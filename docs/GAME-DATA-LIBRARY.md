@@ -23,7 +23,9 @@ app storage unless the VR installation already uses its supported shared root.
 
 Imports read actual Xbox v5 cache headers: PAL `01.01.14.2342` and NTSC
 `01.10.12.2276` / `01.08.15.1749`. The set lists detected region/build(s), hashes
-every map and computes a combined SHA-256 fingerprint. Equal sets deduplicate.
+every map and computes a combined SHA-256 fingerprint at import. Equal sets
+deduplicate. Mods or manual file edits can change those bytes afterward; use
+Game data & compatibility to read current headers and recompute fingerprints.
 UI must be a recognized menu cache; unsupported cache builds/types are rejected
 for managed imports. Resource files (bitmaps/sounds/loc) are hashed separately.
 Unknown custom content remains the existing experimental content path.

@@ -99,4 +99,8 @@ and melee with desktop peers; repeated deaths/quit/rejoin and map rotation;
 v9/v10 hosts where available; both launcher flavors' document pickers, imports,
 controller navigation and set switching; paired Quest/flat co-op regression.
 No game installation/launch, live-match load test or runtime acceptance is claimed.
-Final build and artifact evidence belongs in TEST17-DELIVERY and the manifest.
+Additional verification: the production directory parser accepted a fresh feed
+of six servers with 48 reported players (a point-in-time report, not a reachability
+measurement). The native cache-format suite passed 127 tests; four optional tests
+requiring real map fixtures were skipped. Final build and artifact evidence is
+recorded in TEST17-DELIVERY and the manifest.
