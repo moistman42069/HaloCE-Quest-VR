@@ -1,0 +1,42 @@
+diff --git a/android-project/app/src/main/java/org/libsdl/app/SDLActivity.java b/android-project/app/src/main/java/org/libsdl/app/SDLActivity.java
+index 2d00adb..63d80c4 100644
+--- a/android-project/app/src/main/java/org/libsdl/app/SDLActivity.java
++++ b/android-project/app/src/main/java/org/libsdl/app/SDLActivity.java
+@@ -2191,10 +2191,16 @@ class SDLClipboardHandler implements
+ 
+     SDLClipboardHandler() {
+        mClipMgr = (ClipboardManager) SDL.getContext().getSystemService(Context.CLIPBOARD_SERVICE);
+-       mClipMgr.addPrimaryClipChangedListener(this);
++       // containers such as Steam Frame's Lepton run without a clipboard service
++       if (mClipMgr != null) {
++           mClipMgr.addPrimaryClipChangedListener(this);
++       }
+     }
+ 
+     public boolean clipboardHasText() {
++        if (mClipMgr == null) {
++            return false;
++        }
+         if (Build.VERSION.SDK_INT >= 28 /* Android 9 (P) */) {
+             return mClipMgr.hasPrimaryClip();
+         } else {
+@@ -2203,6 +2209,9 @@ class SDLClipboardHandler implements
+     }
+ 
+     public String clipboardGetText() {
++        if (mClipMgr == null) {
++            return null;
++        }
+         ClipData clip = mClipMgr.getPrimaryClip();
+         if (clip != null) {
+             ClipData.Item item = clip.getItemAt(0);
+@@ -2217,6 +2226,9 @@ class SDLClipboardHandler implements
+     }
+ 
+     public void clipboardSetText(String string) {
++        if (mClipMgr == null) {
++            return;
++        }
+         mClipMgr.removePrimaryClipChangedListener(this);
+         if (string.isEmpty()) {
+             if (Build.VERSION.SDK_INT >= 28 /* Android 9 (P) */) {

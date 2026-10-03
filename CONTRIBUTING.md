@@ -1,0 +1,41 @@
+# Development and continuation
+
+Start with [CURRENT-STATE.md](docs/CURRENT-STATE.md), [release provenance](docs/RELEASE-PROVENANCE.md), [controls](docs/CONTROLS-AND-OPTIONS.md) and [architecture](docs/VR_ARCHITECTURE.md). `main` is the current canonical source. Create a focused branch/PR for changes; no private chat access is needed to resume.
+
+## Local setup
+
+Use Linux or WSL, Python 3.11+ (packaging uses `hashlib.file_digest`), Ninja, clang with the `arm64_32` target, JDK 17, Android SDK platform/build-tools 35 and NDK 27.2.12479018. Current shipped builds used clang 18. Set `ANDROID_HOME` and `ANDROID_NDK_HOME` as required. Build scripts keep caches/temp under the checkout. On the maintainer's Windows workstation, new work/builds belong on the D: drive; other environments use their own writable checkout.
+
+```sh
+bash tools/build-quest.sh vr
+# Copy app-vr-debug.apk to an artifact directory before changing flavor.
+bash tools/build-quest.sh flat
+```
+
+Both commands share `build/android` native staging, so run them serially. Gradle is explicitly invoked after Ninja so Java-only changes are included. Outputs are `port/android/app/build/outputs/apk/vr/debug/app-vr-debug.apk` and `port/android/app/build/outputs/apk/debug/app-debug.apk`.
+
+Public source does not contain the project signing key. A locally generated debug key can install a separate clean app, but generally cannot update the published app in place. Do not commit keys, passwords, game maps, logs, invites, personal recordings, SDKs or build caches. Use GitHub's noreply identity for new commits if email privacy matters.
+
+## Change and report discipline
+
+- Preserve both VR and flat paths. Scope gameplay changes narrowly; keep feature failure local and retain bounds/finite-value/teardown guards.
+- Inspect actual code/evidence before relying on a historical checkpoint. Date findings and distinguish source implementation, build checks and device results.
+- Build the affected variant; shared native/launcher/network changes normally require both. Use focused checks appropriate to the changed behavior. Do not claim a headset result from compilation.
+- Record controls/default/protocol changes in player docs and CURRENT-STATE. New protocols need explicit compatibility/ownership/bounds handling; preserve old-peer fallback.
+- Do not alter game maps on disk or bundle copyrighted data. Mod installation work must preserve originals and recovery.
+- Do not install to devices, launch games, publish releases or push to unrelated upstreams without the maintainer's authorization.
+
+## Release process
+
+1. Commit source and record exact revisions for every APK; build flavors serially and preserve outputs immediately.
+2. Verify package/version/ABI/certificate, payload identity and archive integrity. Preserve hashes and existing signing identity.
+3. If a release combines a VR-only update with the prior flat binary, label both versions and source revisions honestly. Do not rebuild merely to make filenames match.
+4. Package individual APKs, a bundle, privacy-reviewed source snapshots, dependency notices, manifest and checksums. Keep code out of Git LFS/binary commits; attach downloads to a GitHub Release.
+5. Publish an experimental prerelease until device acceptance supports stronger wording. Update the README links and CURRENT-STATE without relabeling untested features as accepted.
+6. Preserve reproducible release notes and receive user logs/device results before another candidate.
+
+Historical `tools/package-quest.py` expects a freshly built pair from one clean commit (pass the correct `--label`); it is not the publisher for the current mixed-version pair. The current public release manifest explicitly records VR test13a and flat test13 separately.
+
+## Reports
+
+Include APK/version, hardware/OS, mission/map/content, settings, exact steps, host/client and peer versions, and relevant launch logs. Remove private invitations/device details before posting. For co-op/avatars, provide both peers' logs. For body/grip/menu faults, attach video if possible. Use the issue templates; contributions should state observed behavior and remaining verification.

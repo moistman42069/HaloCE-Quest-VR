@@ -1,0 +1,2 @@
+# rally.cmd is downloaded raw from GitHub and run by cmd.exe: keep its CRLF
+*.cmd -text

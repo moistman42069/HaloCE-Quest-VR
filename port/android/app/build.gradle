@@ -1,0 +1,116 @@
+plugins {
+    id "com.android.application"
+}
+
+// build/android in the repository root, where `ninja android` stages the
+// native libraries (jniLibs) and the guest image (assets)
+def staged = new File(rootDir, "../../build/android")
+
+// a build of main knows its number (tools/ci_build.py), which names its
+// release and which the self-updater (Updater.java) compares; others have
+// none and never look for updates
+def buildNumberText = System.getenv("HALO_BUILD_NUMBER") ?: "0"
+def buildNumber = buildNumberText.isInteger() ? buildNumberText.toInteger() : 0
+
+// the workflow's signing key (.github/workflows/build.yml): every build of
+// main signed with it can install over the one before; without it, the
+// debug key of the computer that builds
+def signingKey = System.getenv("HALO_ANDROID_KEYSTORE")
+
+// the VR headset build (configure.py --vr): its own app, com.halo.decomp.vr,
+// with the OpenXR manifest entries of src/vr
+def haloVr = project.hasProperty("haloVr")
+// Keep browser compatibility in step with the native join gate.
+def networkLimits = new File(rootDir, "../linux/include/halo_port_limits.h").text
+def networkValue = { name ->
+    def match = networkLimits =~ /(?m)^#define ${name} (\d+)\s*$/
+    if (!match.find()) throw new GradleException("Missing native network constant: ${name}")
+    match.group(1)
+}
+
+android {
+    namespace "com.halo.decomp"
+    compileSdk 35
+
+    defaultConfig {
+        applicationId "com.halo.decomp"
+        minSdk 28
+        targetSdk 35
+        versionCode Math.max(haloVr ? 14 : 13, buildNumber)
+        versionName buildNumber > 0 ? "build " + buildNumber : (haloVr ? "1.0-test13a" : "1.0-test13")
+        buildConfigField "int", "HALO_BUILD_NUMBER", "${buildNumber}"
+        buildConfigField "int", "HALO_NETWORK_VERSION", networkValue("HALO_PORT_NETWORK_VERSION")
+        buildConfigField "int", "HALO_NETWORK_MINIMUM", networkValue("HALO_PORT_NETWORK_VERSION_MINIMUM")
+        buildConfigField "int", "HALO_NETWORK_MAXIMUM", networkValue("HALO_PORT_NETWORK_VERSION_MAXIMUM")
+        ndk {
+            abiFilters "arm64-v8a"
+        }
+    }
+
+    if (haloVr) {
+        flavorDimensions = ["display"]
+        productFlavors {
+            vr {
+                dimension "display"
+                applicationIdSuffix ".vr"
+            }
+        }
+    }
+
+    sourceSets {
+        main {
+            java.srcDirs += new File(staged, "third_party/SDL3/android-project/app/src/main/java")
+            jniLibs.srcDirs = [new File(staged, "jniLibs")]
+            assets.srcDirs = [new File(staged, "assets")]
+        }
+        if (haloVr) {
+            // the OpenXR loader (configure.py --vr)
+            vr {
+                jniLibs.srcDirs = [new File(staged, "jniLibs-vr")]
+            }
+        }
+    }
+
+    // the guest image is read straight from the APK
+    androidResources {
+        noCompress += ["elf"]
+    }
+
+    packaging {
+        jniLibs {
+            useLegacyPackaging false
+        }
+    }
+
+    buildFeatures {
+        buildConfig true
+    }
+
+    signingConfigs {
+        if (signingKey) {
+            halo {
+                storeFile file(signingKey)
+                storePassword System.getenv("HALO_ANDROID_KEYSTORE_PASSWORD")
+                keyAlias System.getenv("HALO_ANDROID_KEY_ALIAS") ?: "halo"
+                keyPassword System.getenv("HALO_ANDROID_KEYSTORE_PASSWORD")
+            }
+        }
+    }
+
+    buildTypes {
+        debug {
+            debuggable true
+            minifyEnabled false
+            signingConfig signingKey ? signingConfigs.halo : signingConfigs.debug
+        }
+        release {
+            minifyEnabled false
+            signingConfig signingKey ? signingConfigs.halo : signingConfigs.debug
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}

@@ -1,0 +1,44 @@
+# IDE folders
+.idea/
+.vs/
+
+# Caches
+__pycache__
+.mypy_cache
+.cache/
+
+# Build files
+build/
+.ninja_*
+build.ninja
+
+# Generated configs
+compile_commands.json
+
+# The January build and the Xbox SDK (tools/xdk_headers.py reads the
+# build's PDB); never commit
+*.exe
+*.pdb
+xbox/
+!source/**/xbox/
+
+# Locally extracted proprietary game data (never commit)
+assets/
+# (but the high-res assets, drawn for the port: tools/hud_assets.py)
+!port/assets/
+original/
+
+# CI build outputs (tools/ci_build.py)
+dist/
+
+# Public release assets and private local material
+*.apk
+*.keystore
+*.jks
+*.p12
+*.pem
+.env
+.env.*
+local.properties
+out/
+release-assets/

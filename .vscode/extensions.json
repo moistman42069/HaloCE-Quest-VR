@@ -1,0 +1,7 @@
+﻿{
+  "recommendations": [
+    "anthropic.claude-code",
+    "ms-vscode-remote.remote-wsl",
+    "ms-vscode.cpptools"
+  ]
+}
