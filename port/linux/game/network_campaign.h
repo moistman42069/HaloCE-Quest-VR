@@ -4,6 +4,7 @@
 #define NETWORK_CAMPAIGN_H
 
 #define HALO_CAMPAIGN_NETWORK_VERSION 0xCE01
+/* CE01 only: upstream PvP uses this bit for an in-progress match. */
 #define HALO_CAMPAIGN_ADVERTISED_FLAG 0x02
 #define HALO_CAMPAIGN_MAP_VERSION 0x434F0001L
 

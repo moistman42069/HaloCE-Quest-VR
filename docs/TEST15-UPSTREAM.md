@@ -1,5 +1,10 @@
 # Test15 upstream integration and version management
 
+Continuation note: test17 reviews upstream through 933aac6 and adds missed
+action-only/in-progress handling plus departed-player queue/statistics guards.
+See [TEST17-PROGRESS.md](TEST17-PROGRESS.md) for exact findings and pins; the
+test15 cutoff below remains historical evidence. Public test14 is unchanged.
+
 ## Pinned sources
 
 - `bnunu/halo-ce-universal` at `c3e55ba8131140838a294eb9fd38f73481d10f4b`: native v10 scoreboard ping message.

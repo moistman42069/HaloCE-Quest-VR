@@ -3190,7 +3190,7 @@ boolean game_engine_showing_postgame(
 boolean game_variant_options_valid(struct game_variant_options const *o)
 {
     int side, vehicle;
-    if (!o || o->time_limit < 0 || o->time_limit > 1440 ||
+    if (!o || o->no_map_weapons > 1 || o->time_limit < 0 || o->time_limit > 1440 ||
         o->friendly_fire < 0 || o->friendly_fire >= NUMBER_OF_FRIENDLY_FIRE_MODES ||
         o->friendly_fire_penalty < 0 || o->friendly_fire_penalty > 600 ||
         o->vehicle_respawn_time < 0 || o->vehicle_respawn_time > 3600 ||
@@ -3978,6 +3978,9 @@ void game_engine_player_killed(
 	killer (port/linux/game/network_distributed.c) */
 	network_distributed_player_killed(&killing_player_index, &killing_object_index, dead_player_index,
 		&friendly_fire);
+	/* port: a killer who has left the game since is no one's kill */
+	if (killing_player_index != NONE && !player_try_and_get(killing_player_index))
+		killing_player_index = NONE;
 	/* the host's kill of a player who quit, ahead of this client's clock
 	(game_update_quit_players has not come to its time yet) */
 	if (network_game_distributed_client() && dead_player->quit_out_of_game_time != NONE &&
@@ -7870,6 +7873,12 @@ static void game_engine_update_item_spawn(
 				struct object_placement_data placement_data;
 				long object_index;
 
+				/* port: the gametype's no weapons on the map */
+				if (definition_index != NONE && game_variant_options_get()->no_map_weapons &&
+					object_definition_get(definition_index)->object.type == _object_type_weapon)
+				{
+					continue;
+				}
 				object_placement_data_new(
 					&placement_data,
 					definition_index,

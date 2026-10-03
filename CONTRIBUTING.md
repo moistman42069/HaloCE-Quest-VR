@@ -46,3 +46,8 @@ If incremental Gradle packaging leaves obsolete ZIP space, `tools/compact-quest-
 
 Test16 adds `python3 tools/test_test16_actions.py` for native action blending and
 VR/flat config migration. Run it alongside the nine test15 regression suites.
+
+Test17 adds `python3 tools/test_test17_network_data.py` for action flag/queue
+regressions, synthetic ISO imports and matching Java/native data selection.
+The browser suite now includes native in-progress flag combinations.
+See `docs/TEST17-PROGRESS.md`; run all eleven suites for this candidate.

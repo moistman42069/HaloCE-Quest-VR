@@ -21,6 +21,7 @@ that runs here.
 
 #include "host.h"
 #include "tomlc17.h"
+#include "game_data_profile.h"
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
@@ -428,14 +429,20 @@ static void *game_main(void *unused)
 	if (directory_has_maps(SHARED_DATA_ROOT))
 		snprintf(data_root, sizeof(data_root), "%s", SHARED_DATA_ROOT);
 #endif
+    {
+        char selected[sizeof(data_root)];
+        int profile=halo_game_data_profile(data_root,selected,sizeof(selected));
+        if(profile<0)host_fatal("The selected game-data set is incomplete. Open Game files & versions in the launcher and select or import a complete set.");
+        if(profile>0)snprintf(data_root,sizeof(data_root),"%s",selected);
+    }
 	snprintf(save_root, sizeof(save_root), "%s/save", data_root);
 	/* readable by adb (the shell user), for managing saves */
 	mkdir(save_root, 0775);
 	share_save_tree(save_root);
 	if (!directory_has_maps(data_root))
 	{
-		host_fatal("The Halo game data was not found.\n\nCopy the PAL game data (build 01.01.14.2342), "
-			"the folder that contains maps, into\n%s\nor import it from the launcher screen.", data_root);
+		host_fatal("The Halo game data was not found.\n\nCopy supported Xbox Halo CE data, "
+			"the folder that contains maps, into\n%s\nor use Game files & versions in the launcher.", data_root);
 	}
 
 	environment_set(&environment, "HOME", save_root);

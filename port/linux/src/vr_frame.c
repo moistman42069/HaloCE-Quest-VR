@@ -415,7 +415,7 @@ void vr_initialize(void)
 	if (vr.initialized)
 		return;
 	vr.initialized = 1;
-	platform_log("vr: HaloCE Quest test16 candidate (safe geometry default and native action handoff)");
+	platform_log("vr: HaloCE Quest test17 candidate (network compatibility and managed game data)");
 	if (!config_boolean("vr.enabled"))
 	{
 		platform_log("vr: off (vr.enabled)");

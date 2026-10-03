@@ -105,6 +105,7 @@ final class ServerBrowser {
             + "and maps. Retail Halo PC, MCC and Xbox are incompatible.");
         text(content, "Join connects an invite, then use Multiplayer > System Link to select the host. "
             + "Upstream ports may call this Direct Link. Nearby LAN games also appear there. Public listings are supplied by ChupathingyCE; availability may change.");
+        text(content, LauncherHelp.DATA_COMPATIBILITY_NOTE);
         button(content, "Add / paste server invite", this::addInvite);
         button(content, "Directory settings", this::setDirectory);
         refresh = button(content, "Refresh directory", this::refresh);
@@ -243,9 +244,13 @@ final class ServerBrowser {
         text(rows, version + (compatible ? "" : " — incompatible; supported: "
             + (campaign ? "matching campaign build" : BuildConfig.HALO_NETWORK_MINIMUM + "–" + BuildConfig.HALO_NETWORK_MAXIMUM)));
         Button open = button(rows, "Join " + entry.name, () -> {
-            RunLog.line("Multiplayer join requested: " + entry.name + " network=" + entry.version);
-            if (join.open(entry.invite)) dialog.dismiss();
-            else status.setText("Could not write the invite. Check game-data storage access, then try again.");
+            Runnable connect=()->{
+                RunLog.line("Multiplayer join requested: " + entry.name + " network=" + entry.version + " map=" + entry.map);
+                if (join.open(entry.invite)) dialog.dismiss();
+                else status.setText("Could not write the invite. Check game-data storage access, then try again.");
+            };
+            if(!campaign&&activity instanceof LauncherActivity)((LauncherActivity)activity).withServerMap(entry.map,connect);
+            else connect.run();
         });
         String blocked = unsupportedCapacity ? "Unsupported campaign capacity: this build supports two-player co-op. Larger PvP limits do not apply to campaign."
             : !compatible ? "Protocol mismatch: this host uses network v" + entry.version +

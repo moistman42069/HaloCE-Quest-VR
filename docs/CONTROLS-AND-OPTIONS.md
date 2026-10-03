@@ -111,4 +111,25 @@ use the affected native arm/hand animations, then blend back to VR tracking.
 Keep holding support grip to return to the same grip; releasing it allows the
 hand to return to free tracking. Ordinary aiming/firing, controller alignment
 and Legs + Arms remain unchanged. This is native animation playback, not physical
-reload. The new behavior still requires the owner's headset testing.
+reload. The owner reports improved action playback in test16; test17 preserves it. New networking/data changes still require owner testing.
+
+
+## Test17: game files, revisions and server compatibility
+
+Open **Game files & versions** to import one or more ISO/XISO images, select an
+extracted maps folder, or scan the displayed `game-versions/inbox` folder. Each
+complete set shows detected cache region/build and a SHA-256 fingerprint. Select
+**Use** to activate it for the next launch; **Rename** edits your personal label.
+The original installation remains **Existing game data**. Saves stay separate
+per set, and current settings are copied once into a newly imported set.
+
+Some server incompatibilities may result from different ISO/revision map files
+or modified data. Network protocol versions, missing maps, full/closed hosts and
+NAT can also prevent joining. Original/Rev1/Rev2 labels are not automatically
+verified without trusted hashes. The browser can offer another installed set
+containing a missing map, but servers do not advertise authoritative revision or
+content fingerprints. Do not change map headers to bypass compatibility checks.
+
+Test17 addresses false rejection of running v11 matches, an action-control
+assertion, and reviewed departed-player/rejoin issues. The test16 animation
+handoff is preserved. [Full data-library instructions](GAME-DATA-LIBRARY.md).

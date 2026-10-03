@@ -3237,6 +3237,7 @@ static boolean distributed_message_stale(
 	case _distributed_message_player_inputs:
 	case _distributed_message_relayed_actions:
 	case _distributed_message_damage_events:
+	case _distributed_message_pings:
 	case _distributed_message_campaign_actors:
 		break;
 	default:

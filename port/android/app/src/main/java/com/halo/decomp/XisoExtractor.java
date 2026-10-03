@@ -98,7 +98,7 @@ final class XisoExtractor {
         final long size;
 
         Entry(String name, long sector, long size) {
-            this.name = name;
+            this.name = name.toLowerCase(java.util.Locale.ROOT);
             this.sector = sector;
             this.size = size;
         }
@@ -118,6 +118,7 @@ final class XisoExtractor {
 
     private void readAt(long offset, ByteBuffer buffer) throws IOException {
         while (buffer.hasRemaining()) {
+            if(Thread.currentThread().isInterrupted())throw new java.io.InterruptedIOException("Import cancelled");
             int count = image.read(buffer, offset);
 
             if (count <= 0)
@@ -218,9 +219,12 @@ final class XisoExtractor {
         List<Entry> files = new ArrayList<>();
         walk(table, 0, 0, false, files, new int[1]);
         long total = 0;
+        java.util.Set<String> unique=new java.util.HashSet<>();
         boolean hasUi = false;
         for (Entry file : files) {
             total += file.size;
+            if(total>12L*1024*1024*1024||!unique.add(file.name))throw new ExtractException("Oversized image data or duplicate filenames");
+            if(partition+file.sector*SECTOR_SIZE+file.size>image.size())throw new ExtractException("Truncated disc image");
             hasUi |= file.name.equalsIgnoreCase("ui.map");
         }
         if (!hasUi)

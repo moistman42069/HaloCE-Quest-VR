@@ -2,14 +2,27 @@
 
 Updated 2026-10-03. Canonical public repository: [moistman42069/HaloCE-Quest-VR](https://github.com/moistman42069/HaloCE-Quest-VR), branch **main**. Main contains complete test14 runtime source plus current player/project documentation. The initial test13a import is historical; private identifying metadata remains excluded. Older private Git history remains a backup, not the continuation branch.
 
-## Active candidate: test16 (unpublished)
+## Active candidate: test17 (unpublished)
+
+Branch `test17-network-data-profiles`, version 1.0-test17/code 18. The owner reports
+test16 animations significantly improved and requests preserving native online
+melee. Six test16 logs identify two networking defects now addressed: running PvP
+hosts rejected by the campaign flag collision, and action-only bit 15 reaching
+unit controls. Reviewed upstream departure/rejoin guards and v11 option semantics
+are included. Both launchers add managed ISO/extracted data sets, detected build
+and fingerprint labels, and explicit ISO/revision compatibility guidance.
+[Findings, preserved scope and tests](TEST17-PROGRESS.md),
+[data library](GAME-DATA-LIBRARY.md), [delivery](TEST17-DELIVERY.md).
+Test14 remains the public release; new testing/publication approval is pending.
+
+## Prior candidate: test16 (unpublished)
 
 Branch `test16-native-actions` continues the complete final test15 implementation.
 Version 1.0-test16/code 17 adds VR Safe geometry defaults/upgrades and native action
 arm ownership. Flat defaults to Normal. See [test16 checkpoint](TEST16-PROGRESS.md)
 and [candidate delivery](TEST16-DELIVERY.md). The owner supplied test15 normal/Safe
-bridge evidence and a weapon-action stretching video; test16 runtime acceptance
-is pending. Test14 remains the public accepted pair; no new release is authorized.
+bridge evidence and a weapon-action stretching video. The follow-up confirms
+improved action animation but reports the multiplayer faults addressed in test17. Test14 remains the public accepted pair; no new release is authorized.
 
 ## Prior candidate: test15 (unpublished)
 
@@ -47,10 +60,11 @@ The 2026-10-03 follow-up reports successful Quest/flat co-op connectivity and fu
 | Grip | Deliberate support grip default, fixed support anchor, first-grip protection, physical/locked weapons and holsters | Paired network physical weapon behavior unverified; off by default online |
 | Movement/melee | Offline arm-run sprint and close contact, stock network speed/collision, impact or swing melee | Physical reload deferred; button reload works |
 | Settings | Generated pages/dynamic storage, directional stepping, body and graphics options | Custom pause tags may not provide same menu |
-| PvP browser | Full bounded feed, population sort then paging, four catalogs, invites/LAN, v9/v10 compatibility | Only ChupathingyCE preset verified; not retail PC/MCC/Xbox protocol |
+| PvP browser | Full bounded feed, population sort then paging, four catalogs, invites/LAN, reviewed v9-v11 compatibility | Only ChupathingyCE preset verified; not retail PC/MCC/Xbox protocol |
 | Campaign co-op | Separate host/join/browser/protocol, campaign authority/replication/transitions | Paired session and test14 release accepted; detailed full campaign coverage and public-directory announcement verification remain open |
 | Remote avatars | Negotiated render-only snapshots, owner/bounds checks, interpolation/expiry, flat receiver | Owner confirmed VR body movement on flat partner; world skeleton has no separate fingers; old peers stock |
-| Flat input | Multi-touch overlay, fire-drag aim, gamepad coexistence, lifecycle release | Phone layout/input validation and Type/Light profile labels pending |
+| Flat input | Customizable multi-touch overlay, swipe/fire-drag aim, Xbox-style gamepad settings, lifecycle release | Phone layout/input validation and Type/Light profile labels pending |
+| Managed data | ISO/XISO/extracted imports, inbox, cache-build/fingerprint detection, atomic set selection, isolated saves | Exact disc-revision hash matrix and per-server content fingerprints unavailable |
 | Logging/content | Per-launch Download/HaloCE logs with fallback; SPV1 original-map recovery | Custom content/dependencies remain experimental |
 
 ## Standing follow-up coverage

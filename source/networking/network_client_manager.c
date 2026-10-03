@@ -3010,12 +3010,11 @@ boolean network_game_client_advertised_game_compatible(
 		network_event("joining campaign protocol %u", theirs);
 		return TRUE;
 	}
-	/* A campaign flag with a competitive version is malformed, not PvP. */
-	if (network_game_client_advertised_versions[game_index].flags & HALO_CAMPAIGN_ADVERTISED_FLAG)
-		compatible_version = FALSE;
+    /* Bit 0x02 is upstream PvP IN_PROGRESS; only CE01 gives it campaign
+     * meaning. Never reject a reviewed PvP protocol for this shared bit. */
 	if (compatible_version && distributed)
 	{
-		network_event("joining a host of network version %u", theirs);
+		network_event("joining a host of network version %u flags=0x%02x", theirs, network_game_client_advertised_versions[game_index].flags);
 		return TRUE;
 	}
 	if (compatible_version)
@@ -3042,8 +3041,9 @@ boolean network_game_client_advertised_game_compatible(
 	}
 	if (tell)
 	{
-		network_event("not joining a host of network version %u%s (this machine's is %u)", theirs,
-			distributed ? "" : " with the lockstep netcode", ours);
+		network_event("not joining host: version=%u flags=0x%02x supported=%u-%u distributed=%u", theirs,
+            network_game_client_advertised_versions[game_index].flags,
+            HALO_PORT_NETWORK_VERSION_MINIMUM, HALO_PORT_NETWORK_VERSION_MAXIMUM, distributed);
 		platform_show_message("Halo: cannot join this game", message);
 	}
 	return FALSE;

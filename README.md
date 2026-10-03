@@ -19,7 +19,7 @@ Both APKs are `1.0-test14`, version code 15, ARM64. Supply your own Halo CE Xbox
 
 ## Development candidate
 
-This work branch contains **test16**, held for owner testing. It adds VR Safe geometry defaults with a one-time config migration, and native action arm/hand playback that blends back to tracking. It preserves the complete test15 pass: configurable controller alignment, a flat touch HUD editor and swipe aim, Xbox-style Android gamepad settings/navigation and automatic touch hiding/recovery, native v11 PvP hosting/join support with legacy settings conversion, geometry upload fixes, bundled help, and signed project update handling. The download links above remain the accepted test14 release. [Candidate details and limits](docs/TEST16-PROGRESS.md).
+This work branch contains **test17**, held for owner testing. It fixes false rejections of running native PvP matches and a unit-control assertion, adds reviewed upstream departure/rejoin fixes, and provides **Game files & versions** for importing and selecting detected game-data sets. Both launchers explain that different ISO/revision map files can cause some incompatibilities, alongside protocol and connection issues. The improved test16 native-action animations, VR Safe geometry default and complete test15 controller/touch/update work are preserved. Download links above remain the accepted test14 release. [Candidate findings and scope audit](docs/TEST17-PROGRESS.md) | [Game-data management](docs/GAME-DATA-LIBRARY.md).
 
 ## What's new in test14
 

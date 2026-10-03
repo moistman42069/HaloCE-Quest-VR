@@ -101,6 +101,8 @@ int main(void){
  p.total_size=65535;assert(!network_game_client_receive_game_settings_piece(0,&p));p.total_size=sizeof(g);p.length=0;assert(!network_game_client_receive_game_settings_piece(0,&p));
  for(int i=0;i<10;i++){g.variant_options.primary_weapon=i;assert(game_variant_options_valid(&g.variant_options));}
  g.variant_options.primary_weapon=255;assert(!game_variant_options_valid(&g.variant_options));g.variant_options.primary_weapon=2;
+ assert(sizeof(g.variant_options)==28);g.variant_options.no_map_weapons=1;assert(game_variant_options_valid(&g.variant_options));
+ g.variant_options.no_map_weapons=255;assert(!game_variant_options_valid(&g.variant_options));g.variant_options.no_map_weapons=0;
  g.variant_options.vehicle_counts[1][5]=255;assert(!game_variant_options_valid(&g.variant_options));
  puts("PASS: v11/legacy fragment assembly, local-data tail, defaults, malformed fragments, bounded match options");
 }

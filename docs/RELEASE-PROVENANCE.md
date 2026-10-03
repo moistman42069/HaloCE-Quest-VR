@@ -38,3 +38,12 @@ checks: [TEST16-DELIVERY.md](TEST16-DELIVERY.md). Continuation source lives on
 `test16-native-actions`; later documentation/test-fixture commits do not replace
 the built runtime. Public test14 APKs/release remain unchanged. No candidate
 publication is authorized until the owner tests and approves the new pair.
+
+
+## Unpublished test17 candidate
+
+Test17, version code 18, continues test16 on `test17-network-data-profiles`.
+It preserves the owner's improved action-animation behavior and addresses the
+reported multiplayer faults with managed game-data selection in both launchers.
+See [TEST17-DELIVERY.md](TEST17-DELIVERY.md) for exact runtime/artifact provenance.
+No new public release is authorized; the test14 downloads remain unchanged.

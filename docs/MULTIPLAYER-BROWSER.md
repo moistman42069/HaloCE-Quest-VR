@@ -174,3 +174,24 @@ hosts that never publish an invite or answer LAN discovery.
 Campaign 0xCE01 uses the separate co-op browser. Public listing is opt-in from its
 host dialog and requires the live native-host heartbeat; see
 `CAMPAIGN-PROTOCOL-WIP.md`. Both browsers accept up to four HTTPS catalogs.
+
+
+## Test17: game files, revisions and server compatibility
+
+Open **Game files & versions** to import one or more ISO/XISO images, select an
+extracted maps folder, or scan the displayed `game-versions/inbox` folder. Each
+complete set shows detected cache region/build and a SHA-256 fingerprint. Select
+**Use** to activate it for the next launch; **Rename** edits your personal label.
+The original installation remains **Existing game data**. Saves stay separate
+per set, and current settings are copied once into a newly imported set.
+
+Some server incompatibilities may result from different ISO/revision map files
+or modified data. Network protocol versions, missing maps, full/closed hosts and
+NAT can also prevent joining. Original/Rev1/Rev2 labels are not automatically
+verified without trusted hashes. The browser can offer another installed set
+containing a missing map, but servers do not advertise authoritative revision or
+content fingerprints. Do not change map headers to bypass compatibility checks.
+
+Test17 addresses false rejection of running v11 matches, an action-control
+assertion, and reviewed departed-player/rejoin issues. The test16 animation
+handoff is preserved. [Full data-library instructions](GAME-DATA-LIBRARY.md).

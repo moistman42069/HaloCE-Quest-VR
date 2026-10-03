@@ -39,6 +39,7 @@ public class LauncherActivity extends Activity {
     private static final int PICK_RESOURCES = 2;
 
     private File dataRoot;
+    private GameDataManager dataManager;
     private TextView status, updateStatus;
     private ProgressBar progress;
     private Button pick;
@@ -124,28 +125,25 @@ public class LauncherActivity extends Activity {
         }
         if (id == null || id.isEmpty())
             return;
-        File partial = new File(dataRoot, "hardware_id.txt.tmp");
+        File identityRoot=gameRoot();if(identityRoot==null)return;
+        File partial = new File(identityRoot, "hardware_id.txt.tmp");
         try (OutputStream out = new FileOutputStream(partial)) {
             out.write(id.getBytes("UTF-8"));
         } catch (java.io.IOException e) {
             partial.delete();
             return;
         }
-        if (!partial.renameTo(new File(dataRoot, "hardware_id.txt")))
+        if (!partial.renameTo(new File(identityRoot, "hardware_id.txt")))
             partial.delete();
     }
 
     private boolean haveData() {
-        if (dataRoot != null && new File(dataRoot, "maps/ui.map").isFile())
-            return true;
-        // the VR build also takes the headset's Documents/HaloCE, which a
-        // reset of the Android container keeps (port/android/host/host_main.c)
-        return BuildConfig.APPLICATION_ID.endsWith(".vr") &&
-            new File("/sdcard/Documents/HaloCE/maps/ui.map").isFile();
+        File root=gameRoot();return root!=null&&new File(root,"maps/ui.map").isFile();
     }
 
     private boolean readyToPlay() {
-        if (busy) return false;
+        if (busy || (dataManager!=null&&dataManager.busy())) return false;
+        if(!haveData()){dataManager().show();return false;}
         if (new ModInstaller(gameRoot()).recoveryNeeded(ModInstaller.SPV1)) {
             if (mods == null) buildMenu();
             selectMod(ModInstaller.SPV1);
@@ -180,12 +178,36 @@ public class LauncherActivity extends Activity {
      * VR build the headset's Documents/HaloCE when the data is there
      * (port/android/host/host_main.c chooses the same way).
      */
-    File gameRoot() {
+    File baseRoot() {
         File shared = new File("/sdcard/Documents/HaloCE");
 
         if (BuildConfig.APPLICATION_ID.endsWith(".vr") && new File(shared, "maps/ui.map").isFile())
             return shared;
         return dataRoot;
+    }
+
+    File gameRoot() { return GameDataLibrary.activeRoot(baseRoot()); }
+    private GameDataManager dataManager() {
+        if(dataManager==null)dataManager=new GameDataManager(this,baseRoot(),()->{passOnHardwareId();if(haveData())buildMenu();else buildInterface();});
+        return dataManager;
+    }
+    @Override protected void onDestroy(){if(dataManager!=null)dataManager.close();super.onDestroy();}
+
+    void withServerMap(String advertised,Runnable join) {
+        if(busy||(dataManager!=null&&dataManager.busy()))return;
+        String map=advertised==null?"":advertised.toLowerCase(java.util.Locale.ROOT);
+        if(map.endsWith(".map"))map=map.substring(0,map.length()-4);
+        if(!map.matches("[a-z0-9_-]{1,80}")){join.run();return;}
+        File active=gameRoot();
+        if(active!=null&&MapInfo.read(new File(active,"maps/"+map+".map")).multiplayer){join.run();return;}
+        try {
+            GameDataLibrary library=new GameDataLibrary(baseRoot());java.util.List<GameDataLibrary.Profile> matches=library.withMap(map);
+            if(matches.isEmpty()){LauncherHelp.page(this,"Map unavailable", "The active set does not contain a supported Xbox cache for "+map+". Import a set containing it with Game files & versions. The directory does not advertise content fingerprints or Original/Rev1/Rev2 requirements, so revision compatibility cannot be guessed.");return;}
+            String[] labels=new String[matches.size()];for(int i=0;i<labels.length;i++)labels[i]=matches.get(i).description();
+            new GamepadNavigation.Builder(this).setTitle("Choose installed data containing "+map).setItems(labels,(d,index)->{
+                try{library.select(matches.get(index).id);passOnHardwareId();buildMenu();join.run();}catch(Exception e){LauncherHelp.page(this,"Could not select data",e.getMessage());}
+            }).setNegativeButton("Cancel",null).show();
+        }catch(Exception e){LauncherHelp.page(this,"Game data",e.getMessage());}
     }
 
     // ---------- the menu: play, the mods, the settings
@@ -287,6 +309,7 @@ public class LauncherActivity extends Activity {
         menuButton(layout, "Network settings").setOnClickListener(v -> { if (!busy) NetworkSettings.show(this, gameRoot()); });
         if (!BuildConfig.APPLICATION_ID.endsWith(".vr"))
             menuButton(layout, "Controller & touch settings").setOnClickListener(v -> { if (!busy) GamepadSupport.show(this); });
+        menuButton(layout, "Game files & versions").setOnClickListener(v -> {if(!busy)dataManager().show();});
         menuButton(layout, "Game data & compatibility").setOnClickListener(v -> { if (!busy) LauncherHelp.data(this, gameRoot()); });
         menuButton(layout, "Geometry compatibility").setOnClickListener(v -> { if (!busy) LauncherHelp.graphics(this, gameRoot()); });
         resetSettings = menuButton(layout, "Reset settings to defaults");
@@ -510,6 +533,7 @@ public class LauncherActivity extends Activity {
         layout.addView(title);
 
         TextView message = new TextView(this);
+        menuButton(layout, "Game files & versions").setOnClickListener(v -> dataManager().show());
         message.setText("Choose an Xbox disc image of Halo: Combat Evolved (an .iso or .xiso file, any "
             + "version) on this device. Its maps folder is copied into the app's storage (about 1.8 GB), "
             + "and you can delete the image afterwards.\n\n"
@@ -634,6 +658,7 @@ public class LauncherActivity extends Activity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        if((requestCode==GameDataManager.PICK_ISO||requestCode==GameDataManager.PICK_FOLDER)&&dataManager().result(requestCode,resultCode,data))return;
         if (requestCode == PICK_RESOURCES && resultCode == RESULT_OK && data != null) {
             java.util.List<Uri> files = new java.util.ArrayList<>();
 

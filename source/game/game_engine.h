@@ -230,7 +230,7 @@ struct game_variant_options
 	byte loadout;
 	byte primary_weapon;
 	byte secondary_weapon;
-	byte pad;
+	boolean no_map_weapons;
 };
 
 typedef char verify_game_variant_options_size[sizeof(struct game_variant_options) == 0x1C ? 1 : -1];

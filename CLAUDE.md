@@ -41,3 +41,15 @@ and docs/TEST16-DELIVERY.md. Preserve the complete test15 scope. VR Safe geometr
 migrates once; flat stays Normal. Native action ownership is driven by real FP
 states, preserves the gun subtree and grip latch, and blends back to tracking.
 Do not publish test16 until owner testing/approval; headset validation is pending.
+
+
+Current continuation: **test17-network-data-profiles**. Read docs/TEST17-PROGRESS.md,
+docs/TEST17-DELIVERY.md and docs/GAME-DATA-LIBRARY.md. Owner confirmed improved
+test16 native animations; preserve action/IK/grip and native online melee. Six
+test16 logs identified the PvP in-progress/campaign flag collision and unmasked
+player action bit 15. Test17 addresses these and reviewed upstream departure
+fixes, and adds managed data sets. Both APKs must be built serially and delivered
+privately with source/build ZIPs. No new release/install/launch is authorized.
+Do not infer Original/Rev1/Rev2 identity from filenames or promise revision-based
+server matching without advertised fingerprints. The launcher includes the
+owner-requested note that differing ISO/revision map files may affect joins.

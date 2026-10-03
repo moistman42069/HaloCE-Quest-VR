@@ -93,11 +93,11 @@ static void platform_show_message(const char *title, const char *message) { (voi
 ''' + defines + "\n" + source[start:end] + r'''
 int main(void) {
     struct network_game_client client = {0};
-    for (int version = 0; version < 15; version++) for (int distributed = 0; distributed < 2; distributed++) {
+    for (int version = 0; version < 15; version++) for (int flags = 0; flags < 4; flags++) {
         network_game_client_advertised_versions[0].version = version;
-        network_game_client_advertised_versions[0].flags = distributed ? HALO_PORT_ADVERTISED_DISTRIBUTED_FLAG : 0;
+        network_game_client_advertised_versions[0].flags = flags;
         assert(network_game_client_advertised_game_compatible(&client, &client.available_games[0], 1)
-            == (distributed && (version >= HALO_PORT_NETWORK_VERSION_MINIMUM && version <= HALO_PORT_NETWORK_VERSION_MAXIMUM)));
+            == ((flags & HALO_PORT_ADVERTISED_DISTRIBUTED_FLAG) && (version >= HALO_PORT_NETWORK_VERSION_MINIMUM && version <= HALO_PORT_NETWORK_VERSION_MAXIMUM)));
     }
     network_game_client_advertised_versions[0].version = HALO_CAMPAIGN_NETWORK_VERSION;
     for (int flags=0;flags<4;flags++) {
@@ -106,7 +106,7 @@ int main(void) {
     }
     assert(!network_game_client_advertised_game_compatible(NULL, NULL, 0));
     assert(!network_game_client_advertised_game_compatible(&client, &client.available_games[4], 0));
-    puts("PASS: 30 native compatibility cases, absent client and out-of-range slot");
+    puts("PASS: 60 native compatibility cases including in-progress PvP, campaign identity, absent client and out-of-range slot");
 }
 ''')
 subprocess.run(["clang", "-fsanitize=address,undefined", str(c), "-o", str(OUT / "compatibility")], check=True)

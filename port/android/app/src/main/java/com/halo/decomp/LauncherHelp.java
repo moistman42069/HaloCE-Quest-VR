@@ -7,6 +7,7 @@ import java.util.*;
 import java.util.concurrent.*;
 
 final class LauncherHelp {
+    static final String DATA_COMPATIBILITY_NOTE = "Some server incompatibilities may be caused by different map files from ISO/revision versions or modified game data. Use Game files & versions to select another supported set. A revision label alone does not prove compatibility; network versions, missing maps and connection problems can also prevent joining.";
     static void show(Activity activity) {
         new GamepadNavigation.Builder(activity).setTitle("Field guide")
             .setItems(new String[]{"Getting started & multiplayer", "VR controls & settings", "Flat touch & gamepad", "Every setting: reference"},(d,index)->{
@@ -32,7 +33,7 @@ final class LauncherHelp {
             .setPositiveButton("Close",null).setNeutralButton("Fingerprint files",null).create();
         Runnable headers=()->{
             File[] files=root==null?null:new File(root,"maps").listFiles((dir,name)->name.endsWith(".map"));
-            StringBuilder report=new StringBuilder("Disc labels such as Original / Rev1 / Rev2 do not identify map bytes reliably. This report reads each installed cache's build and format. PAL normalization is automatic. No revision switch is required. Unknown/custom data may not support networking. Co-op needs identical mission/resource files.\n\n");
+            StringBuilder report=new StringBuilder(DATA_COMPATIBILITY_NOTE+"\n\nThis report reads actual cache builds and formats. PAL normalization is automatic. Original/Rev1/Rev2 disc labels remain unverified without trusted hashes. Co-op needs identical mission/resource files.\n\n");
             if(files==null) report.append("No maps found.");
             else { Arrays.sort(files,Comparator.comparing(File::getName)); for(File f:files) {
                 String line=f.getName()+": "+MapInfo.read(f).summary()+"; "+f.length()+" bytes";
