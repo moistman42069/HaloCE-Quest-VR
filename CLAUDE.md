@@ -35,3 +35,9 @@ Active work: test15-community-refinements, see docs/TEST15-PROGRESS.md. Preserve
 Test15 also includes the added Android controller pass (docs/ANDROID-GAMEPAD.md): SDL/Xbox mappings, reviewed digital-trigger patch, launcher/dialog navigation, response settings, reconnect cleanup and Auto/Show/Hide touch. Earlier pre-controller test15 artifact hashes are superseded by the final delivery record. Hardware gamepad/phone/Quest regression evidence remains pending.
 
 Campaign expansion investigation is recorded in docs/COOP-PLAYER-LIMITS.md. CE01 remains two-player: do not expose larger capacities by changing a constant. Multi-peer transition ACK/snapshot state and recovery storage are concrete blockers; larger mission/vehicle/script performance remains unverified. The test15 browser rejects known unsupported campaign capacities without hiding compatible PvP rows.
+
+Active continuation is now `test16-native-actions`; read docs/TEST16-PROGRESS.md
+and docs/TEST16-DELIVERY.md. Preserve the complete test15 scope. VR Safe geometry
+migrates once; flat stays Normal. Native action ownership is driven by real FP
+states, preserves the gun subtree and grip latch, and blends back to tracking.
+Do not publish test16 until owner testing/approval; headset validation is pending.

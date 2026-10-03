@@ -43,3 +43,6 @@ Include APK/version, hardware/OS, mission/map/content, settings, exact steps, ho
 Test15 onward: `tools/package-quest.py` emits `compatibility.json`. Include that exact metadata with both approved stable release APKs; the in-launcher updater checks its hashes, edition/version and save/config policies. Review `docs/TEST15-UPSTREAM.md` before changing protocol acceptance or update schema. Public release publication is the approval boundary; candidates stay private until the owner accepts them.
 
 If incremental Gradle packaging leaves obsolete ZIP space, `tools/compact-quest-apk.py` can compact a preserved APK, align for 16KB pages and re-sign with the same key. It compares every non-signature payload hash and signing certificate before/after. Its password comes from an environment variable. Never substitute a different key or alter the accepted release binary in place.
+
+Test16 adds `python3 tools/test_test16_actions.py` for native action blending and
+VR/flat config migration. Run it alongside the nine test15 regression suites.

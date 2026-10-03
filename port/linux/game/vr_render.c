@@ -29,6 +29,7 @@ built from the game's camera and the headset's pose (port/linux/src/vr.h).
 
 #include "halo_vr.h"
 #include "network_vr_pose.h"
+#include "vr_action_blend.h"
 #include "../src/vr.h"
 #include "../src/port_config.h"
 
@@ -2258,7 +2259,7 @@ static void vr_body_plant_feet(long unit, struct object_datum const *object,
 	}
 }
 
-static struct { real_point3d position; double time; boolean valid; } vr_avatar_hands[2];
+static struct { real_point3d position, elbow; double time; real animated; long unit; boolean valid; } vr_avatar_hands[2];
 
 /* The observer palette keeps every body bone, before the local visibility
  * filter. The biped's own hierarchy/proportions are used, not FP bone indices. */
@@ -2298,11 +2299,22 @@ static void vr_publish_body(long unit, struct animation_graph *graph,
         /* Reuse last frame's displayed contact/grip target, when fresh and
          * nearby, so the remote support hand doesn't slide off the held gun. */
         vr_point_minus(&vr_avatar_hands[side].position, &hand, &old_axis);
-        if (vr_avatar_hands[side].valid && vr_pose_time() - vr_avatar_hands[side].time >= 0 &&
-            vr_pose_time() - vr_avatar_hands[side].time < 0.05 && vr_length(&old_axis) < 0.5f * units)
+        if (vr_avatar_hands[side].valid && vr_avatar_hands[side].unit == unit && vr_pose_time() - vr_avatar_hands[side].time >= 0 &&
+            vr_pose_time() - vr_avatar_hands[side].time < 0.05 &&
+            vr_length(&old_axis) < (vr_avatar_hands[side].animated > 0 ? 1.5f : 0.5f) * units)
             hand = vr_avatar_hands[side].position;
         pole = (real_vector3d){right.i * (side ? 0.6f : -0.6f) - heading.i * 0.3f,
             right.j * (side ? 0.6f : -0.6f) - heading.j * 0.3f, -1};
+        if (vr_avatar_hands[side].valid && vr_avatar_hands[side].unit == unit &&
+            vr_avatar_hands[side].animated > 0 && vr_pose_time() >= vr_avatar_hands[side].time &&
+            vr_pose_time() - vr_avatar_hands[side].time < 0.05) {
+            real_vector3d animated_pole;
+            vr_point_minus(&vr_avatar_hands[side].elbow, &m[chain[0]].position, &animated_pole);
+            if (vr_unit_vector(&animated_pole)) {
+                real w = vr_avatar_hands[side].animated;
+                for (int axis = 0; axis < 3; axis++) pole.n[axis] = pole.n[axis] * (1 - w) + animated_pole.n[axis] * w;
+            }
+        }
         old_fore = m[chain[1]]; old_hand = m[chain[2]];
         vr_solve_arm(graph, m, chain, vr_body_pose.shoulders_valid ? vr_body_pose.shoulders[side] : m[chain[0]].position,
             &hand, &pole, FALSE, &vr_arm_history[2 + side]);
@@ -2537,15 +2549,65 @@ real_matrix4x3 *vr_render_body_matrices(long object_index)
 	return matrices;
 }
 
+static boolean vr_action_matrix_valid(real_matrix4x3 const *m)
+{
+    if (!isfinite(m->scale)) return FALSE;
+    for (int axis = 0; axis < 3; axis++)
+        if (!isfinite(m->position.n[axis]) || !isfinite(m->forward.n[axis]) ||
+            !isfinite(m->left.n[axis]) || !isfinite(m->up.n[axis])) return FALSE;
+    return TRUE;
+}
+
+/* Blend rotations without shearing the skin. Both palettes already have the
+ * same left-hand reflection; factor it out before quaternion interpolation. */
+static void vr_blend_action_matrix(real_matrix4x3 *tracked, real_matrix4x3 const *native, real w)
+{
+    real_matrix4x3 a = *tracked, b = *native;
+    real_vector3d cross;
+    real_quaternion qa, qb, q;
+    boolean reflected;
+    if (!isfinite(w) || w <= 0 || !vr_action_matrix_valid(native)) return;
+    if (!vr_action_matrix_valid(tracked)) { *tracked = *native; return; }
+    if (w >= 1) { *tracked = *native; return; }
+    cross_product3d(&a.forward, &a.left, &cross);
+    reflected = dot_product3d(&cross, &a.up) < 0;
+    if (reflected) { scale_vector3d(&a.left, -1, &a.left); scale_vector3d(&b.left, -1, &b.left); }
+    matrix4x3_rotation_to_quaternion(&a, &qa);
+    matrix4x3_rotation_to_quaternion(&b, &qb);
+    quaternions_interpolate_and_normalize(&qa, &qb, w, &q);
+    matrix4x3_rotation_from_quaternion(tracked, &q);
+    if (reflected) scale_vector3d(&tracked->left, -1, &tracked->left);
+    for (int axis = 0; axis < 3; axis++)
+        tracked->position.n[axis] = a.position.n[axis] + (b.position.n[axis] - a.position.n[axis]) * w;
+    tracked->scale = a.scale + (b.scale - a.scale) * w;
+}
+
+/* Keep the gun and its attachments byte-for-byte unchanged by arm blending. */
+static void vr_blend_action_arm(struct animation_graph *graph, real_matrix4x3 *matrices,
+    real_matrix4x3 const *authored, short root, short gun, real weight)
+{
+    if (!graph || graph->nodes.count <= 0 || graph->nodes.count > MAXIMUM_NODES_PER_ANIMATION ||
+        root < 0 || root >= graph->nodes.count) return;
+    for (short n = 0; weight > 0 && n < graph->nodes.count; n++)
+        if (vr_node_under(graph, n, root) && !vr_node_under(graph, n, gun))
+            vr_blend_action_matrix(&matrices[n], &authored[n], weight);
+}
+
 void vr_render_first_person_ik(
 	real_matrix4x3 *matrices,
-	struct animation_graph *graph)
+	struct animation_graph *graph, long unit, long weapon, unsigned native_arms)
 {
 	static char const *const arms_setting_names[] = { "ik", "hidden", "animated" };
 	static int arms = -1, generation;
 	static struct animation_graph *logged;
 	short left[NUMBER_OF_VR_ARM_BONES], right[NUMBER_OF_VR_ARM_BONES];
 	int side, bone, draw_arms;
+    real_matrix4x3 authored[MAXIMUM_NODES_PER_ANIMATION];
+    static struct vr_action_blend action;
+    static struct animation_graph *action_graph;
+    static long action_unit = NONE, action_weapon = NONE;
+    static int action_hand = -1, action_generation = -1;
+    boolean action_reset;
 
 	/* (again when the pause menu changes it) */
 	if (arms < 0 || generation != vr_settings_generation())
@@ -2633,6 +2695,22 @@ void vr_render_first_person_ik(
 		}
 	}
 
+    draw_arms = vr_render_hands_only() ? 0 : arms;
+    if (draw_arms == 2) {
+        vr_avatar_hands[0].valid = vr_avatar_hands[1].valid = FALSE;
+        action.valid = 0;
+        vr_hide_forearms(matrices, graph, left, right); return;
+    }
+    action_reset = action_graph != graph || action_unit != unit || action_weapon != weapon ||
+        action_hand != vr_weapon_hand() || action_generation != vr_settings_generation() ||
+        !action.valid || vr_pose_time() - action.time > 0.25 || vr_pose_time() < action.time;
+    if (action_reset) vr_avatar_hands[0].valid = vr_avatar_hands[1].valid = FALSE;
+    if (vr_hand_empty()) native_arms = 0;
+    vr_action_blend_update(&action, vr_pose_time(), native_arms, action_reset);
+    action_graph = graph; action_unit = unit; action_weapon = weapon;
+    action_hand = vr_weapon_hand(); action_generation = vr_settings_generation();
+    memcpy(authored, matrices, graph->nodes.count * sizeof(*matrices));
+
 	/* Capture the authored support grip in weapon-local coordinates once,
 	not once per animation frame. Holding grip then stays fixed to the gun. */
 	{
@@ -2642,6 +2720,7 @@ void vr_render_first_person_ik(
 		short gun = vr_find_node(graph, "frame", "gun");
 		real_point3d controller;
 		real_vector3d f, u, gap;
+		if (action_reset || !vr_two_handed()) support_locked = FALSE;
 		vr_support_near(FALSE);
 		vr_touch_weapon.valid = FALSE;
 		if (gun >= 0 && gun < graph->nodes.count && !vr_hand_empty()) {
@@ -2664,24 +2743,23 @@ void vr_render_first_person_ik(
 				vr_support_near(vr_length(&gap) < 0.16f * vr_units_per_metre());
 			}
 			if (vr_two_handed()) {
-				if (!support_locked || support_graph != graph) {
+                /* Never acquire a new grip from a transient reload/throw pose. */
+				if ((!support_locked || support_graph != graph) && !native_arms && action.weight[0] == 0) {
 					real_matrix4x3 inverse;
 					matrix4x3_inverse(&matrices[gun], &inverse);
 					for (short n = 0; n < graph->nodes.count; n++)
 						if (vr_node_under(graph, n, left[_vr_arm_hand]))
 							matrix4x3_multiply(&inverse, &matrices[n], &support_local[n]);
 					support_graph = graph;
+                    support_locked = TRUE;
 				}
-				for (short n = 0; n < graph->nodes.count; n++)
+				for (short n = 0; support_locked && n < graph->nodes.count; n++)
 					if (vr_node_under(graph, n, left[_vr_arm_hand]))
 						matrix4x3_multiply(&matrices[gun], &support_local[n], &matrices[n]);
 			}
-			support_locked = vr_two_handed();
 		} else support_locked = FALSE;
 	}
 
-	draw_arms = vr_render_hands_only() ? 0 : arms;
-	if (draw_arms == 2) { vr_hide_forearms(matrices, graph, left, right); return; }
 	/* First-person arms remain the hands in full-body mode. */
 	if (draw_arms == 1)
 	{
@@ -2733,6 +2811,9 @@ void vr_render_first_person_ik(
 			real outward = (gun_arm == (weapon_hand == 1)) ? 1.0f : -1.0f;
 			int controller = gun_arm ? weapon_hand : 1 - weapon_hand;
 
+            /* At full ownership use the untouched native chain, including fingers.
+             * No contact solver/haptics should fight an animated hand. */
+            if (action.weight[side] >= 1) continue;
 			/* shoulders below and either side of the eyes, a little back */
 			shoulder.x = head.x + (right_side.i * 0.17f * outward - forward.i * 0.06f) * units;
 			shoulder.y = head.y + (right_side.j * 0.17f * outward - forward.j * 0.06f) * units;
@@ -2800,15 +2881,27 @@ void vr_render_first_person_ik(
 					vr_distribute_arm_twist(matrices, chain, &old_fore, &old_hand, &vr_arm_history[controller]);
 					if (vr_finger_pose(controller, curls))
 						contacts = vr_touch_fingers(graph, matrices, controller, chain[_vr_arm_hand], joints, curls, &palm, &f, &u, pressed);
-					if (pressed) vr_pressure_buzz(controller, depth);
-					else if (contacts) vr_haptic(controller, 0.05f + 0.05f * contacts, 0.03f);
+					if (pressed && action.weight[side] == 0) vr_pressure_buzz(controller, depth);
+					else if (contacts && action.weight[side] == 0) vr_haptic(controller, 0.05f + 0.05f * contacts, 0.03f);
 				}
 				else vr_distribute_arm_twist(matrices, chain, &old_fore, &old_hand, &vr_arm_history[controller]);
-                vr_avatar_hands[controller].position = matrices[chain[_vr_arm_hand]].position;
-                vr_avatar_hands[controller].time = vr_pose_time(); vr_avatar_hands[controller].valid = TRUE;
+
 			}
 		}
 	}
+    for (side = 0; side < 2; side++) {
+        short *chain = side ? right : left;
+        int controller = side ? vr_weapon_hand() : 1 - vr_weapon_hand();
+        real weight = action.weight[side];
+        short gun = vr_find_node(graph, "frame", "gun");
+        vr_blend_action_arm(graph, matrices, authored, chain[0], gun, weight);
+        vr_avatar_hands[controller].position = matrices[chain[2]].position;
+        vr_avatar_hands[controller].elbow = matrices[chain[1]].position;
+        vr_avatar_hands[controller].animated = weight;
+        vr_avatar_hands[controller].unit = unit;
+        vr_avatar_hands[controller].time = vr_pose_time();
+        vr_avatar_hands[controller].valid = TRUE;
+    }
     vr_hide_forearms(matrices, graph, left, right);
 }
 

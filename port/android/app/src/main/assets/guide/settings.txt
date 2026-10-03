@@ -1,6 +1,6 @@
 NATIVE SETTINGS REFERENCE
 
-Defaults apply to new settings. Existing saved values win. VR settings apply to Quest only; desktop-only options do not affect Android. Restart for renderer, networking and other startup options. Use the in-game VR pages for live supported adjustments. The integrated project updater checks automatically in the launcher; Versions & updates controls checks and installation; inherited update.auto does not replace the mod with upstream.
+Defaults apply to new settings. Existing saved values win except the one-time VR Safe geometry migration (revision 1); subsequent explicit Safe/Normal choices are preserved. VR settings apply to Quest only; desktop-only options do not affect Android. Restart for renderer, networking and other startup options. Use the in-game VR pages for live supported adjustments. The integrated project updater checks automatically in the launcher; Versions & updates controls checks and installation; inherited update.auto does not replace the mod with upstream.
 
 pvp.time_limit [integer]
 Default: 0
@@ -134,10 +134,14 @@ Where saved games and profiles go; empty for the usual place
 (~/.local/share/halo-linux, or %APPDATA%\halo on Windows).
 
 renderer.safe_geometry [boolean]
-Default: false
+Default: true in VR; false in flat Android
 Geometry compatibility mode (Android; restart required). Streams geometry
 without persistent buffers/static mirrors and rebases indices on CPU.
-Try for stretched triangles; can reduce performance. Not a data revision selector.
+Default on in VR, off in flat Android. Can reduce performance. Not a data revision selector.
+
+renderer.vr_geometry_revision [integer]
+Default: 1
+Internal VR geometry-default migration revision. Keep at 1 after choosing Safe or Normal.
 
 network.address [string]
 Default: ""

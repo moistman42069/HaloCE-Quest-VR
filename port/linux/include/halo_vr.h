@@ -81,7 +81,8 @@ void vr_render_weapon_fired(long weapon_index, long player_index);
 weapon posed for the hand that aims (vr.arms) */
 struct real_matrix4x3;
 struct animation_graph;
-void vr_render_first_person_ik(struct real_matrix4x3 *matrices, struct animation_graph *graph);
+void vr_render_first_person_ik(struct real_matrix4x3 *matrices, struct animation_graph *graph,
+    long unit, long weapon, unsigned native_arms);
 /* player_control_update: the head aims the first local player (vr.h) */
 void vr_player_control_facing(short local_player_index);
 /* vr.vehicle_view "first_person": vehicles seen from their seat, which the

@@ -9,3 +9,7 @@ Upstream: https://github.com/cktan/tomlc17, release `R260821`
 The native ports read their settings file, `config.toml`, with it
 (`port/linux/src/port_config.c`); it builds into the Linux, Windows and
 Android platform layers and the Android host.
+
+Local portability fix (test16): page allocation uses standard `offsetof(page_t, data)`
+instead of forming a member pointer through NULL; production config tests exposed
+the latter under UndefinedBehaviorSanitizer. Allocation layout is unchanged.

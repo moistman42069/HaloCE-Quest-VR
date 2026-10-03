@@ -1,4 +1,4 @@
-# Controls and options - test15 candidate VR / flat
+# Controls and options - test16 candidate VR / flat
 
 These mappings follow the shipped code. Start with Controls = VR and a standard native controller profile. Changing either can change the resulting actions. Touch controllers lack conventional gamepad bumpers/View.
 
@@ -96,3 +96,19 @@ Pause > VR Settings > Align Left / Align Right. These refer to the physical left
 - Reset Left / Right: zero that controller's offsets and restore Native aim, leaving the other controller alone.
 
 Offsets apply once per tracked frame before aiming, gesture speed, body/contact and avatar calculations. Changes clear velocity/support history so adjustment is not treated as a melee swing or run gesture. Head aim remains available. If a correction is wrong, reset that hand. These are Touch-controller calibration settings, not optical finger tracking.
+
+
+## Test16 candidate: geometry and action animations
+
+VR now defaults to **Safe geometry**, including a one-time upgrade of older
+configs. Flat Android still defaults to **Normal**. Launcher **Geometry
+compatibility** lets you choose either mode; restart the game afterward. Your
+subsequent explicit choice is preserved. Safe mode trades some rendering speed
+for compatibility. The original config is backed up during the VR migration.
+
+Reload, grenade throw, melee, weapon draw/put-away and heat/vent actions temporarily
+use the affected native arm/hand animations, then blend back to VR tracking.
+Keep holding support grip to return to the same grip; releasing it allows the
+hand to return to free tracking. Ordinary aiming/firing, controller alignment
+and Legs + Arms remain unchanged. This is native animation playback, not physical
+reload. The new behavior still requires the owner's headset testing.

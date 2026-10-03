@@ -1091,6 +1091,34 @@ static void first_person_weapon_set_state(
 	return;
 }
 
+#ifdef HALO_VR
+/* Model-side bits: bit 0 support/left arm, bit 1 gun/right arm. Mirroring
+ * maps these to the opposite controllers without changing the animation. */
+static unsigned first_person_weapon_vr_action_mask(short state)
+{
+    switch (state) {
+    case _first_person_weapon_state_throw_grenade: return 1;
+    case _first_person_weapon_state_throw_grenade_overheated:
+    case _first_person_weapon_state_overheating:
+    case _first_person_weapon_state_overheating_again:
+    case _first_person_weapon_state_overheated:
+    case _first_person_weapon_state_overheated_exit:
+    case _first_person_weapon_state_overheating_super_recoil:
+    case _first_person_weapon_state_melee:
+    case _first_person_weapon_state_light_on:
+    case _first_person_weapon_state_light_off:
+    case _first_person_weapon_state_reload_while_empty:
+    case _first_person_weapon_state_reload_while_full:
+    case _first_person_weapon_state_shotgun_enter_reload:
+    case _first_person_weapon_state_shotgun_exit_reload_empty:
+    case _first_person_weapon_state_shotgun_exit_reload_full:
+    case _first_person_weapon_state_put_away:
+    case _first_person_weapon_state_ready: return 3;
+    default: return 0; /* idle, posing, charge and firing retain tracked IK */
+    }
+}
+#endif
+
 static void first_person_weapon_build_node_matrices(
 	short local_player_index)
 {
@@ -1411,7 +1439,10 @@ static void first_person_weapon_build_node_matrices(
 			&render.camera);
 #ifdef HALO_VR
 		/* the arms reach for the headset's hands (port/linux/game/vr_render.c) */
-		vr_render_first_person_ik(first_person_weapon->node_matrices, animation_graph);
+		vr_render_first_person_ik(first_person_weapon->node_matrices, animation_graph,
+                        first_person_weapon->unit_index, first_person_weapon->weapon_index,
+                        first_person_weapon->state_animation.index != NONE ?
+                        first_person_weapon_vr_action_mask(first_person_weapon->state) : 0);
 #endif
 	}
 

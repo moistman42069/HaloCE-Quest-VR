@@ -34,7 +34,7 @@ def main():
     parser.add_argument("--flat", type=Path, required=True)
     parser.add_argument("--build-tools", type=Path, required=True)
     parser.add_argument("--out", type=Path, required=True)
-    parser.add_argument("--label", default="test15")
+    parser.add_argument("--label", default="test16")
     args = parser.parse_args()
     if not re.fullmatch(r"[A-Za-z0-9_-]+", args.label):
         parser.error("label must contain letters, digits, underscore or dash")
@@ -97,12 +97,12 @@ def main():
     manifest = {"candidate": args.label, "created_utc": datetime.now(timezone.utc).isoformat(),
                 "source_commit": commit, "branch": branch, "runtime_accepted": False,
                 "publication": "held pending owner candidate testing and approval",
-                "prior_device_report": "test14 pair accepted by owner for release; test15 device regression results pending",
+                "prior_device_report": "test14 accepted for release; test15 bridge and arm-action report recorded; current candidate testing pending",
                 "certificate_sha256": CERTIFICATE, "apks": records,
                 "source_zip": {"file": source.name, "sha256": sha(source)},
                 "native_host_version": network_value("HALO_PORT_NETWORK_VERSION"), "accepted_host_versions": list(range(network_value("HALO_PORT_NETWORK_VERSION_MINIMUM"), network_value("HALO_PORT_NETWORK_VERSION_MAXIMUM")+1)),
                 "campaign_protocol": 0xCE01, "campaign_runtime_verified": False,
-                "avatar_protocol": 1, "avatar_message_ids": [37, 38], "avatar_prior_owner_report": "VR body movement visible on flat Android in accepted test14; test15 regression pending",
+                "avatar_protocol": 1, "avatar_message_ids": [37, 38], "avatar_prior_owner_report": "VR body movement visible on flat Android in accepted test14; current action handoff regression pending",
                 "directory": "https://halo.milenko.org/v1/games.txt"}
     (output / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
     compatibility = {"schema": 1, "project": "moistman42069/HaloCE-Quest-VR",
@@ -113,8 +113,9 @@ def main():
         "editions": {record["package"]: {"apk": record["file"], "sha256": record["sha256"],
             "bytes": record["bytes"], "version_code": record["version_code"], "min_sdk": record["min_sdk"]} for record in records}}
     (output / "compatibility.json").write_text(json.dumps(compatibility, indent=2)+"\n")
-    documents = ["TEST15-DELIVERY.md", "TEST15-PROGRESS.md", "TEST15-UPSTREAM.md", "DATA-COMPATIBILITY.md", "CURRENT-STATE.md", "PLAYER-GUIDE.md", "CONTROLS-AND-OPTIONS.md", "COOP-COMPATIBILITY-AUDIT.md", "NETWORK-VR-AVATARS.md", "CAMPAIGN-PROTOCOL-WIP.md",
+    documents = [args.label.upper()+"-DELIVERY.md", args.label.upper()+"-PROGRESS.md", "TEST15-DELIVERY.md", "TEST15-PROGRESS.md", "TEST15-UPSTREAM.md", "DATA-COMPATIBILITY.md", "CURRENT-STATE.md", "PLAYER-GUIDE.md", "CONTROLS-AND-OPTIONS.md", "COOP-COMPATIBILITY-AUDIT.md", "NETWORK-VR-AVATARS.md", "CAMPAIGN-PROTOCOL-WIP.md",
                  "ANDROID-TOUCH-CONTROLS.md", "ANDROID-GAMEPAD.md", "COOP-PLAYER-LIMITS.md", "MULTIPLAYER-BROWSER.md"]
+    documents = list(dict.fromkeys(documents))
     for doc in documents:
         shutil.copy2(ROOT / "docs" / doc, output / doc)
     for notice in ["CREDITS.md", "THIRD-PARTY-NOTICES.txt", "LICENSE.md"]:

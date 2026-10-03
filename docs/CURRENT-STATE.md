@@ -2,7 +2,16 @@
 
 Updated 2026-10-03. Canonical public repository: [moistman42069/HaloCE-Quest-VR](https://github.com/moistman42069/HaloCE-Quest-VR), branch **main**. Main contains complete test14 runtime source plus current player/project documentation. The initial test13a import is historical; private identifying metadata remains excluded. Older private Git history remains a backup, not the continuation branch.
 
-## Active candidate: test15 (unpublished)
+## Active candidate: test16 (unpublished)
+
+Branch `test16-native-actions` continues the complete final test15 implementation.
+Version 1.0-test16/code 17 adds VR Safe geometry defaults/upgrades and native action
+arm ownership. Flat defaults to Normal. See [test16 checkpoint](TEST16-PROGRESS.md)
+and [candidate delivery](TEST16-DELIVERY.md). The owner supplied test15 normal/Safe
+bridge evidence and a weapon-action stretching video; test16 runtime acceptance
+is pending. Test14 remains the public accepted pair; no new release is authorized.
+
+## Prior candidate: test15 (unpublished)
 
 Campaign capacity was audited: CE01 remains two-player; [findings and expansion requirements](COOP-PLAYER-LIMITS.md).
 

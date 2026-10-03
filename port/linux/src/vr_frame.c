@@ -415,7 +415,7 @@ void vr_initialize(void)
 	if (vr.initialized)
 		return;
 	vr.initialized = 1;
-	platform_log("vr: HaloCE Quest test15 candidate (co-op actor control and resting biped synchronization)");
+	platform_log("vr: HaloCE Quest test16 candidate (safe geometry default and native action handoff)");
 	if (!config_boolean("vr.enabled"))
 	{
 		platform_log("vr: off (vr.enabled)");

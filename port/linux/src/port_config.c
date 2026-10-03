@@ -164,7 +164,9 @@ static const struct config_setting config_settings[] =
 	{ "renderer.safe_geometry", _config_boolean, "false", "HALO_SAFE_GEOMETRY", _environment_value, _platform_all,
 		"Geometry compatibility mode (Android; restart required). Streams geometry\n"
 		"without persistent buffers/static mirrors and rebases indices on CPU.\n"
-		"Try for stretched triangles; can reduce performance. Not a data revision selector." },
+		"Default on in VR, off in flat Android. Can reduce performance. Not a data revision selector." },
+    { "renderer.vr_geometry_revision", _config_integer, "1", "HALO_VR_GEOMETRY_REVISION", _environment_value, _platform_vr,
+        "Internal VR geometry-default migration revision. Keep at 1 after choosing Safe or Normal." },
 
 	{ "network.address", _config_string, "\"\"", "HALO_NET_ADDRESS", _environment_value, _platform_all,
 		"This machine's IPv4 address for system link, for a machine on several\n"
@@ -711,6 +713,14 @@ static char *config_copy(const char *text, size_t length)
 	return copy;
 }
 
+static const char *config_default_value(const struct config_setting *setting)
+{
+#ifdef HALO_VR
+    if (!strcmp(setting->name, "renderer.safe_geometry")) return "true";
+#endif
+    return setting->default_value;
+}
+
 /* one setting as the file holds it: its comment, and its key at the
 default */
 static void config_append_setting(struct config_text *text, const struct config_setting *setting)
@@ -746,7 +756,7 @@ static void config_append_setting(struct config_text *text, const struct config_
 	}
 	config_append(text, buffer);
 #endif
-	snprintf(buffer, sizeof(buffer), "%s = %s\n", dot + 1, setting->default_value);
+	snprintf(buffer, sizeof(buffer), "%s = %s\n", dot + 1, config_default_value(setting));
 	config_append(text, buffer);
 }
 
@@ -952,7 +962,7 @@ static void config_set_from_file(struct config_value *value, const struct config
 		static const char *const expected[] = { "true or false", "a whole number", "a number", "a quoted string" };
 
 		platform_log("config.toml line %d: %s should be %s; using %s", datum.lineno, setting->name,
-			expected[setting->type], setting->default_value);
+			expected[setting->type], config_default_value(setting));
 	}
 }
 
@@ -994,6 +1004,53 @@ static void config_report_unknown_keys(toml_datum_t table)
 	}
 }
 
+#ifdef HALO_VR
+/* Work only on parsed, ordinary section/key lines; preserve all other text.
+ * An unusual inline/dotted form is never rewritten by guessing a TOML span. */
+static int config_line_key(const char *, const char *, const char *);
+static int config_line_section(const char *, const char *, char *, size_t);
+/* Preserve the previous config and replace atomically within its directory.
+ * If storage fails, this run is still safe and the migration retries next launch. */
+static int config_write_geometry_migration(const char *path, const char *completed, const char *original)
+{
+    char backup[1100], temporary[1100];
+    FILE *existing;
+    toml_result_t verified = toml_parse(completed, (int)strlen(completed));
+    int valid = verified.ok;
+    toml_free(verified);
+    if (!valid || !original) return 0;
+    snprintf(backup, sizeof(backup), "%s.pre-safe-geometry", path);
+    snprintf(temporary, sizeof(temporary), "%s.safe-geometry.tmp", path);
+    existing = fopen(backup, "rb");
+    if (existing) fclose(existing);
+    else if (!config_write_file(backup, original)) return 0;
+    if (!config_write_file(temporary, completed)) { remove(temporary); return 0; }
+    if (rename(temporary, path) != 0) { remove(temporary); return 0; }
+    return 1;
+}
+
+static char *config_replace_geometry_line(const char *text, const char *key, const char *value, int *found)
+{
+    struct config_text out = {0};
+    char section[64] = "", replacement[128];
+    const char *line = text;
+    *found = 0;
+    snprintf(replacement, sizeof(replacement), "%s = %s\n", key, value);
+    while (*line) {
+        const char *end = line + strcspn(line, "\n"), *next = *end ? end + 1 : end;
+        config_line_section(line, end, section, sizeof(section));
+        if (!strcmp(section, "renderer") && config_line_key(line, end, key)) {
+            config_append(&out, replacement); *found = 1;
+        } else {
+            char *copy = config_copy(line, next - line);
+            if (copy) { config_append(&out, copy); free(copy); }
+        }
+        line = next;
+    }
+    return out.buffer;
+}
+#endif
+
 static void config_load(void)
 {
 	char path[1024];
@@ -1003,7 +1060,7 @@ static void config_load(void)
 
 	for (index = 0; index < NUMBER_OF_CONFIG_SETTINGS; index++)
 	{
-		const char *default_value = config_settings[index].default_value;
+		const char *default_value = config_default_value(&config_settings[index]);
 
 		if (config_settings[index].type == _config_string)
 		{
@@ -1027,15 +1084,54 @@ static void config_load(void)
 		if (result.ok)
 		{
 			char *completed;
+#ifdef HALO_VR
+            toml_datum_t revision = toml_seek(result.toptab, "renderer.vr_geometry_revision");
+            int migrate = revision.type != TOML_INT64 || revision.u.int64 < 1;
+            int can_write = 1;
+            char *original = migrate ? strdup(text) : NULL;
+            if (migrate) {
+                toml_datum_t safe = toml_seek(result.toptab, "renderer.safe_geometry");
+                int found;
+                char *changed = config_replace_geometry_line(text, "safe_geometry", "true", &found);
+                can_write = changed && (found || safe.type == TOML_UNKNOWN);
+                if (can_write) {
+                    char *with_revision = config_replace_geometry_line(changed, "vr_geometry_revision", "1", &found);
+                    free(changed);
+                    if (with_revision) {
+                        toml_result_t verified = toml_parse(with_revision, (int)strlen(with_revision));
+                        if (verified.ok) {
+                            free(text); text = with_revision;
+                            toml_free(result); result = verified;
+                        } else {
+                            toml_free(verified); free(with_revision); can_write = 0;
+                        }
+                    } else can_write = 0;
+                } else free(changed);
+                platform_log("settings: VR Safe geometry default migration%s; flat defaults unchanged",
+                    can_write ? " applied" : " in memory only (custom config syntax preserved)");
+            }
+#endif
 
 			for (index = 0; index < NUMBER_OF_CONFIG_SETTINGS; index++)
 				config_set_from_file(&config_values[index], &config_settings[index], result.toptab);
 			config_report_unknown_keys(result.toptab);
 			platform_log("settings: %s", path);
-			completed = config_add_missing(text, result.toptab);
-			if (completed && !config_write_file(path, completed))
-				platform_log("settings: cannot write %s", path);
-			free(completed);
+#ifdef HALO_VR
+            if (migrate) config_values[config_setting_index("renderer.safe_geometry")].boolean = 1;
+            completed = can_write ? config_add_missing(text, result.toptab) : NULL;
+            if (migrate && can_write && !completed) completed = strdup(text);
+#else
+            completed = config_add_missing(text, result.toptab);
+#endif
+#ifdef HALO_VR
+            if (completed && !(migrate ? config_write_geometry_migration(path, completed, original) : config_write_file(path, completed)))
+                platform_log("settings: cannot write %s; Safe geometry migration will retry", path);
+            free(original);
+#else
+            if (completed && !config_write_file(path, completed))
+                platform_log("settings: cannot write %s", path);
+#endif
+            free(completed);
 		}
 		else
 		{

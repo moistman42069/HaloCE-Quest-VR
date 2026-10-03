@@ -108,3 +108,19 @@ Data & compatibility reads actual map headers and optionally logs SHA256 fingerp
 ## Campaign capacity (test15 audit)
 
 Campaign co-op currently supports two players on two machines. Native PvP can expose up to 128 slots, but campaign loading/checkpoint barriers currently track one remote peer and player recovery has four slots. Larger campaign limits are not enabled. Known incompatible higher-cap campaign listings show a capacity reason; unknown saved invites are checked by the native handshake. See [capacity audit and expansion requirements](COOP-PLAYER-LIMITS.md). This preserves the accepted paired co-op path while larger sessions require separate implementation and device testing.
+
+
+## Test16 candidate: geometry and action animations
+
+VR now defaults to **Safe geometry**, including a one-time upgrade of older
+configs. Flat Android still defaults to **Normal**. Launcher **Geometry
+compatibility** lets you choose either mode; restart the game afterward. Your
+subsequent explicit choice is preserved. Safe mode trades some rendering speed
+for compatibility. The original config is backed up during the VR migration.
+
+Reload, grenade throw, melee, weapon draw/put-away and heat/vent actions temporarily
+use the affected native arm/hand animations, then blend back to VR tracking.
+Keep holding support grip to return to the same grip; releasing it allows the
+hand to return to free tracking. Ordinary aiming/firing, controller alignment
+and Legs + Arms remain unchanged. This is native animation playback, not physical
+reload. The new behavior still requires the owner's headset testing.

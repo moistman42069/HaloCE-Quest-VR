@@ -59,11 +59,16 @@ final class LauncherHelp {
         }); dialog.show();
     }
     static void graphics(Activity activity,File root) {
-        boolean current=ConfigSettings.read(root,"renderer","safe_geometry","false").equals("true");
+        boolean vr=activity.getPackageName().endsWith(".vr");
+        boolean migrated=ConfigSettings.read(root,"renderer","vr_geometry_revision","0").equals("1");
+        boolean current=(vr&&!migrated)||ConfigSettings.read(root,"renderer","safe_geometry",vr?"true":"false").equals("true");
         new GamepadNavigation.Builder(activity).setTitle("Geometry compatibility")
-            .setMessage("Try Safe geometry if scenery stretches into triangles or strips. It bypasses static geometry caching, persistent streaming and GPU base-vertex rebasing. It can reduce frame rate. This is a renderer option, not a game-revision selection. Restart the game after changing it.\n\nCurrent: "+(current?"Safe":"Normal"))
+            .setMessage("Safe geometry is the VR default, including upgrades. Flat Android defaults to Normal. Use Safe if scenery stretches into triangles or strips. It bypasses static geometry caching, persistent streaming and GPU base-vertex rebasing. It can reduce frame rate. This is a renderer option, not a game-revision selection. Restart the game after changing it.\n\nCurrent: "+(current?"Safe":"Normal"))
             .setPositiveButton(current?"Use normal":"Use safe",(d,w)->{
-                try { ConfigSettings.write(root,"renderer",Collections.singletonMap("safe_geometry",Boolean.toString(!current)));
+                try { Map<String,String> changes=new LinkedHashMap<>();
+                    changes.put("safe_geometry",Boolean.toString(!current));
+                    if(vr) changes.put("vr_geometry_revision","1");
+                    ConfigSettings.write(root,"renderer",changes);
                     Toast.makeText(activity,"Saved for next launch",Toast.LENGTH_LONG).show(); }
                 catch(IOException e) { page(activity,"Could not save",e.getMessage()); }
             }).setNegativeButton("Cancel",null).show();
