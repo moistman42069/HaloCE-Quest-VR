@@ -1,3 +1,5 @@
+> **Subsequent acceptance, 2026-10-03:** the owner accepted the delivered test14 pair and explicitly authorized publication as the latest release. This supersedes the earlier release hold below. Original investigation/check results remain historical; no complete campaign playthrough or all-device certification is inferred. See [current state](CURRENT-STATE.md) and [release provenance](RELEASE-PROVENANCE.md).
+
 # Test14 candidate delivery ? 2026-10-03
 
 **Private testing candidate; no public APK release is authorized.** Both flavors are version `1.0-test14`, version code 15, ARM64. Source commit: `696a7bbe9321565d90207042067658cb8814cad1`. This delivery-record follow-up changes documentation only; the matching source ZIP is an archive of that exact source commit.

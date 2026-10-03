@@ -1,20 +1,29 @@
-> **Release withdrawn / binaries on hold (2026-10-03).** The following is the preserved provenance of the prior private test pair and initial public source import, not an available release. No public APKs will be posted until the owner tests the replacement pair. `SOURCE-IDENTITY.json` describes the initial import, not subsequent source changes. Current candidate status: [CURRENT-STATE.md](CURRENT-STATE.md).
+# Release provenance - test14
 
-# Public release provenance — test13a
+[Public release](https://github.com/moistman42069/HaloCE-Quest-VR/releases/tag/halo-ce-quest-test14). Accepted for publication by the owner on 2026-10-03 after delivery of this exact pair. The prior test13a hold is superseded for test14 only. APKs are copied unchanged from the tested delivery; publication does not rebuild or re-sign them.
 
-This release deliberately pairs the newest Quest APK with the current flat APK. Both are preserved bytes from their original builds; public publication does not rebuild or re-sign them.
+## Exact binaries and source
 
-| Artifact | Version | Original build source identity | SHA-256 |
-| --- | --- | --- | --- |
-| HaloCE-Quest-test13a.apk | 1.0-test13a, code 14 | `6c7aabf7c8974ac15e3ab302f94997ab2684dbfd` | `b84f21633e3f12cb26f5fde4c02768646f28da452e842895d0a2e59dae5824fa` |
-| HaloCE-Android-test13.apk | 1.0-test13, code 13 | `68aebbc07f9731f6341a599a7b991f9233a16ac2` | `20f5d59eddb64a6088b1304199bf6ba6026523032151235f166f0bdaf4a2894a` |
+Both packages are ARM64, version `1.0-test14`, code 15, from build commit [`696a7bbe9321565d90207042067658cb8814cad1`](https://github.com/moistman42069/HaloCE-Quest-VR/commit/696a7bbe9321565d90207042067658cb8814cad1). Tag `halo-ce-quest-test14` points to that commit; later commits are documentation follow-ups.
 
-Those identities belong to preserved private history and are provenance labels, not public commit links. It contains personal author metadata, so the public repository begins with a clean current snapshot using a GitHub noreply author. No private history is pushed.
+| Artifact | Bytes | SHA-256 |
+| --- | --- | --- |
+| HaloCE-Quest-test14.apk | 27650336 | `96c017a6bab47c333957e6143bf0761f329802fb3710687aec7e2b1dd3ed9a56` |
+| HaloCE-Android-test14.apk | 25698413 | `192d351049abfee427c2c0ddee1ee5dd820b41e3757675e11077589f987a1437` |
+| HaloCE-Quest-test14-source.zip | 10236093 | `26d99433fd9dadbb182a5f8fd607ec2bef328842975e2a920ebcabff9b3ad8bf` |
 
-The public VR and flat source archives preserve every original tracked runtime/build-source file byte for byte for their respective build revision. Markdown documentation, GitHub publishing metadata and ignore rules are refreshed/sanitized. One optional Steam Frame deployment helper now requires explicit `FRAME_HOST` instead of a personal LAN endpoint; it is not compiled into either APK. A per-file runtime/build-source manifest records hashes and permits comparison. GitHub's automatic source archive describes the release tag/current source; the separate flat archive is the precise older flat build source.
+Package IDs: `com.halo.decomp.vr` and `com.halo.decomp`. Established signing certificate SHA-256: `53d416f7e123cc62b749940983209bc9a400002e033fd5f50900d4ffad8e2aa4`. The key remains private. The source archive is the exact clean public build commit and therefore retains historical pre-acceptance documentation. The release bundle contains these same APKs plus current player guides, credits and dependency notices. `release-manifest.json` records build and documentation commits; `SHA256SUMS.txt` covers downloads. A bundle changes packaging/documentation, never APK bytes.
 
-The APK certificate SHA-256 is `53d416f7e123cc62b749940983209bc9a400002e033fd5f50900d4ffad8e2aa4`. The private key is not included. Package IDs/ABI, signatures and archive integrity were checked during original packaging. Publication rechecks the bytes/signatures and the public assets. No device install/game launch is performed.
+## Build and verification evidence
 
-Build commands were serial `bash tools/build-quest.sh vr` / `flat`, with each APK preserved before shared native staging changed flavor. VR test13a was a later VR-only rebuild. Compiler/native/Gradle completion and signature checks do not establish campaign/avatar/phone runtime acceptance.
+VR and flat were built serially with `bash tools/build-quest.sh vr` / `flat`, preserving each output before shared native staging changed flavor. The final VR APK was compacted, aligned with `zipalign -P 16` and signed with the existing key before user delivery. Every non-signature ZIP entry matched the original build; no runtime payload changed. The larger intermediate VR APK was never the accepted candidate.
 
-`release-manifest.json` and `SHA256SUMS.txt` on the release list the public artifact hashes and the public repository/tag. Dependency notices accompany the bundle. Original private source ZIPs are not uploaded because their documentation contains identifying workstation details.
+Both builds completed. Package/version/ABI/certificate checks, ZIP integrity, payload checks and source/APK privacy scans passed. Five targeted suites passed: campaign actors, campaign lifecycle, browser compatibility, VR math/weapon lifecycle and render-target storage. Native logic harnesses use sanitizers and mocked engine/transport dependencies; they do not substitute for device testing. See the [compatibility audit](COOP-COMPATIBILITY-AUDIT.md) and [original delivery record](TEST14-DELIVERY.md).
+
+The owner previously confirmed paired Quest/flat connectivity and remote VR body movement, then accepted test14 and authorized public release. No complete campaign playthrough, universal phone compatibility or public co-op directory registration is claimed. Publication itself performs no install/game launch.
+
+## Privacy and attribution
+
+Only the clean public history is tagged. Private original Git history, signing keys, game maps, raw logs/recordings, private invitations and workstation details are excluded. Required third-party copyright/license notices are retained; see [CREDITS.md](../CREDITS.md). `SOURCE-IDENTITY.json` belongs to the initial import, not this updated runtime.
+
+The original pre-acceptance candidate manifest remains preserved privately and says `runtime_accepted: false`; the release manifest separately records the subsequent acceptance. [Withdrawn test13a provenance](RELEASE-PROVENANCE-TEST13A.md) is historical and does not describe current downloads.

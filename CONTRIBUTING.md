@@ -31,10 +31,10 @@ Public source does not contain the project signing key. A locally generated debu
 2. Verify package/version/ABI/certificate, payload identity and archive integrity. Preserve hashes and existing signing identity.
 3. If a release combines a VR-only update with the prior flat binary, label both versions and source revisions honestly. Do not rebuild merely to make filenames match.
 4. Package individual APKs, a bundle, privacy-reviewed source snapshots, dependency notices, manifest and checksums. Keep code out of Git LFS/binary commits; attach downloads to a GitHub Release.
-5. Obtain the maintainer's explicit approval after candidate testing before any public binary upload. The current release hold overrides earlier publication authorization. After approval, publish an experimental prerelease until device acceptance supports stronger wording. Update the README links and CURRENT-STATE without relabeling untested features as accepted.
+5. Obtain the maintainer's explicit approval after candidate testing before any public binary upload. The owner accepted test14 and explicitly authorized it as the latest release on 2026-10-03; this overrides its earlier hold. Future releases require their own authorization. Label experimental feature limits even when the accepted build is a normal GitHub release. Update the README links and CURRENT-STATE without relabeling untested features as accepted.
 6. Preserve reproducible release notes and receive user logs/device results before another candidate.
 
-Historical `tools/package-quest.py` expects a freshly built pair from one clean commit (pass the correct `--label`); it is not the publisher for the current mixed-version pair. The withdrawn initial release manifest records VR test13a and flat test13 separately. Test14 again uses a matched pair from one source commit.
+Historical `tools/package-quest.py` expects a freshly built pair from one clean commit (pass the correct `--label`); publication of preserved accepted binaries is a separate operation and must not silently rebuild them. The withdrawn initial release manifest records VR test13a and flat test13 separately. Test14 again uses a matched pair from one source commit.
 
 ## Reports
 

@@ -2,11 +2,11 @@
 
 ## APK and device
 
-Quest VR test13a is the immersive standalone build. Flat Android test13 is the touch/gamepad build. Their labels differ because test13a only changes VR body default/build identification; both retain the same campaign/avatar implementation. Quest 3 is the reference headset; other devices lack the same owner evidence. Flat requires Android 9/API 28+, ARM64 and compatible OpenGL ES graphics. Neither APK bundles game maps or the signing key.
+Quest VR test14 is the immersive standalone build. Flat Android test14 is the touch/gamepad build. Both are version `1.0-test14`, code 15, built from the same source revision. Quest 3 is the reference headset; other devices lack the same owner evidence. Flat requires Android 9/API 28+, ARM64 and compatible OpenGL ES graphics. Neither APK bundles game maps or the signing key.
 
 ## Install and import
 
-1. Public APK releases are on hold for co-op testing. Use the candidate supplied directly by the maintainer, or build from source. Candidate `SHA256SUMS.txt` identifies the exact files.
+1. Download your APK from the [latest release](https://github.com/moistman42069/HaloCE-Quest-VR/releases/latest). Choose `HaloCE-Quest-test14.apk` for VR or `HaloCE-Android-test14.apk` for flat play. Release `SHA256SUMS.txt` identifies the exact files.
 2. Sideload through your authorized Quest installer or Android's package installer. Optional computer command: `adb install -r <apk-file>`.
 3. Copy your legally obtained Halo CE Xbox `.iso`/`.xiso` onto the device and select it in the launcher's data-import flow. Allow roughly 1.8 GB for maps plus cache/saves and image space during extraction. This data is distinct from MCC/retail PC installation files.
 4. Wait for extraction, then Play. Existing Quest data at `/sdcard/Documents/HaloCE/maps` is recognized when `ui.map` is present; otherwise app external files are used.
@@ -27,7 +27,7 @@ Only VR selects the shared root, and only when `maps/ui.map` exists. Editing an 
 
 Install over the existing project APK to retain data. The original project certificate is retained. Other forks may have the same package ID with a different key; Android rejects that in-place update. Back up maps/config/saves before removing any installation. VR and flat have separate app storage and do not automatically share saves.
 
-These candidates update manually from this project's Releases. They do not automatically follow upstream builds. Existing body choices survive updates: choose Legs + Arms or set `[vr] body = "legs"` while closed if needed. Avoid deleting app data merely to reset one option.
+These builds update manually from this project's Releases. They do not automatically follow upstream builds. Existing body choices survive updates: choose Legs + Arms or set `[vr] body = "legs"` while closed if needed. Avoid deleting app data merely to reset one option.
 
 ## PvP
 
@@ -42,7 +42,7 @@ Accepted native PvP host versions: 9/10, with compatible maps/rules. Retail PC/C
 
 ## Campaign co-op (experimental)
 
-Use matching campaign-capable builds and identical mission/resource files: two Quests or Quest plus flat Android. No documented paired-device campaign success is claimed yet.
+Use matching campaign-capable builds and identical mission/resource files: two Quests or Quest plus flat Android. The owner confirmed Quest/flat connectivity and remote VR body movement, then accepted test14 for release after the NPC fixes. Full campaign progression and all host/device combinations remain outside documented acceptance.
 
 1. Host: **Campaign co-op > Host campaign**; select mission/difficulty. **List publicly** is optional.
 2. Keep the native System Link lobby open. Its private invite is copied and logged.
@@ -55,7 +55,7 @@ Keep both logs when checking opening cinematics, AI/weapons/doors, checkpoint, b
 
 ## VR avatars
 
-Supporting hosts/observers negotiate the visual extension automatically. Flat test13 has the receiver; old hosts/clients keep stock animations. Local torso hiding does not remove the remote body. The remote world skeleton has coarse hands, without the local individual finger rig. [Protocol/limits](NETWORK-VR-AVATARS.md).
+Supporting hosts/observers negotiate the visual extension automatically. Flat test14 has the receiver; old hosts/clients keep stock animations. Local torso hiding does not remove the remote body. The remote world skeleton has coarse hands, without the local individual finger rig. [Protocol/limits](NETWORK-VR-AVATARS.md).
 
 ## Troubleshooting
 

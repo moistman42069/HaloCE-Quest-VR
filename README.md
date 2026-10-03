@@ -2,15 +2,26 @@
 
 Native **Halo: Combat Evolved on standalone Meta Quest**, with a separate **flat Android APK** for touch/gamepad play. This community fork builds on the Halo CE decompilation, the native cross-platform port and astromaddie's OpenXR VR work. The reference headset is **Quest 3**.
 
-**Public source; APK releases are on hold pending co-op testing.** The last private test pair was Quest VR test13a and flat Android test13. Legs + Arms remains the default for new VR settings; saved choices remain respected.
+**Latest release: test14, Quest VR + flat Android**, accepted for publication by the owner on 2026-10-03. These are the exact tested APKs, not rebuilt replacements. **Legs + Arms** remains the default for new VR settings; saved choices remain respected.
 
-## Build and testing status
+## Downloads
 
-No APK release is currently published. Test candidates are delivered directly to the maintainer before public distribution. The test13a release was withdrawn on 2026-10-03 when paired co-op testing exposed NPC animation problems. The current local testing candidate is test14 for both Quest VR and flat Android; [delivery evidence](docs/TEST14-DELIVERY.md) records its source and checks.
+| Device / purpose | Download |
+| --- | --- |
+| Standalone Quest VR | [HaloCE-Quest-test14.apk](https://github.com/moistman42069/HaloCE-Quest-VR/releases/download/halo-ce-quest-test14/HaloCE-Quest-test14.apk) |
+| Flat Android, touch/gamepad | [HaloCE-Android-test14.apk](https://github.com/moistman42069/HaloCE-Quest-VR/releases/download/halo-ce-quest-test14/HaloCE-Android-test14.apk) |
+| Both APKs, current guides, credits and notices | [test14 bundle](https://github.com/moistman42069/HaloCE-Quest-VR/releases/download/halo-ce-quest-test14/HaloCE-Quest-Android-test14-bundle.zip) |
+| Exact source used for both APKs | [test14 source ZIP](https://github.com/moistman42069/HaloCE-Quest-VR/releases/download/halo-ce-quest-test14/HaloCE-Quest-test14-source.zip) |
 
-[Controls/options](docs/CONTROLS-AND-OPTIONS.md) ? [Install/help](docs/PLAYER-GUIDE.md) ? [Credits](CREDITS.md) ? [Development checkpoint](docs/CURRENT-STATE.md) ? [Co-op fix evidence](docs/TEST14-PROGRESS.md)
+[Release notes and checksums](https://github.com/moistman42069/HaloCE-Quest-VR/releases/tag/halo-ce-quest-test14) | [Always latest release](https://github.com/moistman42069/HaloCE-Quest-VR/releases/latest) | [VR controls](#vr-controls-quest-touch) | [All controls/options](docs/CONTROLS-AND-OPTIONS.md) | [Install/help](docs/PLAYER-GUIDE.md) | [Credits](CREDITS.md) | [Development checkpoint](docs/CURRENT-STATE.md)
 
-The owner reports working Quest gameplay, multiplayer, settings, Downloads logging and room-scale legs, and has now confirmed that full VR body movement is visible on the flat Android partner. Co-op NPC walking/falling presentation still needs correction and paired-device confirmation. This is not full campaign acceptance.
+Both APKs are `1.0-test14`, version code 15, ARM64. Supply your own Halo CE Xbox game data; maps are not included. Use test14 on both co-op peers.
+
+## What's new in test14
+
+Co-op fixes preserve host-controlled NPC movement inputs on the client, apply resting/velocity updates even inside position tolerance, transmit optional one-shot AI animation events, replicate unarmed NPC vehicle seats, and open the campaign pause/settings menu without pausing only one peer. Existing VR body/finger/grip, flat touch, launcher and avatar features are preserved. [Investigation and checks](docs/TEST14-PROGRESS.md).
+
+The owner previously confirmed Quest gameplay, multiplayer, settings, Downloads logging, room-scale legs and full VR body movement visible on a flat Android partner, and has now accepted this replacement pair for release. This is not a documented playthrough of every mission, device or network condition. [Evidence and remaining coverage](docs/CURRENT-STATE.md).
 
 ## VR features
 
@@ -26,6 +37,38 @@ The owner reports working Quest gameplay, multiplayer, settings, Downloads loggi
 - Physical crouch, flashlight gesture, shoulder/hip holsters, haptics, weapon scope, vehicle view/steering choices and immersive/3D-screen/flat cutscenes.
 - Native weapon crosshair artwork with size/opacity controls; independent menu pointer.
 - Paged VR settings covering graphics, effects, resolution and refresh requests. Actual frame rate depends on device/runtime and scene load.
+
+## VR controls (Quest Touch)
+
+Use **Controls = VR** with the standard native controller profile. "Weapon hand" is the right hand by default; select Left in VR Settings to swap weapon/zoom trigger roles. Face-button sides are not all mirrored.
+
+| Input | Action |
+| --- | --- |
+| Left stick | Move/strafe relative to Head, Left Hand or Right Hand setting |
+| Right stick | Smooth or Snap 30/45 turn; vertical input also serves native look prompts |
+| Weapon-hand trigger | Fire |
+| Other-hand trigger | Zoom; Scope enables the weapon-aligned zoomed view |
+| Right A | Jump / confirm |
+| Right B | Reload/use; hold for native interaction/pickup prompts; Back in pointer menus |
+| Left Y | Switch weapons |
+| Left X, Physical weapons | Tap and release to throw grenade; hold 0.4 seconds to change grenade type |
+| Left X, Locked weapons | Change grenade type |
+| Weapon-hand grip, Physical | Hold the gun; release after the first grip to drop/holster/transfer |
+| Weapon-hand grip, Locked | Throw grenade away from holsters; switch weapon at a holster |
+| Other-hand grip near support area | Attach support hand at a fixed point; release to detach |
+| Left stick click | Crouch |
+| Right stick click | Melee |
+| Both stick clicks together | Recenter during gameplay; stand at normal height first |
+| Left menu button | Open pause/menu; online co-op keeps the shared world running |
+| Weapon pointer + trigger | Select menu item; right B goes back |
+
+**Weapon holding and two-hand grip:** Physical is the offline default. A weapon supplied on load/pickup stays supported until your first grip action, then grip/release controls holding. **Two Hands = Grip** is the default: proximity alone does not attach the support hand. **Auto** enables proximity attachment; **Off** disables it. Bring palms together and grip with the other hand to transfer handedness. Reload uses the button; physical magazine reloading is not implemented.
+
+**Multiplayer difference:** **MP Physical defaults Off**, so online play uses Locked holding even when Weapons is set to Physical. Use the Locked grenade inputs above in that case. Enabling MP Physical opts into physical holding/drop behavior, whose replication has limitations. This setting does not disable remote VR body visibility.
+
+**Gestures and body:** duck physically (default 35 cm below recentered height), bring the off hand near your head for the flashlight (default 20 cm), and use shoulder/hip holsters with entry haptics. Swing/contact melee uses the configured speed threshold; stick-click melee remains available. Optional Arm Run uses arm motion with a neutral stick, reaching up to 1.5x speed offline; online speed stays stock and stick movement takes priority. Fingers follow controller sensors, not optical hand tracking. **Legs + Arms** is the default body view; Full, Arms + Hands and Hands Only are also available.
+
+**Changing options:** campaign pause > **VR Settings**. A/right increases or advances; left decreases. Next Page exposes more settings; Back returns through pages/categories. Settings save to `config.toml`; existing choices survive updates. Body, hand, movement, turn, scope, vehicle, cutscene, graphics, refresh and crosshair options are covered in the [complete controls and options guide](docs/CONTROLS-AND-OPTIONS.md), including flat touch/gamepad inputs and all menu ranges.
 
 ## Flat Android features
 
@@ -71,7 +114,7 @@ Use [Issues](https://github.com/moistman42069/HaloCE-Quest-VR/issues) with APK v
 
 ## Continuing development
 
-`main` contains the complete current test13a source plus current public documentation. Earlier private history is retained privately because it contains personal commit metadata. Privacy-clean source downloads preserve each shipped APK's runtime source files byte for byte; documentation/publishing metadata is refreshed. [Provenance](docs/RELEASE-PROVENANCE.md) and [CONTRIBUTING.md](CONTRIBUTING.md) explain the two APK revisions.
+`main` contains the complete test14 runtime source and current documentation. The release tag and matching source ZIP point to build commit `696a7bbe9321565d90207042067658cb8814cad1`; later documentation commits do not change the tested APKs. Earlier private history remains private because it contains personal commit metadata. [Provenance](docs/RELEASE-PROVENANCE.md) and [CONTRIBUTING.md](CONTRIBUTING.md) explain source identity, build checks and continuation.
 
 Build in Linux/WSL using Python, Ninja, clang with `arm64_32`, JDK 17, Android SDK 35 and NDK 27.2.12479018:
 

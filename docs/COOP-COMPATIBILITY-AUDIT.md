@@ -1,3 +1,5 @@
+> **Subsequent acceptance, 2026-10-03:** the owner accepted the delivered test14 pair and explicitly authorized publication as the latest release. This supersedes the earlier release hold below. Original investigation/check results remain historical; no complete campaign playthrough or all-device certification is inferred. See [current state](CURRENT-STATE.md) and [release provenance](RELEASE-PROVENANCE.md).
+
 # Co-op compatibility audit ? test14, 2026-10-03
 
 This records a source audit and focused automated checks, not a full campaign playthrough. The owner has confirmed paired Quest/flat connectivity and VR body visibility. NPC animation/physics and the fixes below still need paired-device acceptance. **Public APK releases remain on hold.**

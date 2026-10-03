@@ -1,4 +1,4 @@
-# Controls and options — test13a VR / test13 flat
+# Controls and options - test14 VR / flat
 
 These mappings follow the shipped code. Start with Controls = VR and a standard native controller profile. Changing either can change the resulting actions. Touch controllers lack conventional gamepad bumpers/View.
 
@@ -11,7 +11,7 @@ These mappings follow the shipped code. Start with Controls = VR and a standard 
 | Weapon-hand trigger | Fire the held gun |
 | Other-hand trigger | Zoom; Scope places the zoomed view at the weapon |
 | Right A | Jump / confirm |
-| Right B | Reload/use in gameplay; pointer-menu Back in menus |
+| Right B | Reload/use in gameplay (hold for native interaction/pickup prompts); pointer-menu Back in menus |
 | Left Y | Switch weapons |
 | Left X with Physical weapons active | Tap/release throws; hold 0.4 seconds switches grenade type |
 | Left X with Locked weapons | Switch grenade type |
@@ -21,11 +21,13 @@ These mappings follow the shipped code. Start with Controls = VR and a standard 
 | Left stick click | Crouch |
 | Right stick click | Native melee |
 | Both stick clicks | Recenter during gameplay; stand normally first |
-| Left menu | Pause |
+| Left menu | Pause/menu; online co-op keeps the shared world running |
 | Weapon pointer + trigger in menus | Select; right B goes back |
 | Off hand near head | Flashlight gesture when enabled |
 
 Left-handed mode changes weapon/off-hand trigger roles; Touch face-button sides are not all mirrored. Palms together plus the other hand's grip can transfer handedness. Controllers with bumpers/View use weapon-hand bumper for grenade, off-hand bumper for flashlight, and View tap/hold for Back/recenter. Use the Touch-specific table above on Quest.
+
+**Physical weapons is the offline default. MP Physical defaults Off, so network play uses Locked weapon holding and its grenade inputs even if Weapons is set to Physical.** Enabling MP Physical opts into physical holding/drop behavior; this is independent of avatar visibility.
 
 Physical weapons is the local default. A gun supplied on load/pickup stays supported until the first grip. Two Hands = Grip requires a squeeze near the support area; simply touching the barrel does not attach. Auto restores proximity attachment; Off disables it. The support point remains fixed until release.
 

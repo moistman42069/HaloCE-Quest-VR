@@ -1,3 +1,5 @@
+> **Subsequent acceptance, 2026-10-03:** the owner accepted the delivered test14 pair and explicitly authorized publication as the latest release. This supersedes the earlier release hold below. Original investigation/check results remain historical; no complete campaign playthrough or all-device certification is inferred. See [current state](CURRENT-STATE.md) and [release provenance](RELEASE-PROVENANCE.md).
+
 # Test14: co-op NPC presentation candidate
 
 ## User evidence and delivery hold ? 2026-10-03
