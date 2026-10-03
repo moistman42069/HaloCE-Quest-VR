@@ -1,5 +1,9 @@
 # Test15 community refinement work - 2026-10-03
 
+## Final delivery status
+
+The final pair includes Android controllers and the campaign capacity investigation, superseding all pre-controller test15 binaries. Both flavors rebuilt from `f9a9e16`; nine regression suites passed, and both APKs passed compaction/payload/certificate/alignment checks. Exact files and pending device checks: [TEST15-DELIVERY.md](TEST15-DELIVERY.md). Co-op remains two-player for the source-backed reasons in COOP-PLAYER-LIMITS.md. No test15 release is published. Earlier checkpoints below retain the work history and are superseded by this status.
+
 ## Delivery contract
 
 Accepted baseline: test14, source 696a7bb, public docs 983a6ae. Work branch: test15-community-refinements. Build both VR and flat APKs for owner testing; DO NOT publish a new release/binaries before subsequent approval. Preserve test14 release and working co-op/body/input. Work and private evidence stay on D:.
