@@ -98,3 +98,14 @@ Builds and integrity checks are recorded separately from device acceptance.
 
 If a candidate fails, preserve its logs, settings and exact binary identity.
 Do not infer a headset success from these mathematical tests or a clean build.
+
+## Additional log review
+
+Both supplied test15 runs also contain the native unsupported-Bink/empty movie
+skip and two persistent-storage checksum failures before gameplay. These occur
+in both geometry modes. The save loader verifies stored bytes against the header
+CRC (`game_state_xbox.c`) and rejects a mismatch; the provided logs do not identify
+which saved bytes caused it. No checksum guard is bypassed and no save is deleted
+by this change. If checkpoint resume fails on the candidate, preserve the affected
+save and its launch log for a separate storage investigation. This is not evidence
+that the rendering option corrupts saves.

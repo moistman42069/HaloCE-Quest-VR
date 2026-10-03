@@ -27,3 +27,14 @@ The owner previously confirmed paired Quest/flat connectivity and remote VR body
 Only the clean public history is tagged. Private original Git history, signing keys, game maps, raw logs/recordings, private invitations and workstation details are excluded. Required third-party copyright/license notices are retained; see [CREDITS.md](../CREDITS.md). `SOURCE-IDENTITY.json` belongs to the initial import, not this updated runtime.
 
 The original pre-acceptance candidate manifest remains preserved privately and says `runtime_accepted: false`; the release manifest separately records the subsequent acceptance. [Withdrawn test13a provenance](RELEASE-PROVENANCE-TEST13A.md) is historical and does not describe current downloads.
+
+
+## Unpublished test16 candidate
+
+The next private VR/flat pair is test16, version code 17, built from
+`1288c6696d1d26cca21719cce062f762d0b1e022`. It preserves final test15 work and adds
+VR Safe geometry defaults and native action arm handoff. Exact APK hashes and
+checks: [TEST16-DELIVERY.md](TEST16-DELIVERY.md). Continuation source lives on
+`test16-native-actions`; later documentation/test-fixture commits do not replace
+the built runtime. Public test14 APKs/release remain unchanged. No candidate
+publication is authorized until the owner tests and approves the new pair.

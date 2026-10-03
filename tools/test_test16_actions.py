@@ -45,6 +45,17 @@ for vr in (False,True):
    if vr and case not in ('malformed','inline'):assert re.search(r'vr_geometry_revision\s*=\s*1',saved)
    if not vr and case=='fresh':assert 'vr_geometry_revision' not in saved
  print('PASS:',name,'fresh/upgrade/reload/opt-out/CRLF/malformed/inline config (18 loads)')
+# Exercise a write failure without relying on privileged filesystem permissions.
+with tempfile.TemporaryDirectory(dir=OUT) as folder:
+ root=Path(folder);original=b'# retained\n[renderer]\nsafe_geometry=false\n[vr]\nbody="legs"\n'
+ config=root/'config.toml';config.write_bytes(original)
+ blocked=root/'config.toml.safe-geometry.tmp';blocked.mkdir();(blocked/'keep').write_text('blocks replacement')
+ env=dict(os.environ,HALO_DATA_ROOT=folder);env.pop('HALO_SAFE_GEOMETRY',None)
+ for _ in range(2):
+  subprocess.run([str(OUT/'config-vr'),'1'],env=env,check=True)
+  assert config.read_bytes()==original
+  assert (root/'config.toml.pre-safe-geometry').read_bytes()==original
+print('PASS: failed migration writes preserve original config/backup; Safe in memory across retries')
 fp=(ROOT/'source/interface/first_person_weapons.c').read_text()
 enum=fp[fp.index('enum first_person_weapon_state'):fp.index('enum first_person_weapon_state')+fp[fp.index('enum first_person_weapon_state'):].index('};')+2]
 compile_run('action-states',r'''

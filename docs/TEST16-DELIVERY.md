@@ -16,3 +16,25 @@ launcher/config/parser changes are shared; flat geometry still defaults to Norma
 All ten automated regression suites passed, including the new state/matrix/config
 suite and all nine test15 suites. Final APK build/integrity provenance is recorded
 in the package manifest and SHA256SUMS after packaging. No device installation, game launch or GitHub release is performed.
+
+## Final build provenance
+
+Both APKs were built serially from runtime commit
+`1288c6696d1d26cca21719cce062f762d0b1e022`. Subsequent delivery documentation/test
+fixture changes do not change runtime source or APK payloads. The source archive
+and manifest identify the final continuation commit, which includes this record.
+
+| APK | Bytes | SHA-256 |
+| --- | ---: | --- |
+| HaloCE-Quest-test16.apk | 27843133 | `dcf419e5a4e427cd4f3e6cde7e6c7d771cd53dc2eff57df53160efb6ebcbc834` |
+| HaloCE-Android-test16.apk | 25840110 | `d963bf392fea62a2e83698eeb3e2e75f8054bf6ba7c66cd778942c25ff1e6436` |
+
+Both builds completed successfully. All ten regression suites passed (25 PASS
+summaries); the added config write-failure fixture also passed. Both APKs were
+compacted, aligned for 16 KB pages and signed with the established certificate;
+every non-signature ZIP payload hash matched the preserved raw build. The flat
+build keeps Normal geometry by default. Package identity/ABI/payload/guide checks
+are enforced again by `tools/package-quest.py` before delivery.
+
+Targeted headset/phone/co-op-observer testing remains pending. No installation,
+game launch, accepted-build pointer change or GitHub release was performed.
