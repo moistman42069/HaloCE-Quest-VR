@@ -56,3 +56,7 @@ Device acceptance remains pending: upside-down-controller calibration on affecte
 ## Latest additive request: automatic update management
 
 Implemented launcher-start/resume checks (six-hour interval, on by default, optional opt-out), cached visible status, upstream protocol detection from the public primary header, and a newer-protocol server-row update entry. Project release metadata must explicitly describe supported editions/protocols and preserved data before the signed APK can be installed. Unknown upstream versions report integration pending; this never replaces VR/co-op with upstream engine files. Candidate publication remains held. Updater Java compilation and protocol-header parser tests passed after this addition. Release process must upload generated compatibility.json with future approved APKs.
+
+## Build completion
+
+Both final VR and flat builds completed successfully and were preserved separately. Seven targeted suites passed. Both APKs were compacted/aligned/re-signed with exact non-signature payload and signing-certificate equivalence verified. See TEST15-DELIVERY.md for APK hashes and the device test matrix; the package manifest/checksums record the final full source archive. No release publication or device installation.

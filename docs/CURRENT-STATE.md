@@ -4,7 +4,7 @@ Updated 2026-10-03. Canonical public repository: [moistman42069/HaloCE-Quest-VR]
 
 ## Active candidate: test15 (unpublished)
 
-Branch `test15-community-refinements` carries the next VR/flat pair, version 1.0-test15/code 16. See [test15 checkpoint](TEST15-PROGRESS.md) for implementation, evidence, tests and remaining device validation. Test14 remains the accepted public pair. No test15 release publication is authorized before owner testing.
+Branch `test15-community-refinements` carries the next VR/flat pair, version 1.0-test15/code 16. See [test15 checkpoint](TEST15-PROGRESS.md) for implementation, evidence, tests and remaining device validation. [Candidate delivery record](TEST15-DELIVERY.md) identifies the new APK pair and completed checks. Test14 remains the accepted public pair. No test15 release publication is authorized before owner testing.
 
 ## Accepted release: test14
 
