@@ -79,6 +79,10 @@ static BOOL reported_keyboard = FALSE;
 
 static pthread_mutex_t mouse_lock = PTHREAD_MUTEX_INITIALIZER;
 static float mouse_pending_x, mouse_pending_y;
+#if defined(HALO_ANDROID) && !defined(HALO_VR)
+static float touch_pending_yaw, touch_pending_pitch;
+static unsigned int touch_generation;
+#endif
 static unsigned long mouse_polls_unconsumed = 0;
 static float mouse_wheel_accumulated = 0.0f;
 /* the wheel's switch (wheel_update): when the wheel last moved, until when
@@ -129,11 +133,15 @@ int halo_linux_mouse_look(short gamepad_index, float *yaw, float *pitch)
 	mouse_pending_x = 0.0f;
 	mouse_pending_y = 0.0f;
 	mouse_polls_unconsumed = 0;
+#if defined(HALO_ANDROID) && !defined(HALO_VR)
+    *yaw = touch_pending_yaw; *pitch = touch_pending_pitch;
+    touch_pending_yaw = touch_pending_pitch = 0.f;
+#endif
 	pthread_mutex_unlock(&mouse_lock);
-	if (x == 0.0f && y == 0.0f)
+	if (x == 0.0f && y == 0.0f && *yaw == 0.f && *pitch == 0.f)
 		return FALSE;
-	*yaw = -x * scale * mouse_sensitivity();
-	*pitch = (invert ? y : -y) * scale * mouse_sensitivity();
+	*yaw += -x * scale * mouse_sensitivity();
+	*pitch += (invert ? y : -y) * scale * mouse_sensitivity();
 	return TRUE;
 }
 
@@ -167,6 +175,9 @@ static void mouse_poll(const struct platform_input_state *input)
 	{
 		mouse_pending_x = 0.0f;
 		mouse_pending_y = 0.0f;
+#if defined(HALO_ANDROID) && !defined(HALO_VR)
+        touch_pending_yaw = touch_pending_pitch = 0.f;
+#endif
 	}
 	if (!input->mouse_released)
 	{
@@ -469,6 +480,14 @@ static void touch_gamepad_state(XINPUT_GAMEPAD *pad)
 	};
 	int index;
 	host_touch_read(&touch);
+    pthread_mutex_lock(&mouse_lock);
+    if (touch_generation != touch.generation) {
+        touch_generation = touch.generation; touch_pending_yaw = touch_pending_pitch = 0.f;
+    }
+    touch_pending_yaw = fmaxf(-1.5708f, fminf(1.5708f, touch_pending_yaw + touch.yaw));
+    touch_pending_pitch = fmaxf(-1.5708f, fminf(1.5708f, touch_pending_pitch + touch.pitch));
+    if (touch.yaw != 0.f || touch.pitch != 0.f) mouse_aimed_ms = SDL_GetTicks();
+    pthread_mutex_unlock(&mouse_lock);
 	merge_button(pad, XINPUT_GAMEPAD_A, touch.buttons & HALO_TOUCH_A);
 	merge_button(pad, XINPUT_GAMEPAD_B, touch.buttons & HALO_TOUCH_B);
 	merge_button(pad, XINPUT_GAMEPAD_X, touch.buttons & HALO_TOUCH_X);

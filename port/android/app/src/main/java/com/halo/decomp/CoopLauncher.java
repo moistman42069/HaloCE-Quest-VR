@@ -68,6 +68,8 @@ final class CoopLauncher {
             File request = new File(root, "coop_host.txt"), partial = new File(root, "coop_host.txt.tmp");
             try {
                 // Do not enter two conflicting network routes on the same launch.
+                File pvpHost = new File(root, "pvp_host.txt");
+                if (pvpHost.exists() && !pvpHost.delete()) throw new java.io.IOException("Pending PvP host could not be cleared");
                 File invite = new File(root, "join_link.txt");
                 if (invite.exists() && !invite.delete()) throw new java.io.IOException("Pending invite could not be cleared");
                 try (FileOutputStream out = new FileOutputStream(partial)) {

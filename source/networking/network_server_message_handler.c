@@ -699,7 +699,16 @@ boolean network_game_server_send_game_settings_to_client_machine(
 {
 	struct message_server_game_settings_update message;
 	long offset;
+	byte legacy_game[HALO_PORT_NETWORK_GAME_LEGACY_SIZE];
 
+	/* CE01 campaign retains the accepted test14 settings record. */
+    if (game_size == sizeof(struct network_game) && network_campaign_game(game)) {
+        csmemcpy(legacy_game, game, HALO_PORT_NETWORK_GAME_VARIANT_OPTIONS_OFFSET);
+        csmemcpy(legacy_game + HALO_PORT_NETWORK_GAME_VARIANT_OPTIONS_OFFSET,
+            (byte const *)game + HALO_PORT_NETWORK_GAME_LOCAL_DATA_OFFSET, 4);
+        game = legacy_game;
+        game_size = sizeof(legacy_game);
+    }
 	for (offset = 0; offset < game_size; offset += sizeof(message.data))
 	{
 		void *encoded_message;
@@ -965,6 +974,7 @@ boolean network_game_server_send_game_settings_to_all_machines(
 {
 	struct message_server_game_settings_update message;
 	long offset;
+	byte legacy_game[HALO_PORT_NETWORK_GAME_LEGACY_SIZE];
 	boolean result = TRUE;
 
 	match_assert(
@@ -975,6 +985,14 @@ boolean network_game_server_send_game_settings_to_all_machines(
 	/* every piece goes out even if one fails for a machine: the others
 	would otherwise keep the old settings (a machine whose connection failed
 	is closed, and is skipped when the update is sent again) */
+	/* CE01 campaign retains the accepted test14 settings record. */
+    if (game_size == sizeof(struct network_game) && network_campaign_game(game)) {
+        csmemcpy(legacy_game, game, HALO_PORT_NETWORK_GAME_VARIANT_OPTIONS_OFFSET);
+        csmemcpy(legacy_game + HALO_PORT_NETWORK_GAME_VARIANT_OPTIONS_OFFSET,
+            (byte const *)game + HALO_PORT_NETWORK_GAME_LOCAL_DATA_OFFSET, 4);
+        game = legacy_game;
+        game_size = sizeof(legacy_game);
+    }
 	for (offset = 0; offset < game_size; offset += sizeof(message.data))
 	{
 		void *encoded_message;

@@ -28,3 +28,7 @@ The root [LICENSE.md](LICENSE.md) is the inherited CC0 dedication. It does not r
 - **LLVM/Clang, Android SDK/NDK, Gradle, CMake, Ninja and Python** provide the build toolchain; they are not all bundled with the APKs.
 
 The public repository begins with a privacy-clean current snapshot. Earlier private author metadata is not exposed. Public upstream links and retained file/license notices preserve attribution; this snapshot is not a claim that this fork wrote the inherited code.
+
+## Test15 additions
+
+Selected v10/v11 networking and gameplay changes are adapted from bnunu/cybersecurity halo-ce-universal contributors; pinned commits and integration boundaries are in [the upstream audit](docs/TEST15-UPSTREAM.md). Ordered static GPU uploads follow Andiweli's [HaloCE-Android-AAOS fix](https://github.com/Andiweli/HaloCE-Android-AAOS/commit/a88f25763b8a51335554ef02e613127ee92677d4). SnowyMouse's [Halo cache format documentation](https://gist.github.com/SnowyMouse/39168bddd597549038a35d78aee39513) (CC BY 3.0) informed header reporting; the recognition code is adapted for this launcher. Activision's official mobile control guides informed HUD usability only; no shooter code/art was imported. Launcher backgrounds are procedural original drawings, with no extracted Halo artwork bundled.

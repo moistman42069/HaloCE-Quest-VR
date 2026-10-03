@@ -26,7 +26,8 @@ public class UpdateProvider extends ContentProvider {
     }
 
     private boolean isApk(Uri uri) {
-        return uri != null && APK.equals(uri.getLastPathSegment());
+        return uri != null && "content".equals(uri.getScheme()) && AUTHORITY.equals(uri.getAuthority())
+            && ("/"+APK).equals(uri.getPath()) && uri.getQuery()==null && uri.getFragment()==null;
     }
 
     @Override

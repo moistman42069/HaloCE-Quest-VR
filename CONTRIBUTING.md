@@ -39,3 +39,5 @@ Historical `tools/package-quest.py` expects a freshly built pair from one clean 
 ## Reports
 
 Include APK/version, hardware/OS, mission/map/content, settings, exact steps, host/client and peer versions, and relevant launch logs. Remove private invitations/device details before posting. For co-op/avatars, provide both peers' logs. For body/grip/menu faults, attach video if possible. Use the issue templates; contributions should state observed behavior and remaining verification.
+
+Test15 onward: `tools/package-quest.py` emits `compatibility.json`. Include that exact metadata with both approved stable release APKs; the in-launcher updater checks its hashes, edition/version and save/config policies. Review `docs/TEST15-UPSTREAM.md` before changing protocol acceptance or update schema. Public release publication is the approval boundary; candidates stay private until the owner accepts them.

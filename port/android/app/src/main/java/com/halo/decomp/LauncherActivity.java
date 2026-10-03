@@ -39,7 +39,7 @@ public class LauncherActivity extends Activity {
     private static final int PICK_RESOURCES = 2;
 
     private File dataRoot;
-    private TextView status;
+    private TextView status, updateStatus;
     private ProgressBar progress;
     private Button pick;
     private final Handler handler = new Handler(Looper.getMainLooper());
@@ -89,6 +89,8 @@ public class LauncherActivity extends Activity {
         String invite = ServerInvite.normalize(text);
         File root = gameRoot();
         if (invite == null || root == null) return false;
+        File pvpHost = new File(root, "pvp_host.txt");
+        if (pvpHost.exists() && !pvpHost.delete()) return false;
         File pendingHost = new File(root, "coop_host.txt");
         if (pendingHost.exists() && !pendingHost.delete()) return false;
         File partial = new File(root, "join_link.txt.tmp");
@@ -155,6 +157,8 @@ public class LauncherActivity extends Activity {
     private boolean startGame() {
         if (!readyToPlay()) return false;
         RunLog.line("Starting game; data root=" + gameRoot());
+        File[] mapFiles = new File(gameRoot(), "maps").listFiles((dir, name) -> name.endsWith(".map"));
+        if (mapFiles != null) for (File mapFile : mapFiles) RunLog.line("Data header: " + mapFile.getName() + " " + MapInfo.read(mapFile).summary() + " bytes=" + mapFile.length());
         Intent game = new Intent(this, HaloActivity.class);
 
         // in the VR build, the headset opens the game immersive only when the
@@ -175,7 +179,7 @@ public class LauncherActivity extends Activity {
      * VR build the headset's Documents/HaloCE when the data is there
      * (port/android/host/host_main.c chooses the same way).
      */
-    private File gameRoot() {
+    File gameRoot() {
         File shared = new File("/sdcard/Documents/HaloCE");
 
         if (BuildConfig.APPLICATION_ID.endsWith(".vr") && new File(shared, "maps/ui.map").isFile())
@@ -197,11 +201,12 @@ public class LauncherActivity extends Activity {
 
     private Button menuButton(LinearLayout parent, String text) {
         Button button = new Button(this);
-        LinearLayout.LayoutParams layout = new LinearLayout.LayoutParams(dp(420),
+        LinearLayout.LayoutParams layout = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
             LinearLayout.LayoutParams.WRAP_CONTENT);
 
         button.setText(text);
         button.setAllCaps(true);
+        LauncherTheme.button(button);
         layout.topMargin = dp(6);
         parent.addView(button, layout);
         return button;
@@ -223,17 +228,20 @@ public class LauncherActivity extends Activity {
         LinearLayout layout = new LinearLayout(this);
 
         mods = new ModInstaller(gameRoot());
-        scroll.setBackgroundColor(Color.rgb(12, 16, 20));
+        scroll.setBackground(new LauncherTheme());
         scroll.setFillViewport(true);
         layout.setOrientation(LinearLayout.VERTICAL);
         layout.setGravity(Gravity.CENTER_HORIZONTAL);
-        layout.setPadding(dp(48), dp(24), dp(48), dp(24));
+        layout.setPadding(dp(24), dp(24), dp(24), dp(24));
         scroll.addView(layout);
 
         TextView title = label(layout, "HALO: COMBAT EVOLVED", 30, Color.WHITE);
-        title.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-        label(layout, BuildConfig.APPLICATION_ID.endsWith(".vr") ? "VIRTUAL REALITY" : "", 14, HALO_BLUE);
+        title.setTypeface(android.graphics.Typeface.create("sans-serif-light", android.graphics.Typeface.NORMAL));
+        title.setLetterSpacing(.14f);
+        label(layout, BuildConfig.APPLICATION_ID.endsWith(".vr") ? "QUEST • VIRTUAL REALITY" : "ANDROID • TOUCH & GAMEPAD", 14, HALO_BLUE);
 
+        label(layout, BuildConfig.VERSION_NAME + " • community test build", 12, HALO_BLUE);
+        updateStatus = Updater.launcher(this, gameRoot(), layout);
         play = menuButton(layout, "Play");
         play.setOnClickListener(v -> startGame());
 
@@ -241,6 +249,8 @@ public class LauncherActivity extends Activity {
             if (!readyToPlay() || !writeInvite(invite)) return false;
             return startGame();
         }));
+        menuButton(layout, "Host multiplayer").setOnClickListener(v -> { if (!busy) new PvpLauncher(this, gameRoot(), this::readyToPlay, this::startGame).show(); });
+        menuButton(layout, "Field guide • controls & help").setOnClickListener(v -> LauncherHelp.show(this));
         menuButton(layout, "Campaign co-op").setOnClickListener(v -> new CoopLauncher(this, gameRoot(),
             this::readyToPlay, this::startGame, invite -> {
                 if (!readyToPlay() || !writeInvite(invite)) return false;
@@ -260,7 +270,7 @@ public class LauncherActivity extends Activity {
         modDetails.setBackgroundColor(PANEL);
         modDetails.setPadding(dp(20), dp(14), dp(20), dp(14));
         modDetails.setVisibility(View.GONE);
-        LinearLayout.LayoutParams detailsLayout = new LinearLayout.LayoutParams(dp(560),
+        LinearLayout.LayoutParams detailsLayout = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
             LinearLayout.LayoutParams.WRAP_CONTENT);
         detailsLayout.topMargin = dp(8);
         layout.addView(modDetails, detailsLayout);
@@ -272,6 +282,10 @@ public class LauncherActivity extends Activity {
             mainMenu3d.setOnClickListener(v -> toggleMainMenu3d());
             refreshMainMenu3d();
         }
+        menuButton(layout, "Versions & updates").setOnClickListener(v -> { if (!busy) Updater.show(this, gameRoot()); });
+        menuButton(layout, "Network settings").setOnClickListener(v -> { if (!busy) NetworkSettings.show(this, gameRoot()); });
+        menuButton(layout, "Game data & compatibility").setOnClickListener(v -> { if (!busy) LauncherHelp.data(this, gameRoot()); });
+        menuButton(layout, "Geometry compatibility").setOnClickListener(v -> { if (!busy) LauncherHelp.graphics(this, gameRoot()); });
         resetSettings = menuButton(layout, "Reset settings to defaults");
         resetSettings.setOnClickListener(v -> resetSettings());
         label(layout, BuildConfig.APPLICATION_ID.endsWith(".vr")
@@ -286,7 +300,7 @@ public class LauncherActivity extends Activity {
         progress = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
         progress.setMax(1000);
         progress.setVisibility(View.GONE);
-        LinearLayout.LayoutParams progressLayout = new LinearLayout.LayoutParams(dp(480),
+        LinearLayout.LayoutParams progressLayout = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
             LinearLayout.LayoutParams.WRAP_CONTENT);
         progressLayout.topMargin = dp(16);
         layout.addView(progress, progressLayout);
@@ -482,7 +496,7 @@ public class LauncherActivity extends Activity {
         LinearLayout layout = new LinearLayout(this);
         layout.setOrientation(LinearLayout.VERTICAL);
         layout.setGravity(Gravity.CENTER);
-        layout.setPadding(dp(48), dp(24), dp(48), dp(24));
+        layout.setPadding(dp(24), dp(24), dp(24), dp(24));
         layout.setBackgroundColor(Color.rgb(12, 16, 20));
 
         TextView title = new TextView(this);
@@ -520,7 +534,7 @@ public class LauncherActivity extends Activity {
         progress = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
         progress.setMax(1000);
         progress.setVisibility(View.GONE);
-        LinearLayout.LayoutParams progressLayout = new LinearLayout.LayoutParams(dp(480),
+        LinearLayout.LayoutParams progressLayout = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
             LinearLayout.LayoutParams.WRAP_CONTENT);
         progressLayout.topMargin = dp(16);
         layout.addView(progress, progressLayout);
@@ -531,13 +545,20 @@ public class LauncherActivity extends Activity {
         status.setPadding(0, dp(8), 0, 0);
         layout.addView(status);
 
-        setContentView(layout);
+        LauncherTheme.button(pick);
+        updateStatus = Updater.launcher(this, gameRoot(), layout);
+        menuButton(layout, "Getting started & controls").setOnClickListener(v -> LauncherHelp.show(this));
+        android.widget.ScrollView importScroll = new android.widget.ScrollView(this);
+        importScroll.setFillViewport(true); importScroll.setBackground(new LauncherTheme());
+        layout.setBackgroundColor(Color.TRANSPARENT); importScroll.addView(layout);
+        setContentView(importScroll);
         pick.requestFocus();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        Updater.resume(this, gameRoot(), updateStatus);
         // data pushed with adb while the import screen was open
         if (pick != null && pick.isEnabled() && play == null && haveData())
             buildMenu();

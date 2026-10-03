@@ -23,13 +23,18 @@ def sha(path):
         return hashlib.file_digest(stream, "sha256").hexdigest()
 
 
+def network_value(name):
+    text=(ROOT / "port/linux/include/halo_port_limits.h").read_text()
+    return int(re.search(r"^#define " + name + r" (\d+)$", text, re.M)[1])
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--vr", type=Path, required=True)
     parser.add_argument("--flat", type=Path, required=True)
     parser.add_argument("--build-tools", type=Path, required=True)
     parser.add_argument("--out", type=Path, required=True)
-    parser.add_argument("--label", default="test14")
+    parser.add_argument("--label", default="test15")
     args = parser.parse_args()
     if not re.fullmatch(r"[A-Za-z0-9_-]+", args.label):
         parser.error("label must contain letters, digits, underscore or dash")
@@ -51,6 +56,9 @@ def main():
             if archive.testzip() is not None:
                 raise SystemExit("APK ZIP checksum failure")
             names = archive.namelist()
+            for guide in ["player-guide", "controls", "touch", "settings"]:
+                if "assets/guide/"+guide+".txt" not in names:
+                    raise SystemExit("Bundled guide missing: "+guide)
             guest = archive.read("assets/halo_guest.elf")
             host = archive.read("lib/arm64-v8a/libmain.so")
             dex = b"".join(archive.read(name) for name in names if re.fullmatch(r"classes\d*\.dex", name))
@@ -74,6 +82,8 @@ def main():
                 if name.lower().endswith((".map", ".yelo", ".jks", ".keystore")):
                     raise SystemExit("Unexpected game data or signing key in APK")
         records.append({"file": path.name, "package": package, "bytes": path.stat().st_size,
+                        "version_code": int(re.search(r"versionCode='(\d+)'", badging)[1]),
+                        "min_sdk": int(re.search(r"sdkVersion:'(\d+)'", badging)[1]),
                         "sha256": sha(path), "guest_sha256": hashlib.sha256(guest).hexdigest(),
                         "host_sha256": hashlib.sha256(host).hexdigest()})
     output = args.out.resolve()
@@ -84,27 +94,38 @@ def main():
     manifest = {"candidate": args.label, "created_utc": datetime.now(timezone.utc).isoformat(),
                 "source_commit": commit, "branch": branch, "runtime_accepted": False,
                 "publication": "held pending owner candidate testing and approval",
-                "prior_device_report": "test13 Quest/flat: remote VR body movement confirmed; NPC sliding/falling reported; see TEST14-PROGRESS.md",
+                "prior_device_report": "test14 pair accepted by owner for release; test15 device regression results pending",
                 "certificate_sha256": CERTIFICATE, "apks": records,
                 "source_zip": {"file": source.name, "sha256": sha(source)},
-                "native_host_version": 9, "accepted_host_versions": [9, 10],
+                "native_host_version": network_value("HALO_PORT_NETWORK_VERSION"), "accepted_host_versions": list(range(network_value("HALO_PORT_NETWORK_VERSION_MINIMUM"), network_value("HALO_PORT_NETWORK_VERSION_MAXIMUM")+1)),
                 "campaign_protocol": 0xCE01, "campaign_runtime_verified": False,
-                "avatar_protocol": 1, "avatar_message_ids": [37, 38], "avatar_prior_owner_report": "VR body movement visible on flat Android; test14 regression pending",
+                "avatar_protocol": 1, "avatar_message_ids": [37, 38], "avatar_prior_owner_report": "VR body movement visible on flat Android in accepted test14; test15 regression pending",
                 "directory": "https://halo.milenko.org/v1/games.txt"}
     (output / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
-    documents = ["TEST14-PROGRESS.md", "CURRENT-STATE.md", "PLAYER-GUIDE.md", "CONTROLS-AND-OPTIONS.md", "COOP-COMPATIBILITY-AUDIT.md", "NETWORK-VR-AVATARS.md", "CAMPAIGN-PROTOCOL-WIP.md",
+    compatibility = {"schema": 1, "project": "moistman42069/HaloCE-Quest-VR",
+        "tag": "halo-ce-quest-"+args.label, "source_commit": commit, "minimum_app_code": 15,
+        "save_policy": "preserve", "config_policy": "preserve", "vr_and_coop_integrated": True,
+        "native_minimum": network_value("HALO_PORT_NETWORK_VERSION_MINIMUM"),
+        "native_maximum": network_value("HALO_PORT_NETWORK_VERSION_MAXIMUM"), "campaign_protocol": 0xCE01,
+        "editions": {record["package"]: {"apk": record["file"], "sha256": record["sha256"],
+            "bytes": record["bytes"], "version_code": record["version_code"], "min_sdk": record["min_sdk"]} for record in records}}
+    (output / "compatibility.json").write_text(json.dumps(compatibility, indent=2)+"\n")
+    documents = ["TEST15-PROGRESS.md", "TEST15-UPSTREAM.md", "DATA-COMPATIBILITY.md", "CURRENT-STATE.md", "PLAYER-GUIDE.md", "CONTROLS-AND-OPTIONS.md", "COOP-COMPATIBILITY-AUDIT.md", "NETWORK-VR-AVATARS.md", "CAMPAIGN-PROTOCOL-WIP.md",
                  "ANDROID-TOUCH-CONTROLS.md", "MULTIPLAYER-BROWSER.md"]
     for doc in documents:
         shutil.copy2(ROOT / "docs" / doc, output / doc)
+    for notice in ["CREDITS.md", "THIRD-PARTY-NOTICES.txt", "LICENSE.md"]:
+        shutil.copy2(ROOT / notice, output / notice)
+        documents.append(notice)
     build = output / f"HaloCE-Quest-{args.label}-build.zip"
     with zipfile.ZipFile(build, "w", compression=zipfile.ZIP_DEFLATED) as archive:
-        for name in [args.vr.name, args.flat.name, "manifest.json"] + documents:
+        for name in [args.vr.name, args.flat.name, "manifest.json", "compatibility.json"] + documents:
             archive.write(output / name, name)
     with zipfile.ZipFile(source) as archive:
         if archive.testzip() is not None: raise SystemExit("Source archive checksum failure")
     with zipfile.ZipFile(build) as archive:
         if archive.testzip() is not None: raise SystemExit("Build archive checksum failure")
-    files = [output / record["file"] for record in records] + [source, build, output / "manifest.json"]
+    files = [output / record["file"] for record in records] + [source, build, output / "manifest.json", output / "compatibility.json"]
     (output / "SHA256SUMS.txt").write_text("".join(f"{sha(path)}  {path.name}\n" for path in files))
     print(json.dumps({"output": str(output), "source_commit": commit, "apks": records}, indent=2))
 

@@ -2,6 +2,10 @@
 
 Updated 2026-10-03. Canonical public repository: [moistman42069/HaloCE-Quest-VR](https://github.com/moistman42069/HaloCE-Quest-VR), branch **main**. Main contains complete test14 runtime source plus current player/project documentation. The initial test13a import is historical; private identifying metadata remains excluded. Older private Git history remains a backup, not the continuation branch.
 
+## Active candidate: test15 (unpublished)
+
+Branch `test15-community-refinements` carries the next VR/flat pair, version 1.0-test15/code 16. See [test15 checkpoint](TEST15-PROGRESS.md) for implementation, evidence, tests and remaining device validation. Test14 remains the accepted public pair. No test15 release publication is authorized before owner testing.
+
 ## Accepted release: test14
 
 On 2026-10-03, after receiving the replacement pair, the owner stated "this is it" and explicitly requested these APKs as the latest public release. This lifts the earlier release hold **for the exact delivered test14 pair**. [Release](https://github.com/moistman42069/HaloCE-Quest-VR/releases/tag/halo-ce-quest-test14).

@@ -735,10 +735,12 @@ long network_game_get_random_seed(
 }
 
 void network_campaign_session_end(void);
+void network_pvp_session_end(void);
 void network_game_abort(
 	void)
 {
 	network_campaign_session_end();
+	network_pvp_session_end();
 	bss_004566dc.client_started = TRUE;
 
 	return;

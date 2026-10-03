@@ -149,6 +149,9 @@ enum
 	GAME_STATE_MINIMUM_TICKS = 2 * GAME_STATE_INTERVAL_TICKS,
 	MAXIMUM_GAME_STATE_SIZE = 0xF00,
 	MAXIMUM_STATISTICS_PER_MESSAGE = 64,
+	PING_INTERVAL_TICKS = 2 * TICKS_PER_SECOND,
+	MAXIMUM_PINGS_PER_MESSAGE = 128,
+	UNKNOWN_PING = 0xFFFF,
 	MAXIMUM_PICKUPS_PER_TICK = 64,
 	/* ticks a client's own player may ride where the host says it does not
 	(or the other way round) before it is put where the host has it: its
@@ -392,6 +395,22 @@ struct distributed_statistics_message
 	struct distributed_player_statistics players[MAXIMUM_STATISTICS_PER_MESSAGE];
 };
 
+/* a player's ping, in milliseconds (UNKNOWN_PING: not known) */
+struct distributed_player_ping
+{
+	byte player_index;
+	byte pad;
+	word milliseconds;
+};
+
+typedef char distributed_player_ping_size_assert[sizeof(struct distributed_player_ping) == 4 ? 1 : -1];
+
+struct distributed_pings_message
+{
+	struct distributed_message_header header;
+	struct distributed_player_ping players[MAXIMUM_PINGS_PER_MESSAGE];
+};
+
 /* a batch's datagram: its header, then each message's size and its bytes
 past its message header */
 struct distributed_batch
@@ -427,6 +446,7 @@ struct distributed_packer
 
 /* ---------- globals */
 
+static word distributed_player_pings[MAXIMUM_TRACKED_PLAYERS];
 static long distributed_last_sent_time = NONE;
 
 /* how each player last died, by absolute index: the host's own, which it
@@ -1208,6 +1228,29 @@ boolean distributed_machine_sees_player(
 	return machine_index >= 0 && machine_index < HALO_PORT_MAXIMUM_NETWORK_MACHINES &&
 		player_index >= 0 && player_index < MAXIMUM_TRACKED_PLAYERS &&
 		TEST_FLAG(distributed_sends[machine_index][player_index], _distributed_send_sees_bit);
+}
+
+long distributed_player_ping(
+	short player_index)
+{
+	long machine_index;
+
+	if (player_index < 0 || player_index >= MAXIMUM_TRACKED_PLAYERS || !distributed_player(player_index))
+		return NONE;
+	if (game_connection() == _game_connection_network_client)
+		return distributed_player_pings[player_index] == UNKNOWN_PING ? NONE : (long)distributed_player_pings[player_index];
+	if (game_connection() != _game_connection_network_server)
+		return NONE;
+	/* (the host: its own players' none, a client's its machine's) */
+	machine_index = distributed_player_machines[player_index];
+	if (machine_index == NONE)
+		return 0;
+	if (machine_index < 0 || machine_index >= HALO_PORT_MAXIMUM_NETWORK_MACHINES ||
+		!distributed_round_trips[machine_index].valid)
+	{
+		return NONE;
+	}
+	return (long)(distributed_round_trips[machine_index].average * 1000.0f / TICKS_PER_SECOND + 0.5f);
 }
 
 real distributed_machine_round_trip_ticks(
@@ -2851,6 +2894,42 @@ static unsigned long distributed_checksum(
 	return checksum;
 }
 
+/* (the host) every player's ping (distributed_player_ping), for the
+clients' scoreboards */
+static void distributed_send_pings(
+	void)
+{
+	struct distributed_pings_message message;
+	short limit = MIN(MAXIMUM_PINGS_PER_MESSAGE, RELIABLE_ENTRIES(struct distributed_player_ping));
+	short count = 0;
+	short player_index;
+
+	for (player_index = 0; player_index < MAXIMUM_TRACKED_PLAYERS; player_index++)
+	{
+		long ping = distributed_player_ping(player_index);
+
+		if (!distributed_player(player_index))
+			continue;
+		message.players[count].player_index = (byte)player_index;
+		message.players[count].pad = 0;
+		message.players[count].milliseconds = ping == NONE ? UNKNOWN_PING : (word)MIN(ping, UNKNOWN_PING - 1);
+		count++;
+		if (count == limit)
+		{
+			distributed_send(&message, _distributed_message_pings, count,
+				(word)(sizeof(message.header) + count * sizeof(struct distributed_player_ping)),
+				_distributed_to_clients);
+			count = 0;
+		}
+	}
+	if (count)
+	{
+		distributed_send(&message, _distributed_message_pings, count,
+			(word)(sizeof(message.header) + count * sizeof(struct distributed_player_ping)),
+			_distributed_to_clients);
+	}
+}
+
 /* the players' statistics that changed since they were last sent, and when
 refreshing, STATISTICS_REFRESH_PLAYERS more whatever they are, round them
 all (a client that lost a change has it again within eight seconds) */
@@ -2989,6 +3068,7 @@ static void distributed_reset(boolean new_map)
 	short player_index;
 
 	distributed_last_sent_time = NONE;
+	csmemset(distributed_player_pings, 0xFF, sizeof(distributed_player_pings));
 	csmemset(distributed_deaths, 0, sizeof(distributed_deaths));
 	csmemset(distributed_seat_disagreements, 0, sizeof(distributed_seat_disagreements));
 	csmemset(distributed_predictions, 0, sizeof(distributed_predictions));
@@ -3117,6 +3197,7 @@ void network_distributed_tick(
 		if (distributed_statistics_due || game_time_get() % STATISTICS_INTERVAL_TICKS == 0)
 			distributed_send_statistics(game_time_get() % STATISTICS_REFRESH_TICKS == 0);
 		distributed_statistics_due = FALSE;
+		if (game_time_get() % PING_INTERVAL_TICKS == 0) distributed_send_pings();
 		distributed_host_send_players();
 		distributed_send_pickups();
 		if (game_time_get() % GAME_STATE_INTERVAL_TICKS == 0)
@@ -3603,7 +3684,7 @@ void network_distributed_handle_message(
 	}
 	/* Unknown upstream IDs remain ignored. Campaign traffic requires an
 	 * identified campaign session and is never decoded in competitive play. */
-	if (header.type > _distributed_message_client_identity &&
+	if (header.type > _distributed_message_pings &&
 		((header.type != _distributed_message_campaign_presentation && header.type != _distributed_message_campaign_devices &&
 		  header.type != _distributed_message_campaign_objects && header.type != _distributed_message_campaign_actors &&
 		  header.type != _distributed_message_campaign_actor_impulses) ||
@@ -3622,6 +3703,7 @@ void network_distributed_handle_message(
 	case _distributed_message_objects_synchronized:
 	case _distributed_message_notice:
 	case _distributed_message_client_ready: entry_size = 0; break;
+	case _distributed_message_pings: entry_size = sizeof(struct distributed_player_ping); break;
 	case _distributed_message_client_identity: entry_size = sizeof(struct distributed_client_identity); break;
 	case _distributed_message_campaign_presentation: entry_size = network_campaign_script_entry_size(); break;
 	case _distributed_message_campaign_devices: entry_size = sizeof(struct campaign_device_state); break;
@@ -3695,6 +3777,19 @@ void network_distributed_handle_message(
 
 			if (player)
 				player->statistics = players[index].statistics;
+		}
+		break;
+	}
+	case _distributed_message_pings:
+	{
+		/* the host's measure of each player's ping */
+		struct distributed_player_ping ping;
+
+		for (index = 0; index < header.count; index++)
+		{
+			csmemcpy(&ping, (byte const *)entries + index * sizeof(ping), sizeof(ping));
+			if (ping.player_index < MAXIMUM_TRACKED_PLAYERS)
+				distributed_player_pings[ping.player_index] = ping.milliseconds;
 		}
 		break;
 	}

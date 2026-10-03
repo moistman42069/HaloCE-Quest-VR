@@ -1158,6 +1158,9 @@ void object_types_place_all(
 	{
 		short object_type;
 
+		/* port: the gametype's vehicles counted afresh */
+		game_engine_vehicle_placement_begin();
+
 		for (object_type = 0; object_type < NUMBER_OF_OBJECT_TYPES; object_type++)
 		{
 			struct object_type_definition *definition;
@@ -1195,7 +1198,8 @@ void object_types_place_all(
 					multiplayer spawn flags name for the game type, as retail Halo
 					does (port/linux/game/custom_edition_objects.c) */
 					if (object_type == _object_type_vehicle &&
-						!custom_edition_vehicle_placement_allowed(scenario_object))
+						(!custom_edition_vehicle_placement_allowed(scenario_object) ||
+						 !game_engine_vehicle_placement_allowed(scenario_object, scenario_palette)))
 					{
 						continue;
 					}

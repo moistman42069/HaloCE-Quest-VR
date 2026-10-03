@@ -8,6 +8,8 @@ struct halo_touch_state
 {
 	int lx, ly, rx, ry;
 	unsigned int buttons;
+	float yaw, pitch; /* accumulated relative radians; consumed once per poll */
+	unsigned int generation; /* cancellation clears already-polled motion */
 };
 
 #define HALO_TOUCH_A        (1u << 0)

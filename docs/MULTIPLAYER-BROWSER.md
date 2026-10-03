@@ -1,3 +1,5 @@
+> Test15 candidate update: native clients accept v9-v11, PvP hosts advertise v11, and campaign retains CE01 legacy settings serialization. Launcher hosting and controlled updates are described in [TEST15-UPSTREAM.md](TEST15-UPSTREAM.md). Earlier version-specific sections below are historical audit evidence.
+
 # Quest multiplayer browser
 
 Current test12: the full-feed browser and separate campaign host/join are

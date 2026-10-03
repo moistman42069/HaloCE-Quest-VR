@@ -54,6 +54,7 @@ and entry points used below that ES lacks */
 
 /* what the context supports (gl_initialize) */
 struct xgpu_capabilities xgpu_capabilities;
+static BOOL safe_geometry;
 #endif
 
 /* ---------- the screen's width
@@ -361,6 +362,7 @@ struct gl_device
 	/* the ring's buffers are mapped for good (host_gl_buffer_persist):
 	uploads are copies, with no GL call each */
 	BOOL stream_persistent, index_persistent;
+	BOOL stream_persistent_ring[STREAM_BUFFER_RING], index_persistent_ring[STREAM_BUFFER_RING];
 	unsigned long buffer_ring;
 #endif
 	unsigned long stream_offset;
@@ -995,28 +997,41 @@ static void gl_initialize(void)
 	{
 		int ring;
 
-		BOOL persist = host_gl_has_extension("GL_EXT_buffer_storage");
+		BOOL persist;
+		safe_geometry = config_boolean("renderer.safe_geometry");
+		persist = !safe_geometry && host_gl_has_extension("GL_EXT_buffer_storage");
+		if (safe_geometry) xgpu_capabilities.base_vertex = FALSE;
+		platform_log("geometry compatibility: %s", safe_geometry ? "safe streaming; CPU index rebasing" : "normal");
 
 		glGenBuffers(STREAM_BUFFER_RING, device.stream_buffers);
 		glGenBuffers(STREAM_BUFFER_RING, device.index_buffers);
-		device.stream_persistent = device.index_persistent = persist;
 		for (ring = 0; ring < STREAM_BUFFER_RING; ring++)
 		{
 			glBindBuffer(GL_ARRAY_BUFFER, device.stream_buffers[ring]);
-			if (!persist || !host_gl_buffer_persist(GL_ARRAY_BUFFER, STREAM_BUFFER_SIZE))
+			device.stream_persistent_ring[ring] = persist && host_gl_buffer_persist(GL_ARRAY_BUFFER, STREAM_BUFFER_SIZE);
+			if (!device.stream_persistent_ring[ring])
 			{
+				/* A failed map may already have allocated immutable storage. */
+				glDeleteBuffers(1, &device.stream_buffers[ring]);
+				glGenBuffers(1, &device.stream_buffers[ring]);
+				glBindBuffer(GL_ARRAY_BUFFER, device.stream_buffers[ring]);
 				glBufferData(GL_ARRAY_BUFFER, STREAM_BUFFER_SIZE, NULL, GL_STREAM_DRAW);
-				device.stream_persistent = FALSE;
 			}
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, device.index_buffers[ring]);
-			if (!persist || !host_gl_buffer_persist(GL_ELEMENT_ARRAY_BUFFER, INDEX_BUFFER_SIZE))
+			device.index_persistent_ring[ring] = persist && host_gl_buffer_persist(GL_ELEMENT_ARRAY_BUFFER, INDEX_BUFFER_SIZE);
+			if (!device.index_persistent_ring[ring])
 			{
+				glDeleteBuffers(1, &device.index_buffers[ring]);
+				glGenBuffers(1, &device.index_buffers[ring]);
+				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, device.index_buffers[ring]);
 				glBufferData(GL_ELEMENT_ARRAY_BUFFER, INDEX_BUFFER_SIZE, NULL, GL_STREAM_DRAW);
-				device.index_persistent = FALSE;
 			}
+			platform_log("stream slot %d: vertex=%s index=%s", ring,
+				device.stream_persistent_ring[ring] ? "persistent" : "mapped",
+				device.index_persistent_ring[ring] ? "persistent" : "mapped");
 		}
-		platform_log("stream buffers: %s", device.stream_persistent && device.index_persistent ?
-			"persistently mapped" : persist ? "partly persistently mapped" : "written by mapping");
+		device.stream_persistent = device.stream_persistent_ring[0];
+		device.index_persistent = device.index_persistent_ring[0];
 		device.stream_buffer = device.stream_buffers[0];
 		device.index_buffer = device.index_buffers[0];
 	}
@@ -3075,6 +3090,9 @@ static BOOL mirror_range(unsigned long address, unsigned long size, GLuint *buff
 	unsigned long start = address - PLATFORM_CONTIGUOUS_BASE;
 	unsigned long segment, first, last, page, oldest = ~0UL, newest = 0;
 	BOOL present = TRUE;
+#ifdef HALO_ANDROID
+	if (safe_geometry) return FALSE;
+#endif
 
 	if (!size || address < PLATFORM_CONTIGUOUS_BASE || start + size > PLATFORM_CONTIGUOUS_SIZE)
 		return FALSE;
@@ -3202,8 +3220,8 @@ static unsigned long stream_upload(const void *data, unsigned long size)
 {
 	unsigned long offset;
 
-	size = (size + 15) & ~15UL;
-	stream_reserve(size);
+	unsigned long reserved = (size + 15) & ~15UL;
+	stream_reserve(reserved);
 	offset = device.stream_offset;
 	state_array_buffer(device.stream_buffer);
 #ifdef HALO_ANDROID
@@ -3215,7 +3233,7 @@ static unsigned long stream_upload(const void *data, unsigned long size)
 #else
 	glBufferSubData(GL_ARRAY_BUFFER, (GLintptr)offset, (GLsizeiptr)size, data);
 #endif
-	device.stream_offset += size;
+	device.stream_offset += reserved;
 	return offset;
 }
 
@@ -3265,9 +3283,9 @@ static unsigned long index_upload(const void *data, unsigned long size)
 {
 	unsigned long offset;
 
-	size = (size + 15) & ~15UL;
+	unsigned long reserved = (size + 15) & ~15UL;
 	state_element_array_buffer(device.index_buffer);
-	if (device.index_offset + size > INDEX_BUFFER_SIZE)
+	if (device.index_offset + reserved > INDEX_BUFFER_SIZE)
 	{
 #ifdef HALO_ANDROID
 		/* mapped for good: wait for the draws instead of orphaning */
@@ -3288,7 +3306,7 @@ static unsigned long index_upload(const void *data, unsigned long size)
 #else
 	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, (GLintptr)offset, (GLsizeiptr)size, data);
 #endif
-	device.index_offset += size;
+	device.index_offset += reserved;
 	return offset;
 }
 
@@ -3862,6 +3880,8 @@ void WINAPI D3DDevice_Present(CONST RECT *source_rectangle, CONST RECT *destinat
 		if (device.readback[device.buffer_ring].copied)
 			visibility_readback_collect(device.buffer_ring);
 		device.readback[device.buffer_ring].count = 0;
+		device.stream_persistent = device.stream_persistent_ring[device.buffer_ring];
+		device.index_persistent = device.index_persistent_ring[device.buffer_ring];
 		device.stream_buffer = device.stream_buffers[device.buffer_ring];
 		device.index_buffer = device.index_buffers[device.buffer_ring];
 		device.stream_offset = 0;

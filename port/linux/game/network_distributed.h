@@ -63,7 +63,9 @@ enum
 	ready: distributed_client_send_identity) */
 	_distributed_message_client_identity,
 
-	/* 19 is the upstream v10 optional ping message. Keep 19..31 reserved;
+	_distributed_message_pings, /* upstream v10 wire ID 19 */
+
+	/* Keep 20..31 reserved;
 	 * a PvP host must never be interpreted as a campaign message sender. */
 	_distributed_message_campaign_presentation = 32,
 	_distributed_message_campaign_devices,
@@ -175,6 +177,7 @@ long distributed_latest_host_time(void);
 /* (a client) how long the host takes to have this machine's players and
 tell it back, in ticks (0 before it is measured) */
 real distributed_own_round_trip_ticks(void);
+long distributed_player_ping(short player_index);
 /* (the host, in its tick) the client machine a player is on, NONE for none
 (the host's own players') */
 long distributed_player_machine(short player_index);

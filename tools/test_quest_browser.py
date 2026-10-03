@@ -92,7 +92,7 @@ int main(void) {
         network_game_client_advertised_versions[0].version = version;
         network_game_client_advertised_versions[0].flags = distributed ? HALO_PORT_ADVERTISED_DISTRIBUTED_FLAG : 0;
         assert(network_game_client_advertised_game_compatible(&client, &client.available_games[0], 1)
-            == (distributed && (version == 9 || version == 10)));
+            == (distributed && (version >= HALO_PORT_NETWORK_VERSION_MINIMUM && version <= HALO_PORT_NETWORK_VERSION_MAXIMUM)));
     }
     network_game_client_advertised_versions[0].version = HALO_CAMPAIGN_NETWORK_VERSION;
     for (int flags=0;flags<4;flags++) {

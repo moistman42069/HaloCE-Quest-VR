@@ -36,8 +36,8 @@ android {
         applicationId "com.halo.decomp"
         minSdk 28
         targetSdk 35
-        versionCode Math.max(15, buildNumber)
-        versionName buildNumber > 0 ? "build " + buildNumber : "1.0-test14"
+        versionCode Math.max(16, buildNumber)
+        versionName buildNumber > 0 ? "build " + buildNumber : "1.0-test15"
         buildConfigField "int", "HALO_BUILD_NUMBER", "${buildNumber}"
         buildConfigField "int", "HALO_NETWORK_VERSION", networkValue("HALO_PORT_NETWORK_VERSION")
         buildConfigField "int", "HALO_NETWORK_MINIMUM", networkValue("HALO_PORT_NETWORK_VERSION_MINIMUM")
@@ -61,7 +61,7 @@ android {
         main {
             java.srcDirs += new File(staged, "third_party/SDL3/android-project/app/src/main/java")
             jniLibs.srcDirs = [new File(staged, "jniLibs")]
-            assets.srcDirs = [new File(staged, "assets")]
+            assets.srcDirs = [new File(staged, "assets"), "src/main/assets"]
         }
         if (haloVr) {
             // the OpenXR loader (configure.py --vr)

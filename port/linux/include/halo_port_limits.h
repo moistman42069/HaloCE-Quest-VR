@@ -46,8 +46,10 @@ machines, 16 players) are 0x226 and 0x434. */
 #define HALO_PORT_NETWORK_GAME_PLAYERS_END \
 	(HALO_PORT_NETWORK_GAME_PLAYERS_OFFSET + HALO_PORT_MAXIMUM_NETWORK_PLAYERS * HALO_PORT_NETWORK_PLAYER_SIZE)
 #define HALO_PORT_NETWORK_GAME_RANDOM_SEED_OFFSET (HALO_PORT_NETWORK_GAME_PLAYERS_END + 2)
-#define HALO_PORT_NETWORK_GAME_LOCAL_DATA_OFFSET (HALO_PORT_NETWORK_GAME_PLAYERS_END + 0xA)
-#define HALO_PORT_NETWORK_GAME_SIZE (HALO_PORT_NETWORK_GAME_PLAYERS_END + 0xE)
+#define HALO_PORT_NETWORK_GAME_VARIANT_OPTIONS_OFFSET (HALO_PORT_NETWORK_GAME_PLAYERS_END + 0xA)
+#define HALO_PORT_NETWORK_GAME_LEGACY_SIZE (HALO_PORT_NETWORK_GAME_PLAYERS_END + 0xE)
+#define HALO_PORT_NETWORK_GAME_LOCAL_DATA_OFFSET (HALO_PORT_NETWORK_GAME_PLAYERS_END + 0x26)
+#define HALO_PORT_NETWORK_GAME_SIZE (HALO_PORT_NETWORK_GAME_PLAYERS_END + 0x2A)
 
 /* ---------- system link protocol
 
@@ -64,12 +66,12 @@ is newer (network_client_manager.c). A host advertises it, with its netcode,
 in its game's advertisement's reserved bytes (network_server_message_handler.c),
 which hosts built before there was a version send as zeros: version 0.
 Raise it with any change to what the machines send each other. */
-#define HALO_PORT_NETWORK_VERSION 9
-/* Version 10 adds only the optional scoreboard ping message. Its appended
-message ID is rejected by our existing bounded decoder; gameplay stays v9.
-Evidence: docs/MULTIPLAYER-BROWSER.md. Do not widen for unreviewed versions. */
+#define HALO_PORT_NETWORK_VERSION 11
+/* v10 pings and v11 match options are implemented. Legacy settings records
+are explicitly converted; CE01 campaign keeps its legacy wire layout.
+See docs/TEST15-UPSTREAM.md for pinned sources and compatibility boundaries. */
 #define HALO_PORT_NETWORK_VERSION_MINIMUM 9
-#define HALO_PORT_NETWORK_VERSION_MAXIMUM 10
+#define HALO_PORT_NETWORK_VERSION_MAXIMUM 11
 /* ... the advertisement's reserved bytes: the version (a little-endian word),
 then flags */
 #define HALO_PORT_ADVERTISED_VERSION_OFFSET 0
@@ -86,7 +88,7 @@ header included; the per-tick update of 128 players is 3,857 */
 update of 128 players decodes to 0x1010 bytes */
 #define HALO_PORT_NETWORK_PACKET_SIZE 0x1100
 
-/* the game settings record (HALO_PORT_NETWORK_GAME_SIZE, 13,092 bytes at 128
+/* the game settings record (HALO_PORT_NETWORK_GAME_SIZE, 13,120 bytes at 128
 machines and players) does not fit one message; it is sent in pieces of
 this many bytes (4 pieces), each 3,594 bytes on the wire */
 #define HALO_PORT_NETWORK_GAME_SETTINGS_FRAGMENT_SIZE 0xE00

@@ -29,3 +29,5 @@ publication instruction. Installation, game launch and unrelated upstream pushes
 require corresponding user instructions. Keep source/delivery
 provenance exact and update CURRENT-STATE after substantive work. For runtime
 bugs, obtain/read the actual reported build's log before theorizing.
+
+Active work: test15-community-refinements, see docs/TEST15-PROGRESS.md. Preserve the test14 public release; test15 APKs are private testing candidates until the owner approves publication. New controller alignment, touch layout, protocol adapters and update checks require targeted regression coverage.

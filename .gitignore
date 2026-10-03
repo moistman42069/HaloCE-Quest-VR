@@ -42,3 +42,8 @@ dist/
 local.properties
 out/
 release-assets/
+
+# Public, text-only bundled field guide (never game assets).
+!port/android/app/src/main/assets/
+!port/android/app/src/main/assets/guide/
+!port/android/app/src/main/assets/guide/*.txt

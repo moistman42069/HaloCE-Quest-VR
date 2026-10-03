@@ -17,6 +17,10 @@ Native **Halo: Combat Evolved on standalone Meta Quest**, with a separate **flat
 
 Both APKs are `1.0-test14`, version code 15, ARM64. Supply your own Halo CE Xbox game data; maps are not included. Use test14 on both co-op peers.
 
+## Development candidate
+
+This work branch contains **test15**, held for owner testing. It adds configurable controller alignment, a flat touch HUD editor and swipe aim, native v11 PvP hosting/join support with legacy settings conversion, geometry upload fixes, bundled help, and signed project update handling. The download links above remain the accepted test14 release. [Candidate details and limits](docs/TEST15-PROGRESS.md).
+
 ## What's new in test14
 
 Co-op fixes preserve host-controlled NPC movement inputs on the client, apply resting/velocity updates even inside position tolerance, transmit optional one-shot AI animation events, replicate unarmed NPC vehicle seats, and open the campaign pause/settings menu without pausing only one peer. Existing VR body/finger/grip, flat touch, launcher and avatar features are preserved. [Investigation and checks](docs/TEST14-PROGRESS.md).

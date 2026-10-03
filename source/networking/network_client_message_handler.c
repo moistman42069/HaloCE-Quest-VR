@@ -920,6 +920,7 @@ static boolean network_game_client_handle_message_server_machine_rejected(
 piece is in */
 static struct network_game network_game_client_settings_staging;
 static long network_game_client_settings_staging_size = 0;
+static word network_game_client_settings_total = 0;
 
 static boolean network_game_client_receive_game_settings_piece(
 	struct network_game_client *client,
@@ -927,9 +928,11 @@ static boolean network_game_client_receive_game_settings_piece(
 {
 	boolean result = TRUE;
 
-	if (piece->total_size != sizeof(network_game_client_settings_staging) ||
+	if ((piece->total_size != sizeof(network_game_client_settings_staging) &&
+         piece->total_size != HALO_PORT_NETWORK_GAME_LEGACY_SIZE) ||
+        piece->length == 0 ||
 		piece->length > sizeof(piece->data) ||
-		piece->offset + piece->length > sizeof(network_game_client_settings_staging))
+		piece->offset + piece->length > piece->total_size)
 	{
 		network_event("got a message_server_game_settings_update piece for a different game layout");
 		network_game_client_settings_staging_size = 0;
@@ -940,9 +943,12 @@ static boolean network_game_client_receive_game_settings_piece(
 		/* each record is sent in order from its start, over a stream */
 		if (piece->offset == 0)
 		{
+            network_game_client_settings_total = piece->total_size;
+            csmemset(&network_game_client_settings_staging, 0, sizeof(network_game_client_settings_staging));
 			network_game_client_settings_staging_size = 0;
 		}
-		if (piece->offset != network_game_client_settings_staging_size)
+		if (piece->total_size != network_game_client_settings_total ||
+            piece->offset != network_game_client_settings_staging_size)
 		{
 			network_event("got a message_server_game_settings_update piece out of order; waiting for the next record");
 			network_game_client_settings_staging_size = 0;
@@ -957,6 +963,16 @@ static boolean network_game_client_receive_game_settings_piece(
 			if (network_game_client_settings_staging_size == piece->total_size)
 			{
 				network_game_client_settings_staging_size = 0;
+                if (piece->total_size == HALO_PORT_NETWORK_GAME_LEGACY_SIZE) {
+                    csmemcpy(&network_game_client_settings_staging.local_data,
+                        (byte *)&network_game_client_settings_staging + HALO_PORT_NETWORK_GAME_VARIANT_OPTIONS_OFFSET, 4);
+                    game_variant_options_default(&network_game_client_settings_staging.variant,
+                        &network_game_client_settings_staging.variant_options);
+                }
+                if (!game_variant_options_valid(&network_game_client_settings_staging.variant_options)) {
+                    network_event("rejected invalid v11 variant options");
+                    return FALSE;
+                }
 				result = network_game_client_game_settings_updated(client, &network_game_client_settings_staging);
 				if (!result)
 				{

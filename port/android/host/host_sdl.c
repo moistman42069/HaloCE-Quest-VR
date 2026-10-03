@@ -16,6 +16,7 @@ so the audio callback is handed to a thread that has one.
 
 #include <SDL3/SDL.h>
 #include <errno.h>
+#include <math.h>
 #include <pthread.h>
 #include <string.h>
 #include <sys/resource.h>
@@ -31,6 +32,7 @@ so the audio callback is handed to a thread that has one.
 static pthread_mutex_t touch_lock = PTHREAD_MUTEX_INITIALIZER;
 static struct halo_touch_state touch_state;
 static unsigned int touch_pressed;
+static Uint64 touch_look_time;
 
 static int touch_axis(int value)
 {
@@ -45,7 +47,9 @@ JNIEXPORT void JNICALL Java_com_halo_decomp_TouchControls_nativeState(
 	pthread_mutex_lock(&touch_lock);
 	if (reset)
 	{
+		unsigned int generation = touch_state.generation + 1;
 		memset(&touch_state, 0, sizeof(touch_state));
+		touch_state.generation = generation;
 		touch_pressed = 0;
 	}
 	else
@@ -60,6 +64,17 @@ JNIEXPORT void JNICALL Java_com_halo_decomp_TouchControls_nativeState(
 	}
 	pthread_mutex_unlock(&touch_lock);
 }
+JNIEXPORT void JNICALL Java_com_halo_decomp_TouchControls_nativeLook(
+    JNIEnv *env, jclass type, jfloat yaw, jfloat pitch)
+{
+    (void)env; (void)type;
+    if (!isfinite(yaw) || !isfinite(pitch)) return;
+    pthread_mutex_lock(&touch_lock);
+    touch_state.yaw = fmaxf(-1.5708f, fminf(1.5708f, touch_state.yaw + yaw));
+    touch_state.pitch = fmaxf(-1.5708f, fminf(1.5708f, touch_state.pitch + pitch));
+    touch_look_time = SDL_GetTicks();
+    pthread_mutex_unlock(&touch_lock);
+}
 #endif
 
 void host_touch_read(void *buffer)
@@ -67,8 +82,10 @@ void host_touch_read(void *buffer)
 	struct halo_touch_state *state = buffer;
 #ifndef HALO_VR
 	pthread_mutex_lock(&touch_lock);
+	if (SDL_GetTicks() - touch_look_time > 250) touch_state.yaw = touch_state.pitch = 0.f;
 	*state = touch_state;
 	state->buttons |= touch_pressed;
+	touch_state.yaw = touch_state.pitch = 0.f;
 	touch_pressed = 0;
 	pthread_mutex_unlock(&touch_lock);
 #else

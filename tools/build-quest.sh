@@ -14,6 +14,7 @@ export GRADLE_USER_HOME="${GRADLE_USER_HOME:-$PWD/build/gradle-cache}"
 export TMPDIR="$PWD/build/tmp"
 mkdir -p "$TMPDIR" "$GRADLE_USER_HOME"
 export JAVA_TOOL_OPTIONS="${JAVA_TOOL_OPTIONS:-} -Djava.io.tmpdir=$TMPDIR"
+python3 tools/generate-field-guide.py
 python3 configure.py "${flags[@]}"
 ninja -j "${HALO_BUILD_JOBS:-6}" android_apk
 # The upstream Ninja APK edge lists native staging inputs only. Always let

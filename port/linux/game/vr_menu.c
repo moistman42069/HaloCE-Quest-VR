@@ -123,6 +123,10 @@ enum
 	_vr_setting_real,
 	_vr_setting_real_choice,
 	_vr_setting_string,
+	_vr_setting_degrees,
+	_vr_setting_centimetres,
+	_vr_setting_reset_alignment,
+	_vr_setting_flip_alignment,
 };
 
 #define VR_MENU_MAXIMUM_VALUES 12
@@ -211,6 +215,32 @@ static struct vr_menu_setting const vr_menu_effects[] =
 	{ "REFRESH", "vr.refresh_rate", _vr_setting_real, 4, { { "72 HZ", "72" }, { "80 HZ", "80" }, { "90 HZ", "90" }, { "120 HZ", "120" } } },
 };
 
+static struct vr_menu_setting const vr_menu_align_left[] =
+{
+    { "PITCH", "vr.align_left_pitch", _vr_setting_degrees, 0, { { NULL,NULL } } },
+    { "YAW", "vr.align_left_yaw", _vr_setting_degrees, 0, { { NULL,NULL } } },
+    { "ROLL", "vr.align_left_roll", _vr_setting_degrees, 0, { { NULL,NULL } } },
+    { "RIGHT", "vr.align_left_right", _vr_setting_centimetres, 0, { { NULL,NULL } } },
+    { "UP", "vr.align_left_up", _vr_setting_centimetres, 0, { { NULL,NULL } } },
+    { "BACK", "vr.align_left_back", _vr_setting_centimetres, 0, { { NULL,NULL } } },
+    { "AIM POSE", "vr.align_left_grip_aim", _vr_setting_boolean, 2, { { "NATIVE", "false" }, { "GRIP", "true" } } },
+    { "FLIP ROLL 180", "vr.align_left_roll", _vr_setting_flip_alignment, 0, { { NULL,NULL } } },
+    { "RESET LEFT", "left", _vr_setting_reset_alignment, 0, { { NULL,NULL } } },
+};
+
+static struct vr_menu_setting const vr_menu_align_right[] =
+{
+    { "PITCH", "vr.align_right_pitch", _vr_setting_degrees, 0, { { NULL,NULL } } },
+    { "YAW", "vr.align_right_yaw", _vr_setting_degrees, 0, { { NULL,NULL } } },
+    { "ROLL", "vr.align_right_roll", _vr_setting_degrees, 0, { { NULL,NULL } } },
+    { "RIGHT", "vr.align_right_right", _vr_setting_centimetres, 0, { { NULL,NULL } } },
+    { "UP", "vr.align_right_up", _vr_setting_centimetres, 0, { { NULL,NULL } } },
+    { "BACK", "vr.align_right_back", _vr_setting_centimetres, 0, { { NULL,NULL } } },
+    { "AIM POSE", "vr.align_right_grip_aim", _vr_setting_boolean, 2, { { "NATIVE", "false" }, { "GRIP", "true" } } },
+    { "FLIP ROLL 180", "vr.align_right_roll", _vr_setting_flip_alignment, 0, { { NULL,NULL } } },
+    { "RESET RIGHT", "right", _vr_setting_reset_alignment, 0, { { NULL,NULL } } },
+};
+
 /* a page of settings, opened from the categories: its first `left_count`
 settings in the left column, the rest in the right */
 static struct vr_menu_page
@@ -226,6 +256,8 @@ static struct vr_menu_page
 	{ "GRAPHICS", vr_menu_graphics, NUMBEROF(vr_menu_graphics) },
 	{ "DISPLAY", vr_menu_effects, NUMBEROF(vr_menu_effects) },
 	{ "CROSSHAIR", vr_menu_crosshair, NUMBEROF(vr_menu_crosshair) },
+	{ "ALIGN LEFT", vr_menu_align_left, NUMBEROF(vr_menu_align_left) },
+	{ "ALIGN RIGHT", vr_menu_align_right, NUMBEROF(vr_menu_align_right) },
 };
 
 #define VR_MENU_PAGE_COUNT ((long)NUMBEROF(vr_menu_pages))
@@ -714,6 +746,14 @@ boolean vr_menu_setting_text(
 		struct vr_menu_setting const *setting = &vr_menu_pages[page].settings[setting_index];
 		long value_index = vr_menu_value_index(setting);
 
+        if(setting->type == _vr_setting_degrees || setting->type == _vr_setting_centimetres) {
+            double value=config_real(setting->key); if(!isfinite(value)) value=0;
+            snprintf(line,sizeof(line),"%s: < %.0f %s >",setting->label,
+                setting->type==_vr_setting_centimetres?value*100:value,
+                setting->type==_vr_setting_centimetres?"CM":"DEG");
+        } else if((setting->type == _vr_setting_reset_alignment || setting->type == _vr_setting_flip_alignment))
+            snprintf(line,sizeof(line),"%s: APPLY",setting->label);
+        else
 		snprintf(line, sizeof(line), setting->type == _vr_setting_real ? "%s: < %s >" : "%s: %s", setting->label,
 			value_index != NONE ? setting->values[value_index].label : "CUSTOM");
 	}
@@ -736,6 +776,32 @@ boolean vr_menu_setting_change(
 	if (vr_menu_widget_kind(definition_tag_index, &page, &setting_index) != _vr_menu_setting)
 		return FALSE;
 	setting = &vr_menu_pages[page].settings[setting_index];
+    if(setting->type == _vr_setting_degrees || setting->type == _vr_setting_centimetres) {
+        double value=config_real(setting->key), unit=setting->type==_vr_setting_degrees?5.0:0.01;
+        double limit=setting->type==_vr_setting_degrees?180.0:0.20;
+        if(!isfinite(value)) value=0.0;
+        value=step>0?(floor(value/unit+0.00001)+1)*unit:(ceil(value/unit-0.00001)-1)*unit;
+        value=fmax(-limit,fmin(limit,value)); written=config_write_real(setting->key,value);
+        vr_reload_settings(); platform_log("vr: %s %.3f%s",setting->key,value,written?"":" (save failed)");
+        return TRUE;
+    }
+    if(setting->type == _vr_setting_flip_alignment) {
+        double roll=config_real(setting->key);
+        if(!isfinite(roll)) roll=0.0;
+        roll=roll>0.0?roll-180.0:roll+180.0;
+        roll=fmax(-180.0,fmin(180.0,roll));
+        written=config_write_real(setting->key,roll); vr_reload_settings();
+        platform_log("vr: %s flipped to %.1f%s",setting->key,roll,written?"":" (save failed)"); return TRUE;
+    }
+    if(setting->type == _vr_setting_reset_alignment) {
+        const char *axes[]={"pitch","yaw","roll","right","up","back"}; char key[64]; int a;
+        written=TRUE;
+        for(a=0;a<6;a++) { snprintf(key,sizeof(key),"vr.align_%s_%s",setting->key,axes[a]);
+            written=config_write_real(key,0.0)&&written; }
+        snprintf(key,sizeof(key),"vr.align_%s_grip_aim",setting->key);
+        written=config_write_boolean(key,FALSE)&&written; vr_reload_settings();
+        platform_log("vr: reset %s controller calibration%s",setting->key,written?"":" (save failed)"); return TRUE;
+    }
 	value_index = vr_menu_value_index(setting);
 	if (setting->type == _vr_setting_real)
 	{

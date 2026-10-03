@@ -167,7 +167,14 @@ void host_gl_wait_frame(uint32_t slot)
 	if (slot >= FRAME_FENCE_SLOTS || !frame_fences[slot])
 		return;
 	/* at most a second: a lost context must not hang the game */
-	glClientWaitSync(frame_fences[slot], GL_SYNC_FLUSH_COMMANDS_BIT, 1000000000ull);
+	GLenum result = glClientWaitSync(frame_fences[slot], GL_SYNC_FLUSH_COMMANDS_BIT, 1000000000ull);
+	if (result != GL_ALREADY_SIGNALED && result != GL_CONDITION_SATISFIED)
+	{
+		static int warned;
+		if (!warned) host_logf(HOST_LOG_INFO, "GPU frame fence incomplete (0x%x); finishing before stream reuse", result);
+		warned = 1;
+		glFinish();
+	}
 	glDeleteSync(frame_fences[slot]);
 	frame_fences[slot] = NULL;
 }
@@ -200,8 +207,8 @@ static struct
 } persistent[PERSISTENT_BUFFERS];
 
 /* gives the buffer bound to target size bytes of storage, mapped for good;
-1 on success, 0 when the driver cannot (the buffer is then left without
-storage: give it some the ordinary way) */
+1 on success, 0 when the driver cannot. On failure the caller MUST replace
+the buffer object: storage may already be immutable even when mapping failed. */
 int host_gl_buffer_persist(uint32_t target, uint32_t size)
 {
 	static void (*buffer_storage)(GLenum, GLsizeiptr, const void *, GLbitfield);
@@ -266,6 +273,16 @@ makes still holds: the renderer only writes ranges that no queued draw reads,
 because host_gl_wait_frame releases the ring slot first. */
 void host_gl_buffer_write(uint32_t target, uint32_t offset, uint32_t size, const void *data)
 {
+    /* Static mirror pages share storage with earlier draws. Adreno reports in
+     * Andiweli/HaloCE-Android-AAOS a88f257 captured zero GPU pages despite
+     * nonzero CPU data after unsynchronized first uploads. Order these writes
+     * through GL; reserve unsynchronized maps for the fence-managed stream ring.
+     * This is independent of disc revision and keeps VR interpolation enabled. */
+    if (target == GL_COPY_WRITE_BUFFER)
+    {
+        glBufferSubData(target, offset, size, data);
+        return;
+    }
 	void *mapping = glMapBufferRange(target, offset, size,
 		GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT);
 

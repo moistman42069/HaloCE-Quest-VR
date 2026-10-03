@@ -446,6 +446,7 @@ symbols in this file:
 
 #include "cseries.h"
 #include "network_campaign.h"
+#include "network_pvp_session.h"
 #include "bungie_net/common/message_header.h"
 #include "bungie_net/network/transport.h"
 #include "bungie_net/network/transport_address_constants.h"
@@ -1145,7 +1146,8 @@ struct network_game_server *network_game_server_create(
 			error(
 				_error_silent,
 				"failed to create the server connection");
-			network_game_server_dispose(server);
+			/* Upstream: connection creation failed before machines were initialized. */
+			network_game_server_memory_do_not_use_directly_in_use = FALSE;
 			server = NULL;
 		}
 	}
@@ -1781,6 +1783,12 @@ boolean network_game_server_game_is_open(
 		(TRUE == game_is_open) || (FALSE == game_is_open));
 
 	return game_is_open;
+}
+
+/* Upstream 133d6a5: slot reuse distinguishes a running match from its lobby. */
+boolean network_game_server_playing(struct network_game_server *server)
+{
+    return server && server->state == _network_game_server_state_ingame;
 }
 
 boolean network_game_server_game_is_valid(
@@ -3105,6 +3113,7 @@ void network_game_server_change_game_variant(
 	if (network_campaign_game(&server->game)) return;
 
 	csmemcpy(&server->game.variant, variant, sizeof(server->game.variant));
+	game_variant_options_default(variant, &server->game.variant_options);
 
 	if (!network_game_server_send_game_data_pregame(server))
 	{
@@ -3753,6 +3762,12 @@ static boolean network_game_server_setup_game_from_playlist(
 		network_game_server_open_game(server);
 		return TRUE;
 	}
+	if (network_pvp_host_requested())
+	{
+		if (!network_pvp_host_settings(&server->game)) return FALSE;
+		network_game_server_open_game(server);
+		return TRUE;
+	}
 	if (game_engine_get_current_stage(&server->game.variant, server->game.map.name))
 	{
 		wchar_t machine_name[MAXIMUM_MACHINE_NAME_LENGTH] = L"<unknown>";
@@ -3763,6 +3778,7 @@ static boolean network_game_server_setup_game_from_playlist(
 		server->game.map.version = 0;
 		server->game.minimum_players = 2;
 		server->game.maximum_players = MAXIMUM_NETWORK_PLAYER_COUNT;
+		game_variant_options_default(&server->game.variant, &server->game.variant_options);
 
 		if (server->game.variant.universal_variant.teams)
 		{
@@ -4179,6 +4195,35 @@ static boolean network_game_server_idle_pregame_tasks(
 	if (server->sent_start_game_message == FALSE)
 	{
 		long itr;
+
+		/* port: the gametype's auto team balance (game_variant_options):
+		the lobby's teams kept within a player of each other, the bigger
+		team's last player moved */
+		if (server->game.variant.universal_variant.teams && server->game.variant_options.auto_team_balance)
+		{
+			for (;;)
+			{
+				short count[2] = { 0, 0 };
+				long last[2] = { NONE, NONE };
+				short bigger;
+
+				for (itr = 0; itr < MAXIMUM_NETWORK_PLAYER_COUNT; itr++)
+				{
+					struct network_player *player = &server->game.players[itr];
+
+					if (network_player_is_valid(player) && VALID_INDEX(player->team_index, 2))
+					{
+						count[player->team_index]++;
+						last[player->team_index] = itr;
+					}
+				}
+				if (ABS(count[0] - count[1]) <= 1)
+					break;
+				bigger = count[0] > count[1] ? 0 : 1;
+				server->game.players[last[bigger]].team_index = 1 - bigger;
+				network_game_server_send_game_data_pregame(server);
+			}
+		}
 
 		/* send the lobby changes collected since the last settings update */
 		network_game_server_flush_game_data_pregame(server);

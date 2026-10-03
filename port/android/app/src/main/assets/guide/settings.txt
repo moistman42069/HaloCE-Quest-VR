@@ -1,0 +1,798 @@
+NATIVE SETTINGS REFERENCE
+
+Defaults apply to new settings. Existing saved values win. VR settings apply to Quest only; desktop-only options do not affect Android. Restart for renderer, networking and other startup options. Use the in-game VR pages for live supported adjustments. The integrated project updater checks automatically in the launcher; Versions & updates controls checks and installation; inherited update.auto does not replace the mod with upstream.
+
+pvp.time_limit [integer]
+Default: 0
+Match time limit in minutes: 0 (unlimited) to 1440.
+
+pvp.friendly_fire [integer]
+Default: 0
+Team damage: 0 on, 1 off, 2 shields only, 3 explosives only.
+
+pvp.vehicle_respawn_time [integer]
+Default: 0
+Empty/destroyed vehicle respawn seconds: 0 never, up to 3600.
+
+pvp.auto_team_balance [boolean]
+Default: false
+Balance teams in the lobby and on death; host authority.
+
+pvp.radar_players [integer]
+Default: 0
+Motion tracker: 0 all, 1 friends only, 2 none.
+
+pvp.custom_loadout [boolean]
+Default: false
+Use selected primary/secondary weapons instead of variant defaults.
+
+pvp.primary_weapon [integer]
+Default: 2
+Custom loadout: 0 none, 1 random, 2 AR, 3 pistol, 4 shotgun, 5 sniper, 6 rocket, 7 plasma pistol, 8 plasma rifle, 9 needler.
+
+pvp.secondary_weapon [integer]
+Default: 3
+Same custom-loadout weapon choices as primary_weapon.
+
+pvp.infinite_grenades [boolean]
+Default: false
+Unlimited grenades in launcher-hosted PvP, including expanded player counts.
+
+display.fullscreen [boolean]
+Default: true
+Start fullscreen, drawing at the display's resolution and shape; false
+starts in a window, which draws the Xbox's 640x480. F11 switches.
+
+display.window_scale [integer]
+Default: 2
+The window's size as a multiple of 640x480 (it can be resized).
+
+display.screen_width [integer]
+Default: 0
+Columns of the 480-line picture: 0 for the display's shape, 640 for the
+Xbox's 4:3.
+
+display.vsync [boolean]
+Default: true
+Wait for the display between frames; false draws as fast as possible.
+
+display.interpolation [boolean]
+Default: true
+Draw a frame for every display refresh, blending between the game's 30
+ticks a second; false keeps the original 30 frames a second.
+
+display.direct_camera [boolean]
+Default: true
+In first person, point the view where the player aims now instead of
+where the last tick left it: the view turns the frame the mouse moves,
+not up to two ticks (66 ms) later.
+
+display.high_res_hud [boolean]
+Default: true
+Draw the HUD (meters, counters, panels, motion sensor, reticles,
+waypoints, scopes) from the high-res assets (8x the maps' bitmaps);
+false draws the maps' own bitmaps.
+
+display.high_res_text [boolean]
+Default: true
+Draw the menus' and HUD's text with the fonts in port/assets/fonts
+(Overpass) at the display's resolution, and the menus' titles from
+port/assets/titles; false draws the maps' bitmap fonts and titles.
+
+audio.enabled [boolean]
+Default: true
+Play sound.
+
+audio.volume [real]
+Default: 1.0
+The volume of everything, 0.0 to 1.0.
+
+input.mouse_sensitivity [real]
+Default: 1.0
+How far the view turns for the mouse's movement.
+
+input.invert_mouse [boolean]
+Default: false
+Moving the mouse forward looks down.
+
+input.mouse_aim_assist [boolean]
+Default: false
+Magnetism while aiming with the mouse, as with a controller: the view
+slowed and dragged along by a target. The last of the mouse and the
+right stick to move decides. The bullets' autoaim (bent toward the
+target) stays either way.
+
+game.console_log [string]
+Default: "important"
+What the game's console shows on screen of what it logs: "important"
+(bans, players dropped for cheating, what refuses a command, and the
+asserts that stop the game), "all" (every line, the game's own
+chatter too), or "none" (the asserts that stop the game only). What
+a command prints shows whatever this is, and debug.txt has every line.
+
+game.language [string]
+Default: ""
+The language the game asks the Xbox for: "ja", "de", "fr", "es" or "it";
+empty for English. The game data decides what is translated.
+
+game.custom_edition [boolean]
+Default: false
+Load and run Halo Custom Edition and OpenSauce (.yelo) maps, which are
+otherwise refused. Experimental: docs/custom_edition_caches.md in the
+source says what works. On Android the launcher's mods turn it on while
+one is installed.
+
+paths.data [string]
+Default: ""
+The folder holding the game data's maps folder; empty looks in the
+working directory and its assets folder. Windows paths are easiest in
+single quotes: 'C:\Games\Halo'.
+
+paths.saves [string]
+Default: ""
+Where saved games and profiles go; empty for the usual place
+(~/.local/share/halo-linux, or %APPDATA%\halo on Windows).
+
+renderer.safe_geometry [boolean]
+Default: false
+Geometry compatibility mode (Android; restart required). Streams geometry
+without persistent buffers/static mirrors and rebases indices on CPU.
+Try for stretched triangles; can reduce performance. Not a data revision selector.
+
+network.address [string]
+Default: ""
+This machine's IPv4 address for system link, for a machine on several
+networks; empty chooses one.
+
+network.broadcast [string]
+Default: ""
+Comma-separated IPv4 addresses system link sends its announcements to
+instead of the local network's broadcast address (for VPNs); empty for
+the local network.
+
+network.online [boolean]
+Default: true
+Internet play: hosting makes an invite link (logged, and put on the
+clipboard) that lets whoever has it join over the internet; opening a
+link (or copying one before switching to the game) joins. Only people
+with the invite can join. Off keeps system link to the local network.
+
+network.join_from_clipboard [boolean]
+Default: true
+Join the game of an invite link found on the clipboard when the game
+comes to the front.
+
+network.tunnel_port [integer]
+Default: 0
+The UDP port internet play uses; 0 picks one. A fixed one can be
+forwarded on the router, for networks whose NAT stops connections.
+
+network.allow_upnp [boolean]
+Default: true
+Let internet play ask the router (UPnP) to forward its port, for
+networks whose NAT stops connections: when a player joins this
+machine's game, and when joining a game takes too long. False never
+asks.
+
+network.signalling_brokers [string]
+Default: "broker.emqx.io:1883,broker.hivemq.com:1883,test.mosquitto.org:1883"
+Public MQTT brokers through which the machines of an invite find each
+other (its messages are encrypted); comma-separated host:port.
+
+network.stun_servers [string]
+Default: "stun.l.google.com:19302,stun.cloudflare.com:3478"
+Public STUN servers that tell this machine its internet address;
+comma-separated host:port.
+
+discord.application_id [string]
+Default: "1553978809840050229"
+The Discord application internet play invites go through while the
+Discord desktop client runs; empty for none.
+
+update.auto [boolean]
+Default: true
+Look for a new version when the game starts, and offer to update to it;
+false never looks (the game's "Do not ask again" writes false here).
+
+debug.network_test [string]
+Default: ""
+Automated system link sessions for testing (port/linux/game/network_test.c):
+"host:<map>" hosts a game on that map, "join" joins the first game found;
+empty for none.
+
+debug.network_test_start [real]
+Default: 15.0
+Seconds after hosting that an automated test game starts.
+
+debug.network_test_kill [real]
+Default: 0.0
+Every this many seconds an automated test host kills its last player; 0 never.
+
+debug.network_test_score [integer]
+Default: 0
+The score an automated test host's game type plays to (a short game, to
+test the next); 0 the game type's own.
+
+debug.network_test_shoot [real]
+Default: 0.0
+Every this many seconds each automated test player hits the next with
+their weapon, within its reach (the host brings far players near the
+first a second before); 0 never.
+
+debug.network_test_vehicle [real]
+Default: 0.0
+This many seconds into an automated test game the host seats its last
+player as a vehicle's driver (and out 15 seconds on); 0 never.
+
+debug.network_test_pickup [real]
+Default: 0.0
+This many seconds into an automated test game the host stands its last
+player on a weapon, which a joining player then picks up; 0 never.
+
+debug.network_test_pickup_weapon [string]
+Default: ""
+The weapon network_test_pickup stands the player on: the first whose tag
+name has this in it ("sniper", say); empty any.
+
+debug.telnet_console [boolean]
+Default: false
+Listen on 127.0.0.1 (port telnet_console_port) for a script console that
+runs what it is sent as the game's console does, with no password; false
+none.
+
+debug.telnet_console_port [integer]
+Default: 2323
+The port of the script console (telnet_console); the Xbox's was 23, which
+only the administrator can listen on.
+
+debug.network_latency [real]
+Default: 0.0
+Milliseconds everything received is held back (a round trip between two
+machines of twice it), to test the netcode as over the internet; 0 none.
+
+debug.network_loss [real]
+Default: 0.0
+Percent of datagrams received that are dropped, for the same; 0 none.
+
+debug.test_input [string]
+Default: ""
+"bot:<seed>" plays controller 1 with a scripted pattern (automated
+network tests); "look:<seed>" stands still, only turning and looking
+up and down; empty for none.
+
+debug.update_answer [string]
+Default: ""
+The answer to the new version question, for automated tests: "yes",
+"no" or "never" (do not ask again, confirmed); empty asks.
+
+debug.exit_after [real]
+Default: 0.0
+Quit this many seconds after the window opens; 0 never.
+
+debug.hidden_window [boolean]
+Default: false
+Keep the window hidden (and never fullscreen).
+
+debug.null_renderer [boolean]
+Default: false
+Run without a window, drawing nothing.
+
+debug.gl_debug [boolean]
+Default: false
+Report OpenGL errors in the log.
+
+debug.gpu_stats [boolean]
+Default: false
+Log the renderer's draw counts once a second.
+
+debug.gpu_trace_frame [integer]
+Default: -1
+Log every draw of this frame; -1 none.
+
+debug.gpu_trace_constants [boolean]
+Default: false
+With gpu_trace_frame, also the vertex shader constants.
+
+debug.gpu_skip_vertex_shaders [string]
+Default: ""
+Comma-separated ids of vertex shaders not to draw with.
+
+debug.gpu_dump_shaders [string]
+Default: ""
+A folder to write the generated GLSL to; empty none.
+
+debug.gpu_debug_expression [string]
+Default: ""
+A GLSL expression every pixel shader shows instead of its result.
+
+debug.gpu_debug_texture0 [boolean]
+Default: false
+Pixel shaders show their first texture.
+
+debug.gpu_debug_flat [boolean]
+Default: false
+Pixel shaders show their vertex colour.
+
+debug.screenshot_directory [string]
+Default: ""
+A folder to save frames to (with screenshot_every); empty none.
+
+debug.screenshot_every [integer]
+Default: 0
+Save every this many frames to screenshot_directory; 0 none.
+
+debug.texture_dump_directory [string]
+Default: ""
+A folder to write every texture to as it is uploaded; empty none.
+
+debug.texture_log [boolean]
+Default: false
+Log texture uploads.
+
+debug.texture_no_cache [boolean]
+Default: false
+Upload textures again every time they are used.
+
+debug.sample_seconds [real]
+Default: 0.0
+Log where the game is this often, in seconds; 0 never. On Android every
+game thread (read by the app, port/android/host/host_debug.c), on
+Windows the main thread (port/windows/src/win32_memory_watch.c).
+
+vr.enabled [boolean]
+Default: true
+Play in the headset (OpenXR); false shows the game on the flat screen
+as the phone build does.
+
+vr.resolution_scale [real]
+Default: 0.0
+The game's picture in the headset as a fraction of the runtime's
+recommended eye resolution (about 1680x1760 on the Quest 3, 1728x1728 on
+the Steam Frame), 0.5 to 1.5; 0 chooses for the headset: 1.0 on the
+Quest 3, 3S and Pro, 0.85 on the Quest 2, 0.7 on the first Quest. 1.5
+holds 72 frames a second on the Steam Frame.
+
+vr.screen_distance [real]
+Default: 2.5
+How far ahead the flat screen (menus, cutscenes) floats, in metres.
+
+vr.screen_width [real]
+Default: 2.4
+The flat screen's width, in metres (its height is three quarters).
+
+vr.stereo [boolean]
+Default: true
+Play in 3D around you; false keeps gameplay on the flat screen too.
+
+vr.world_scale [real]
+Default: 0.328084
+Game units per metre of head movement and eye separation: the game's
+unit is 10 feet (0.328084 per metre). Larger makes the world feel
+smaller.
+
+vr.hud_distance [real]
+Default: 15.0
+How far ahead of the eyes the HUD floats, in metres: far, so the eyes
+need not refocus between it and the world.
+
+vr.hud_width [real]
+Default: 10.0
+The HUD's width, in metres (its height is three quarters); with
+vr.hud_distance, how much of the view it spans (10 at 15: 37 degrees).
+
+vr.refresh_rate [real]
+Default: 72.0
+The headset's display rate to ask for, in hertz: the highest the
+runtime offers at or below it; 0 leaves the runtime's choice. The Quest 3
+offers 72, 80, 90 and 120; SteamVR on the Steam Frame offers only the
+rate its own display setting is on.
+
+vr.cutscenes [string]
+Default: "immersive"
+"immersive": cutscenes around you, seen from their camera as you look
+about (a moment of black at each cut); "screen": on a large screen
+ahead (in 3D, vr.cinema_3d); "flat": on the flat screen.
+
+vr.script_messages [boolean]
+Default: false
+Show script print messages in the green terminal overlay while in VR.
+False keeps them in the run log only; the flat build is unchanged.
+
+vr.cinema_3d [boolean]
+Default: true
+With vr.cutscenes "screen": the cutscene screen in 3D (each eye its
+own picture); false shows them flat.
+
+vr.cinema_separation [real]
+Default: 0.064
+The cutscene screen's eye separation, in metres of the game's world:
+more for deeper 3D.
+
+vr.cinema_convergence [real]
+Default: 2.0
+How far from the cutscene's camera, in game units (10 feet), things
+show at the screen's depth; nearer comes out of it.
+
+vr.cinema_distance [real]
+Default: 3.0
+How far ahead the cutscene screen floats, in metres.
+
+vr.cinema_width [real]
+Default: 3.6
+The cutscene screen's width, in metres.
+
+vr.controls [string]
+Default: "vr"
+The controllers' layout. "vr": right trigger fire, left trigger zoom, A
+jump, B reload and action, X switch grenades, Y switch weapons, right
+bumper grenade, left bumper flashlight, right stick click melee, left
+stick click crouch, menu pause, view back (held a second, recentre).
+"pad": as an Xbox controller.
+
+vr.move_relative [string]
+Default: "head"
+What the left stick moves you relative to: "head", or where the
+"left" or "right" controller points.
+
+vr.aim [string]
+Default: "hand"
+What aims on foot: "head" (where you look, with a reticle ahead) or
+"hand" (the right controller, holding the weapon). In vehicles the
+head aims either way.
+
+vr.crosshair [string]
+Default: "native"
+Gameplay crosshair: "native" uses the weapon's own animated artwork,
+or "off" hides it. The menu pointer is independent.
+
+vr.crosshair_size [real]
+Default: 1.0
+Native crosshair size multiplier (0.25 to 3).
+
+vr.crosshair_opacity [real]
+Default: 1.0
+Native crosshair opacity (0 to 1). Does not change the menu pointer.
+
+vr.vehicle_view [string]
+Default: "first_person"
+Vehicles seen from the seat, turning with the vehicle and the horizon
+kept level ("first_person"), or from the game's chase camera ("chase").
+
+vr.vehicle_steering [string]
+Default: "stick"
+What a driver steers with: "stick" (the right stick, as on a flat
+screen; the head only looks), "head" (where you look) or "hand" (where
+the right controller points). Gunners aim with the head.
+
+vr.arms [string]
+Default: "ik"
+With vr.aim "hand": the first-person arms. "ik" reaches them from the
+shoulders to the hands (the left to the left controller, or to the gun
+when held near it); "hidden" shows the gun alone; "animated" moves
+them with the gun as the game animates them.
+
+vr.two_handed [string]
+Default: "grip"
+With vr.aim "hand": holding the gun in both hands steadies it, pointing
+from the weapon hand to the other. "grip": the other hand's grip held
+near the support grip, then locked to that point until release;
+"auto": attach by proximity without squeezing; "off": no attachment.
+Default is grip: a free hand can touch the gun without attaching.
+
+vr.left_handed [boolean]
+Default: false
+Hold the weapon in the left hand (fire, grenade and zoom swap triggers
+and bumpers). Palms together and the other hand's grip also swaps.
+
+vr.melee [string]
+Default: "impact"
+"impact": a hand (the weapon hand with the gun) moving at vr.melee_speed
+strikes what it sweeps through - enemies, vehicles, glass - harder the
+faster; "swing": a hand swung up or down that fast makes the game's own
+melee ahead. A network game's client always swings.
+
+vr.melee_speed [real]
+Default: 2.0
+How fast a hand must move to strike (metres a second); 0 turns physical
+melee off (the right stick click still melees).
+
+vr.flashlight_distance [real]
+Default: 0.2
+The off hand brought this close (metres) to the middle of the head
+turns the flashlight on or off; 0 turns the gesture off.
+
+vr.crouch_height [real]
+Default: 0.35
+Ducking this far (metres) below your height at the last recentre
+crouches; 0 turns it off.
+
+vr.haptics [real]
+Default: 1.0
+The strength of the controllers' buzz (shots, gestures), 0 to 1; 0 none.
+
+vr.menu_3d [boolean]
+Default: true
+The main menu in 3D: its scene around you, its menus on a panel ahead;
+false shows it all on the flat screen.
+
+vr.body [string]
+Default: "legs"
+"arms": first-person arms/hands; "hands": hands only; "full": torso
+and legs too; "legs": legs plus arms/hands with the torso hidden.
+Local visibility only; supported peers see the complete VR avatar.
+
+vr.fingers [boolean]
+Default: true
+A free hand turns with your wrist and its fingers follow yours on the
+controller (Touch senses the thumb and index finger resting): point,
+thumbs up, a fist; pointing with the thumb up held a second shows the
+middle finger. It stops at what it meets - walls, vehicles, people - its
+palm laid flat to it and each finger resting on it, felt as a buzz.
+
+vr.diag_finger_sign [real]
+Default: 1.0
+Legacy test8 setting, retained for old configs; absolute finger posing
+in test9 determines bend direction from the hand frame instead.
+
+vr.arm_run [boolean]
+Default: false
+Run by swinging the arms as in running, ahead where the head faces, as
+fast as the swing (both arms; holding the gun in both hands, the gun's
+bob). Offline, strong forward pumping raises movement speed up to 1.5x.
+Network games retain stock speed. Deliberate stick movement takes priority.
+
+vr.arm_run_speed [real]
+Default: 0.6
+With vr.arm_run: how fast the hands must move (metres a second) to start
+running; full speed at 2.5 times it. Lower is easier.
+
+vr.close_contact [boolean]
+Default: true
+Offline local VR player only: reduce capsule radius by up to 15 percent
+(at most 5 cm, minimum radius 18 cm) for closer hand contact. Solid
+collision and total height remain; false restores the stock radius.
+
+vr.weapons [string]
+Default: "physical"
+With vr.aim "hand": "locked" keeps the gun in the weapon hand always;
+"physical" keeps it there while that hand's grip holds it (the trigger
+fires whatever gun is in the hand): let go, it falls - at a holster it
+is put away, the hand empty, and with the other hand on it, it passes to
+that hand. A gun the game puts in the hand (a level's start, a pickup)
+stays supported until the first grip. An empty hand gripping at a
+holster draws the weapon there, and by a weapon lying about takes it.
+Grenades then go on the left's lower button (a tap throws, a hold
+switches). In network games only with vr.physical_multiplayer.
+
+vr.physical_multiplayer [boolean]
+Default: false
+Physical weapons (vr.weapons) in network games too, where the other
+machines may not see the guns dropped and taken; false keeps network
+games to the locked behaviour.
+
+vr.holsters [boolean]
+Default: true
+Holsters over each shoulder and at each hip (the weapon hand buzzes
+coming into one): its grip there switches weapons, or with physical
+weapons (vr.weapons) a gun let go there is put away and an empty hand
+gripping there draws one.
+
+vr.holster_size [real]
+Default: 0.2
+How far from its place each holster reaches, in metres (0.05 to 0.6).
+
+vr.roomscale [boolean]
+Default: true
+Walking about your room walks your character (on foot, not in
+vehicles or cutscenes). Walls stop it where they stop the character, so
+your room and the game drift apart; recentre (hold View) to line them up.
+
+vr.scope [boolean]
+Default: true
+With vr.aim "hand": a zoomed weapon shows its zoom in a scope held at
+the gun (an extra view rendered while zoomed); your eyes stay unzoomed.
+
+vr.scope_size [real]
+Default: 0.06
+How wide the scope is, in metres.
+
+vr.align_left_pitch [real]
+Default: 0.0
+Left controller local pitch: degrees (-180..180), applied to grip and aim. Zero preserves runtime tracking.
+
+vr.align_left_yaw [real]
+Default: 0.0
+Left controller local yaw: degrees (-180..180), applied to grip and aim. Zero preserves runtime tracking.
+
+vr.align_left_roll [real]
+Default: 0.0
+Left controller local roll: degrees (-180..180), applied to grip and aim. Zero preserves runtime tracking.
+
+vr.align_left_right [real]
+Default: 0.0
+Left controller local right: metres (-0.20..0.20), in the original controller frame. Zero preserves runtime tracking.
+
+vr.align_left_up [real]
+Default: 0.0
+Left controller local up: metres (-0.20..0.20), in the original controller frame. Zero preserves runtime tracking.
+
+vr.align_left_back [real]
+Default: 0.0
+Left controller local back: metres (-0.20..0.20), in the original controller frame. Zero preserves runtime tracking.
+
+vr.align_left_grip_aim [boolean]
+Default: false
+Use left grip pose for aim too. Optional controller compatibility mode; false preserves native aim.
+
+vr.align_right_pitch [real]
+Default: 0.0
+Right controller local pitch: degrees (-180..180), applied to grip and aim. Zero preserves runtime tracking.
+
+vr.align_right_yaw [real]
+Default: 0.0
+Right controller local yaw: degrees (-180..180), applied to grip and aim. Zero preserves runtime tracking.
+
+vr.align_right_roll [real]
+Default: 0.0
+Right controller local roll: degrees (-180..180), applied to grip and aim. Zero preserves runtime tracking.
+
+vr.align_right_right [real]
+Default: 0.0
+Right controller local right: metres (-0.20..0.20), in the original controller frame. Zero preserves runtime tracking.
+
+vr.align_right_up [real]
+Default: 0.0
+Right controller local up: metres (-0.20..0.20), in the original controller frame. Zero preserves runtime tracking.
+
+vr.align_right_back [real]
+Default: 0.0
+Right controller local back: metres (-0.20..0.20), in the original controller frame. Zero preserves runtime tracking.
+
+vr.align_right_grip_aim [boolean]
+Default: false
+Use right grip pose for aim too. Optional controller compatibility mode; false preserves native aim.
+
+vr.weapon_offset_right [real]
+Default: 0.10
+With vr.aim "hand": how far right of the game's eye the weapon's model
+holds its grip, in metres, so the grip sits in the hand.
+
+vr.weapon_offset_up [real]
+Default: -0.12
+As vr.weapon_offset_right, above the eye (negative is below).
+
+vr.weapon_offset_back [real]
+Default: -0.20
+As vr.weapon_offset_right, behind the eye (negative is ahead).
+
+vr.snap_turn [real]
+Default: 0.0
+Degrees the right stick turns you at a flick; 0 turns smoothly instead.
+
+vr.smooth_turn_speed [real]
+Default: 120.0
+With vr.snap_turn 0: degrees a second the right stick turns you at full
+push.
+
+vr.force_render [boolean]
+Default: false
+Draw stereo frames with the headset off (in standby), from a head
+looking ahead: for testing.
+
+vr.diag_yaw [real]
+Default: 0.0
+With vr.force_render: turn that head left by this many degrees.
+
+vr.diag_hand_yaw [real]
+Default: 0.0
+With vr.force_render: turn the right hand left of the head by this many
+degrees.
+
+vr.diag_two_handed [boolean]
+Default: false
+With vr.force_render: hold the left hand on the gun, ahead and a little
+left of the right.
+
+vr.diag_drive_seconds [real]
+Default: 0.0
+This many seconds into play, seat the player as the nearest vehicle's
+driver: for testing; 0 never.
+
+vr.diag_walk_speed [real]
+Default: 0.0
+With vr.force_render: the synthetic head walks ahead at this speed
+(metres a second), for testing vr.roomscale; 0 still.
+
+vr.diag_zoom_seconds [real]
+Default: 0.0
+This many seconds into play, zoom in (switching first to a weapon that
+zooms): for testing the scope; 0 never.
+
+vr.dump_frame [integer]
+Default: 0
+Write the eyes and HUD of this stereo frame as vr-eye0.bmp, vr-eye1.bmp
+and vr-hud.bmp in the data folder; 0 none.
+
+vr.timing [boolean]
+Default: true
+Log where each frame's time goes every 300 frames ([vr-frame]).
+
+vr.timing_gpu [boolean]
+Default: false
+With vr.timing: wait for the GPU before showing each frame, to time it
+apart (slows the game).
+
+vr.dump_cinema_frame [integer]
+Default: 0
+As vr.dump_frame, for this frame of cutscenes on the 3D screen.
+
+vr.probe_seconds [real]
+Default: 0.0
+Before the game starts, show dim test colours in each eye for this many
+seconds and log the OpenXR frame rate; 0 skips it.
+
+graphics.preset [string]
+Default: "auto"
+Which effects the headset draws (port/linux/game/vr_graphics.c): "low",
+"medium", "high", or "max" (high, and with vr.resolution_scale 0 a
+sharper picture than the headset recommends). "auto": low on the first
+Quest, medium on the Quest 2, high otherwise. The settings below override
+it one effect at a time.
+
+graphics.shadows [string]
+Default: "auto"
+Objects' shadows: "auto" (as graphics.preset: high), "on" or "off".
+
+graphics.dynamic_lights [string]
+Default: "auto"
+Moving lights on the level (the flashlight, plasma, explosions):
+"auto" (every preset), "on" or "off".
+
+graphics.specular [string]
+Default: "auto"
+Shine on the level's surfaces: "auto" (medium and high), "on" or
+"off".
+
+graphics.reflections [string]
+Default: "auto"
+The level's reflective surfaces: "auto" (high), "on" or "off".
+
+graphics.bump_mapping [string]
+Default: "auto"
+Surface relief: "auto" (medium and high), "on" or "off".
+
+graphics.detail_objects [string]
+Default: "auto"
+Grass and small plants: "auto" (medium and high), "on" or "off".
+
+graphics.decals [string]
+Default: "auto"
+Bullet holes, scorch marks and blood: "auto" (every preset), "on" or
+"off".
+
+graphics.particles [string]
+Default: "auto"
+Sparks, smoke and other particles: "auto" (every preset), "on" or
+"off".
+
+graphics.contrails [string]
+Default: "auto"
+Projectiles' trails: "auto" (medium and high), "on" or "off".
+
+graphics.weather [string]
+Default: "auto"
+Rain and snow: "auto" (medium and high), "on" or "off".
+
+graphics.lens_flares [string]
+Default: "auto"
+Lens flares and the sun's glow: "auto" (high), "on" or "off".
+
+graphics.fog_screen [string]
+Default: "auto"
+The layered fog drawn across the view: "auto" (medium and high),
+"on" or "off".
+
+graphics.camouflage_multipass [string]
+Default: "auto"
+Active camouflage's finer, costlier look: "auto" (medium and high),
+"on" or "off".

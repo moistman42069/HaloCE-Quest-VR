@@ -391,6 +391,7 @@ symbols in this file:
 #include "halo_vr.h"
 
 #include "network_campaign.h"
+#include "network_pvp_session.h"
 
 /* ---------- constants */
 
@@ -3213,6 +3214,7 @@ void main_loop(
 			/* automated system link tests (port/linux/game/network_test.c) */
 			network_test_update(main_globals.main_menu_scenario_loaded, main_globals.seconds_elapsed);
 			network_campaign_session_update(main_globals.main_menu_scenario_loaded, main_globals.seconds_elapsed);
+			network_pvp_session_update(main_globals.main_menu_scenario_loaded, main_globals.seconds_elapsed);
 			connection = main_globals.connection;
 			if (connection==_game_connection_network_client)
 			{

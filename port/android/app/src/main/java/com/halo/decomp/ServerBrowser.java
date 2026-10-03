@@ -50,7 +50,8 @@ final class ServerBrowser {
     private static final class Entry {
         final String name, invite, description;
         final int version;
-        final int players;
+        final int players, maximum;
+        final String map;
         final boolean open;
         Entry(JSONObject object) {
             name = ServerInvite.displayName(object.optString("name", "Unnamed server"));
@@ -58,6 +59,8 @@ final class ServerBrowser {
             description = ServerInvite.displayName(object.optString("description", "Invite session"));
             version = object.optInt("network_version", 0);
             players = Math.max(0, Math.min(128, object.optInt("players", 0)));
+            maximum = Math.max(1, Math.min(128, object.optInt("maximum_players", 128)));
+            map = ServerInvite.displayName(object.optString("map", ""));
             open = object.optBoolean("open", true);
         }
         Entry(ServerListing listing) {
@@ -65,8 +68,8 @@ final class ServerBrowser {
             invite = listing.invite;
             description = listing.description();
             version = listing.version;
-            players = listing.players;
-            open = listing.open && listing.players < listing.maximum;
+            players = listing.players; maximum = listing.maximum; map = listing.map;
+            open = listing.open;
         }
         boolean compatible() {
             return version == 0 || (version >= BuildConfig.HALO_NETWORK_MINIMUM
@@ -97,7 +100,7 @@ final class ServerBrowser {
             : "Cross-play: native Windows, Mac, Linux and Android ports with compatible network versions "
             + "and maps. Retail Halo PC, MCC and Xbox are incompatible.");
         text(content, "Join connects an invite, then use Multiplayer > System Link to select the host. "
-            + "Nearby LAN games also appear there. Public listings are supplied by ChupathingyCE; availability may change.");
+            + "Upstream ports may call this Direct Link. Nearby LAN games also appear there. Public listings are supplied by ChupathingyCE; availability may change.");
         button(content, "Add / paste server invite", this::addInvite);
         button(content, "Directory settings", this::setDirectory);
         refresh = button(content, "Refresh directory", this::refresh);
@@ -239,7 +242,16 @@ final class ServerBrowser {
             if (join.open(entry.invite)) dialog.dismiss();
             else status.setText("Could not write the invite. Check game-data storage access, then try again.");
         });
-        open.setEnabled(compatible && (favorite || entry.open));
+        String blocked = !compatible ? "Protocol mismatch: this host uses network v" + entry.version +
+            ". Disc revision cannot change the network protocol. Ask the host to update or choose a compatible server."
+            : !favorite && entry.players >= entry.maximum ? "Server full. Refresh after a player leaves."
+            : !favorite && !entry.open ? "Host is closed to joining (loading, postgame, or locked lobby). Refresh later."
+            : "";
+        if(!blocked.isEmpty()) text(rows,blocked);
+        if(!campaign && entry.version > BuildConfig.HALO_NETWORK_MAXIMUM)
+            button(rows,"Check for compatible update",()->Updater.show(activity,activity instanceof LauncherActivity ? ((LauncherActivity)activity).gameRoot() : activity.getExternalFilesDir(null)));
+        else text(rows,"Reachability is checked by the game, not the directory. If the host does not appear: refresh its invite, check Internet settings, and check both networks for NAT/firewall restrictions.");
+        open.setEnabled(compatible && (favorite || (entry.open && entry.players < entry.maximum)));
         button(rows, favorite ? "Remove saved server" : "Save server", () -> {
             if (favorite) saved.remove(entry);
             else {

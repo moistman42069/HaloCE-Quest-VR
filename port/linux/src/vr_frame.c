@@ -13,6 +13,7 @@ swapchain images, whose GL texture names work in this context as they are.
 #include "gl.h"
 #include "port_config.h"
 #include "vr.h"
+#include "vr_alignment.h"
 
 #include "guest_host.h"
 #include "halo_android_abi.h"
@@ -68,6 +69,8 @@ static struct
 	float head_yaw, aim_yaw;
 	/* the weapon's place relative to the right hand (vr.weapon_offset_*) */
 	float weapon_offset[3];
+	float alignment_rotation[2][4], alignment_offset[2][3];
+	int alignment_grip_aim[2];
 	/* the aim this frame: the right controller's, or with both hands on
 	the gun the line from the right to the left (vr.two_handed) */
 	struct halo_xr_pose aim_pose;
@@ -266,6 +269,30 @@ void vr_reload_settings(void)
 {
 	static int left_handed = -1;
 
+    {
+        const char *sides[] = {"left", "right"};
+        const char *axes[] = {"pitch", "yaw", "roll", "right", "up", "back"};
+        int h,a,changed=0;
+        for(h=0;h<2;h++) {
+            char key[64]; float angle[3],offset[3],rotation[4]; int grip_aim;
+            for(a=0;a<6;a++) {
+                snprintf(key,sizeof(key),"vr.align_%s_%s",sides[h],axes[a]);
+                if(a<3) angle[a]=vr_alignment_bound(config_real(key),180.f);
+                else offset[a-3]=vr_alignment_bound(config_real(key),0.2f);
+            }
+            snprintf(key,sizeof(key),"vr.align_%s_grip_aim",sides[h]);
+            grip_aim=config_boolean(key);
+            vr_alignment_rotation(angle,rotation);
+            changed |= memcmp(rotation,vr.alignment_rotation[h],sizeof(rotation)) != 0 ||
+                memcmp(offset,vr.alignment_offset[h],sizeof(offset)) != 0 || grip_aim != vr.alignment_grip_aim[h];
+            memcpy(vr.alignment_rotation[h],rotation,sizeof(rotation));
+            memcpy(vr.alignment_offset[h],offset,sizeof(offset)); vr.alignment_grip_aim[h]=grip_aim;
+            platform_log("vr: %s calibration pitch/yaw/roll %.1f/%.1f/%.1f degrees offset %.3f/%.3f/%.3f m aim=%s",
+                sides[h],angle[0],angle[1],angle[2],offset[0],offset[1],offset[2],grip_aim?"grip":"native");
+        }
+        if(changed) { vr.hands_last_valid=0; vr.smoothed_valid=0; vr.run_push=0.f;
+            vr.hand_speed[0]=vr.hand_speed[1]=0.f; vr.two_hand_held=0; vr.melee_rearm=0.5f; }
+    }
 	/* "immersive", "screen" (3D unless vr.cinema_3d is off) or "flat" */
 	vr.cinema_immersive = !strcmp(config_string("vr.cutscenes"), "immersive");
 	vr.cinema_enabled = config_boolean("vr.cinema_3d") && strcmp(config_string("vr.cutscenes"), "flat") != 0;
@@ -388,7 +415,7 @@ void vr_initialize(void)
 	if (vr.initialized)
 		return;
 	vr.initialized = 1;
-	platform_log("vr: HaloCE Quest test14 candidate (co-op actor control and resting biped synchronization)");
+	platform_log("vr: HaloCE Quest test15 candidate (co-op actor control and resting biped synchronization)");
 	if (!config_boolean("vr.enabled"))
 	{
 		platform_log("vr: off (vr.enabled)");
@@ -1216,6 +1243,21 @@ static int frame_begin(void)
 		vr.room_held = 1;
 	}
 	layout_controls();
+    /* Once per freshly acquired frame, before gestures/weapon rays/IK. Never
+     * accumulate corrections on the previous corrected frame. */
+    {
+        int h;
+        for(h=0;h<2;h++) {
+            if(vr.alignment_grip_aim[h]) {
+                if(vr.frame.hand_valid[h]&1) { vr.frame.aim[h]=vr.frame.grip[h]; vr.frame.hand_valid[h]|=2; }
+                else vr.frame.hand_valid[h]&=~2u;
+            }
+            if((vr.frame.hand_valid[h]&1) && !vr_alignment_apply(vr.frame.grip[h].position,
+                vr.frame.grip[h].orientation,vr.alignment_rotation[h],vr.alignment_offset[h])) vr.frame.hand_valid[h]&=~1u;
+            if((vr.frame.hand_valid[h]&2) && !vr_alignment_apply(vr.frame.aim[h].position,
+                vr.frame.aim[h].orientation,vr.alignment_rotation[h],vr.alignment_offset[h])) vr.frame.hand_valid[h]&=~2u;
+        }
+    }
 	update_gestures();
 	vr.frame_start = now_ms();
 	vr.wait_ms += vr.frame_start - start;

@@ -69,6 +69,33 @@ struct config_setting
 
 static const struct config_setting config_settings[] =
 {
+	{ "pvp.time_limit", _config_integer, "0", "HALO_PVP_TIME_LIMIT", _environment_value, _platform_all,
+		"Match time limit in minutes: 0 (unlimited) to 1440." },
+
+	{ "pvp.friendly_fire", _config_integer, "0", "HALO_PVP_FRIENDLY_FIRE", _environment_value, _platform_all,
+		"Team damage: 0 on, 1 off, 2 shields only, 3 explosives only." },
+
+	{ "pvp.vehicle_respawn_time", _config_integer, "0", "HALO_PVP_VEHICLE_RESPAWN_TIME", _environment_value, _platform_all,
+		"Empty/destroyed vehicle respawn seconds: 0 never, up to 3600." },
+
+	{ "pvp.auto_team_balance", _config_boolean, "false", "HALO_PVP_AUTO_TEAM_BALANCE", _environment_value, _platform_all,
+		"Balance teams in the lobby and on death; host authority." },
+
+	{ "pvp.radar_players", _config_integer, "0", "HALO_PVP_RADAR_PLAYERS", _environment_value, _platform_all,
+		"Motion tracker: 0 all, 1 friends only, 2 none." },
+
+	{ "pvp.custom_loadout", _config_boolean, "false", "HALO_PVP_CUSTOM_LOADOUT", _environment_value, _platform_all,
+		"Use selected primary/secondary weapons instead of variant defaults." },
+
+	{ "pvp.primary_weapon", _config_integer, "2", "HALO_PVP_PRIMARY_WEAPON", _environment_value, _platform_all,
+		"Custom loadout: 0 none, 1 random, 2 AR, 3 pistol, 4 shotgun, 5 sniper, 6 rocket, 7 plasma pistol, 8 plasma rifle, 9 needler." },
+
+	{ "pvp.secondary_weapon", _config_integer, "3", "HALO_PVP_SECONDARY_WEAPON", _environment_value, _platform_all,
+		"Same custom-loadout weapon choices as primary_weapon." },
+
+	{ "pvp.infinite_grenades", _config_boolean, "false", "HALO_PVP_INFINITE_GRENADES", _environment_value, _platform_all,
+		"Unlimited grenades in launcher-hosted PvP, including expanded player counts." },
+
 	{ "display.fullscreen", _config_boolean, "true", "HALO_FULLSCREEN", _environment_value, _platform_desktop,
 		"Start fullscreen, drawing at the display's resolution and shape; false\n"
 		"starts in a window, which draws the Xbox's 640x480. F11 switches." },
@@ -133,6 +160,11 @@ static const struct config_setting config_settings[] =
 	{ "paths.saves", _config_string, "\"\"", "HALO_SAVE_ROOT", _environment_value, _platform_desktop,
 		"Where saved games and profiles go; empty for the usual place\n"
 		"(~/.local/share/halo-linux, or %APPDATA%\\halo on Windows)." },
+
+	{ "renderer.safe_geometry", _config_boolean, "false", "HALO_SAFE_GEOMETRY", _environment_value, _platform_all,
+		"Geometry compatibility mode (Android; restart required). Streams geometry\n"
+		"without persistent buffers/static mirrors and rebases indices on CPU.\n"
+		"Try for stretched triangles; can reduce performance. Not a data revision selector." },
 
 	{ "network.address", _config_string, "\"\"", "HALO_NET_ADDRESS", _environment_value, _platform_all,
 		"This machine's IPv4 address for system link, for a machine on several\n"
@@ -427,6 +459,34 @@ static const struct config_setting config_settings[] =
 		"the gun (an extra view rendered while zoomed); your eyes stay unzoomed." },
 	{ "vr.scope_size", _config_real, "0.06", "HALO_VR_SCOPE_SIZE", _environment_value, _platform_vr,
 		"How wide the scope is, in metres." },
+	{ "vr.align_left_pitch", _config_real, "0.0", "HALO_VR_ALIGN_LEFT_PITCH", _environment_value, _platform_vr,
+		"Left controller local pitch: degrees (-180..180), applied to grip and aim. Zero preserves runtime tracking." },
+	{ "vr.align_left_yaw", _config_real, "0.0", "HALO_VR_ALIGN_LEFT_YAW", _environment_value, _platform_vr,
+		"Left controller local yaw: degrees (-180..180), applied to grip and aim. Zero preserves runtime tracking." },
+	{ "vr.align_left_roll", _config_real, "0.0", "HALO_VR_ALIGN_LEFT_ROLL", _environment_value, _platform_vr,
+		"Left controller local roll: degrees (-180..180), applied to grip and aim. Zero preserves runtime tracking." },
+	{ "vr.align_left_right", _config_real, "0.0", "HALO_VR_ALIGN_LEFT_RIGHT", _environment_value, _platform_vr,
+		"Left controller local right: metres (-0.20..0.20), in the original controller frame. Zero preserves runtime tracking." },
+	{ "vr.align_left_up", _config_real, "0.0", "HALO_VR_ALIGN_LEFT_UP", _environment_value, _platform_vr,
+		"Left controller local up: metres (-0.20..0.20), in the original controller frame. Zero preserves runtime tracking." },
+	{ "vr.align_left_back", _config_real, "0.0", "HALO_VR_ALIGN_LEFT_BACK", _environment_value, _platform_vr,
+		"Left controller local back: metres (-0.20..0.20), in the original controller frame. Zero preserves runtime tracking." },
+	{ "vr.align_left_grip_aim", _config_boolean, "false", "HALO_VR_ALIGN_LEFT_GRIP_AIM", _environment_value, _platform_vr,
+		"Use left grip pose for aim too. Optional controller compatibility mode; false preserves native aim." },
+	{ "vr.align_right_pitch", _config_real, "0.0", "HALO_VR_ALIGN_RIGHT_PITCH", _environment_value, _platform_vr,
+		"Right controller local pitch: degrees (-180..180), applied to grip and aim. Zero preserves runtime tracking." },
+	{ "vr.align_right_yaw", _config_real, "0.0", "HALO_VR_ALIGN_RIGHT_YAW", _environment_value, _platform_vr,
+		"Right controller local yaw: degrees (-180..180), applied to grip and aim. Zero preserves runtime tracking." },
+	{ "vr.align_right_roll", _config_real, "0.0", "HALO_VR_ALIGN_RIGHT_ROLL", _environment_value, _platform_vr,
+		"Right controller local roll: degrees (-180..180), applied to grip and aim. Zero preserves runtime tracking." },
+	{ "vr.align_right_right", _config_real, "0.0", "HALO_VR_ALIGN_RIGHT_RIGHT", _environment_value, _platform_vr,
+		"Right controller local right: metres (-0.20..0.20), in the original controller frame. Zero preserves runtime tracking." },
+	{ "vr.align_right_up", _config_real, "0.0", "HALO_VR_ALIGN_RIGHT_UP", _environment_value, _platform_vr,
+		"Right controller local up: metres (-0.20..0.20), in the original controller frame. Zero preserves runtime tracking." },
+	{ "vr.align_right_back", _config_real, "0.0", "HALO_VR_ALIGN_RIGHT_BACK", _environment_value, _platform_vr,
+		"Right controller local back: metres (-0.20..0.20), in the original controller frame. Zero preserves runtime tracking." },
+	{ "vr.align_right_grip_aim", _config_boolean, "false", "HALO_VR_ALIGN_RIGHT_GRIP_AIM", _environment_value, _platform_vr,
+		"Use right grip pose for aim too. Optional controller compatibility mode; false preserves native aim." },
 	{ "vr.weapon_offset_right", _config_real, "0.10", "HALO_VR_WEAPON_RIGHT", _environment_value, _platform_vr,
 		"With vr.aim \"hand\": how far right of the game's eye the weapon's model\n"
 		"holds its grip, in metres, so the grip sits in the hand." },
