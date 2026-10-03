@@ -3,6 +3,7 @@ from pathlib import Path
 import re,ast
 ROOT=Path(__file__).resolve().parents[1]
 OUT=ROOT/'port/android/app/src/main/assets/guide';OUT.mkdir(parents=True,exist_ok=True)
+(OUT/'credits.txt').write_text((ROOT/'CREDITS.md').read_text(encoding='utf-8')+'\n\n'+(ROOT/'THIRD-PARTY-NOTICES.txt').read_text(encoding='utf-8'),encoding='utf-8',newline='\n')
 for source,target in [('PLAYER-GUIDE.md','player-guide.txt'),('CONTROLS-AND-OPTIONS.md','controls.txt'),('ANDROID-TOUCH-CONTROLS.md','touch.txt')]:
     text=(ROOT/'docs'/source).read_text(encoding='utf-8')
     if target=='touch.txt': text+='\n\n'+(ROOT/'docs/ANDROID-GAMEPAD.md').read_text(encoding='utf-8')

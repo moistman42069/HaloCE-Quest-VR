@@ -1,8 +1,23 @@
 # Current development state
 
-Updated 2026-10-03. Canonical public repository: [moistman42069/HaloCE-Quest-VR](https://github.com/moistman42069/HaloCE-Quest-VR), branch **main**. Main contains complete test14 runtime source plus current player/project documentation. The initial test13a import is historical; private identifying metadata remains excluded. Older private Git history remains a backup, not the continuation branch.
+Updated 2026-10-03. Canonical public repository: [moistman42069/HaloCE-Quest-VR](https://github.com/moistman42069/HaloCE-Quest-VR), branch **main**. The 1.0 publication advances main to the complete release source and player/project documentation. The initial test13a import is historical; private identifying metadata remains excluded. Older private Git history remains a backup, not the continuation branch.
 
-## Active candidate: test17 (unpublished)
+## Current baseline: 1.0 (owner-authorized publication)
+
+The owner accepted the delivered test17 work as the first proper 1.0 baseline and
+explicitly authorized a new release, preserving test14 unchanged. Both APKs use
+version **1.0.0 / code 19**. Gameplay, protocols, body/grip and native action
+behavior remain test17. Publication changes version presentation, stable-version
+updater policy, current guides and bundled credit/license notices. Tag `v1.0.0`
+identifies the complete source; see [release notes](RELEASE-1.0.0.md) and
+[exact provenance](RELEASE-PROVENANCE-1.0.0.md).
+
+Publish only the two clearly named APKs and required `compatibility.json`;
+GitHub supplies source archives. This authorization does not cover future
+releases or imply a new comprehensive device/campaign test matrix. Future
+release notes must follow [the release contract](RELEASE-TEMPLATE.md).
+
+## Historical candidate: test17 (basis of 1.0)
 
 Branch `test17-network-data-profiles`, version 1.0-test17/code 18. The owner reports
 test16 animations significantly improved and requests preserving native online
@@ -13,7 +28,7 @@ are included. Both launchers add managed ISO/extracted data sets, detected build
 and fingerprint labels, and explicit ISO/revision compatibility guidance.
 [Findings, preserved scope and tests](TEST17-PROGRESS.md),
 [data library](GAME-DATA-LIBRARY.md), [delivery](TEST17-DELIVERY.md).
-Test14 remains the public release; new testing/publication approval is pending.
+The owner subsequently authorized 1.0 from this baseline; test14 stays available unchanged.
 
 ## Prior candidate: test16 (unpublished)
 

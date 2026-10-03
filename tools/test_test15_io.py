@@ -150,6 +150,12 @@ public class MobileCheck {
   check(Math.abs(TouchLayout.axis(100,100,100,.08f)-.7071)<.0001);check(TouchLayout.axis(Float.NaN,0,100,.08f)==0);
   check(UpdatePolicy.newer("halo-ce-quest-test16","1.0-test15"));check(!UpdatePolicy.newer("halo-ce-quest-test14","1.0-test15"));
   check(UpdatePolicy.asset("halo-ce-quest-test16",true).equals("HaloCE-Quest-test16.apk"));check(UpdatePolicy.asset("build-111",false)==null);
+  check(UpdatePolicy.asset("v1.0.0",true).equals("HaloCE-Quest-1.0.0.apk"));check(UpdatePolicy.asset("v1.2.3",false).equals("HaloCE-Android-1.2.3.apk"));
+  check(UpdatePolicy.newer("v1.0.0","1.0-test17"));check(!UpdatePolicy.newer("v1.0.0","1.0.0"));
+  check(UpdatePolicy.newer("v1.0.1","1.0.0"));check(UpdatePolicy.newer("v1.10.0","1.9.99"));check(UpdatePolicy.newer("v2.0.0","1.99.99"));
+  check(!UpdatePolicy.newer("v1.0.0","1.0.1"));check(!UpdatePolicy.newer("halo-ce-quest-test999","1.0.0"));check(!UpdatePolicy.newer("v0.9.0","1.0-test17"));
+  for(String bad:new String[]{"v1.0","v01.0.0","v1.0.0-rc1","v1.0.0/evil","v99999999999.0.0", "v1.0.0+meta", "", "build-111"}){check(UpdatePolicy.asset(bad,true)==null);check(!UpdatePolicy.newer(bad,"1.0.0"));}
+  check(!UpdatePolicy.newer("v1.0.1","1.1.0-rc1"));check(!UpdatePolicy.newer(null,"1.0.0"));check(!UpdatePolicy.newer("v1.0.0",null));
   for(String url:new String[]{"http://github.com/a","https://github.com.evil/a","https://user@github.com/a","file:///tmp/x","https://github.com:99/a"})check(!UpdatePolicy.allowedUrl(url));
   check(UpdatePolicy.upstreamVersion("#define HALO_PORT_NETWORK_VERSION 11\n")==11);
   check(UpdatePolicy.upstreamVersion("#define HALO_PORT_NETWORK_VERSION 12\n")==12);

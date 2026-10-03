@@ -50,7 +50,7 @@ Additional native-port reference: id Software's public [DOOM iOS HUD editor](htt
 Controller & touch settings in the launcher controls automatic hiding and recovery. Auto is the default; only a fully mapped SDL gamepad hides the HUD. Always hide is an explicit override; restore visibility in the launcher. See [controller support](ANDROID-GAMEPAD.md).
 
 
-# Android controllers (test15 candidate)
+# Android controllers (1.0)
 
 The flat ARM64 Android APK uses Android's input system and bundled SDL3 to
 translate common USB/Bluetooth gamepads into Halo's Xbox controller state.

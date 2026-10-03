@@ -1,16 +1,164 @@
-# Installation, multiplayer and troubleshooting
+# Halo CE Quest VR + Android 1.0 — player guide
 
-## APK and device
+## 1. Installation
 
-Quest VR test15 is the immersive standalone build. Flat Android test15 is the touch/gamepad build. Both are version `1.0-test15`, code 16, built from the same source revision. Quest 3 is the reference headset; other devices lack the same owner evidence. Flat requires Android 9/API 28+, ARM64 and compatible OpenGL ES graphics. Neither APK bundles game maps or the signing key.
+**Halo CE Quest VR + Android 1.0** is the first stable baseline for this project: standalone Quest VR and a separate flat Android edition. App version: **1.0.0**.
 
-## Install and import
+| Your device | Download |
+| --- | --- |
+| Android phone/tablet — flat, touch or gamepad | **[HaloCE-Android-1.0.0.apk](https://github.com/moistman42069/HaloCE-Quest-VR/releases/download/v1.0.0/HaloCE-Android-1.0.0.apk)** |
+| Meta Quest — immersive standalone VR | **[HaloCE-Quest-1.0.0.apk](https://github.com/moistman42069/HaloCE-Quest-VR/releases/download/v1.0.0/HaloCE-Quest-1.0.0.apk)** |
 
-1. For this unpublished test15 candidate, use the delivered `HaloCE-Quest-test15.apk` for VR or `HaloCE-Android-test15.apk` for flat. Candidate `SHA256SUMS.txt` identifies the files. The public latest release remains test14 until testing/approval.
-2. Sideload through your authorized Quest installer or Android's package installer. Optional computer command: `adb install -r <apk-file>`.
-3. Copy your legally obtained Halo CE Xbox `.iso`/`.xiso` onto the device and select it in the launcher's data-import flow. Allow roughly 1.8 GB for maps plus cache/saves and image space during extraction. This data is distinct from MCC/retail PC installation files.
-4. Wait for extraction, then Play. Existing Quest data at `/sdcard/Documents/HaloCE/maps` is recognized when `ui.map` is present; otherwise app external files are used.
-5. Recenter standing normally; open campaign pause > VR Settings. [Controls/options](CONTROLS-AND-OPTIONS.md).
+1. **Install the appropriate APK.** On Quest, enable developer mode and sideload with SideQuest or your existing installer; open it from **Unknown Sources**. On Android, open the downloaded APK and allow installation from that source when prompted. Both require ARM64, Android 9/API 28 or newer and compatible graphics. **Quest 3 is the reference headset**; other devices are not equally verified.
+2. **Updating this project? Install over it.** Both APKs retain their package IDs and signing certificate. Do not uninstall or clear app data. Optional ADB command: `adb install -r <apk-file>`. Back up your maps, saves and settings first. Another fork using the same package ID but a different key cannot update in place.
+3. **Supply your own legally obtained Xbox Halo: Combat Evolved data.** No game maps are included. Copy your `.iso`/`.xiso` or extracted game folder to the device. MCC and retail PC installation files are not substitutes for the supported Xbox base data.
+4. **Open the launcher → Game files & versions.** Import an ISO/XISO or select an extracted `maps` folder/game root. Wait for validation, then select **Use** beside the imported set. Allow roughly 1.8 GB for the usual maps, plus the source image, saves and import space. Multiple sets require additional storage.
+5. **Choose Play.** Existing installations remain available as **Existing game data**. In VR, stand normally and press both stick clicks together to recenter. Open the campaign pause menu → **VR Settings** to customize your experience.
+
+The launcher includes an offline **Field guide** with controls, settings and credits. Existing Quest data under `/sdcard/Documents/HaloCE/maps` is recognized when `ui.map` is present; otherwise each app uses its own external-files storage. VR and flat can coexist and have separate app data.
+
+**Coming from a test build:** install 1.0 manually once. Older test updaters do not recognize the new stable release names. From 1.0 onward, **Versions & updates** supports normal release versions. The previous test14 release remains available unchanged.
+
+## 2. New Features / Major Changes
+
+This release brings the refinements since public test14 together into the 1.0 baseline:
+
+- **Multiplayer compatibility fixes:** running native PvP matches are no longer falsely rejected by the shared advertisement flag; the action-control bit responsible for the reported assertion is handled correctly. Includes reviewed upstream player departure/rejoin safeguards and Network 11 options, while accepting reviewed v9/v10 hosts.
+- **Managed game-data sets:** import multiple ISO/XISO or extracted installations, scan an import inbox, view detected builds/fingerprints, rename sets and switch without replacing the original installation. Saves remain separate per set.
+- **Smoother native weapon actions in VR:** reloads, grenade throws, melee, weapon swaps and other affected animations temporarily own the appropriate arm/hand, then blend back to tracking. Existing support grip is preserved through the action.
+- **Safe geometry by default in VR**, including a one-time migration of older settings. Flat Android retains Normal by default. Explicit later choices are preserved.
+- **Per-controller alignment controls** for unusual tracking/firmware orientation, plus a customizable flat touch HUD and expanded Xbox-style gamepad settings.
+- **Launcher PvP hosting**, population-sorted browsing, compatibility explanations, bundled help, detailed per-launch logs and verified project updates.
+
+Gameplay is based on the delivered test17 build. The 1.0 publication changes version presentation, stable-version update handling, documentation and bundled license information; it does not introduce another body, grip or combat redesign.
+
+## 3. Controls / Inputs
+
+### Quest Touch — default VR layout
+
+Use **Controls = VR** and the standard native controller profile. Right is the default weapon hand. Left-handed mode changes weapon/off-hand trigger roles; face-button sides are not all mirrored.
+
+| Input | Action |
+| --- | --- |
+| Left stick | Move/strafe; relative to the selected head/hand orientation |
+| Right stick | Smooth or snap turn; vertical input also serves native look prompts |
+| Weapon-hand trigger / other-hand trigger | Fire / zoom |
+| Right A / Right B | Jump or confirm / reload-use; hold B for interaction prompts; B returns in pointer menus |
+| Left Y | Switch weapons |
+| Left X, Physical weapons | Tap/release to throw a grenade; hold 0.4 seconds to switch grenade type |
+| Left X, Locked weapons | Switch grenade type |
+| Weapon-hand grip, Physical | Hold the gun; release after the first grip to drop/holster/transfer |
+| Weapon-hand grip, Locked | Throw grenade away from holsters; switch weapon at a holster |
+| Other-hand grip near the support region | Lock the support hand; release to detach |
+| Left / right stick click | Crouch / native melee |
+| Both stick clicks together | Recenter during gameplay |
+| Left menu button | Pause/menu; online co-op continues running |
+| Weapon pointer + trigger | Select menu item; right B returns |
+
+**Online holding differs:** **MP Physical defaults Off**, so multiplayer uses **Locked** holding and the Locked grenade inputs above. Body sharing remains available. A newly supplied weapon stays held until the first grip action in Physical mode. Two Hands defaults to **Grip**: proximity alone does not attach it.
+
+### Flat Android — Xbox-style gamepad defaults
+
+| Input | Action |
+| --- | --- |
+| Left / right stick | Move / aim |
+| RT / LT | Fire / throw grenade |
+| A / B | Jump-confirm / melee-cancel |
+| X | Reload; hold for use, pickups and vehicle interaction |
+| Y | Switch weapons |
+| LB / RB | Flashlight / switch grenade type |
+| Left / right stick click | Crouch / zoom |
+| Start-Menu / Back-View | Pause / Halo Back input or multiplayer scores |
+| D-pad or left stick in launcher | Navigate; A confirms, B returns |
+
+PlayStation/Nintendo-style pads use equivalent button positions; an optional face-button swap is available. Native Halo Options retains alternate layouts, sensitivity and inverted aim. System file pickers/keyboards follow Android's own input support.
+
+### Flat touch
+
+Use **MOVE** plus swipe aiming or **FIRE-and-drag** to move, fire and aim together. Labeled buttons provide jump, crouch, melee, reload/use, weapon/grenade switching, grenade, zoom, flashlight and menu navigation. Tap **HUD** during play to edit the layout. Editing does not pause an online match.
+
+## 4. VR Features and Settings
+
+- **Native standalone OpenXR:** stereo rendering, tracked headset/controllers, hand or head aim, room-scale movement, recentering, smooth/snap turning and weapon-aligned scope.
+- **Body modes:** **Legs + Arms is the default**. Full, Arms + Hands and Hands Only are also available. The procedural IK rig infers torso/legs from headset/controllers, with room-scale foot following, bounded shoulders and smoothed elbows/wrist twist. Arm modes include IK, hidden and authored animation.
+- **Hands and contact:** controller-driven finger poses and smoothing, palm/finger/world contact, approximate held-weapon contact and haptics. These are controller sensors, not optical finger tracking or fully simulated rigid-body hands.
+- **Weapons:** deliberate support grip at a fixed anchor, optional Auto proximity grip or Off, physical/locked holding, first-grip protection, hand transfer and shoulder/hip holsters. Reload uses native animations and the button; physical magazine reloading is not implemented.
+- **Movement and gestures:** physical crouch, off-hand-near-head flashlight, impact or swing melee, optional arm-run effort and up to 1.5× offline sprint. Online movement speed/collision remain stock; network clients use native swing melee.
+- **View choices:** inside/chase vehicles; stick/head/hand steering; immersive, 3D-screen or flat cinematics; native crosshair artwork with size/opacity or Off.
+- **Graphics:** Auto/Low/Medium/High/Max presets; render resolution; shadows, lights, specular, reflections, bump maps, grass, fog, decals, particles, contrails, weather, lens flares and camouflage. Refresh choices are 72/80/90/120 Hz requests, not guaranteed frame rates.
+- **Calibration:** Align Left/Right provides controller-local pitch/yaw/roll, position offsets, Flip Roll 180, Native/Grip aim source and separate resets. Correct only the affected hand; no automatic firmware-based flip is applied.
+
+In VR Settings, **A/right increases or advances; left decreases**. Next Page exposes more options; Back returns through pages/categories. Settings persist. **Safe geometry** can be changed in the launcher; restart afterward. It can trade performance for compatibility. Existing body preferences are retained when updating.
+
+## 5. Android / Mobile Features and Settings
+
+- Separate flat APK with multi-touch movement, relative swipe aim, fire-drag aiming and controller coexistence.
+- **HUD editor:** drag individual controls; choose covered controls from a selector; adjust individual/global size and opacity, spacing through placement, overall scale, color, horizontal/vertical sensitivity, dead zone, floating movement and swipe/stick aim. Save, Cancel and Reset are provided; placement accounts for screen edges/cutouts.
+- **USB/Bluetooth gamepads:** Android input through SDL3, targeting Xbox/XInput-style controllers without requiring a Windows XInput layer. Includes analog and supported digital trigger mappings, hot-plug/reconnect cleanup, independent dead zones/response, optional face-button swap and vibration where the device/driver supports it.
+- **Touch visibility:** Auto hides the HUD when a fully mapped controller is ready and restores it after disconnection. Always show and Always hide are manual choices. In Always hide, touch stays hidden after disconnect until you change the setting.
+- **Controller input check** and controller navigation across launcher/browser dialogs; gameplay uses Halo's native controller mapping.
+- Shared launcher, game-data manager, offline help, server browsing/hosting, co-op, update checks and remote VR-avatar reception. Flat geometry remains Normal by default.
+
+## 6. Multiplayer / Co-op / Server Compatibility
+
+### Regular PvP
+
+Open **Multiplayer servers → Refresh → Join**. After the invite tunnel connects, use **Multiplayer → System Link** in-game to select the host; other native ports may call it Direct Link. Saved invites and LAN discovery support unlisted hosts.
+
+The browser reads the ChupathingyCE native-port directory, retains valid listings and sorts by reported population before paging. Directory settings can merge up to four compatible HTTPS catalogs. Full/incompatible hosts show their status; a listing does not prove reachability or measure ping. No second independent compatible preset directory has been verified, and private/unadvertised games cannot all be enumerated.
+
+**Host multiplayer** offers installed map, game type, name, score/time, friendly fire, radar, team balance, vehicle respawn, loadout/grenade options and **2–128 PvP slots**. Public listing is opt-in; private invites are available. Start with modest limits: 128 is protocol capacity, not a verified Quest-host performance target. Network settings expose Internet/LAN, UPnP, clipboard invites and tunnel port.
+
+This build hosts native **Network 11** and accepts reviewed distributed hosts **9–11**, subject to content/rules and connectivity. Supported native Windows/macOS/Linux/Android ports can cross-play when compatible. **Retail Halo PC/Custom Edition, original Xbox and MCC use different network protocols.** Older clients that insist on an older version need an update.
+
+### Campaign co-op and avatars
+
+**Campaign co-op → Host campaign / Browse or join** is separate from PvP. Use **matching 1.0 builds and matching campaign/resource files** on both peers. Two Quests or Quest plus flat Android are the intended pairings; Quest-to-flat connectivity and remote VR body movement have prior owner confirmation.
+
+Both players join the lobby before starting. The host controls campaign scripts, AI, checkpoints and transitions. **Campaign supports two players**, not 128; joining mid-mission is disabled. Disconnects require a new lobby. Public campaign directory acceptance remains unverified; private invite/LAN is the fallback.
+
+Supporting hosts/clients negotiate VR head/arms/body/leg presentation, including the flat receiver. Local torso hiding does not hide the remote body. Older peers use stock presentation; remote world skeletons do not replicate the local individual finger rig. Avatar extensions also operate in supporting PvP sessions.
+
+## 7. Game Revision / Version Compatibility
+
+**Some server incompatibilities may result from different ISO/revision map files or modified game data.** Network versions, missing maps, NAT, full/closed servers and expired invites are other possible causes; an ISO revision is not automatically the explanation for a failed join.
+
+The manager recognizes Xbox cache format 5 with these actual build strings:
+
+| Detected build | Region |
+| --- | --- |
+| `01.01.14.2342` | PAL |
+| `01.10.12.2276`, `01.08.15.1749` | NTSC |
+
+PAL normalization is automatic. **Original/Rev1/Rev2 disc labels are not conclusively identified from filenames or these headers**; no verified disc-revision hash database is bundled. Imported sets show detected cache builds and import-time SHA-256 fingerprints. You can rename your set without altering its detected identity. Header recognition is not a full-disc integrity guarantee.
+
+Use **Game files & versions** to import/switch, or place images/extracted roots in the displayed `game-versions/inbox` and scan. Imports validate in staging before becoming selectable. The original installation is retained; new sets copy current settings once and keep separate saves. The browser can offer an installed set containing a missing map, but servers do not advertise authoritative revision/content fingerprints, so it cannot guarantee automatic revision matching.
+
+**Versions & updates** checks compatible project releases and upstream network changes. Complete signed APKs are checked against compatibility metadata, hashes, edition, version and certificate; the current APK/config/touch preferences are backed up before Android asks to install. Maps/saves are preserved. New upstream protocols require reviewed integration rather than blindly replacing VR/co-op components. Automatic checks are optional; offline play remains available.
+
+## 8. Known Issues or Important Notes
+
+- **Co-op remains experimental:** not every mission, checkpoint, vehicle, cinematic, transition or device/network combination has a documented full playthrough. The 1.0 baseline is not universal certification.
+- Inferred body joints can still clip in extreme poses/custom rigs. Physical weapon drops/pickups online remain limited and **MP Physical defaults Off**.
+- Safe geometry can reduce performance. Refresh requests do not guarantee that frame rate; simulation remains 30 Hz with interpolated rendering.
+- Controller mappings/rumble depend on Android, driver, connection type and model. Other headsets/phones have less testing than Quest 3.
+- NAT/firewall/Wi-Fi isolation can block multiplayer; the native transport has no general relay fallback. Keep the app foregrounded during a match.
+- Custom Edition/SPV1/custom rigs/resources remain experimental; custom cache support does not add retail Custom Edition network compatibility.
+- **Logs:** each launch writes to `Download/HaloCE`, with app-storage fallback if needed. Include the matching log, build, map, device/OS and reproduction steps in a report. Review logs before posting: they may contain invites and device/path details.
+- Back up the whole data root, including `game-versions`, for all imported sets and saves. Uninstalling or clearing app data can remove app-specific files. Switching sets intentionally keeps progress separate.
+
+## 9. Additional Technical Details / Credits
+
+Both APKs are ARM64, **version 1.0.0 / version code 19**, using package IDs `com.halo.decomp` and `com.halo.decomp.vr` with the established signing certificate. The exact source is tagged **v1.0.0**; GitHub's source ZIP/tar.gz downloads are sufficient. `compatibility.json` is the small metadata file required by the launcher updater; players do not need to install or edit it.
+
+Validation covers both flavor builds, package/version/signature checks, 16 KB ZIP alignment, payload/ZIP integrity and targeted networking, imports, animation, co-op, controller/touch and updater tests. These checks complement device feedback; they do not substitute for real multiplayer or headset testing. Exact hashes/build provenance live in the tagged source documentation.
+
+Credits: **Bungie/Microsoft and the original Halo team**; **punpckhdq/halo and bnunu/halo-1 contributors** for the decompilation; **bnunu/cybersecurity halo-ce-universal contributors** for the native port/networking; **astromaddie/Madison** for the OpenXR VR foundation; **ChupathingyCE and halo.milenko.org maintainers** for the directory; **moistman42069 and project contributors/testers** for this integration and refinements. Thanks also to LivingFray/HaloCEVR and the documented IK references, Andiweli's Android rendering work, and SnowyMouse's cache-format documentation.
+
+SDL3, OpenXR, musl, KCP, miniupnpc, Mbed TLS, tomlc17, stb, extract-xiso and other inherited dependencies retain their licenses. **This product includes software developed by in &lt;in@fishtank.com&gt;.** Full credits and notices are included inside each APK under **Field guide → Credits & licenses**, and in the tagged repository. This is an unofficial community project; supply your own game data.
+
+
+## Storage reference
 
 | Data | Location |
 | --- | --- |
@@ -23,125 +171,4 @@ Quest VR test15 is the immersive standalone build. Flat Android test15 is the to
 
 Only VR selects the shared root, and only when `maps/ui.map` exists. Editing an inactive config has no effect. Android file-manager restrictions may require the system picker or authorized ADB access.
 
-## Updates and backups
-
-Install over the existing project APK to retain data. The original project certificate is retained. Other forks may have the same package ID with a different key; Android rejects that in-place update. Back up maps/config/saves before removing any installation. VR and flat have separate app storage and do not automatically share saves.
-
-These builds update manually from this project's Releases. They do not automatically follow upstream builds. Existing body choices survive updates: choose Legs + Arms or set `[vr] body = "legs"` while closed if needed. Avoid deleting app data merely to reset one option.
-
-## PvP
-
-1. Launcher > **Multiplayer servers**; Refresh.
-2. Select an open compatible host. Population is sorted before paging; **Show next 50** reveals more.
-3. Join launches the game with the invite. In-game use **Multiplayer > System Link** after the tunnel connects.
-4. Native LAN discovery and saved `halo://join/<64 hex digits>` invites support unlisted hosts. Restarting a host can invalidate its old invite.
-
-Directory settings accepts up to four compatible HTTPS feeds, one per line; **Use ChupathingyCE** restores the verified preset. Saved-only operation is available. Valid distinct listings in bounded responses are retained; oversize/failing feeds are reported. Full/incompatible entries can remain visible with Join disabled. Counts are host reports, not ping measurements. Unadvertised private hosts cannot all be enumerated.
-
-Accepted native PvP host versions: 9/10, with compatible maps/rules. Retail PC/Custom Edition, original Xbox and MCC use other protocols. NAT, firewall and Wi-Fi isolation can prevent joins. Keep the game foregrounded: Android suspends it in the background. [Directory details](MULTIPLAYER-BROWSER.md).
-
-## Campaign co-op (experimental)
-
-Use matching campaign-capable builds and identical mission/resource files: two Quests or Quest plus flat Android. The owner confirmed Quest/flat connectivity and remote VR body movement, then accepted test14 for release after the NPC fixes. Full campaign progression and all host/device combinations remain outside documented acceptance.
-
-1. Host: **Campaign co-op > Host campaign**; select mission/difficulty. **List publicly** is optional.
-2. Keep the native System Link lobby open. Its private invite is copied and logged.
-3. Partner: **Campaign co-op > Browse / join**; select a listing or paste/save the invite. In-game open **Multiplayer > System Link** and choose the host.
-4. Intended flow starts the mission with both players present. Host controls scripts/AI/checkpoints/BSP transitions/progression; each process owns its view/input and local saves.
-
-Joining in progress is disabled. Disconnecting closes the session; reconnect through a new lobby. Missing shared checkpoints trigger coordinated restart. Campaign protocol `0xCE01` is separate from ordinary PvP. Backend acceptance for public publication is unverified; use private invite/LAN if it fails. [Implementation scope](CAMPAIGN-PROTOCOL-WIP.md).
-
-Keep both logs when checking opening cinematics, AI/weapons/doors, checkpoint, both players dying, BSP transition, restart and next mission. Those cases need device evidence.
-
-## VR avatars
-
-Supporting hosts/observers negotiate the visual extension automatically. Flat test14 has the receiver; old hosts/clients keep stock animations. Local torso hiding does not remove the remote body. The remote world skeleton has coarse hands, without the local individual finger rig. [Protocol/limits](NETWORK-VR-AVATARS.md).
-
-## Troubleshooting
-
-| Problem | Check |
-| --- | --- |
-| Install fails | Correct device/ARM64 APK, storage and signing conflict with another fork |
-| Quest opens flat | `.vr` package, immersive launch, focus; include startup/OpenXR log lines |
-| Missing maps/import failure | Xbox data, completed extraction, active root and `maps/ui.map`; preserve error |
-| Old body choice after update | Saved preferences are preserved; change Body explicitly |
-| Height/alignment | Recenter standing normally; collision can separate real/virtual positions |
-| Automatic support attachment | Set Two Hands to Grip, not Auto; release to detach |
-| Gun dropping | Physical mode requires holding after first grip; check holsters/MP Physical or choose Locked |
-| Different online movement/melee | Network speed/collision stay stock; clients use native swing; MP Physical defaults off |
-| Lower settings | Left decreases; A/right advances; Back traverses page history |
-| Poor performance | Compare lower preset/resolution and 72 Hz; report scene/device/settings |
-| Missing co-op listing | Backend acceptance is unverified; use matching builds/private invite |
-| No Downloads log | Check launcher destination; storage failure falls back to app files where possible |
-| Custom content issues | Reproduce stock first; Custom Edition/SPV1 and custom rigs remain experimental |
-
-Logs cover launcher startup through native output/exit and may contain host invites/device details. Review before public posting. Include build, device/OS, map, settings, reproduction steps, host/client roles and peer versions. Video plus the same launch's log helps diagnose body/grip/menu issues.
-
-## Test15 candidate additions (not yet released)
-
-Use the delivered test APKs only after retaining your test14 backup. Test14 remains the accepted public release. Test15 changes are pending owner testing.
-
-### Host regular multiplayer
-
-Launcher > Host multiplayer. Select an installed supported Xbox multiplayer map, a built-in variant, a 2-128 player limit, a server name (15 printable characters maximum), and optionally a score limit (0 keeps the variant default). The native lobby opens with your local player; choose Start Game when ready. Stock match settings and late join remain available. Start with 16 or fewer players: 128 is a protocol capacity, not measured Quest hosting performance.
-
-Private hosting shares an invite only with people you give it to. List publicly publishes session invite, name, map and population to the community directory while the live host exists. Failure is reported; private invitations still work. Leaving closes the listing, with backend expiry as fallback. Campaign hosting remains the separate two-player flow.
-
-Network settings controls Internet invites vs LAN-only, automatic UPnP router mapping, clipboard invitation discovery, and a fixed UDP port (0 selects automatically). Apply changes before launching. Existing advanced config values are preserved. A directory listing does not prove the host is online or reachable through both routers. This client accepts reviewed PvP v9-v11 using explicit legacy settings conversion; hosted PvP advertises v11. Old clients that insist on v9 need an update. Campaign still requires matching campaign-capable builds.
-
-### Data and graphics
-
-Game data & compatibility reads each installed map's actual cache build, format and region. Fingerprint files computes SHA-256 locally and records it in this launch's log. Nothing is uploaded. Disc revision names alone do not identify exact map data. Do not rename headers to bypass network checks. Original and Rev2 both have success reports, and corruption was reported on both; Rev1 has no confirmed device report in the reviewed thread.
-
-Geometry compatibility > Safe bypasses persistent geometry streaming, static mirrors and GPU base-vertex rebasing. Restart after changing it. Try it if stretched triangles persist after the normal-path upload fixes; it can cost performance. Return to Normal if it does not help. This changes rendering only, not game data or the network protocol.
-
-Field guide bundles this guide, full input mappings, touch instructions, and generated descriptions/defaults for the available mobile/VR settings. It is available before importing game data. New Align Left / Align Right VR pages provide a quick upside-down correction and per-controller adjustments.
-
-## Test15 mobile controls and updates
-
-Flat players can tap HUD during play, drag each control and open Options for per-control position/size/opacity, overall scale/opacity/color, dead zone, sensitivity, floating movement and swipe/stick aim. Save commits; Cancel restores; Reset is temporary until saved. Online play continues during editing. See [touch guide](ANDROID-TOUCH-CONTROLS.md).
-
-The launcher automatically checks for compatible project releases and upstream protocol changes every six hours, with an opt-out under Versions & updates. Newer-protocol server listings offer the same built-in update path. Versions & updates checks this project's signed, complete edition-matching APKs. It displays the integrated upstream baseline and protocols, verifies newer-version/hash/signature/package before Android installation, and backs up the current APK, active config and touch preferences. It does not replace the mod with an unrelated upstream engine. Candidate builds newer than public latest are never downgraded. See [upstream/update details](TEST15-UPSTREAM.md).
-
-Data & compatibility reads actual map headers and optionally logs SHA256 fingerprints; disc revision labels are not assumed to cause graphics bugs. Test15 fixes upload defects and offers Geometry compatibility > Safe as a slower fallback. Restart after changing it. See [data evidence](DATA-COMPATIBILITY.md).
-
-## Campaign capacity (test15 audit)
-
-Campaign co-op currently supports two players on two machines. Native PvP can expose up to 128 slots, but campaign loading/checkpoint barriers currently track one remote peer and player recovery has four slots. Larger campaign limits are not enabled. Known incompatible higher-cap campaign listings show a capacity reason; unknown saved invites are checked by the native handshake. See [capacity audit and expansion requirements](COOP-PLAYER-LIMITS.md). This preserves the accepted paired co-op path while larger sessions require separate implementation and device testing.
-
-
-## Test16 candidate: geometry and action animations
-
-VR now defaults to **Safe geometry**, including a one-time upgrade of older
-configs. Flat Android still defaults to **Normal**. Launcher **Geometry
-compatibility** lets you choose either mode; restart the game afterward. Your
-subsequent explicit choice is preserved. Safe mode trades some rendering speed
-for compatibility. The original config is backed up during the VR migration.
-
-Reload, grenade throw, melee, weapon draw/put-away and heat/vent actions temporarily
-use the affected native arm/hand animations, then blend back to VR tracking.
-Keep holding support grip to return to the same grip; releasing it allows the
-hand to return to free tracking. Ordinary aiming/firing, controller alignment
-and Legs + Arms remain unchanged. This is native animation playback, not physical
-reload. The owner reports improved action playback in test16; test17 preserves it. New networking/data changes still require owner testing.
-
-
-## Test17: game files, revisions and server compatibility
-
-Open **Game files & versions** to import one or more ISO/XISO images, select an
-extracted maps folder, or scan the displayed `game-versions/inbox` folder. Each
-complete set shows detected cache region/build and a SHA-256 fingerprint. Select
-**Use** to activate it for the next launch; **Rename** edits your personal label.
-The original installation remains **Existing game data**. Saves stay separate
-per set, and current settings are copied once into a newly imported set.
-
-Some server incompatibilities may result from different ISO/revision map files
-or modified data. Network protocol versions, missing maps, full/closed hosts and
-NAT can also prevent joining. Original/Rev1/Rev2 labels are not automatically
-verified without trusted hashes. The browser can offer another installed set
-containing a missing map, but servers do not advertise authoritative revision or
-content fingerprints. Do not change map headers to bypass compatibility checks.
-
-Test17 addresses false rejection of running v11 matches, an action-control
-assertion, and reviewed departed-player/rejoin issues. The test16 animation
-handoff is preserved. [Full data-library instructions](GAME-DATA-LIBRARY.md).
+Managed sets and their saves live under `game-versions/p-<id>` beneath the selected base. Quit before editing configuration manually.

@@ -1,4 +1,4 @@
-# Controls and options - test16 candidate VR / flat
+# Controls and options - 1.0 VR / flat
 
 These mappings follow the shipped code. Start with Controls = VR and a standard native controller profile. Changing either can change the resulting actions. Touch controllers lack conventional gamepad bumpers/View.
 
@@ -62,7 +62,7 @@ Auto graphics effects follow the preset. Resolution is relative to runtime eye t
 
 ## Flat Android touch and controller
 
-The flat candidate now includes relative swipe aim, a draggable HUD editor, saved
+The flat edition includes relative swipe aim, a draggable HUD editor, saved
 positions/size/opacity/color and response settings. MOVE + FIRE/drag supports
 simultaneous movement and aiming. Cancel, focus loss and hiding release touch
 input. See [touch controls and editor](ANDROID-TOUCH-CONTROLS.md).
@@ -98,7 +98,7 @@ Pause > VR Settings > Align Left / Align Right. These refer to the physical left
 Offsets apply once per tracked frame before aiming, gesture speed, body/contact and avatar calculations. Changes clear velocity/support history so adjustment is not treated as a melee swing or run gesture. Head aim remains available. If a correction is wrong, reset that hand. These are Touch-controller calibration settings, not optical finger tracking.
 
 
-## Test16 candidate: geometry and action animations
+## geometry and action animations
 
 VR now defaults to **Safe geometry**, including a one-time upgrade of older
 configs. Flat Android still defaults to **Normal**. Launcher **Geometry
@@ -111,10 +111,10 @@ use the affected native arm/hand animations, then blend back to VR tracking.
 Keep holding support grip to return to the same grip; releasing it allows the
 hand to return to free tracking. Ordinary aiming/firing, controller alignment
 and Legs + Arms remain unchanged. This is native animation playback, not physical
-reload. The owner reports improved action playback in test16; test17 preserves it. New networking/data changes still require owner testing.
+reload. The owner reported improved action playback in test16; the 1.0 baseline preserves it. See release notes for remaining device coverage.
 
 
-## Test17: game files, revisions and server compatibility
+## game files, revisions and server compatibility
 
 Open **Game files & versions** to import one or more ISO/XISO images, select an
 extracted maps folder, or scan the displayed `game-versions/inbox` folder. Each

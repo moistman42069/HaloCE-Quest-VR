@@ -10,8 +10,8 @@ final class LauncherHelp {
     static final String DATA_COMPATIBILITY_NOTE = "Some server incompatibilities may be caused by different map files from ISO/revision versions or modified game data. Use Game files & versions to select another supported set. A revision label alone does not prove compatibility; network versions, missing maps and connection problems can also prevent joining.";
     static void show(Activity activity) {
         new GamepadNavigation.Builder(activity).setTitle("Field guide")
-            .setItems(new String[]{"Getting started & multiplayer", "VR controls & settings", "Flat touch & gamepad", "Every setting: reference"},(d,index)->{
-                String[] files={"player-guide.txt","controls.txt","touch.txt","settings.txt"};
+            .setItems(new String[]{"Getting started & multiplayer", "VR controls & settings", "Flat touch & gamepad", "Every setting: reference", "Credits & licenses"},(d,index)->{
+                String[] files={"player-guide.txt","controls.txt","touch.txt","settings.txt","credits.txt"};
                 try(InputStream in=activity.getAssets().open("guide/"+files[index])) {
                     ByteArrayOutputStream out=new ByteArrayOutputStream(); byte[] buffer=new byte[4096];
                     for(int n;(n=in.read(buffer))!=-1;) out.write(buffer,0,n);

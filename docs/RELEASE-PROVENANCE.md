@@ -1,3 +1,7 @@
+# Current release provenance
+
+Current baseline: [1.0.0](RELEASE-PROVENANCE-1.0.0.md). The earlier test14 release below remains unchanged; its original files and hashes are retained.
+
 # Release provenance - test14
 
 [Public release](https://github.com/moistman42069/HaloCE-Quest-VR/releases/tag/halo-ce-quest-test14). Accepted for publication by the owner on 2026-10-03 after delivery of this exact pair. The prior test13a hold is superseded for test14 only. APKs are copied unchanged from the tested delivery; publication does not rebuild or re-sign them.

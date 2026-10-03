@@ -263,7 +263,7 @@ public class LauncherActivity extends Activity {
         title.setLetterSpacing(.14f);
         label(layout, BuildConfig.APPLICATION_ID.endsWith(".vr") ? "QUEST • VIRTUAL REALITY" : "ANDROID • TOUCH & GAMEPAD", 14, HALO_BLUE);
 
-        label(layout, BuildConfig.VERSION_NAME + " • community test build", 12, HALO_BLUE);
+        label(layout, BuildConfig.VERSION_NAME + " • community release", 12, HALO_BLUE);
         updateStatus = Updater.launcher(this, gameRoot(), layout);
         play = menuButton(layout, "Play");
         play.setOnClickListener(v -> startGame());

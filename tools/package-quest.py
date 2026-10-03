@@ -35,15 +35,22 @@ def main():
     parser.add_argument("--build-tools", type=Path, required=True)
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--label", default="test17")
+    parser.add_argument("--stable", action="store_true", help="Use semantic release identity; requires owner publication authorization")
+    parser.add_argument("--runtime-source", help="Exact build commit when later commits change documentation only")
     args = parser.parse_args()
-    if not re.fullmatch(r"[A-Za-z0-9_-]+", args.label):
+    if not re.fullmatch(r"[A-Za-z0-9_.-]+", args.label):
         parser.error("label must contain letters, digits, underscore or dash")
+    if args.stable and not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", args.label):
+        parser.error("stable label must be major.minor.patch")
+    version_name=args.label if args.stable else "1.0-"+args.label
+    release_tag="v"+args.label if args.stable else "halo-ce-quest-"+args.label
     subprocess.run(["git", "diff", "--exit-code", "HEAD", "--"], cwd=ROOT, check=True, stdout=subprocess.DEVNULL)
     untracked = subprocess.check_output(["git", "ls-files", "--others", "--exclude-standard"], cwd=ROOT)
     if untracked.strip():
         raise SystemExit("Commit intended source files before packaging; untracked files remain")
     commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
     branch = subprocess.check_output(["git", "branch", "--show-current"], cwd=ROOT, text=True).strip()
+    runtime_commit=subprocess.check_output(["git","rev-parse",args.runtime_source or "HEAD"],cwd=ROOT,text=True).strip()
     records = []
     for path, package, vr in [(args.vr, "com.halo.decomp.vr", True), (args.flat, "com.halo.decomp", False)]:
         signed = subprocess.check_output([str(args.build_tools / "apksigner"), "verify", "--print-certs", str(path)], text=True)
@@ -52,13 +59,13 @@ def main():
         badging = subprocess.check_output([str(args.build_tools / "aapt"), "dump", "badging", str(path)], text=True)
         if f"package: name='{package}'" not in badging or "native-code: 'arm64-v8a'" not in badging:
             raise SystemExit("Wrong package or ABI: " + str(path))
-        if f"versionName='1.0-{args.label}'" not in badging:
+        if f"versionName='{version_name}'" not in badging:
             raise SystemExit("Wrong candidate version: " + str(path))
         with zipfile.ZipFile(path) as archive:
             if archive.testzip() is not None:
                 raise SystemExit("APK ZIP checksum failure")
             names = archive.namelist()
-            for guide in ["player-guide", "controls", "touch", "settings"]:
+            for guide in ["player-guide", "controls", "touch", "settings"]+(["credits"] if args.stable else []):
                 if "assets/guide/"+guide+".txt" not in names:
                     raise SystemExit("Bundled guide missing: "+guide)
             guest = archive.read("assets/halo_guest.elf")
@@ -76,7 +83,7 @@ def main():
                 raise SystemExit("Negotiated avatar support missing")
             if vr and (b"HANDS ONLY" not in guest or b"NEXT PAGE (%ld/%ld)" not in guest):
                 raise SystemExit("Body modes or paged settings missing")
-            identity = ("HaloCE Quest " + args.label + " candidate").encode("ascii")
+            identity = ("HaloCE Quest " + args.label + (" release" if args.stable else " candidate")).encode("ascii")
             if (identity in guest) != vr:
                 raise SystemExit("VR/flat guest identity mismatch")
             if ("lib/arm64-v8a/libopenxr_loader.so" in names) != vr:
@@ -99,8 +106,8 @@ def main():
     source = output / f"HaloCE-Quest-{args.label}-source.zip"
     subprocess.run(["git", "archive", "--format=zip", "--prefix=halo-ce-quest/", "-o", str(source), commit], cwd=ROOT, check=True)
     manifest = {"candidate": args.label, "created_utc": datetime.now(timezone.utc).isoformat(),
-                "source_commit": commit, "branch": branch, "runtime_accepted": False,
-                "publication": "held pending owner candidate testing and approval",
+                "source_commit": commit, "runtime_source_commit": runtime_commit, "branch": branch, "runtime_accepted": args.stable,
+                "publication": "owner-authorized 1.0 baseline" if args.stable else "held pending owner candidate testing and approval",
                 "prior_device_report": "test14 accepted for release; owner reports test16 action animations improved; test16 multiplayer log faults addressed in test17; candidate testing pending",
                 "certificate_sha256": CERTIFICATE, "apks": records,
                 "source_zip": {"file": source.name, "sha256": sha(source)},
@@ -110,14 +117,15 @@ def main():
                 "directory": "https://halo.milenko.org/v1/games.txt"}
     (output / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
     compatibility = {"schema": 1, "project": "moistman42069/HaloCE-Quest-VR",
-        "tag": "halo-ce-quest-"+args.label, "source_commit": commit, "minimum_app_code": 15,
+        "tag": release_tag, "source_commit": commit, "minimum_app_code": 15,
         "save_policy": "preserve", "config_policy": "preserve", "vr_and_coop_integrated": True,
         "native_minimum": network_value("HALO_PORT_NETWORK_VERSION_MINIMUM"),
         "native_maximum": network_value("HALO_PORT_NETWORK_VERSION_MAXIMUM"), "campaign_protocol": 0xCE01,
         "editions": {record["package"]: {"apk": record["file"], "sha256": record["sha256"],
             "bytes": record["bytes"], "version_code": record["version_code"], "min_sdk": record["min_sdk"]} for record in records}}
     (output / "compatibility.json").write_text(json.dumps(compatibility, indent=2)+"\n")
-    documents = [args.label.upper()+"-DELIVERY.md", args.label.upper()+"-PROGRESS.md", "GAME-DATA-LIBRARY.md", "TEST15-DELIVERY.md", "TEST15-PROGRESS.md", "TEST15-UPSTREAM.md", "DATA-COMPATIBILITY.md", "CURRENT-STATE.md", "PLAYER-GUIDE.md", "CONTROLS-AND-OPTIONS.md", "COOP-COMPATIBILITY-AUDIT.md", "NETWORK-VR-AVATARS.md", "CAMPAIGN-PROTOCOL-WIP.md",
+    edition_docs=["RELEASE-"+args.label+".md", "RELEASE-PROVENANCE-"+args.label+".md"] if args.stable else [args.label.upper()+"-DELIVERY.md", args.label.upper()+"-PROGRESS.md"]
+    documents = edition_docs+["GAME-DATA-LIBRARY.md", "TEST15-DELIVERY.md", "TEST15-PROGRESS.md", "TEST15-UPSTREAM.md", "DATA-COMPATIBILITY.md", "CURRENT-STATE.md", "PLAYER-GUIDE.md", "CONTROLS-AND-OPTIONS.md", "COOP-COMPATIBILITY-AUDIT.md", "NETWORK-VR-AVATARS.md", "CAMPAIGN-PROTOCOL-WIP.md",
                  "ANDROID-TOUCH-CONTROLS.md", "ANDROID-GAMEPAD.md", "COOP-PLAYER-LIMITS.md", "MULTIPLAYER-BROWSER.md"]
     documents = list(dict.fromkeys(documents))
     for doc in documents:
