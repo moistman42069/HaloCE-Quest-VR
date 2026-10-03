@@ -63,7 +63,8 @@ def main():
             host = archive.read("lib/arm64-v8a/libmain.so")
             dex = b"".join(archive.read(name) for name in names if re.fullmatch(r"classes\d*\.dex", name))
             for marker in [b"ServerBrowser;", b"ServerListing;", b"RunLog;", b"openGameLog", b"CoopLauncher;",
-                           b"CoopPublisher;", b"prepareGameExit", b"https://halo.milenko.org/v1/games.txt"]:
+                           b"CoopPublisher;", b"prepareGameExit", b"PvpLauncher;", b"TouchLayout;", b"UpdatePolicy;",
+                           b"upstreamVersion", b"compatibility.json", b"https://halo.milenko.org/v1/games.txt"]:
                 if marker not in dex: raise SystemExit("Browser missing from APK: " + repr(marker))
             if not guest.startswith(b"\x7fELF") or not host.startswith(b"\x7fELF"):
                 raise SystemExit("Missing native ELF payload")
