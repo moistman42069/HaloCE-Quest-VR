@@ -27,7 +27,8 @@ final class CoopLauncher {
     void show() {
         new GamepadNavigation.Builder(activity).setTitle("Campaign co-op")
             .setMessage("Two players: Quest VR or flat Android, using the same build and identical maps/resources. "
-                + "The mission starts when both players enter the host's System Link lobby.")
+                + "The mission starts when both players enter the host's System Link lobby. "
+                + "Campaign currently supports two players; the higher PvP limits do not apply to campaign.")
             .setPositiveButton("Host campaign", (dialog, which) -> host())
             .setNeutralButton("Browse / join", (dialog, which) -> new ServerBrowser(activity, join, true))
             .setNegativeButton("Back", null).show();

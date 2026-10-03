@@ -29,6 +29,7 @@ typedef unsigned short word;
 #define _distributed_to_host_reliably 2
 static int active=1,conn=1,tick=10,round_id=2,seed=3,global_structure_bsp_index=0;
 static unsigned int ms=100;
+static int remote_count=1;
 static int aborts,saves,restores,restarts,snapshots,resets,sync_ready=1,checkpoint=1,io_ok=1,hash_ok=1,sent,op,client_clock,server_clock,script_resets;
 static struct { struct { char name[32]; } map; } game;
 static struct { struct { int count; } structure_bsp_references; } scenario={{3}};
@@ -51,7 +52,7 @@ void update_queues_reset_and_fill_with_lies(void) { }
 void network_distributed_resynchronize(void) { resets++; }
 void network_campaign_script_reset(void) { script_resets++; }
 boolean cache_files_campaign_digest(char const *m,byte *d) { (void)m;memset(d,7,32);return hash_ok; }
-int distributed_client_machines(int *m,int n) { assert(n==2);m[0]=1;return 1; }
+int distributed_client_machines(int *m,int n) { assert(n==2);m[0]=1;m[1]=2;return remote_count<n?remote_count:n; }
 boolean network_objects_synchronized(void) { return sync_ready; }
 boolean game_state_campaign_has_checkpoint(void) { return checkpoint; }
 boolean game_state_campaign_save(void) { saves++;return io_ok; }
@@ -68,6 +69,12 @@ void distributed_send(void*m,byte type,short count,word size,short dest) { asser
 static void begin(void) { conn=1;active=1;epoch=0;tick=10;ms=100;aborts=0;hash_ok=io_ok=sync_ready=checkpoint=1;network_campaign_loaded();assert(phase==PHASE_HOST_WAIT&&epoch==1);network_campaign_frame();assert(op==CAMPAIGN_READY); }
 static struct campaign_barrier client_ready(void) { begin();struct campaign_barrier offer=barrier;memcpy(offer.digest,local_digest,32);conn=2;network_campaign_loaded();assert(phase==PHASE_CLIENT_WAIT);network_campaign_lifecycle_receive(NONE,&offer,sizeof(offer));assert(phase==PHASE_CLIENT_APPLY);network_campaign_frame();assert(phase==PHASE_CLIENT_SNAPSHOT&&op==CAMPAIGN_ACK);return offer; }
 int main(void) {
+ begin();struct campaign_barrier capacity=barrier;memcpy(capacity.digest,local_digest,32);capacity.operation=CAMPAIGN_ACK;
+ remote_count=2;network_campaign_lifecycle_receive(1,&capacity,sizeof(capacity));assert(!peer_ack&&phase==PHASE_HOST_WAIT);
+ network_campaign_lifecycle_receive(2,&capacity,sizeof(capacity));assert(!peer_ack);
+ remote_count=127;network_campaign_lifecycle_receive(1,&capacity,sizeof(capacity));assert(!peer_ack);
+ remote_count=1;network_campaign_lifecycle_receive(1,&capacity,sizeof(capacity));assert(peer_ack);network_campaign_frame();assert(phase==PHASE_IDLE);
+ puts("PASS: CE01 refuses multi-peer ACKs; two-player barrier remains supported");
  struct campaign_barrier e=client_ready();e.operation=CAMPAIGN_RELEASE;
  network_campaign_lifecycle_receive(NONE,&e,sizeof(e));assert(phase==PHASE_IDLE&&client_clock==10&&!aborts);
  int time=network_campaign_encode_time(123);assert(network_campaign_decode_time(&time)&&time==123);time=0;assert(!network_campaign_decode_time(&time));

@@ -53,6 +53,7 @@ final class ServerBrowser {
         final int players, maximum;
         final String map;
         final boolean open;
+        final boolean capacityKnown;
         Entry(JSONObject object) {
             name = ServerInvite.displayName(object.optString("name", "Unnamed server"));
             invite = ServerInvite.normalize(object.optString("invite", ""));
@@ -60,6 +61,7 @@ final class ServerBrowser {
             version = object.optInt("network_version", 0);
             players = Math.max(0, Math.min(128, object.optInt("players", 0)));
             maximum = Math.max(1, Math.min(128, object.optInt("maximum_players", 128)));
+            capacityKnown = object.has("maximum_players");
             map = ServerInvite.displayName(object.optString("map", ""));
             open = object.optBoolean("open", true);
         }
@@ -70,6 +72,7 @@ final class ServerBrowser {
             version = listing.version;
             players = listing.players; maximum = listing.maximum; map = listing.map;
             open = listing.open;
+            capacityKnown = true;
         }
         boolean compatible() {
             return version == 0 || (version >= BuildConfig.HALO_NETWORK_MINIMUM
@@ -80,6 +83,7 @@ final class ServerBrowser {
             try {
                 object.put("name", name).put("invite", invite).put("description", description)
                     .put("network_version", version);
+                if (capacityKnown) object.put("maximum_players",maximum).put("players",players).put("map",map).put("open",open);
             } catch (org.json.JSONException impossible) { throw new IllegalStateException(impossible); }
             return object;
         }
@@ -233,7 +237,8 @@ final class ServerBrowser {
 
     private void row(Entry entry, boolean favorite) {
         text(rows, entry.name + " — " + entry.description);
-        boolean compatible = entry.version == 0 || (campaign ? entry.version == CAMPAIGN_VERSION : entry.compatible());
+        boolean unsupportedCapacity = campaign && !ServerListing.campaignCapacityCompatible(entry.version,entry.maximum,entry.capacityKnown);
+        boolean compatible = !unsupportedCapacity && (entry.version == 0 || (campaign ? entry.version == CAMPAIGN_VERSION : entry.compatible()));
         String version = entry.version == 0 ? "version checked by game" : "network v" + entry.version;
         text(rows, version + (compatible ? "" : " — incompatible; supported: "
             + (campaign ? "matching campaign build" : BuildConfig.HALO_NETWORK_MINIMUM + "–" + BuildConfig.HALO_NETWORK_MAXIMUM)));
@@ -242,7 +247,8 @@ final class ServerBrowser {
             if (join.open(entry.invite)) dialog.dismiss();
             else status.setText("Could not write the invite. Check game-data storage access, then try again.");
         });
-        String blocked = !compatible ? "Protocol mismatch: this host uses network v" + entry.version +
+        String blocked = unsupportedCapacity ? "Unsupported campaign capacity: this build supports two-player co-op. Larger PvP limits do not apply to campaign."
+            : !compatible ? "Protocol mismatch: this host uses network v" + entry.version +
             ". Disc revision cannot change the network protocol. Ask the host to update or choose a compatible server."
             : !favorite && entry.players >= entry.maximum ? "Server full. Refresh after a player leaves."
             : !favorite && !entry.open ? "Host is closed to joining (loading, postgame, or locked lobby). Refresh later."

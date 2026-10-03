@@ -48,6 +48,11 @@ public class BrowserCheck {
         check(ServerListing.parse(many.toString()).size() == 150);
         String campaign = row.replace("\t2\t12\t128\t1\t10", "\t0\t1\t2\t1\t52737");
         check(ServerListing.parse(campaign).get(0).description().contains("Campaign co-op"));
+        for(int cap=1;cap<=128;cap++) {
+            check(ServerListing.campaignCapacityCompatible(0xCE01,cap,true)==(cap==2));
+            check(ServerListing.campaignCapacityCompatible(11,cap,true));
+            check(ServerListing.campaignCapacityCompatible(0xCE01,cap,false));
+        }
         if (args.length > 0) {
             var live = ServerListing.parse(Files.readString(Path.of(args[0])).replace("\ufeff", ""));
             check(!live.isEmpty());

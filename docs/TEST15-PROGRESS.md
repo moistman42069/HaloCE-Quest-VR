@@ -64,3 +64,7 @@ Both final VR and flat builds completed successfully and were preserved separate
 ## Added Android controller pass
 
 The owner added full Xbox-style Android gamepad support before delivery. Prior candidate APK hashes are superseded; final pair must be rebuilt. Retained SDL3/native Xbox mapping, added full-pad readiness detection, flat-only response/trigger/rumble settings, focus neutralization and recycled disconnect handles. Auto/Show/Hide touch policy and controller navigation across launcher dialogs are included. Corrected touch Type/Light mappings against the native default profile. See ANDROID-GAMEPAD.md. Adapter and UI-policy tests pass; hardware controller acceptance remains pending. Preserve all earlier test15 scope and release hold.
+
+## Added campaign capacity investigation
+
+Audited the 128-player transport against campaign identity/lobby/lifecycle, spawning/recovery, scripts/AI, vehicles, checkpoints/BSP and mission progression. Current CE01 cannot support more than two: the barrier validates exactly one remote, and recovery stores four slots despite 128 network indices. No higher stable campaign capacity is established. Retained two-player operation, added clear launcher/browser capacity explanations and saved-listing capacity preservation; known unsupported CE01 capacities cannot be joined. Added production capacity and multi-peer barrier rejection tests. See COOP-PLAYER-LIMITS.md for findings, limits and staged expansion work. This is an investigation result, not a shipped 128-player co-op feature.

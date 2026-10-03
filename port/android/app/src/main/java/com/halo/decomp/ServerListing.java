@@ -8,6 +8,11 @@ import java.util.Set;
 /** ChupathingyCE /v1/games.txt, documented by its browser.c parse_game(). */
 final class ServerListing {
     static final int CAMPAIGN_VERSION = 0xCE01;
+    // CE01 identity/lifecycle is two-player; independent of native PvP's 128 slots.
+    static final int CAMPAIGN_MAXIMUM = 2;
+    static boolean campaignCapacityCompatible(int version,int maximum,boolean known) {
+        return version != CAMPAIGN_VERSION || !known || maximum == CAMPAIGN_MAXIMUM;
+    }
     final String invite, name, map;
     final int engine, players, maximum, version, age;
     final boolean open;
