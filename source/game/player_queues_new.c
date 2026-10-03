@@ -372,7 +372,7 @@ static boolean update_queue_make_room(
 		return FALSE;
 	if (header->identifier == (short)(player_index >> 16))
 		return TRUE;
-	datum_delete(queues, (long)((dword)(word)header->identifier << 16 | (word)absolute_index));
+	datum_delete(queues, (long)((unsigned long)(word)header->identifier << 16 | (word)absolute_index));
 
 	return FALSE;
 }

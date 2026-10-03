@@ -51,7 +51,6 @@ binary = compile_c('network', r'''
 typedef int boolean;
 typedef uint8_t byte;
 typedef uint16_t word;
-typedef uint32_t dword;
 #define FALSE 0
 #define TRUE 1
 #define FLAG(b) (1u << (b))
