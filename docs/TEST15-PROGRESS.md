@@ -60,3 +60,7 @@ Implemented launcher-start/resume checks (six-hour interval, on by default, opti
 ## Build completion
 
 Both final VR and flat builds completed successfully and were preserved separately. Seven targeted suites passed. Both APKs were compacted/aligned/re-signed with exact non-signature payload and signing-certificate equivalence verified. See TEST15-DELIVERY.md for APK hashes and the device test matrix; the package manifest/checksums record the final full source archive. No release publication or device installation.
+
+## Added Android controller pass
+
+The owner added full Xbox-style Android gamepad support before delivery. Prior candidate APK hashes are superseded; final pair must be rebuilt. Retained SDL3/native Xbox mapping, added full-pad readiness detection, flat-only response/trigger/rumble settings, focus neutralization and recycled disconnect handles. Auto/Show/Hide touch policy and controller navigation across launcher dialogs are included. Corrected touch Type/Light mappings against the native default profile. See ANDROID-GAMEPAD.md. Adapter and UI-policy tests pass; hardware controller acceptance remains pending. Preserve all earlier test15 scope and release hold.

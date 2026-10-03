@@ -25,7 +25,7 @@ final class CoopLauncher {
     }
 
     void show() {
-        new AlertDialog.Builder(activity).setTitle("Campaign co-op")
+        new GamepadNavigation.Builder(activity).setTitle("Campaign co-op")
             .setMessage("Two players: Quest VR or flat Android, using the same build and identical maps/resources. "
                 + "The mission starts when both players enter the host's System Link lobby.")
             .setPositiveButton("Host campaign", (dialog, which) -> host())
@@ -57,7 +57,7 @@ final class CoopLauncher {
         status.setText("Private hosts can share the invite copied by the game. Public listing requires the community "
             + "directory to accept campaign sessions; failures are reported in the launch log.");
         layout.addView(status);
-        AlertDialog dialog = new AlertDialog.Builder(activity).setTitle("Host campaign")
+        AlertDialog dialog = new GamepadNavigation.Builder(activity).setTitle("Host campaign")
             .setView(layout).setPositiveButton("Host", null).setNegativeButton("Cancel", null).create();
         dialog.setOnShowListener(ignored -> dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
             if (!ready.getAsBoolean()) return;

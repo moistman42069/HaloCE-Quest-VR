@@ -4,7 +4,9 @@ import re,ast
 ROOT=Path(__file__).resolve().parents[1]
 OUT=ROOT/'port/android/app/src/main/assets/guide';OUT.mkdir(parents=True,exist_ok=True)
 for source,target in [('PLAYER-GUIDE.md','player-guide.txt'),('CONTROLS-AND-OPTIONS.md','controls.txt'),('ANDROID-TOUCH-CONTROLS.md','touch.txt')]:
-    (OUT/target).write_text((ROOT/'docs'/source).read_text(encoding='utf-8'),encoding='utf-8')
+    text=(ROOT/'docs'/source).read_text(encoding='utf-8')
+    if target=='touch.txt': text+='\n\n'+(ROOT/'docs/ANDROID-GAMEPAD.md').read_text(encoding='utf-8')
+    (OUT/target).write_text(text,encoding='utf-8')
 s=(ROOT/'port/linux/src/port_config.c').read_text(encoding='utf-8')
 s=s[s.index('static const struct config_setting config_settings[]'):s.index('/* ----------',s.index('static const struct config_setting config_settings[]')+1)]
 rows=[]

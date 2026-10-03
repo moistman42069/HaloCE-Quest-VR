@@ -1,0 +1,53 @@
+--- a/android-project/app/src/main/java/org/libsdl/app/SDLControllerManager.java
++++ b/android-project/app/src/main/java/org/libsdl/app/SDLControllerManager.java
+@@ -296,7 +296,7 @@
+                     mJoysticks.add(joystick);
+                     SDLControllerManager.nativeAddJoystick(joystick.device_id, joystick.name, joystick.desc,
+                             getVendorId(joystickDevice), getProductId(joystickDevice),
+-                            getButtonMask(joystickDevice), joystick.axes.size(), getAxisMask(joystick.axes), joystick.hats.size()/2, can_rumble, has_rgb_led,
++                            getButtonMask(joystickDevice), joystick.axes.size(), getAxisMask(joystick.axes, joystickDevice), joystick.hats.size()/2, can_rumble, has_rgb_led,
+                             has_accelerometer, has_gyroscope);
+                 }
+             }
+@@ -395,7 +395,7 @@
+         return joystickDevice.getVendorId();
+     }
+ 
+-    int getAxisMask(List<InputDevice.MotionRange> ranges) {
++    int getAxisMask(List<InputDevice.MotionRange> ranges, InputDevice device) {
+         // For compatibility, keep computing the axis mask like before,
+         // only really distinguishing 2, 4 and 6 axes.
+         int axis_mask = 0;
+@@ -427,6 +427,14 @@
+             // If both these exist, the compare() function changed sorting order.
+             // Set a bit to indicate this fact.
+             axis_mask |= 0x8000;
++        }
++        // Halo Android: preserve analog mappings, but expose digital-only
++        // L2/R2 separately; R2's bit otherwise falls outside the 16-bit GUID
++        // button field. These bits are consumed by the matching SDL C patch.
++        if (ranges.size() < 6) {
++            boolean[] triggerKeys = device.hasKeys(KeyEvent.KEYCODE_BUTTON_L2, KeyEvent.KEYCODE_BUTTON_R2);
++            if (triggerKeys[0]) axis_mask |= 0x0040;
++            if (triggerKeys[1]) axis_mask |= 0x0080;
+         }
+         return axis_mask;
+     }
+--- a/src/joystick/SDL_gamepad.c
++++ b/src/joystick/SDL_gamepad.c
+@@ -817,9 +817,15 @@
+         }
+         if (axis_mask & (1 << SDL_GAMEPAD_AXIS_LEFT_TRIGGER)) {
+             SDL_strlcat(mapping_string, "lefttrigger:a4,", sizeof(mapping_string));
++        } else if (axis_mask & 0x0040) {
++            // Halo Android: KEYCODE_BUTTON_L2 with no analog trigger axis.
++            SDL_strlcat(mapping_string, "lefttrigger:b15,", sizeof(mapping_string));
+         }
+         if (axis_mask & (1 << SDL_GAMEPAD_AXIS_RIGHT_TRIGGER)) {
+             SDL_strlcat(mapping_string, "righttrigger:a5,", sizeof(mapping_string));
++        } else if (axis_mask & 0x0080) {
++            // Halo Android: KEYCODE_BUTTON_R2 with no analog trigger axis.
++            SDL_strlcat(mapping_string, "righttrigger:b16,", sizeof(mapping_string));
+         }
+     }
+     return SDL_PrivateAddMappingForGUID(guid, mapping_string, &existing, SDL_GAMEPAD_MAPPING_PRIORITY_DEFAULT);

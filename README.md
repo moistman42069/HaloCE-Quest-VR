@@ -19,7 +19,7 @@ Both APKs are `1.0-test14`, version code 15, ARM64. Supply your own Halo CE Xbox
 
 ## Development candidate
 
-This work branch contains **test15**, held for owner testing. It adds configurable controller alignment, a flat touch HUD editor and swipe aim, native v11 PvP hosting/join support with legacy settings conversion, geometry upload fixes, bundled help, and signed project update handling. The download links above remain the accepted test14 release. [Candidate details and limits](docs/TEST15-PROGRESS.md).
+This work branch contains **test15**, held for owner testing. It adds configurable controller alignment, a flat touch HUD editor and swipe aim, Xbox-style Android gamepad settings/navigation and automatic touch hiding/recovery, native v11 PvP hosting/join support with legacy settings conversion, geometry upload fixes, bundled help, and signed project update handling. The download links above remain the accepted test14 release. [Candidate details and limits](docs/TEST15-PROGRESS.md).
 
 ## What's new in test14
 

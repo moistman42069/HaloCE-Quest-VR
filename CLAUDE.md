@@ -31,3 +31,5 @@ provenance exact and update CURRENT-STATE after substantive work. For runtime
 bugs, obtain/read the actual reported build's log before theorizing.
 
 Active work: test15-community-refinements, see docs/TEST15-PROGRESS.md. Preserve the test14 public release; test15 APKs are private testing candidates until the owner approves publication. New controller alignment, touch layout, protocol adapters and update checks require targeted regression coverage.
+
+Test15 also includes the added Android controller pass (docs/ANDROID-GAMEPAD.md): SDL/Xbox mappings, reviewed digital-trigger patch, launcher/dialog navigation, response settings, reconnect cleanup and Auto/Show/Hide touch. Earlier pre-controller test15 artifact hashes are superseded by the final delivery record. Hardware gamepad/phone/Quest regression evidence remains pending.

@@ -64,7 +64,7 @@ def main():
             dex = b"".join(archive.read(name) for name in names if re.fullmatch(r"classes\d*\.dex", name))
             for marker in [b"ServerBrowser;", b"ServerListing;", b"RunLog;", b"openGameLog", b"CoopLauncher;",
                            b"CoopPublisher;", b"prepareGameExit", b"PvpLauncher;", b"TouchLayout;", b"UpdatePolicy;",
-                           b"upstreamVersion", b"compatibility.json", b"https://halo.milenko.org/v1/games.txt"]:
+                           b"upstreamVersion", b"compatibility.json", b"GamepadSupport;", b"GamepadNavigation;", b"https://halo.milenko.org/v1/games.txt"]:
                 if marker not in dex: raise SystemExit("Browser missing from APK: " + repr(marker))
             if not guest.startswith(b"\x7fELF") or not host.startswith(b"\x7fELF"):
                 raise SystemExit("Missing native ELF payload")
@@ -79,6 +79,8 @@ def main():
                 raise SystemExit("VR/flat OpenXR loader mismatch")
             if (b"Java_com_halo_decomp_TouchControls_nativeState" in host) == vr:
                 raise SystemExit("VR/flat touch JNI separation mismatch")
+            if (b"Java_com_halo_decomp_GamepadSupport_nativeSettings" in host) == vr:
+                raise SystemExit("VR/flat gamepad settings JNI separation mismatch")
             for name in names:
                 if name.lower().endswith((".map", ".yelo", ".jks", ".keystore")):
                     raise SystemExit("Unexpected game data or signing key in APK")
@@ -112,7 +114,7 @@ def main():
             "bytes": record["bytes"], "version_code": record["version_code"], "min_sdk": record["min_sdk"]} for record in records}}
     (output / "compatibility.json").write_text(json.dumps(compatibility, indent=2)+"\n")
     documents = ["TEST15-DELIVERY.md", "TEST15-PROGRESS.md", "TEST15-UPSTREAM.md", "DATA-COMPATIBILITY.md", "CURRENT-STATE.md", "PLAYER-GUIDE.md", "CONTROLS-AND-OPTIONS.md", "COOP-COMPATIBILITY-AUDIT.md", "NETWORK-VR-AVATARS.md", "CAMPAIGN-PROTOCOL-WIP.md",
-                 "ANDROID-TOUCH-CONTROLS.md", "MULTIPLAYER-BROWSER.md"]
+                 "ANDROID-TOUCH-CONTROLS.md", "ANDROID-GAMEPAD.md", "MULTIPLAYER-BROWSER.md"]
     for doc in documents:
         shutil.copy2(ROOT / "docs" / doc, output / doc)
     for notice in ["CREDITS.md", "THIRD-PARTY-NOTICES.txt", "LICENSE.md"]:

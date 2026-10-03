@@ -47,6 +47,7 @@ public class LauncherActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        GamepadNavigation.install(getWindow());
         RunLog.start(this);
         RunLog.line("Launcher opened");
         dataRoot = getExternalFilesDir(null);
@@ -284,13 +285,15 @@ public class LauncherActivity extends Activity {
         }
         menuButton(layout, "Versions & updates").setOnClickListener(v -> { if (!busy) Updater.show(this, gameRoot()); });
         menuButton(layout, "Network settings").setOnClickListener(v -> { if (!busy) NetworkSettings.show(this, gameRoot()); });
+        if (!BuildConfig.APPLICATION_ID.endsWith(".vr"))
+            menuButton(layout, "Controller & touch settings").setOnClickListener(v -> { if (!busy) GamepadSupport.show(this); });
         menuButton(layout, "Game data & compatibility").setOnClickListener(v -> { if (!busy) LauncherHelp.data(this, gameRoot()); });
         menuButton(layout, "Geometry compatibility").setOnClickListener(v -> { if (!busy) LauncherHelp.graphics(this, gameRoot()); });
         resetSettings = menuButton(layout, "Reset settings to defaults");
         resetSettings.setOnClickListener(v -> resetSettings());
         label(layout, BuildConfig.APPLICATION_ID.endsWith(".vr")
             ? "Settings are changed in the game: pause, then VR SETTINGS."
-            : "Change settings in the game's Options menu. Use TOUCH to show or hide on-screen controls.",
+            : "Controller & touch settings controls automatic HUD hiding and gamepad response. In-game Options retains layout, sensitivity and invert.",
             13, Color.rgb(150, 160, 170));
         label(layout, "Something wrong? Each run's log is in this headset's Download folder, Download/HaloCE, "
             + "named by when the game started (halo_log_<date>_<time>.txt; the newest is the last run; the "

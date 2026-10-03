@@ -17,6 +17,7 @@ public class HaloActivity extends SDLActivity {
     /** lets system link's broadcasts in over Wi-Fi while the game runs */
     private WifiManager.MulticastLock multicastLock;
     private TouchControls touchControls;
+    private GamepadSupport gamepads;
     private CoopPublisher coopPublisher;
     private PvpPublisher pvpPublisher;
 
@@ -40,6 +41,7 @@ public class HaloActivity extends SDLActivity {
             mLayout.addView(touchControls, new ViewGroup.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
             touchControls.requestApplyInsets();
+            gamepads = new GamepadSupport(this,touchControls);
             RunLog.line("Phone touch controls initialized: player-one merge; multi-touch; hold fire and drag to aim");
         }
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -51,6 +53,7 @@ public class HaloActivity extends SDLActivity {
 
     @Override
     protected void onDestroy() {
+        if (gamepads != null) gamepads.pause();
         if (touchControls != null) touchControls.releaseAll();
         if (coopPublisher != null) coopPublisher.close();
         if (pvpPublisher != null) pvpPublisher.close();
@@ -74,11 +77,13 @@ public class HaloActivity extends SDLActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        if (gamepads != null) gamepads.resume();
         RunLog.line("Game activity resumed");
     }
 
     @Override
     protected void onPause() {
+        if (gamepads != null) gamepads.pause();
         if (touchControls != null) touchControls.releaseAll();
         RunLog.line("Game activity paused / headset focus changed");
         super.onPause();
@@ -86,6 +91,7 @@ public class HaloActivity extends SDLActivity {
 
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
+        if (gamepads != null) gamepads.focus(hasFocus);
         if (!hasFocus && touchControls != null) touchControls.releaseAll();
         super.onWindowFocusChanged(hasFocus);
     }

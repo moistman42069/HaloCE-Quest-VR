@@ -47,7 +47,7 @@ final class Updater {
         automatic.setOnCheckedChangeListener((b,v)->prefs(a).edit().putBoolean("automatic",v).apply());
         TextView privacy=new TextView(a);privacy.setText("Checks contact GitHub for release metadata and the upstream protocol header. No saves, logs, invites or configuration are uploaded. Offline play is always available.");box.addView(privacy);
         android.widget.ScrollView scroll=new android.widget.ScrollView(a);scroll.addView(box);
-        new AlertDialog.Builder(a).setTitle("Versions & compatible updates").setView(scroll)
+        new GamepadNavigation.Builder(a).setTitle("Versions & compatible updates").setView(scroll)
             .setPositiveButton("Check now",(d,w)->check(a,gameRoot,false,null)).setNegativeButton("Close",null).show();
     }
     private static void status(Activity a,TextView view,String text) {
@@ -65,7 +65,7 @@ final class Updater {
             return version>BuildConfig.HALO_NETWORK_MAXIMUM ? "Upstream network v"+version+" needs project integration before it is safe for this build. Compatible servers remain playable." : "Upstream network v"+version+" is within this build's supported range.";
         }catch(Exception e){return "Upstream status unavailable (offline or service limit).";}
     }
-    private static void message(Activity a,String text) {a.runOnUiThread(()->{if(!a.isFinishing()&&!a.isDestroyed())new AlertDialog.Builder(a).setTitle("Project update").setMessage(text).setPositiveButton("OK",null).show();});}
+    private static void message(Activity a,String text) {a.runOnUiThread(()->{if(!a.isFinishing()&&!a.isDestroyed())new GamepadNavigation.Builder(a).setTitle("Project update").setMessage(text).setPositiveButton("OK",null).show();});}
     private static HttpURLConnection open(String address) throws Exception {
         for(int i=0;i<6;i++) {
             if(!UpdatePolicy.allowedUrl(address))throw new IOException("Untrusted update URL");
@@ -120,7 +120,7 @@ final class Updater {
                 String available="Compatible update available: "+tag+" (native v"+minimum+"-"+maximum+"). Tap to check and install. "+upstream;
                 status(a,statusView,available);
                 if(silent)return;
-                a.runOnUiThread(()->{if(!a.isFinishing()&&!a.isDestroyed())new AlertDialog.Builder(a).setTitle("Update to "+tag+"?").setMessage("Download "+name+" ("+(size/1048576)+" MiB), validate it, back up the installed app and settings, then open Android's installer. Maps and saves are not replaced.")
+                a.runOnUiThread(()->{if(!a.isFinishing()&&!a.isDestroyed())new GamepadNavigation.Builder(a).setTitle("Update to "+tag+"?").setMessage("Download "+name+" ("+(size/1048576)+" MiB), validate it, back up the installed app and settings, then open Android's installer. Maps and saves are not replaced.")
                     .setPositiveButton("Download",(d,w)->download(a,gameRoot,url,digest,size,expectedVersion)).setNegativeButton("Later",null).show();});
             }catch(Exception e){prefs(a).edit().putLong("last_check",System.currentTimeMillis()-CHECK_INTERVAL+15L*60*1000).apply();String text="Update check: "+e.getMessage()+". Current game remains available.";status(a,statusView,text);if(!silent)message(a,text);}
             finally{busy.set(false);}
@@ -137,7 +137,7 @@ final class Updater {
     private static void download(Activity a,File gameRoot,String url,String expected,long size,int expectedVersion) {
         if(!busy.compareAndSet(false,true))return;
         TextView status=new TextView(a);status.setPadding(32,24,32,24);status.setText("Downloading and verifying update...");
-        AtomicBoolean cancel=new AtomicBoolean();AlertDialog dialog=new AlertDialog.Builder(a).setTitle("Project update").setView(status).setNegativeButton("Cancel",(d,w)->cancel.set(true)).create();
+        AtomicBoolean cancel=new AtomicBoolean();AlertDialog dialog=new GamepadNavigation.Builder(a).setTitle("Project update").setView(status).setNegativeButton("Cancel",(d,w)->cancel.set(true)).create();
         dialog.setOnCancelListener(d->cancel.set(true));dialog.show();
         new Thread(()->{
             File directory=new File(a.getCacheDir(),UpdateProvider.DIRECTORY),part=new File(directory,"download.part"),apk=new File(directory,UpdateProvider.APK);

@@ -60,29 +60,26 @@ Close Contact reduces only the offline local VR capsule radius: up to 15%, at mo
 
 Auto graphics effects follow the preset. Resolution is relative to runtime eye targets. Refresh requests a supported rate; it does not guarantee frame timing. The simulation remains 30 Hz with interpolated rendering.
 
-## Flat Android touch
+## Flat Android touch and controller
 
-| Control | Input / use |
-| --- | --- |
-| Move | Analog movement/strafe |
-| Look | Rate-based analog look: hold away from center to turn, release to stop |
-| Fire | Fire; drag while holding also aims |
-| A / Jump | Jump / confirm |
-| B / Melee | Melee / cancel |
-| X / Use | Reload / hold to interact or pick up |
-| Y / Swap | Switch weapons |
-| Crouch / Zoom | Left/right stick click inputs |
-| Grenade | Left trigger |
-| Type / Light | Xbox White / Black respectively; actual action follows the native controller profile |
-| Menu / Back | Start / Back |
-| Arrows | D-pad/navigation |
-| Touch | Hide/show overlay; choice saved |
+The flat candidate now includes relative swipe aim, a draggable HUD editor, saved
+positions/size/opacity/color and response settings. MOVE + FIRE/drag supports
+simultaneous movement and aiming. Cancel, focus loss and hiding release touch
+input. See [touch controls and editor](ANDROID-TOUCH-CONTROLS.md).
 
-Move + Fire/drag works with two fingers; extra contacts can use other actions. Look is gamepad-rate based rather than relative mouse swipe. Pointer ownership lasts until release and is cleared on pause/focus loss/cancel. Layout positions use fixed screen proportions; no layout editor is included. Phone acceptance, including Type/Light labels against the selected native profile, remains open.
+Connected Xbox-style USB/Bluetooth gamepads use Android + SDL3. Both sticks,
+triggers, face buttons, shoulders, stick clicks, Start/Back and D-pad reach
+Halo's native controller profile. LB is flashlight; RB switches grenades in the
+default profile. Launcher **Controller & touch settings** offers independent
+stick dead zones/response, trigger dead zone, vibration, optional face-button
+swap and Auto / Always show / Always hide touch policies. Auto hides only for
+SDL-ready full gamepads and restores touch after disconnect. Native Options
+retains layout, look sensitivity and invert. No touch/gamepad setting changes VR.
 
-## Flat gamepad and keyboard
-
-SDL receives connected Android gamepads. In a standard Xbox-style profile: sticks move/look; right trigger fires; left trigger throws; A jumps/confirms; B melees/backs; X reloads/uses; Y changes weapon; stick clicks crouch/zoom; Start pauses. The native profile is authoritative. [Inherited keyboard/mouse mappings](../port/linux/README.md#controls). The newer touch controls above supersede the inherited Android guide's old no-touch statement.
+See [full controller mappings, menus and testing](ANDROID-GAMEPAD.md). The
+launcher/browser/dialogs support D-pad or left-stick focus navigation with
+repeat, A confirm and B cancel. Device-level USB/Bluetooth, rumble and focus
+validation remain pending. [Inherited keyboard/mouse mappings](../port/linux/README.md#controls).
 
 ## Advanced config
 

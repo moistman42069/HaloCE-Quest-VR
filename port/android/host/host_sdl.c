@@ -23,6 +23,24 @@ so the audio callback is handed to a thread that has one.
 #include <time.h>
 #ifndef HALO_VR
 #include <jni.h>
+#include <stdatomic.h>
+#include "gamepad_policy.h"
+static atomic_int pad_count, pad_focused, pad_rumble = 1, pad_swap;
+static _Atomic float pad_move_dead = 9000.f/32767.f, pad_look_dead = 9000.f/32767.f;
+static _Atomic float pad_gain_x = 1.f, pad_gain_y = 1.f, pad_trigger_dead = .05f;
+
+JNIEXPORT jint JNICALL Java_com_halo_decomp_GamepadSupport_nativeCount(JNIEnv *env, jclass type)
+{
+    (void)env; (void)type; return atomic_load(&pad_count);
+}
+JNIEXPORT void JNICALL Java_com_halo_decomp_GamepadSupport_nativeSettings(JNIEnv *env, jclass type,
+    jfloat move, jfloat look, jfloat x, jfloat y, jfloat trigger, jboolean rumble, jboolean swap, jboolean focused)
+{
+    (void)env; (void)type;
+    atomic_store(&pad_move_dead, move); atomic_store(&pad_look_dead, look);
+    atomic_store(&pad_gain_x,x); atomic_store(&pad_gain_y,y); atomic_store(&pad_trigger_dead,trigger);
+    atomic_store(&pad_rumble,rumble); atomic_store(&pad_swap,swap); atomic_store(&pad_focused,focused);
+}
 #endif
 
 /* Flat touch input is independent of SDL device enumeration and physical pad
@@ -157,6 +175,11 @@ static void *handle_get(uint32_t handle, int type)
 	return object;
 }
 
+/* Serialize flat device reads with close/reconnect; never reuse a freed SDL pointer. */
+#ifndef HALO_VR
+static pthread_mutex_t pad_device_lock = PTHREAD_MUTEX_INITIALIZER;
+#endif
+
 /* ---------- general */
 
 int host_sdl_init(uint32_t flags)
@@ -250,6 +273,23 @@ int host_sdl_poll_event(void *event)
 
 	if (!SDL_PollEvent(&host_event))
 		return 0;
+#ifndef HALO_VR
+    if (host_event.type == SDL_EVENT_GAMEPAD_REMOVED) {
+        pthread_mutex_lock(&pad_device_lock);
+        SDL_Gamepad *removed = SDL_GetGamepadFromID(host_event.gdevice.which);
+        if (removed) {
+            SDL_RumbleGamepad(removed,0,0,0);
+            pthread_mutex_lock(&handle_lock);
+            for (unsigned i=1;i<HANDLE_COUNT;i++)
+                if (handles[i].type == _handle_gamepad && handles[i].object == removed)
+                    memset(&handles[i],0,sizeof(handles[i]));
+            pthread_mutex_unlock(&handle_lock);
+            SDL_CloseGamepad(removed);
+            host_logf(HOST_LOG_INFO,"flat gamepad %u disconnected; handle released",(unsigned)host_event.gdevice.which);
+        }
+        pthread_mutex_unlock(&pad_device_lock);
+    }
+#endif
 	/* the layouts agree except for the pointers of text, drop and user
 	events, which the guest does not read */
 	memcpy(event, &host_event, sizeof(host_event));
@@ -258,24 +298,42 @@ int host_sdl_poll_event(void *event)
 
 /* ---------- gamepads */
 
-int host_sdl_get_gamepads(uint32_t *ids, int capacity)
+static int host_sdl_get_gamepads_unlocked(uint32_t *ids, int capacity)
 {
-	int count = 0, index;
+	int count = 0, index, found = 0;
 	SDL_JoystickID *list = SDL_GetGamepads(&count);
 
-	if (!list)
-		return 0;
-	if (count > capacity)
-		count = capacity;
-	for (index = 0; index < count; index++)
-		ids[index] = list[index];
+	if (!list) {
+#ifndef HALO_VR
+        atomic_store(&pad_count,0);
+#endif
+        return 0;
+    }
+	for (index = 0; index < count && found < capacity; index++) {
+#ifndef HALO_VR
+        SDL_Gamepad *pad = SDL_GetGamepadFromID(list[index]);
+        /* Do not hide touch for a keyboard/remote with a few pad buttons.
+         * Full gameplay requires two sticks and both trigger mappings. */
+        if (!pad || !SDL_GamepadHasAxis(pad,SDL_GAMEPAD_AXIS_LEFTX) ||
+            !SDL_GamepadHasAxis(pad,SDL_GAMEPAD_AXIS_LEFTY) ||
+            !SDL_GamepadHasAxis(pad,SDL_GAMEPAD_AXIS_RIGHTX) ||
+            !SDL_GamepadHasAxis(pad,SDL_GAMEPAD_AXIS_RIGHTY) ||
+            !SDL_GamepadHasAxis(pad,SDL_GAMEPAD_AXIS_LEFT_TRIGGER) ||
+            !SDL_GamepadHasAxis(pad,SDL_GAMEPAD_AXIS_RIGHT_TRIGGER)) continue;
+#endif
+        ids[found++] = list[index];
+    }
 	SDL_free(list);
-	return count;
+#ifndef HALO_VR
+    atomic_store(&pad_count,found);
+#endif
+	return found;
 }
 
-uint32_t host_sdl_open_gamepad(uint32_t id)
+static uint32_t host_sdl_open_gamepad_unlocked(uint32_t id)
 {
-	SDL_Gamepad *gamepad = SDL_OpenGamepad((SDL_JoystickID)id);
+	SDL_Gamepad *gamepad = SDL_GetGamepadFromID((SDL_JoystickID)id);
+    if (!gamepad) gamepad = SDL_OpenGamepad((SDL_JoystickID)id);
 
 	if (gamepad)
 		host_logf(HOST_LOG_INFO, "gamepad %u: %s (type %d, %04x:%04x)", (unsigned)id, SDL_GetGamepadName(gamepad),
@@ -283,44 +341,160 @@ uint32_t host_sdl_open_gamepad(uint32_t id)
 	return handle_new(_handle_gamepad, gamepad);
 }
 
-uint32_t host_sdl_gamepad_from_id(uint32_t id)
+static uint32_t host_sdl_gamepad_from_id_unlocked(uint32_t id)
 {
 	return handle_new(_handle_gamepad, SDL_GetGamepadFromID((SDL_JoystickID)id));
 }
 
-int host_sdl_gamepad_axis(uint32_t gamepad, int axis)
+static int host_sdl_gamepad_axis_unlocked(uint32_t gamepad, int axis)
 {
 	SDL_Gamepad *object = handle_get(gamepad, _handle_gamepad);
-
-	return object ? SDL_GetGamepadAxis(object, (SDL_GamepadAxis)axis) : 0;
+    int value = object ? SDL_GetGamepadAxis(object, (SDL_GamepadAxis)axis) : 0;
+#ifndef HALO_VR
+    if (!atomic_load(&pad_focused)) return 0;
+    if (axis == SDL_GAMEPAD_AXIS_LEFTX || axis == SDL_GAMEPAD_AXIS_LEFTY)
+        return halo_pad_axis(value,atomic_load(&pad_move_dead),1.f,0);
+    if (axis == SDL_GAMEPAD_AXIS_RIGHTX || axis == SDL_GAMEPAD_AXIS_RIGHTY)
+        return halo_pad_axis(value,atomic_load(&pad_look_dead),
+            atomic_load(axis == SDL_GAMEPAD_AXIS_RIGHTX ? &pad_gain_x : &pad_gain_y),0);
+    if (axis == SDL_GAMEPAD_AXIS_LEFT_TRIGGER || axis == SDL_GAMEPAD_AXIS_RIGHT_TRIGGER)
+        return halo_pad_trigger(value,atomic_load(&pad_trigger_dead));
+#endif
+	return value;
 }
 
-int host_sdl_gamepad_button(uint32_t gamepad, int button)
+static int host_sdl_gamepad_button_unlocked(uint32_t gamepad, int button)
 {
 	SDL_Gamepad *object = handle_get(gamepad, _handle_gamepad);
-
+#ifndef HALO_VR
+    if (!atomic_load(&pad_focused)) return 0;
+    if (atomic_load(&pad_swap)) {
+        if (button == SDL_GAMEPAD_BUTTON_SOUTH) button=SDL_GAMEPAD_BUTTON_EAST;
+        else if (button == SDL_GAMEPAD_BUTTON_EAST) button=SDL_GAMEPAD_BUTTON_SOUTH;
+        else if (button == SDL_GAMEPAD_BUTTON_WEST) button=SDL_GAMEPAD_BUTTON_NORTH;
+        else if (button == SDL_GAMEPAD_BUTTON_NORTH) button=SDL_GAMEPAD_BUTTON_WEST;
+    }
+#endif
 	return object ? SDL_GetGamepadButton(object, (SDL_GamepadButton)button) : 0;
 }
 
-int host_sdl_gamepad_type(uint32_t gamepad)
+static int host_sdl_gamepad_type_unlocked(uint32_t gamepad)
 {
 	SDL_Gamepad *object = handle_get(gamepad, _handle_gamepad);
 
 	return object ? SDL_GetGamepadType(object) : SDL_GAMEPAD_TYPE_UNKNOWN;
 }
 
-int host_sdl_gamepad_vendor(uint32_t gamepad)
+static int host_sdl_gamepad_vendor_unlocked(uint32_t gamepad)
 {
 	SDL_Gamepad *object = handle_get(gamepad, _handle_gamepad);
 
 	return object ? SDL_GetGamepadVendor(object) : 0;
 }
 
-int host_sdl_rumble_gamepad(uint32_t gamepad, uint32_t low, uint32_t high, uint32_t milliseconds)
+static int host_sdl_rumble_gamepad_unlocked(uint32_t gamepad, uint32_t low, uint32_t high, uint32_t milliseconds)
 {
 	SDL_Gamepad *object = handle_get(gamepad, _handle_gamepad);
-
+#ifndef HALO_VR
+    if (!atomic_load(&pad_focused) || !atomic_load(&pad_rumble)) { low=high=milliseconds=0; }
+#endif
 	return object ? SDL_RumbleGamepad(object, (Uint16)low, (Uint16)high, milliseconds) : 0;
+}
+
+int host_sdl_get_gamepads(uint32_t *ids, int capacity)
+{
+#ifndef HALO_VR
+    pthread_mutex_lock(&pad_device_lock);
+#endif
+    int result = host_sdl_get_gamepads_unlocked(ids,capacity);
+#ifndef HALO_VR
+    pthread_mutex_unlock(&pad_device_lock);
+#endif
+    return result;
+}
+
+uint32_t host_sdl_open_gamepad(uint32_t id)
+{
+#ifndef HALO_VR
+    pthread_mutex_lock(&pad_device_lock);
+#endif
+    uint32_t result = host_sdl_open_gamepad_unlocked(id);
+#ifndef HALO_VR
+    pthread_mutex_unlock(&pad_device_lock);
+#endif
+    return result;
+}
+
+uint32_t host_sdl_gamepad_from_id(uint32_t id)
+{
+#ifndef HALO_VR
+    pthread_mutex_lock(&pad_device_lock);
+#endif
+    uint32_t result = host_sdl_gamepad_from_id_unlocked(id);
+#ifndef HALO_VR
+    pthread_mutex_unlock(&pad_device_lock);
+#endif
+    return result;
+}
+
+int host_sdl_gamepad_axis(uint32_t gamepad, int axis)
+{
+#ifndef HALO_VR
+    pthread_mutex_lock(&pad_device_lock);
+#endif
+    int result = host_sdl_gamepad_axis_unlocked(gamepad,axis);
+#ifndef HALO_VR
+    pthread_mutex_unlock(&pad_device_lock);
+#endif
+    return result;
+}
+
+int host_sdl_gamepad_button(uint32_t gamepad, int button)
+{
+#ifndef HALO_VR
+    pthread_mutex_lock(&pad_device_lock);
+#endif
+    int result = host_sdl_gamepad_button_unlocked(gamepad,button);
+#ifndef HALO_VR
+    pthread_mutex_unlock(&pad_device_lock);
+#endif
+    return result;
+}
+
+int host_sdl_gamepad_type(uint32_t gamepad)
+{
+#ifndef HALO_VR
+    pthread_mutex_lock(&pad_device_lock);
+#endif
+    int result = host_sdl_gamepad_type_unlocked(gamepad);
+#ifndef HALO_VR
+    pthread_mutex_unlock(&pad_device_lock);
+#endif
+    return result;
+}
+
+int host_sdl_gamepad_vendor(uint32_t gamepad)
+{
+#ifndef HALO_VR
+    pthread_mutex_lock(&pad_device_lock);
+#endif
+    int result = host_sdl_gamepad_vendor_unlocked(gamepad);
+#ifndef HALO_VR
+    pthread_mutex_unlock(&pad_device_lock);
+#endif
+    return result;
+}
+
+int host_sdl_rumble_gamepad(uint32_t gamepad, uint32_t low, uint32_t high, uint32_t milliseconds)
+{
+#ifndef HALO_VR
+    pthread_mutex_lock(&pad_device_lock);
+#endif
+    int result = host_sdl_rumble_gamepad_unlocked(gamepad,low,high,milliseconds);
+#ifndef HALO_VR
+    pthread_mutex_unlock(&pad_device_lock);
+#endif
+    return result;
 }
 
 /* ---------- audio */

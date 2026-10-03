@@ -20,7 +20,7 @@ final class NetworkSettings {
         port.setText(ConfigSettings.read(root,"network","tunnel_port","0")); layout.addView(port);
         TextView info=new TextView(activity); info.setText("Applies on the next game launch. A directory listing is not a connectivity test: firewalls, carrier NAT, Wi-Fi isolation and an offline host can prevent joining. Enable Internet invites for remote play; for LAN, use the same network and Multiplayer > System Link. Upstream ports may call this Direct Link. Advanced address, broadcast/VPN, broker and STUN settings remain in config.toml; only change them if you know your network."); layout.addView(info);
         ScrollView scroll=new ScrollView(activity); scroll.addView(layout);
-        AlertDialog dialog=new AlertDialog.Builder(activity).setTitle("Network settings").setView(scroll)
+        AlertDialog dialog=new GamepadNavigation.Builder(activity).setTitle("Network settings").setView(scroll)
             .setPositiveButton("Save",null).setNegativeButton("Cancel",null).create();
         dialog.setOnShowListener(x->dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v->{
             try {

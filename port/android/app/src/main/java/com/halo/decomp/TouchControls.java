@@ -89,8 +89,7 @@ final class TouchControls extends View {
         readLayout();
         setFocusable(false); // SDL's surface keeps keyboard/gamepad focus.
         setContentDescription("Halo touch controls: move, look, combat and menus");
-        controlsShown=context.getSharedPreferences("phone-controls", 0)
-                .getBoolean("shown", true);
+        controlsShown=true;
         setOnApplyWindowInsetsListener((view, insets) -> {
             insetLeft=insets.getSystemWindowInsetLeft();
             insetTop=insets.getSystemWindowInsetTop();
@@ -132,8 +131,8 @@ final class TouchControls extends View {
             new Control("Crouch", left+w*.28f, top+h*.82f, r, CROUCH, BUTTON),
             new Control("Zoom", left+w*.80f, top+h*.84f, r, ZOOM, BUTTON),
             new Control("Grenade", left+w*.10f, top+h*.38f, r, GRENADE, BUTTON),
-            new Control("Type", left+w*.21f, top+h*.38f, r, WHITE, BUTTON),
-            new Control("Light", left+w*.32f, top+h*.38f, r, BLACK, BUTTON),
+            new Control("Type", left+w*.21f, top+h*.38f, r, BLACK, BUTTON),
+            new Control("Light", left+w*.32f, top+h*.38f, r, WHITE, BUTTON),
             new Control("Menu", left+w*.56f, top+h*.10f, r, START, BUTTON),
             new Control("Back", left+w*.44f, top+h*.10f, r, BACK, BUTTON),
             new Control("^", left+w*.40f, top+h*.60f, r*.8f, UP, BUTTON),
@@ -157,6 +156,12 @@ final class TouchControls extends View {
         contacts.clear();dragPointer=-1;
         nativeState(0, 0, 0, 0, 0, true);
         invalidate();
+    }
+
+    void controllerVisibility(int mode,int connected) {
+        boolean show=editing || GamepadPolicy.showTouch(mode,connected);
+        int visibility=show?VISIBLE:GONE;
+        if(getVisibility()!=visibility) { releaseAll();setVisibility(visibility); }
     }
 
     private boolean owned(Control c) {
@@ -183,11 +188,11 @@ final class TouchControls extends View {
                     Toast.makeText(getContext(),"Drag controls. Options edits size, opacity and aiming. Save keeps changes; Cancel restores. Online play continues.",Toast.LENGTH_LONG).show();
                     return true;
                 } else if (c.kind == TOGGLE) {
-                    controlsShown=!controlsShown;
                     releaseAll();
-                    getContext().getSharedPreferences("phone-controls", 0).edit()
-                            .putBoolean("shown", controlsShown).apply();
-                    RunLog.line("Phone touch controls " + (controlsShown ? "shown" : "hidden"));
+                    new GamepadNavigation.Builder(getContext()).setTitle("Touch visibility")
+                        .setSingleChoiceItems(new String[]{"Auto: hide with controller","Always show","Always hide (restore in launcher)"},GamepadSupport.mode(getContext()),(dialog,which)->{
+                            preferences().edit().putInt("controller_touch_mode",which).apply();dialog.dismiss();
+                        }).setNegativeButton("Cancel",null).show();
                 } else {
                     contacts.put(event.getPointerId(index), new Contact(c, x, y));
                 }
@@ -279,7 +284,7 @@ final class TouchControls extends View {
                 releaseAll();
                 if(i==0){saveLayout();editing=false;} else if(i==1){readLayout();editing=false;layoutControls();}
                 else if(i==2) showOptions();
-                else new AlertDialog.Builder(getContext()).setTitle("Reset touch layout?").setMessage("Restore default positions and touch preferences. Save to keep, or Cancel in the editor to restore your old layout.")
+                else new GamepadNavigation.Builder(getContext()).setTitle("Reset touch layout?").setMessage("Restore default positions and touch preferences. Save to keep, or Cancel in the editor to restore your old layout.")
                     .setPositiveButton("Reset",(d,w)->{layout=new TouchLayout();selected=-1;layoutControls();}).setNegativeButton("Back",null).show();
                 invalidate();return true;
             }
@@ -316,7 +321,7 @@ final class TouchControls extends View {
         Button choose=new Button(getContext());choose.setText("Select a control (including covered controls)");box.addView(choose);
         final AlertDialog[] optionsDialog=new AlertDialog[1];
         choose.setOnClickListener(v->{String[] names=new String[TouchLayout.COUNT];for(int i=0;i<names.length;i++)names[i]=controls[i].label;
-            new AlertDialog.Builder(getContext()).setTitle("Edit control").setItems(names,(d,i)->{selected=i;optionsDialog[0].dismiss();showOptions();invalidate();}).show();});
+            new GamepadNavigation.Builder(getContext()).setTitle("Edit control").setItems(names,(d,i)->{selected=i;optionsDialog[0].dismiss();showOptions();invalidate();}).show();});
         if(selected>=0) {final int id=selected;TextView label=new TextView(getContext());label.setText("Selected: "+controls[id].label+" (drag to change spacing)");box.addView(label);
             slider(box,"Horizontal position",layout.x[id],0,1,v->layout.x[id]=v);
             slider(box,"Vertical position",layout.y[id],0,1,v->layout.y[id]=v);
@@ -332,8 +337,8 @@ final class TouchControls extends View {
         check(box,"Invert vertical aim",layout.invert,v->layout.invert=v);
         TextView help=new TextView(getContext());help.setText("Swipe on LOOK or drag FIRE while shooting. Lift to stop turning. Movement starts within MOVE; floating places its center under your finger. Dead zone applies to stick mode and movement. A screen-width swipe turns 180 degrees at sensitivity 1. Layout uses safe screen fractions and adapts around notches. Options stay temporary until SAVE.");box.addView(help);
         String[] colors={"CE blue","Cyan","White","Amber","Green"};int[] values={0xff69c9ff,0xff65eeee,0xffeeeeee,0xffffbd65,0xff8be298};
-        Button color=new Button(getContext());color.setText("HUD color");box.addView(color);color.setOnClickListener(v->new AlertDialog.Builder(getContext()).setTitle("HUD color").setItems(colors,(d,i)->{layout.color=values[i];invalidate();}).show());
-        ScrollView scroll=new ScrollView(getContext());scroll.addView(box);optionsDialog[0]=new AlertDialog.Builder(getContext()).setTitle("Touch options").setView(scroll).setPositiveButton("Back to editor",null).create();optionsDialog[0].show();
+        Button color=new Button(getContext());color.setText("HUD color");box.addView(color);color.setOnClickListener(v->new GamepadNavigation.Builder(getContext()).setTitle("HUD color").setItems(colors,(d,i)->{layout.color=values[i];invalidate();}).show());
+        ScrollView scroll=new ScrollView(getContext());scroll.addView(box);optionsDialog[0]=new GamepadNavigation.Builder(getContext()).setTitle("Touch options").setView(scroll).setPositiveButton("Back to editor",null).create();optionsDialog[0].show();
     }
 
     @Override protected void onDetachedFromWindow() {

@@ -109,7 +109,7 @@ final class ServerBrowser {
         content.addView(rows);
         ScrollView scroll = new ScrollView(activity);
         scroll.addView(content);
-        dialog = new AlertDialog.Builder(activity).setTitle(campaign ? "Campaign co-op servers" : "Multiplayer servers")
+        dialog = new GamepadNavigation.Builder(activity).setTitle(campaign ? "Campaign co-op servers" : "Multiplayer servers")
             .setView(scroll).setNegativeButton("Back", null).create();
         dialog.setOnDismissListener(ignored -> {
             closed = true;
@@ -165,7 +165,7 @@ final class ServerBrowser {
         EditText name = input(fields, "Server name", "");
         EditText link = input(fields, "halo://join/... or invite code", "");
         link.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
-        AlertDialog edit = new AlertDialog.Builder(activity).setTitle("Save server")
+        AlertDialog edit = new GamepadNavigation.Builder(activity).setTitle("Save server")
             .setView(fields).setPositiveButton("Save", null).setNegativeButton("Cancel", null).create();
         edit.setOnShowListener(ignored -> edit.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
             String normalized = ServerInvite.normalize(link.getText().toString());
@@ -195,7 +195,7 @@ final class ServerBrowser {
         url.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI);
         url.setSingleLine(false);
         url.setMinLines(3);
-        AlertDialog edit = new AlertDialog.Builder(activity).setTitle("Community directory")
+        AlertDialog edit = new GamepadNavigation.Builder(activity).setTitle("Community directory")
             .setView(fields).setPositiveButton("Save", null).setNegativeButton("Cancel", null).create();
         edit.setOnShowListener(ignored -> edit.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
             String value = url.getText().toString().trim();

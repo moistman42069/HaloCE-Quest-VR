@@ -8,8 +8,8 @@ import java.util.concurrent.*;
 
 final class LauncherHelp {
     static void show(Activity activity) {
-        new AlertDialog.Builder(activity).setTitle("Field guide")
-            .setItems(new String[]{"Getting started & multiplayer", "VR controls & settings", "Flat touch controls", "Every setting: reference"},(d,index)->{
+        new GamepadNavigation.Builder(activity).setTitle("Field guide")
+            .setItems(new String[]{"Getting started & multiplayer", "VR controls & settings", "Flat touch & gamepad", "Every setting: reference"},(d,index)->{
                 String[] files={"player-guide.txt","controls.txt","touch.txt","settings.txt"};
                 try(InputStream in=activity.getAssets().open("guide/"+files[index])) {
                     ByteArrayOutputStream out=new ByteArrayOutputStream(); byte[] buffer=new byte[4096];
@@ -22,13 +22,13 @@ final class LauncherHelp {
         TextView text=new TextView(activity); text.setText(content); text.setTextSize(16); text.setTextIsSelectable(true);
         int pad=(int)(20*activity.getResources().getDisplayMetrics().density); text.setPadding(pad,pad,pad,pad);
         ScrollView scroll=new ScrollView(activity); scroll.addView(text);
-        new AlertDialog.Builder(activity).setTitle(title).setView(scroll).setPositiveButton("Close",null).show();
+        new GamepadNavigation.Builder(activity).setTitle(title).setView(scroll).setPositiveButton("Close",null).show();
     }
     static void data(Activity activity,File root) {
         TextView text=new TextView(activity); text.setText("Reading installed map headers…"); text.setPadding(24,16,24,16); text.setTextIsSelectable(true);
         ScrollView scroll=new ScrollView(activity); scroll.addView(text);
         ExecutorService worker=Executors.newSingleThreadExecutor();
-        AlertDialog dialog=new AlertDialog.Builder(activity).setTitle("Game data & compatibility").setView(scroll)
+        AlertDialog dialog=new GamepadNavigation.Builder(activity).setTitle("Game data & compatibility").setView(scroll)
             .setPositiveButton("Close",null).setNeutralButton("Fingerprint files",null).create();
         Runnable headers=()->{
             File[] files=root==null?null:new File(root,"maps").listFiles((dir,name)->name.endsWith(".map"));
@@ -60,7 +60,7 @@ final class LauncherHelp {
     }
     static void graphics(Activity activity,File root) {
         boolean current=ConfigSettings.read(root,"renderer","safe_geometry","false").equals("true");
-        new AlertDialog.Builder(activity).setTitle("Geometry compatibility")
+        new GamepadNavigation.Builder(activity).setTitle("Geometry compatibility")
             .setMessage("Try Safe geometry if scenery stretches into triangles or strips. It bypasses static geometry caching, persistent streaming and GPU base-vertex rebasing. It can reduce frame rate. This is a renderer option, not a game-revision selection. Restart the game after changing it.\n\nCurrent: "+(current?"Safe":"Normal"))
             .setPositiveButton(current?"Use normal":"Use safe",(d,w)->{
                 try { ConfigSettings.write(root,"renderer",Collections.singletonMap("safe_geometry",Boolean.toString(!current)));

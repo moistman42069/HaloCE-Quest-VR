@@ -15,11 +15,11 @@ Test15 candidate, `com.halo.decomp`, Android 9+ / ARM64. Quest has no touch over
 | Y / Swap | Change weapon |
 | Crouch / Zoom | Left / right stick clicks |
 | Grenade | Throw selected grenade |
-| Type / Light | Xbox white / black: grenade type / flashlight in default profile |
+| Type / Light | Xbox black / white: grenade type / flashlight in default profile |
 | Menu / Back | Start / Back |
 | Arrows | D-pad and menu navigation |
-| Touch | Hide/show controls, saved across launches |
-| HUD | Open layout editing, even while controls are hidden |
+| Touch | Auto / Always show / Always hide visibility policy |
+| HUD | Open layout editing while the overlay is visible |
 
 The game's selected controller profile still determines button actions. MOVE + FIRE/drag permits movement, aim and fire with two fingers. More fingers can operate other controls. Physical gamepads remain player one; stronger analog input wins and buttons merge. External mouse events pass through to SDL.
 
@@ -46,3 +46,5 @@ Usability references: Activision's [Warzone Mobile control customization guide](
 Device checks: simultaneous move/fire/aim/jump, menus and controller profiles, cancel/focus/rotation, save/reopen/cancel/reset, controls under toolbar, notches, gamepad coexistence and Quest overlay absence. Test15 is awaiting owner results.
 
 Additional native-port reference: id Software's public [DOOM iOS HUD editor](https://github.com/id-Software/DOOM-iOS/blob/master/code/iphone/hud.c), reviewed for drag ownership, screen-edge clamping and saved-control lifecycle. This was design comparison only; none of its GPL code/art was copied into this implementation.
+
+Controller & touch settings in the launcher controls automatic hiding and recovery. Auto is the default; only a fully mapped SDL gamepad hides the HUD. Always hide is an explicit override; restore visibility in the launcher. See [controller support](ANDROID-GAMEPAD.md).

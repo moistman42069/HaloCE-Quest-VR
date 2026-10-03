@@ -42,7 +42,7 @@ final class PvpLauncher {
             if(name.matches("[a-z0-9_]{1,31}\\.map") && MapInfo.read(file).multiplayer) maps.add(name.substring(0,name.length()-4));
         }
         Collections.sort(maps);
-        if(maps.isEmpty()) { new AlertDialog.Builder(activity).setTitle("No multiplayer maps")
+        if(maps.isEmpty()) { new GamepadNavigation.Builder(activity).setTitle("No multiplayer maps")
             .setMessage("Import legitimate Xbox game data containing multiplayer maps before hosting. PC/Custom Edition maps are not interchangeable with Xbox maps.")
             .setPositiveButton("OK",null).show(); return; }
         LinearLayout layout=new LinearLayout(activity); layout.setOrientation(LinearLayout.VERTICAL);
@@ -72,7 +72,7 @@ final class PvpLauncher {
         text(layout,"Private: share the game's invite with friends. Public: ChupathingyCE receives the invite, server name, map and population. Internet play must be enabled in Network settings. LAN works on the same network; router/client isolation can block it.");
         TextView status=new TextView(activity); layout.addView(status);
         ScrollView scroll=new ScrollView(activity); scroll.addView(layout);
-        AlertDialog dialog=new AlertDialog.Builder(activity).setTitle("Host multiplayer").setView(scroll)
+        AlertDialog dialog=new GamepadNavigation.Builder(activity).setTitle("Host multiplayer").setView(scroll)
             .setPositiveButton("Create lobby",null).setNegativeButton("Cancel",null).create();
         dialog.setOnShowListener(ignored->dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v->{
             if(!ready.getAsBoolean()) return;

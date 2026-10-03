@@ -203,13 +203,16 @@ def fetch_third_party(vr: bool = False) -> None:
         print(f"Cloning SDL3 {SDL_TAG}")
         subprocess.run(["git", "clone", "-q", "--depth", "1", "--branch", SDL_TAG, SDL_URL, str(SDL_DIR)],
                        check=True)
-    # local fixes to SDL3's Java side (port/android/patches), applied once
+    # Reviewed fixes against pinned SDL3. A changed baseline must not silently
+    # skip a required Java/native compatibility patch.
     for patch in sorted((PORT_DIR / "patches").glob("sdl3-*.patch")):
         check = subprocess.run(["git", "-C", str(SDL_DIR), "apply", "--check", str(patch.resolve())],
                                capture_output=True)
         if check.returncode == 0:
             print(f"Applying {patch}")
             subprocess.run(["git", "-C", str(SDL_DIR), "apply", str(patch.resolve())], check=True)
+        else:
+            subprocess.run(["git", "-C", str(SDL_DIR), "apply", "--reverse", "--check", str(patch.resolve())], check=True)
     if vr:
         _fetch_openxr()
 
@@ -529,7 +532,7 @@ def generate_android_build(n: Writer, sln: Any) -> None:
         description="ANDROID SDL3",
         pool="console",
     )
-    n.build(outputs=libsdl, rule="android_sdl3", implicit=[SDL_DIR / "CMakeLists.txt"])
+    n.build(outputs=libsdl, rule="android_sdl3", implicit=[SDL_DIR / "CMakeLists.txt", *sorted((PORT_DIR / "patches").glob("sdl3-*.patch"))])
 
     # ---------- the host library
 
