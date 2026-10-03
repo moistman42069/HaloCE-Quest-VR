@@ -6,7 +6,7 @@ Updated 2026-10-03. Canonical public repository: [moistman42069/HaloCE-Quest-VR]
 
 On 2026-10-03 the owner stopped public APK distribution pending additional co-op tests. The briefly published test13a release was removed, including its binary downloads. The source repo remains public; no new release or binary upload is authorized until the owner tests the replacement pair and approves publication.
 
-**Active candidate: test14, VR and flat, version 1.0-test14 / code 15.** Client NPC control ownership/resting state, one-shot AI animations, unarmed vehicle-seat replication and campaign pause-menu routing are corrected in source. Build/package evidence and acceptance remain separate; see [TEST14-PROGRESS.md](TEST14-PROGRESS.md).
+**Active candidate: test14, VR and flat, version 1.0-test14 / code 15.** Client NPC control ownership/resting state, one-shot AI animations, unarmed vehicle-seat replication and campaign pause-menu routing are corrected in source. Both APKs and matching source/build ZIPs are packaged for owner testing; all five targeted suites and signature/version/integrity/privacy checks passed. Runtime acceptance remains pending. Exact hashes/source: [TEST14-DELIVERY.md](TEST14-DELIVERY.md); investigation: [TEST14-PROGRESS.md](TEST14-PROGRESS.md).
 
 ## Previously delivered versions
 

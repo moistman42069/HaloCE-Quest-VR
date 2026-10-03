@@ -4,8 +4,9 @@ The canonical repository is `moistman42069/HaloCE-Quest-VR`, default branch `mai
 Read `docs/CURRENT-STATE.md`, `docs/RELEASE-PROVENANCE.md`, `CONTRIBUTING.md`
 and the relevant player/architecture/protocol documents before code changes.
 
-Current shipped versions: Quest VR test13a (Legs + Arms default) and flat Android
-test13. The public source starts from the complete latest test13a snapshot.
+Current testing pair: Quest VR and flat Android test14 (version code 15),
+packaged from 696a7bbe9321565d90207042067658cb8814cad1; see TEST14-DELIVERY.md.
+Legs + Arms remains the VR default. Public main contains the full current source.
 Historical TEST* files are dated evidence, not current instructions. Earlier
 private history is retained as a backup and must not be pushed publicly.
 

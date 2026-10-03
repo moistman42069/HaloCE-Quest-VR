@@ -6,7 +6,7 @@ Native **Halo: Combat Evolved on standalone Meta Quest**, with a separate **flat
 
 ## Build and testing status
 
-No APK release is currently published. Test candidates are delivered directly to the maintainer before public distribution. The test13a release was withdrawn on 2026-10-03 when paired co-op testing exposed NPC animation problems. The next candidate is test14 for both Quest VR and flat Android.
+No APK release is currently published. Test candidates are delivered directly to the maintainer before public distribution. The test13a release was withdrawn on 2026-10-03 when paired co-op testing exposed NPC animation problems. The current local testing candidate is test14 for both Quest VR and flat Android; [delivery evidence](docs/TEST14-DELIVERY.md) records its source and checks.
 
 [Controls/options](docs/CONTROLS-AND-OPTIONS.md) ? [Install/help](docs/PLAYER-GUIDE.md) ? [Credits](CREDITS.md) ? [Development checkpoint](docs/CURRENT-STATE.md) ? [Co-op fix evidence](docs/TEST14-PROGRESS.md)
 
