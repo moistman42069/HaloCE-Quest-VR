@@ -681,6 +681,7 @@ boolean unit_start_animation_impulse(
 	long unit_index,
 	short animation_impulse,
 	real_vector2d *alignment_vector);
+boolean unit_animation_impulse_valid(short impulse);
 long unit_get_aiming_unit_index(long unit_index);
 void unit_get_aiming_vector(
 	long unit_index,

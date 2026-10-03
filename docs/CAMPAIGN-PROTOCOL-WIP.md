@@ -1,3 +1,5 @@
+> **Current follow-up: test14 (2026-10-03).** Owner confirmed a Quest/flat session and VR body movement visible on flat Android; NPC animation problems blocked public release. Message 39 adds optional reliable 24-byte NPC animation impulses (round, seed, object, short impulse, word alignment-present, float2 alignment). Existing CE01 layouts and avatar IDs stay fixed; use test14 on both peers. Current evidence and limits: [COOP-COMPATIBILITY-AUDIT.md](COOP-COMPATIBILITY-AUDIT.md), [CURRENT-STATE.md](CURRENT-STATE.md). The test12 statements below are historical.
+
 # Campaign protocol implementation checkpoint
 
 This is the test12 candidate implementation. No successful remote campaign play is claimed.

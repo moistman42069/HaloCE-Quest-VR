@@ -54,6 +54,7 @@ same datum index (identifier and all), so that any message can name one:
 #include "models/model_definitions.h"
 #include "units/units.h"
 #include "units/biped_definitions.h"
+#include "units/bipeds.h"
 #include "units/vehicle_definitions.h"
 #include "units/vehicle_datum.h"
 #include "items/items.h"
@@ -1244,6 +1245,10 @@ static void distributed_host_send_inventories(
 		unsigned long weapons_checksum;
 		byte kind;
 
+		/* The inventory record also carries vehicle seating. Unarmed campaign
+		 * passengers still need it; after exit, the normal empty refresh applies. */
+		if (network_campaign_playing() && unit->unit.parent_seat_index != NONE)
+			carries = TRUE;
 		for (weapon_slot = 0; weapon_slot < MAXIMUM_WEAPONS_PER_UNIT; weapon_slot++)
 			carries |= unit->unit.weapon_object_indices[weapon_slot] != NONE;
 		if (!distributed_object_networked(iterator.index) || TEST_FLAG(unit->object.damage_flags, _object_dead_bit))
@@ -2167,6 +2172,27 @@ void network_objects_handle_states(
 		dx = state->position.x - object->object.position.x;
 		dy = state->position.y - object->object.position.y;
 		dz = state->position.z - object->object.position.z;
+		if (network_campaign_client() && object->object.type == _object_type_biped &&
+			((struct unit_datum *)object)->unit.player_index == NONE)
+		{
+			boolean at_rest = TEST_FLAG(state->flags, _distributed_object_at_rest_bit);
+			/* Position tolerance must not discard a host velocity/rest change.
+			 * In particular a resting corpse can otherwise keep its local falling
+			 * state forever, while tiny position errors are ignored. */
+			object->object.translational_velocity = velocity;
+			object->object.angular_velocity = angular_velocity;
+			SET_FLAG(object->object.flags, _object_at_rest_bit, at_rest);
+			if (at_rest)
+			{
+				struct biped_datum *biped = (struct biped_datum *)object;
+				/* biped_update_moving only sets at_rest when grounded. */
+				SET_FLAG(biped->biped.flags, _biped_airborne_bit, FALSE);
+				biped->biped.airborne_ticks = 0;
+				SET_FLAG(object->object.flags, _object_on_ground_bit, TRUE);
+				tolerance = 0.f;
+				blend_distance = 0.f;
+			}
+		}
 		/* (close enough where it is, and turned as it is: one at rest too) */
 		if (dx * dx + dy * dy + dz * dz <= tolerance * tolerance &&
 			forward.i * object->object.forward.i + forward.j * object->object.forward.j +

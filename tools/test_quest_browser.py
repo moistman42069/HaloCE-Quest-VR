@@ -45,7 +45,9 @@ public class BrowserCheck {
         check(ServerListing.parse(row.replace("\t1\t10", "\t0\t10")).get(0).open == false);
         StringBuilder many = new StringBuilder();
         for (int i = 0; i < 150; i++) many.append(row.replace(code, String.format("%064x", i))).append('\n');
-        check(ServerListing.parse(many.toString()).size() == 128);
+        check(ServerListing.parse(many.toString()).size() == 150);
+        String campaign = row.replace("\t2\t12\t128\t1\t10", "\t0\t1\t2\t1\t52737");
+        check(ServerListing.parse(campaign).get(0).description().contains("Campaign co-op"));
         if (args.length > 0) {
             var live = ServerListing.parse(Files.readString(Path.of(args[0])).replace("\ufeff", ""));
             check(!live.isEmpty());
@@ -69,12 +71,16 @@ c.write_text(r'''
 #include <assert.h>
 #include <stdio.h>
 typedef int boolean;
+typedef unsigned short word;
 #define NONE (-1)
 #define TRUE 1
 #define FALSE 0
 #define MAXIMUM_NETWORK_ADVERTISED_GAMES 4
 #define csprintf sprintf
 #define network_event(...) ((void)0)
+#define HALO_CAMPAIGN_NETWORK_VERSION 0xCE01
+#define HALO_CAMPAIGN_ADVERTISED_FLAG 2
+static boolean network_campaign_advertised(unsigned short v, unsigned char f) { return v==HALO_CAMPAIGN_NETWORK_VERSION && (f&3)==3; }
 struct network_advertised_game { int unused; };
 struct network_game_client { struct network_advertised_game available_games[4]; };
 static struct { unsigned int version, flags; } network_game_client_advertised_versions[4];
@@ -87,6 +93,11 @@ int main(void) {
         network_game_client_advertised_versions[0].flags = distributed ? HALO_PORT_ADVERTISED_DISTRIBUTED_FLAG : 0;
         assert(network_game_client_advertised_game_compatible(&client, &client.available_games[0], 1)
             == (distributed && (version == 9 || version == 10)));
+    }
+    network_game_client_advertised_versions[0].version = HALO_CAMPAIGN_NETWORK_VERSION;
+    for (int flags=0;flags<4;flags++) {
+        network_game_client_advertised_versions[0].flags=flags;
+        assert(network_game_client_advertised_game_compatible(&client,&client.available_games[0],0)==(flags==3));
     }
     assert(!network_game_client_advertised_game_compatible(NULL, NULL, 0));
     assert(!network_game_client_advertised_game_compatible(&client, &client.available_games[4], 0));

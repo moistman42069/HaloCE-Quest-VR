@@ -1,3 +1,5 @@
+> **Release withdrawn / binaries on hold (2026-10-03).** The following is the preserved provenance of the prior private test pair and initial public source import, not an available release. No public APKs will be posted until the owner tests the replacement pair. `SOURCE-IDENTITY.json` describes the initial import, not subsequent source changes. Current candidate status: [CURRENT-STATE.md](CURRENT-STATE.md).
+
 # Public release provenance — test13a
 
 This release deliberately pairs the newest Quest APK with the current flat APK. Both are preserved bytes from their original builds; public publication does not rebuild or re-sign them.

@@ -2,19 +2,15 @@
 
 Native **Halo: Combat Evolved on standalone Meta Quest**, with a separate **flat Android APK** for touch/gamepad play. This community fork builds on the Halo CE decompilation, the native cross-platform port and astromaddie's OpenXR VR work. The reference headset is **Quest 3**.
 
-**Current release: Quest VR test13a + flat Android test13.** Test13a makes **Legs + Arms** the VR body default. Saved choices remain respected. The flat companion already contains the matching campaign/avatar implementation and does not need that local visibility change.
+**Public source; APK releases are on hold pending co-op testing.** The last private test pair was Quest VR test13a and flat Android test13. Legs + Arms remains the default for new VR settings; saved choices remain respected.
 
-## Downloads
+## Build and testing status
 
-| Device / purpose | Download | Identity |
-| --- | --- | --- |
-| Standalone Quest VR | [HaloCE-Quest-test13a.apk](https://github.com/moistman42069/HaloCE-Quest-VR/releases/download/halo-ce-quest-test13a/HaloCE-Quest-test13a.apk) | `1.0-test13a`, code 14; `com.halo.decomp.vr` |
-| Flat Android phone/tablet | [HaloCE-Android-test13.apk](https://github.com/moistman42069/HaloCE-Quest-VR/releases/download/halo-ce-quest-test13a/HaloCE-Android-test13.apk) | `1.0-test13`, code 13; `com.halo.decomp` |
-| Both APKs, guides, notices and hashes | [Download bundle](https://github.com/moistman42069/HaloCE-Quest-VR/releases/download/halo-ce-quest-test13a/HaloCE-Quest-Android-test13a-bundle.zip) | Same binaries as above |
+No APK release is currently published. Test candidates are delivered directly to the maintainer before public distribution. The test13a release was withdrawn on 2026-10-03 when paired co-op testing exposed NPC animation problems. The next candidate is test14 for both Quest VR and flat Android.
 
-[Release notes and source](https://github.com/moistman42069/HaloCE-Quest-VR/releases/tag/halo-ce-quest-test13a) · [Controls/options](docs/CONTROLS-AND-OPTIONS.md) · [Install/help](docs/PLAYER-GUIDE.md) · [Credits](CREDITS.md) · [Development checkpoint](docs/CURRENT-STATE.md)
+[Controls/options](docs/CONTROLS-AND-OPTIONS.md) ? [Install/help](docs/PLAYER-GUIDE.md) ? [Credits](CREDITS.md) ? [Development checkpoint](docs/CURRENT-STATE.md) ? [Co-op fix evidence](docs/TEST14-PROGRESS.md)
 
-These are **experimental community builds**. Quest gameplay, multiplayer, settings, Downloads logging and room-scale legs have received positive owner reports; the owner specifically approved Legs + Arms. Campaign co-op, remote avatar replication and flat touch still need documented paired-device/phone acceptance. Build checks do not establish those results.
+The owner reports working Quest gameplay, multiplayer, settings, Downloads logging and room-scale legs, and has now confirmed that full VR body movement is visible on the flat Android partner. Co-op NPC walking/falling presentation still needs correction and paired-device confirmation. This is not full campaign acceptance.
 
 ## VR features
 

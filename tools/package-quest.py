@@ -29,7 +29,7 @@ def main():
     parser.add_argument("--flat", type=Path, required=True)
     parser.add_argument("--build-tools", type=Path, required=True)
     parser.add_argument("--out", type=Path, required=True)
-    parser.add_argument("--label", default="test13")
+    parser.add_argument("--label", default="test14")
     args = parser.parse_args()
     if not re.fullmatch(r"[A-Za-z0-9_-]+", args.label):
         parser.error("label must contain letters, digits, underscore or dash")
@@ -83,16 +83,16 @@ def main():
     subprocess.run(["git", "archive", "--format=zip", "--prefix=halo-ce-quest/", "-o", str(source), commit], cwd=ROOT, check=True)
     manifest = {"candidate": args.label, "created_utc": datetime.now(timezone.utc).isoformat(),
                 "source_commit": commit, "branch": branch, "runtime_accepted": False,
-                "accepted_baseline": "test8 be7ec96470fa8db544a440f63218e5fe4f127a82",
-                "prior_device_report": "test12 4fe781ed: room-scale legs improved and Downloads log exits cleanly; menu overlap and body/shoulder clipping recorded in TEST13-PROGRESS.md",
+                "publication": "held pending owner candidate testing and approval",
+                "prior_device_report": "test13 Quest/flat: remote VR body movement confirmed; NPC sliding/falling reported; see TEST14-PROGRESS.md",
                 "certificate_sha256": CERTIFICATE, "apks": records,
                 "source_zip": {"file": source.name, "sha256": sha(source)},
                 "native_host_version": 9, "accepted_host_versions": [9, 10],
                 "campaign_protocol": 0xCE01, "campaign_runtime_verified": False,
-                "avatar_protocol": 1, "avatar_message_ids": [37, 38], "avatar_runtime_verified": False,
+                "avatar_protocol": 1, "avatar_message_ids": [37, 38], "avatar_prior_owner_report": "VR body movement visible on flat Android; test14 regression pending",
                 "directory": "https://halo.milenko.org/v1/games.txt"}
     (output / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
-    documents = ["TEST13-PROGRESS.md", "TEST13-README.md", "TEST12-README.md", "NETWORK-VR-AVATARS.md", "CAMPAIGN-PROTOCOL-WIP.md",
+    documents = ["TEST14-PROGRESS.md", "CURRENT-STATE.md", "PLAYER-GUIDE.md", "CONTROLS-AND-OPTIONS.md", "COOP-COMPATIBILITY-AUDIT.md", "NETWORK-VR-AVATARS.md", "CAMPAIGN-PROTOCOL-WIP.md",
                  "ANDROID-TOUCH-CONTROLS.md", "MULTIPLAYER-BROWSER.md"]
     for doc in documents:
         shutil.copy2(ROOT / "docs" / doc, output / doc)

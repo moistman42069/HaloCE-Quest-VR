@@ -388,7 +388,7 @@ void vr_initialize(void)
 	if (vr.initialized)
 		return;
 	vr.initialized = 1;
-	platform_log("vr: HaloCE Quest test13a candidate (test13 with legs plus arms default)");
+	platform_log("vr: HaloCE Quest test14 candidate (co-op actor control and resting biped synchronization)");
 	if (!config_boolean("vr.enabled"))
 	{
 		platform_log("vr: off (vr.enabled)");

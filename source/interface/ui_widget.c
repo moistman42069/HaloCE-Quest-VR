@@ -642,6 +642,7 @@ struct widget_instance;
 #include "cutscene/cinematics.h"
 #include "event_manager.h"
 #include "game/game_engine.h"
+#include "network_campaign.h"
 #include "game/game_globals.h"
 #include "game/players.h"
 #include "hs/hs.h"
@@ -3588,7 +3589,10 @@ static void widget_instance_initialize(
 	widget->visible = TRUE;
 	widget->render_regardless_of_controller_index =
 		TEST_FLAG(definition->flags, _widget_render_regardless_of_controller_index_bit);
-	widget->pause_game_time = TEST_FLAG(definition->flags, _widget_pause_game_time_bit);
+	/* Online campaign menus use campaign tags, but must keep both peers'
+	 * simulation and transport running just like the multiplayer menu. */
+	widget->pause_game_time = TEST_FLAG(definition->flags, _widget_pause_game_time_bit) &&
+		!network_campaign_active();
 	widget->creation_time = widget_globals.current_system_milliseconds;
 	widget->milliseconds_to_auto_close = MAX(definition->milliseconds_to_auto_close, 0);
 	widget->auto_close_fade_time = MAX(definition->auto_close_fade_time, 0);
@@ -4269,7 +4273,7 @@ void display_error(
 				widget->widget_is_error_dialog = TRUE;
 				if (!widget->pause_game_time)
 				{
-					widget->pause_game_time = pause_game_time;
+					widget->pause_game_time = pause_game_time && !network_campaign_active();
 					if (widget->pause_game_time == TRUE)
 					{
 						match_vassert(
@@ -6861,6 +6865,10 @@ static boolean ui_check_for_pause_game(
 						widget_name = NULL;
 						break;
 					}
+					/* Campaign map caches do not contain the competitive pause
+					 * widgets. Use their authored campaign menu (and VR settings). */
+					if (network_campaign_active())
+						widget_name = "ui\\shell\\solo_game\\pause_game\\pause_game";
 					if (widget_name &&
 						!ui_widget_load_by_name_or_tag(
 							widget_name,

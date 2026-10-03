@@ -5197,6 +5197,9 @@ boolean unit_update(
 	profile_enter(unit_update_section);
 
 	unit_verify_vectors(unit_index, "unit-update-begin");
+	/* Remote campaign actors are controlled by the host, with a bounded
+	 * input lifetime; no local AI actor is created on the client. */
+	network_campaign_actor_update(unit_index);
 
 	++unit->unit.timer;
 
@@ -8389,6 +8392,20 @@ boolean unit_start_animation_impulse(
 	long animation_graph_index;
 	boolean result = FALSE;
 
+	/* A newly replicated NPC can receive its event before its first local
+	 * animation/weapon-class update. Never index an uninitialized graph. */
+	if (network_campaign_client())
+	{
+		if (!unit_animation_impulse_valid(animation_impulse)) return FALSE;
+		unit_definition = unit_definition_get(unit->definition_index);
+		if (unit_definition->object.animation_graph.index == NONE) return FALSE;
+		animation_graph = animation_graph_definition_get(unit_definition->object.animation_graph.index);
+		if (!VALID_INDEX(unit->unit.animation.seat_index, animation_graph->unit_seats.count)) return FALSE;
+		unit_seat = TAG_BLOCK_GET_ELEMENT(&animation_graph->unit_seats, unit->unit.animation.seat_index,
+			struct animation_graph_unit_seat);
+		if (!VALID_INDEX(unit->unit.animation.weapon_index, unit_seat->weapon_classes.count)) return FALSE;
+	}
+
 	if (unit_can_play_animation_impulse(unit_index, animation_impulse))
 	{
 		unit_definition = unit_definition_get(unit->definition_index);
@@ -8447,7 +8464,12 @@ boolean unit_start_animation_impulse(
 		}
 	}
 
+	if (result) network_campaign_actor_impulse_capture(unit_index, animation_impulse, alignment_vector);
 	return result;
+}
+boolean unit_animation_impulse_valid(short impulse)
+{
+	return VALID_INDEX(impulse, NUMBER_OF_UNIT_ANIMATION_IMPULSES);
 }
 static void unit_melee_sound(
 	long unit_index,

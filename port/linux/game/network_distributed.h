@@ -72,6 +72,8 @@ enum
 	_distributed_message_campaign_actors,
 	_distributed_message_vr_pose,
 	_distributed_message_vr_capability,
+	/* Optional campaign NPC one-shot animation events (test14, reliable). */
+	_distributed_message_campaign_actor_impulses,
 	NUMBER_OF_DISTRIBUTED_MESSAGES
 };
 

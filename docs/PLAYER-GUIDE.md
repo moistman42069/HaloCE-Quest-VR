@@ -6,7 +6,7 @@ Quest VR test13a is the immersive standalone build. Flat Android test13 is the t
 
 ## Install and import
 
-1. Download from [Releases](https://github.com/moistman42069/HaloCE-Quest-VR/releases/tag/halo-ce-quest-test13a). `SHA256SUMS.txt` identifies the exact files.
+1. Public APK releases are on hold for co-op testing. Use the candidate supplied directly by the maintainer, or build from source. Candidate `SHA256SUMS.txt` identifies the exact files.
 2. Sideload through your authorized Quest installer or Android's package installer. Optional computer command: `adb install -r <apk-file>`.
 3. Copy your legally obtained Halo CE Xbox `.iso`/`.xiso` onto the device and select it in the launcher's data-import flow. Allow roughly 1.8 GB for maps plus cache/saves and image space during extraction. This data is distinct from MCC/retail PC installation files.
 4. Wait for extraction, then Play. Existing Quest data at `/sdcard/Documents/HaloCE/maps` is recognized when `ui.map` is present; otherwise app external files are used.

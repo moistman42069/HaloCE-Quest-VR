@@ -1,0 +1,4 @@
+*.sh text eol=lf
+*.in text eol=lf
+*.sed text eol=lf
+**/gradlew text eol=lf

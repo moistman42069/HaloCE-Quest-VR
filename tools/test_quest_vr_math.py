@@ -54,7 +54,7 @@ static void cross_product3d(real_vector3d const*a,real_vector3d const*b,real_vec
 }
 enum { HAND_LOOSE,HAND_HELD,HAND_EMPTY };
 static char const *hand_state_names[] = {"loose","held","empty"};
-static struct { long noted_weapon; int pending_state,hand_state,grip_held[2],weapon_hand,gun_held;
+static struct { long noted_weapon; int pending_state,hand_state,grip_held[2],weapon_hand,gun_held,two_hand_held,support_near;
  double pending_until; float ungripped_seconds; int ungripped_warned; } vr;
 static double clock_ms;
 static double now_ms(void) { return clock_ms; }

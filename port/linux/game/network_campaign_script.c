@@ -76,6 +76,9 @@ static void presentation_initialize(void)
 
 void network_campaign_script_reset(void)
 {
+	/* Preserve queued one-shot effects across save/BSP barriers, but discard
+	 * the abandoned timeline on checkpoint restore and new missions. */
+	network_campaign_actor_impulses_reset();
 	pending_count = 0;
 	overflowed = FALSE;
 }
