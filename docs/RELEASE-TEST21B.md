@@ -21,7 +21,7 @@ The launcher includes an offline **Field guide** with controls, settings and cre
 
 ## 2. New Features / Major Changes
 
-This release carries forward the v1.0.2 project features and adds the test21 hands/body refinements. It preserves the restored fenced Safe geometry path from v1.0.2; the withdrawn v1.0.1 upload path is not present. Test21b changes are: 
+This release carries forward the v1.0.2 project features and adds the test21 hands/body refinements. It preserves the restored fenced Safe geometry path from v1.0.2; the withdrawn v1.0.1 upload path is not present. Test21b changes are:
 
 - Floating mode now means hands only, with closed wrists; **Float + Arms** is a separate choice.
 - Body shoulders follow torso yaw across body modes, and the Full Body neck pivot is moved behind/below the headset to improve looking down. These visual changes are not headset-confirmed in this candidate. Legs + Arms remains the default.
