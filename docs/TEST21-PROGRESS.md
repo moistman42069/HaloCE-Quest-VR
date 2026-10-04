@@ -1,0 +1,124 @@
+# Test21 checkpoint: hand modes, body turns, Full Body, two-hand lock, horn, online melee
+
+Updated 2026-10-04. Private candidate **1.0.2 / code 26**, branch
+`test21-hands-body` from `main` (`dae77ab1`). The accepted release is v1.0.2
+(the exact test20e pair, code 25); see
+[RELEASE-PROVENANCE-1.0.2.md](RELEASE-PROVENANCE-1.0.2.md). No release without
+explicit owner approval.
+
+## Evidence reconciled (owner files kept private)
+
+The recording starts at 12:45:58 in the session logged from 12:42:16. That
+session ran test20e (code 25, the public v1.0.2 binary) on a freshly written
+default config in the default data root. Video time + 12:45:58 lines up with
+every logged setting change:
+
+| Video | Log | State |
+| --- | --- | --- |
+| 0–7 s | 12:45:53 | Body Arms + Hands, Hands Body IK |
+| 8 s | 12:46:06 | Hands **Floating** (the overlay the report describes) |
+| 13–57 s | 12:46:11 | Hands Animated |
+| 58 s | 12:46:56 | Body IK; 59 s Floating again |
+| 74 s / 76 s | 12:47:11 / 12:47:13 | Body Full, then Legs + Arms (Floating) |
+| 93 s | 12:47:31 | Body **Hands Only** + Floating |
+| 95–96 s | 12:47:33–34 | Animated, Gun Only |
+
+The `body legs` snapshots are earlier moments of the same session, not stale
+state or a migration. The 12:36 log is a test20d runtime on a managed data set.
+The local signing key's certificate matches v1.0.2
+(`53d416f7e123cc62b749940983209bc9a400002e033fd5f50900d4ffad8e2aa4`), and the
+local copy of the release APK has the published SHA-256.
+
+## Causes (established in source)
+
+1. **Floating kept attached arms** (owner: "the floating hands toggle didn't
+   really work"). Test20d merged Floating with Float + Arms, so Floating drew arms
+   from a floating shoulder whenever Body showed arms (59–61 s, 76–84 s).
+2. **Cut, slivered wrists** (Hands Only + Floating, 93–95 s). A floating hand is
+   moved to the controller without an arm solve. `vr_hide_forearms` then gathered
+   the hidden forearm 3.5 cm toward the forearm bone's old animated position, an
+   arbitrary direction, which flattened the cuff into slivers.
+3. **Arms don't follow body turns.** Without a drawn body (Arms + Hands, Hands
+   Only) the IK shoulders faced `vr.heading`, the stick-turn heading, not the
+   torso. With a body, the torso yaw followed the head only beyond a 25° cone.
+4. **Full Body clipping and snapping.** The neck target was a fixed 14 cm behind
+   (along the torso yaw) and 20 cm below the eyes, ignoring head pitch. Room-scale
+   moves the character with the eyes, so looking down carried the chest into the
+   camera. The torso yaw came from the flattened head forward, which is unstable
+   looking straight down.
+5. **No horn while driving.** The horn is the driver's crouch control
+   (`vehicles.c`). `player_control` passes crouch only while the move stick is
+   below 98%, and the Warthog's throttle is that stick.
+6. **Melee too easy online.** Swing melee fires on any hand moving faster than
+   2 m/s vertically, in every game type.
+7. **Two-hand auto grip "removed".** "Auto" was a magnet: two-handed aim only
+   while the off hand stayed within a narrow cone; it never locked. The default was
+   Grip (squeeze).
+
+## Changes
+
+- `vr.hand_tracking`:
+  - `floating` = hands only (any Body);
+  - `floating_arms` = Float + Arms;
+  - Hands row: Body IK / Floating / Float + Arms / Animated / Gun Only.
+- The hidden-arm cuff (Hands Only, Floating) closes along the hand's own axis
+  (`vr_hand_back_axis`: finger bases to wrist), with the forearm direction as a
+  fallback.
+- One torso heading (`vr_body_heading`) for the IK shoulders in every Body mode,
+  for the body, and for the published avatar:
+  - pitch-safe head yaw (`vr_head_yaw_vector`);
+  - pulled halfway toward both tracked hands ahead, within 45°
+    (`vr_body_wanted_yaw`);
+  - 15° comfort cone, rate 10/s, wrapped.
+- Full Body neck pivot (`vr_neck_pivot`):
+  - eye − (0.14 f′ + 0.20 u′), with pitch limited to −60..+30°;
+  - horizontal follow cap 45 cm (was 30);
+  - Legs + Arms stays the default.
+- Two Hands **Auto Lock** (new default `auto`):
+  - locks after the off hand rests 0.12 s at the support grip;
+  - releases on a 20 cm distance change or leaving a 60° cone;
+  - re-arms only after the hand leaves the grip;
+  - Squeeze (`grip`) and Off remain;
+  - one-time migration from the old Grip default (`vr.two_hand_auto_applied`);
+  - two-handed aim now always uses the lock (the old magnet is gone).
+- Online melee:
+  - `vr.melee_multiplayer` (off by default) gates impact and swing melee in any
+    network game (`vr_set_network_game`); the button is unaffected;
+  - Melee row: Impact / Swing / Impact + Online / Swing + Online.
+- Horn: seated, either stick click sets the crouch control whatever the throttle
+  (`vr_horn_held` via `vr_take_actions`); a lowered head no longer crouches while
+  seated.
+- Packaging recognises test21 labels and checks its markers.
+
+Kept: Legs + Arms default, gun anchoring, hand/gun calibration, fingers,
+action-animation handoff, Safe geometry, avatar publishing, left-handed mode,
+and Quest/Android networking parity. The Quest OS v78 orientation report
+remains separate (FUTURE-RELEASE-FOLLOWUPS.md); nothing here links to it.
+
+## Status
+
+| Item | Implemented | Automatically verified | Headset |
+| --- | --- | --- | --- |
+| Floating hands only / Float + Arms | Yes | Yes (test21, test20c/d updated) | No |
+| Wrist cuff along the hand | Yes | Yes (2,000 hands, forearm bone anywhere) | No |
+| Arms follow body turns | Yes | Yaw math, all pitches, hands ahead/behind, wrap | No |
+| Full Body neck pivot | Yes | Pivot math across pitch | No: needs looking-down, turning, crouch and room-scale walking checks |
+| Auto two-hand lock | Yes | Static wiring and migration | No |
+| Horn | Yes | Button logic | No |
+| Online melee off | Yes | Gate logic | No |
+| v78 hand/weapon orientation | No | — | Separate report |
+
+## Headset checks needed
+
+1. Hands: Floating (no arms, closed wrists) and Float + Arms with each Body choice.
+2. With hands still, turn the body slowly through 180°+ and back (Arms + Hands,
+   Legs + Arms, Full): the shoulders follow and the arms don't twist across.
+   Repeat while moving the hands, reaching across the body, and after a recenter.
+3. Full Body: look straight down at the torso and turn the head side to side;
+   crouch; walk in room-scale. The chest must stay visible below and never clip,
+   snap or vanish. Then switch back to Legs + Arms.
+4. Two hands: bring the off hand to a rifle's support grip without squeezing; it
+   locks. Pull away; it releases. Also try Squeeze and Off, and left-handed.
+5. Warthog: honk with either stick click while driving at full throttle.
+6. Multiplayer: quick hand movements don't melee, the melee button does; Melee →
+   Impact + Online re-enables physical melee.

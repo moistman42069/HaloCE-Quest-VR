@@ -51,8 +51,8 @@ Test20d gives each decision one row. Rows that only mattered together with anoth
 
 | Category | Menu options |
 | --- | --- |
-| Controls | **Handedness** Right / Left; **Mirror Controls** Auto / Off; **Turning** Smooth 60–300 degrees/s or Snap 30 / 45 / 90; Move With Head / Left Hand / Right Hand; Two Hands Grip / Auto / Off; **Weapons** Locked / Physical / Physical + MP; **Holsters** Off or 10–40 cm; Aim Hand / Head; Controls VR / Xbox |
-| Body | Body Arms + Hands / Full / Legs + Arms / Hands Only; **Hands** Body IK / Floating / Animated / Gun Only; Fingers Off / Tracked; Room-scale Off / On; Crouch Depth Off or 5–40 cm; **Arm Run** Off or effort 0.3–1.2; Melee Impact / Swing; Melee Speed Off or 1.0–3.6 m/s |
+| Controls | **Handedness** Right / Left; **Mirror Controls** Auto / Off; **Turning** Smooth 60–300 degrees/s or Snap 30 / 45 / 90; Move With Head / Left Hand / Right Hand; **Two Hands** Auto Lock (default) / Squeeze / Off; **Weapons** Locked / Physical / Physical + MP; **Holsters** Off or 10–40 cm; Aim Hand / Head; Controls VR / Xbox |
+| Body | Body Arms + Hands / Full / Legs + Arms / Hands Only; **Hands** Body IK / Floating / Float + Arms / Animated / Gun Only; Fingers Off / Tracked; Room-scale Off / On; Crouch Depth Off or 5–40 cm; **Arm Run** Off or effort 0.3–1.2; **Melee** Impact / Swing / Impact + Online / Swing + Online; Melee Speed Off or 1.0–3.6 m/s |
 | Hands + Gun | Hand Pitch / Yaw / Roll (both hands, left mirrored; default −70 / 0 / 0); Reset Hands; Gun Pitch / Yaw / Roll (default 0); Reset Gun; Gun Forward / Up / Out ±20 cm; Gun Grip Anchored / Classic |
 | Gameplay | Haptics 0–100%; Flashlight Gesture / Button; Scope Off / On; Cutscenes Immersive / 3D Screen / Flat; Close Contact Off / On; Crosshair Native / Off; Crosshair Size 25–300%; Crosshair Opacity 0–100% |
 | Vehicles | Third Person (default) / First Person; Steering Right Hand (default) / Left Hand / Head / Stick; global and Warthog/Ghost/Banshee/Scorpion/Pelican Up/Forward/Right seat offsets ±50 cm |
@@ -60,7 +60,7 @@ Test20d gives each decision one row. Rows that only mattered together with anoth
 | Display | Decals, Particles, Contrails, Weather, Lens Flares, Camo: Auto / On / Off; Refresh 72 / 80 / 90 / 120 Hz |
 | Controller Left / Right | Advanced tracking correction for hand and gun together (see below) |
 
-Important defaults: right-handed with Mirror Controls Auto; body `legs`; Hands Body IK; hand pitch −70°; gun angle 0, Gun Grip Anchored, gun position 0; fingers/room-scale/scope on; holsters 20 cm; hand aim; two-hand Grip; Physical weapons (not in multiplayer); Arm Run off; Close Contact on; smooth turn 120 degrees/s; refresh request 72 Hz. Saved values override defaults. Hands Only forces hand IK even if Hands was set to Animated or Gun Only.
+Important defaults: right-handed with Mirror Controls Auto; body `legs`; Hands Body IK; hand pitch −70°; gun angle 0, Gun Grip Anchored, gun position 0; fingers/room-scale/scope on; holsters 20 cm; hand aim; two-hand Auto Lock; physical melee offline only; Physical weapons (not in multiplayer); Arm Run off; Close Contact on; smooth turn 120 degrees/s; refresh request 72 Hz. Saved values override defaults. Hands Only forces hand IK even if Hands was set to Animated or Gun Only.
 
 Close Contact reduces only the offline local VR capsule radius: up to 15%, at most 5 cm, never below 18 cm. Solid collision and height remain. Physical + MP concerns weapon holding/drop behavior, not visual avatar sharing; peers may not reproduce physical drops/pickups correctly.
 
@@ -91,6 +91,18 @@ validation remain pending. [Inherited keyboard/mouse mappings](../port/linux/REA
 
 Quit before external edits. In `[vr]`, `body = "legs"` explicitly selects the default; alternatives: `arms`, `full`, `hands`. Generated comments and [port_config.c](../port/linux/src/port_config.c) document all keys. Advanced settings include HUD/screen size/distance, world scale, scope size, weapon offsets, cinematic separation/convergence and diagnostics. Diagnostic switches are for development. See [the player guide](PLAYER-GUIDE.md) for paths/backups.
 
+## Two hands, melee and the horn (test21)
+
+- **Two Hands: Auto Lock** (new default): rest the off hand at the gun's support grip (where Halo's animation puts that hand) for about a tenth of a second and it locks there, as a squeeze used to. Pull the hand away (the hands' distance changes by 20 cm, or the hand leaves a 60-degree cone ahead of the gun) to release; it locks again only after the hand has left the grip. **Squeeze** is the old behaviour (lock while the grip is held at the support); **Off** never attaches. A config still on the old Grip default moves to Auto Lock once; a later choice is kept.
+- **Melee online:** physical melee (Impact or Swing) is off in network games by default, because a quick hand movement there (reaching for a holster) could melee. The melee button (right stick click) always works. Body → Melee: **Impact + Online** / **Swing + Online** turns physical melee on in network games too.
+- **Horn:** a driver's horn is Halo's crouch control. While seated, either stick click sounds it, whatever the throttle (the game used to pass the left stick click only below 98% throttle, and the Warthog's throttle is that stick). Clicking both sticks still recentres. A lowered head no longer counts as crouching while seated.
+
+## Body turns and Full Body (test21)
+
+- The arms hang from shoulders that face the torso in every Body mode. Before, without a drawn body (Arms + Hands, Hands Only), the shoulders faced the stick-turn heading, so turning your real body left them behind and the arms twisted across.
+- The torso's direction follows the head beyond a 15-degree comfort cone (25 before), drawn halfway toward your hands when both are tracked ahead, so turning your body (head and hands together) turns it while looking around with the head alone mostly does not. The head's direction is read so it stays steady even looking straight down; it used to flip there and snap the torso.
+- Full Body hangs from a neck pivot 14 cm behind and 20 cm below your eyes in the head's own frame. Looking down swings the eyes forward and down about it, so the chest stays behind and below them instead of moving into the camera. Legs + Arms stays the default until Full Body is confirmed on a headset.
+
 ## Hand, gun and controller calibration (test20c, test20d)
 
 Three separate things can be adjusted in Pause > VR Settings. Each changes only what its name says:
@@ -108,7 +120,8 @@ Three separate things can be adjusted in Pause > VR Settings. Each changes only 
 **Hand tracking** (Body page → **Hands**), separate from what body is shown:
 
 - **Body IK** (default): unchanged. Arms reach from the body's shoulders; with Full or Legs + Arms the hands follow the body solution.
-- **Floating:** hands go exactly where the controllers are, with no reach limit or shoulder pull. If the Body setting shows arms, they hang from a shoulder that floats with the hand (it stays at the body's shoulder within reach and slides along beyond it). With **Body: Hands Only** you get floating hands alone, with the glove cuff closed just behind the wrist. Test20c's separate Floating and Float + Arms are now this one choice, and a saved `floating_arms` becomes `floating`.
+- **Floating:** hands only, exactly where the controllers are, whatever the Body setting (test21 restores test20c's meaning; test20d had merged it with Float + Arms, which drew arms). The glove cuff closes just behind each wrist along the hand's own direction, so the wrist no longer looks cut or slivered.
+- **Float + Arms:** hands exactly at the controllers, with arms hanging from a shoulder that floats with the hand (it stays at the body's shoulder within reach and slides along beyond it). With Body: Hands Only it behaves as Floating.
 - **Animated:** Halo's own arm animation (the old Arms = Animated); the gun is still anchored.
 - **Gun Only:** arms and hands hidden (the old Arms = Hidden).
 

@@ -421,12 +421,14 @@ static const struct config_setting config_settings[] =
 		"shoulders to the hands (the left to the left controller, or to the gun\n"
 		"when held near it); \"hidden\" shows the gun alone; \"animated\" moves\n"
 		"them with the gun as the game animates them." },
-	{ "vr.two_handed", _config_string, "\"grip\"", "HALO_VR_TWO_HANDED", _environment_value, _platform_vr,
+	{ "vr.two_handed", _config_string, "\"auto\"", "HALO_VR_TWO_HANDED", _environment_value, _platform_vr,
 		"With vr.aim \"hand\": holding the gun in both hands steadies it, pointing\n"
-		"from the weapon hand to the other. \"grip\": the other hand's grip held\n"
-		"near the support grip, then locked to that point until release;\n"
-		"\"auto\": attach by proximity without squeezing; \"off\": no attachment.\n"
-		"Default is grip: a free hand can touch the gun without attaching." },
+		"from the weapon hand to the other. \"auto\" (default): the other hand resting at the\n"
+		"gun's support grip locks there, until pulled away; \"grip\": it locks only while its\n"
+		"grip is squeezed there; \"off\": no attachment." },
+	{ "vr.two_hand_auto_applied", _config_boolean, "false", "HALO_VR_TWO_HAND_AUTO_APPLIED", _environment_value, _platform_vr,
+		"Internal one-time migration (test21): a config on the old \"grip\" default moves to\n"
+		"\"auto\" (two-hand grip locks automatically). A later choice is kept." },
 	{ "vr.left_handed", _config_boolean, "false", "HALO_VR_LEFT_HANDED", _environment_value, _platform_vr,
 		"Left-handed play: the gun starts in the left hand (fire, grenade and zoom swap triggers\n"
 		"and bumpers) and, with vr.mirror_controls \"auto\", the sticks and face buttons mirror.\n"
@@ -447,6 +449,9 @@ static const struct config_setting config_settings[] =
 	{ "vr.melee_speed", _config_real, "2.0", "HALO_VR_MELEE_SPEED", _environment_value, _platform_vr,
 		"How fast a hand must move to strike (metres a second); 0 turns physical\n"
 		"melee off (the right stick click still melees)." },
+	{ "vr.melee_multiplayer", _config_boolean, "false", "HALO_VR_MELEE_MULTIPLAYER", _environment_value, _platform_vr,
+		"Physical melee (impact or swing) in network games too. Off by default: online, a\n"
+		"quick hand movement does not melee; the melee button always does." },
 	{ "vr.flashlight_distance", _config_real, "0.2", "HALO_VR_FLASHLIGHT_DISTANCE", _environment_value, _platform_vr,
 		"The off hand brought this close (metres) to the middle of the head\n"
 		"turns the flashlight on or off; 0 turns the gesture off." },
@@ -550,9 +555,9 @@ static const struct config_setting config_settings[] =
 		"Use right grip pose for aim too. Optional controller compatibility mode; false preserves native aim." },
 	{ "vr.hand_tracking", _config_string, "\"ik\"", "HALO_VR_HAND_TRACKING", _environment_value, _platform_vr,
 		"How tracked hands follow the controllers (with vr.arms \"ik\"): \"ik\" body-IK arms reach\n"
-		"from the shoulders; \"floating\" hands go exactly where the controllers are and the arms\n"
-		"hang from a shoulder that follows them (hidden with vr.body \"hands\"). The older\n"
-		"\"floating_arms\" becomes \"floating\"." },
+		"from the shoulders; \"floating\" hands go exactly where the controllers are, with no\n"
+		"arms; \"floating_arms\" hands go exactly to the controllers and arms hang from a\n"
+		"shoulder that follows them." },
 	{ "vr.hand_left_pitch", _config_real, "-70.0", "HALO_VR_HAND_LEFT_PITCH", _environment_value, _platform_vr,
 		"Left visible hand only: degrees (-180..180) around the controller's X axis. Default -70\n"
 		"lines the empty hand up with a hand holding a Touch controller. Does not move the gun." },

@@ -75,9 +75,8 @@ static struct
 	and the one-handed gun's on the aim (vr.weapon_*, mirrored for the left
 	hand); separate, so a comfortable hand never tilts the gun */
 	float hand_rotation[2][4], weapon_rotation[2][4];
-	/* vr.hand_tracking: 0 body IK, 1 floating (test20d: the arms drawn from
-	a floating shoulder unless the body shows hands only; the older
-	"floating_arms" is the same) */
+	/* vr.hand_tracking: 0 body IK, 1 floating hands (no arms, any body:
+	test20c's meaning, restored in test21), 2 floating hands and arms */
 	int hand_tracking;
 	/* test20d: left-handed controls (vr.left_handed with vr.mirror_controls
 	"auto"): the sticks trade jobs and the face buttons swap hands */
@@ -140,9 +139,17 @@ static struct
 	int touch_layout;
 	float hands_last[2][3];
 	float melee_speed, flashlight_distance, crouch_height;
-	int holsters, two_handed_mode; /* 0 off, 1 grip, 2 auto */
+	int holsters, two_handed_mode; /* 0 off, 1 grip (squeeze), 2 auto lock */
 	int support_near;
 	double support_time;
+	/* test21 auto lock: how long the off hand has rested at the support grip,
+	the hands' distance when it locked, and whether it may lock again (only
+	after the hand has left the grip since the last release) */
+	float support_dwell, support_engaged_apart;
+	int support_rearmed;
+	/* test21: a network game (vr_set_network_game) and whether physical
+	melee works in one (vr.melee_multiplayer, off by default) */
+	int network_game, melee_multiplayer;
 	/* the holsters' reach (vr.holster_size, metres) and which one the
 	weapon hand is in (0 none, 1 + HOLSTER_*) */
 	float holster_size;
@@ -317,17 +324,11 @@ static void migrate_calibration_split(void)
 /* Test20d: left-handed play now also mirrors the sticks and face buttons
 (vr.mirror_controls "auto"). Someone already playing left-handed keeps the
 layout they learned: once per config their controls stay standard. The old
-"floating_arms" hand mode is now plain "floating" (the arms follow vr.body). */
+(Test21: "floating" and "floating_arms" are separate modes again.) */
 static void migrate_handedness(void)
 {
 	int ok = 1;
 
-	if (!strcmp(config_string("vr.hand_tracking"), "floating_arms"))
-	{
-		ok = config_write_string("vr.hand_tracking", "floating");
-		platform_log("vr: hand tracking floating_arms is now floating (arms follow the Body setting)%s",
-			ok ? "" : " (save failed)");
-	}
 	if (config_boolean("vr.handedness_applied"))
 		return;
 	if (config_boolean("vr.left_handed"))
@@ -338,6 +339,25 @@ static void migrate_handedness(void)
 	}
 	if (ok)
 		config_write_boolean("vr.handedness_applied", 1);
+}
+
+/* Test21: two-hand grip locks automatically when the off hand rests at the
+gun's support grip (vr.two_handed "auto", the new default). Configs still on
+the old "grip" default move to it once; a later choice is kept. */
+static void migrate_two_hand_auto(void)
+{
+	int ok = 1;
+
+	if (config_boolean("vr.two_hand_auto_applied"))
+		return;
+	if (!strcmp(config_string("vr.two_handed"), "grip"))
+	{
+		ok = config_write_string("vr.two_handed", "auto");
+		platform_log("vr: two-hand grip now locks automatically at the support grip (Controls > Two Hands: Squeeze restores the old way)%s",
+			ok ? "" : " (save failed)");
+	}
+	if (ok)
+		config_write_boolean("vr.two_hand_auto_applied", 1);
 }
 
 void vr_reload_settings(void)
@@ -377,8 +397,9 @@ void vr_reload_settings(void)
 		for (vr.hand_tracking = 0; vr.hand_tracking < 3 &&
 			strcmp(config_string("vr.hand_tracking"), tracking[vr.hand_tracking]); vr.hand_tracking++)
 			;
-		/* "floating_arms" (test20c) is floating; unknown is body IK */
-		vr.hand_tracking = vr.hand_tracking == 0 || vr.hand_tracking == 3 ? 0 : 1;
+		/* unknown is body IK */
+		if (vr.hand_tracking == 3)
+			vr.hand_tracking = 0;
 		platform_log("vr: gun pitch/yaw/roll %.1f/%.1f/%.1f degrees offset %.3f/%.3f/%.3f m; hand tracking %s",
 			weapon[0], weapon[1], weapon[2], vr.weapon_offset[0], vr.weapon_offset[1], vr.weapon_offset[2],
 			tracking[vr.hand_tracking]);
@@ -429,8 +450,9 @@ void vr_reload_settings(void)
 	{
 		const char *mode = config_string("vr.two_handed");
 
-		/* "grip" (the off hand's grip on the gun), "auto" (the off hand held
-		ahead along the gun), "off"; an older boolean true means auto */
+		/* "auto" (test21: locks when the off hand rests at the support grip),
+		"grip" (locks when the off hand squeezes there), "off"; an older
+		boolean true means auto */
 		vr.two_handed_mode = !strcmp(mode, "off") || !strcmp(mode, "false") ? 0 :
 			!strcmp(mode, "auto") || !strcmp(mode, "true") ? 2 : 1;
 		vr.two_handed_enabled = vr.two_handed_mode != 0;
@@ -446,6 +468,7 @@ void vr_reload_settings(void)
 	platform_log("vr: %s-handed; sticks and face buttons %s", left_handed ? "left" : "right",
 		vr.controls_mirrored ? "mirrored (move on the right stick, turn on the left)" : "standard (move on the left stick)");
 	vr.melee_speed = (float)config_real("vr.melee_speed");
+	vr.melee_multiplayer = config_boolean("vr.melee_multiplayer");
 	vr.melee_impact = !strcmp(config_string("vr.melee"), "impact");
 	vr.fingers = config_boolean("vr.fingers");
 	vr.arm_run = config_boolean("vr.arm_run");
@@ -534,7 +557,7 @@ void vr_initialize(void)
 		return;
 	vr.initialized = 1;
 	config_vr_vehicle_defaults();
-	platform_log("vr: HaloCE Quest test20e candidate (gun anchored to the controller, left-handed controls, simplified settings, multiplayer join stages, full-rate crosshair)");
+	platform_log("vr: HaloCE Quest test21 candidate (floating hands restored, torso-following arms, neck-pivot full body, auto two-hand lock, horn, online melee off)");
 	if (!config_boolean("vr.enabled"))
 	{
 		platform_log("vr: off (vr.enabled)");
@@ -567,6 +590,7 @@ void vr_initialize(void)
 	vr.weapon_hand = config_boolean("vr.left_handed") ? 0 : 1;
 	migrate_calibration_split();
 	migrate_handedness();
+	migrate_two_hand_auto();
 	vr_reload_settings();
 	vr.zoom_level = -1;
 	vr.flashlight_armed = 1;
@@ -642,9 +666,39 @@ void vr_set_impact_melee_allowed(int allowed)
 	vr.impact_allowed = allowed != 0;
 }
 
+/* test21: physical melee (impact and swing) stays off in network games
+unless vr.melee_multiplayer; the melee button always works */
+void vr_set_network_game(int network)
+{
+	network = network != 0;
+	if (network != vr.network_game)
+		platform_log("vr: %s game: physical melee %s", network ? "network" : "local",
+			!network || vr.melee_multiplayer ? "on (as set)" : "off (vr.melee_multiplayer; the melee button still works)");
+	vr.network_game = network;
+}
+
+static int physical_melee_allowed(void)
+{
+	return vr.melee_speed > 0.0f && (!vr.network_game || vr.melee_multiplayer);
+}
+
 int vr_impact_melee(void)
 {
-	return vr.active && vr.melee_impact && vr.impact_allowed && vr.melee_speed > 0.0f;
+	return vr.active && vr.melee_impact && vr.impact_allowed && physical_melee_allowed();
+}
+
+/* test21: the horn. A seated driver's horn is the game's crouch control,
+which player_control passes only while the move stick is below 98% (and
+the Warthog's throttle is that stick), so a stick click while driving was
+lost. Seated, either stick click sounds it (the melee click does nothing
+for a driver); both together still recentre. */
+int vr_horn_held(void)
+{
+	unsigned int both = HALO_XR_BUTTON_LEFT_THUMB | HALO_XR_BUTTON_RIGHT_THUMB;
+
+	return vr.active && vr.layout_vr && vr.seated && (vr.frame.flags & HALO_XR_FRAME_FOCUSED) &&
+		(vr.pad_buttons & (HALO_XR_BUTTON_LEFT_THUMB | HALO_XR_BUTTON_B)) != 0 &&
+		(vr.pad_buttons & both) != both;
 }
 
 float vr_hand_speed(int hand)
@@ -1004,7 +1058,7 @@ static void update_gestures(void)
 	allows it: vr_set_impact_melee_allowed) */
 	if (vr.melee_rearm > 0.0f)
 		vr.melee_rearm -= seconds;
-	if (vr.melee_speed > 0.0f && vr.hands_last_valid && !(vr.frame.flags & HALO_XR_FRAME_RECENTRED) && seconds > 0.0f &&
+	if (physical_melee_allowed() && vr.hands_last_valid && !(vr.frame.flags & HALO_XR_FRAME_RECENTRED) && seconds > 0.0f &&
 		!(vr.melee_impact && vr.impact_allowed))
 	{
 		for (hand = 0; hand < 2; hand++)
@@ -1194,17 +1248,73 @@ static void update_gestures(void)
 			platform_log("vr: the weapon changes to the %s hand", vr.weapon_hand ? "right" : "left");
 			return;
 		}
-		if (vr.two_handed_mode == 1 && vr.support_near && vr_pose_time() - vr.support_time < 0.10 &&
-			hands_apart < 0.8f && !vr_hand_empty()) {
+		if (vr.two_handed_mode >= 1 && !vr.two_hand_held && vr.support_near &&
+			vr_pose_time() - vr.support_time < 0.10 && hands_apart < 0.8f && !vr_hand_empty()) {
 			vr.two_hand_held = 1;
+			vr.support_engaged_apart = hands_apart;
 			vr_haptic(o, 0.25f, 0.035f);
 			platform_log("vr: support grip engaged (%s hand); attachment fixed until release", o ? "right" : "left");
 		}
 	}
-	if (!vr.grip_held[o] || !both_tracked || !vr.aiming_last_frame || vr_hand_empty()) {
-		if (vr.two_hand_held) platform_log("vr: support grip released");
-		vr.two_hand_held = 0;
+	/* auto lock: the off hand resting at the gun's support grip (where the
+	game's animation puts that hand; vr_support_near) for 0.12 s locks it
+	there as a squeeze would, once the hand has left the grip since the
+	last release */
+	{
+		int near = vr.support_near && vr_pose_time() - vr.support_time < 0.10;
+
+		if (!near)
+			vr.support_rearmed = 1;
+		if (vr.two_handed_mode == 2 && !vr.two_hand_held && near && vr.support_rearmed && both_tracked &&
+			vr.aiming_last_frame && !vr_hand_empty() && hands_apart > 0.08f && hands_apart < 0.8f)
+		{
+			vr.support_dwell += seconds;
+			if (vr.support_dwell >= 0.12f)
+			{
+				vr.two_hand_held = 1;
+				vr.support_engaged_apart = hands_apart;
+				vr.support_dwell = 0.0f;
+				vr_haptic(o, 0.25f, 0.035f);
+				platform_log("vr: support grip locked automatically (%s hand); pull the hand away to release",
+					o ? "right" : "left");
+			}
+		}
+		else if (!vr.two_hand_held)
+			vr.support_dwell = 0.0f;
 	}
+	if (vr.two_hand_held)
+	{
+		int release = !both_tracked || !vr.aiming_last_frame || vr_hand_empty();
+		const char *why = "";
+
+		if (!release && vr.two_handed_mode == 1 && !vr.grip_held[o])
+			release = 1, why = " (grip let go)";
+		else if (!release && vr.two_handed_mode == 2)
+		{
+			/* pulled away: the hands' distance changed by 20 cm since it
+			locked, or the off hand left a 60-degree cone ahead of the gun */
+			static const float xr_forward[3] = { 0.0f, 0.0f, -1.0f };
+			float aim[3], between[3], along;
+			int axis;
+
+			rotate(vr.frame.aim[w].orientation, xr_forward, aim);
+			for (axis = 0; axis < 3; axis++)
+				between[axis] = vr.frame.grip[o].position[axis] - vr.frame.grip[w].position[axis];
+			along = hands_apart > 0.001f ?
+				(between[0] * aim[0] + between[1] * aim[1] + between[2] * aim[2]) / hands_apart : 1.0f;
+			if (fabsf(hands_apart - vr.support_engaged_apart) > 0.20f || along < 0.5f)
+				release = 1, why = " (hand pulled away)";
+		}
+		if (release)
+		{
+			platform_log("vr: support grip released%s", why);
+			vr.two_hand_held = 0;
+			vr.support_rearmed = 0;
+			vr.support_dwell = 0.0f;
+		}
+	}
+	else if (!both_tracked || !vr.aiming_last_frame || vr_hand_empty())
+		vr.support_dwell = 0.0f;
 }
 
 /* zoomed in, the aim is eased toward the hand's: at zoom 1 by about 15
@@ -1269,7 +1379,10 @@ unsigned int vr_take_actions(void)
 	unsigned int actions = vr.actions;
 
 	vr.actions = 0;
-	if (vr.crouching)
+	/* the head lowered crouches on foot; seated, the crouch control is a
+	driver's horn: a stick click sounds it (vr_horn_held), a lowered head
+	does not (test21) */
+	if (vr.seated ? vr_horn_held() : vr.crouching)
 		actions |= VR_ACTION_CROUCH;
 	return actions;
 }
@@ -1853,8 +1966,8 @@ static void steady_aim(void);
 
 static void compute_aim_pose(void)
 {
-	static const float xr_forward[3] = { 0.0f, 0.0f, -1.0f }, xr_up[3] = { 0.0f, 1.0f, 0.0f };
-	float aim[3], between[3], length, up[3];
+	static const float xr_up[3] = { 0.0f, 1.0f, 0.0f };
+	float between[3], length, up[3];
 
 	int w = vr.weapon_hand, o = 1 - vr.weapon_hand;
 
@@ -1866,23 +1979,14 @@ static void compute_aim_pose(void)
 	if (!vr.two_handed_enabled || vr_hand_empty() ||
 		(vr.frame.hand_valid[w] & 3) != 3 || !(vr.frame.hand_valid[o] & 1))
 		return;
-	rotate(vr.frame.aim[w].orientation, xr_forward, aim);
 	between[0] = vr.frame.grip[o].position[0] - vr.frame.grip[w].position[0];
 	between[1] = vr.frame.grip[o].position[1] - vr.frame.grip[w].position[1];
 	between[2] = vr.frame.grip[o].position[2] - vr.frame.grip[w].position[2];
 	length = sqrtf(between[0] * between[0] + between[1] * between[1] + between[2] * between[2]);
-	if (vr.two_handed_mode == 1)
-	{
-		/* gripped: the off hand holds the gun wherever it is, up to an arm's
-		reach apart */
-		if (!vr.two_hand_held || length < 0.05f)
-			return;
-	}
-	else if (length < 0.12f || length > 0.60f ||
-		(between[0] * aim[0] + between[1] * aim[1] + between[2] * aim[2]) / length < 0.82f)
-	{
+	/* locked (squeezed, or automatically at the support grip): the off
+	hand holds the gun wherever it is, up to an arm's reach apart */
+	if (!vr.two_hand_held || length < 0.05f)
 		return;
-	}
 	between[0] /= length;
 	between[1] /= length;
 	between[2] /= length;

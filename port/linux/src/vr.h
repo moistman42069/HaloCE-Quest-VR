@@ -166,6 +166,10 @@ game allows it (not a network game's client, whose blows the host would
 not see; the game says, from vr_render_actions); 1 while in effect */
 void vr_set_impact_melee_allowed(int allowed);
 int vr_impact_melee(void);
+/* test21: physical melee is off in network games unless vr.melee_multiplayer */
+void vr_set_network_game(int network);
+/* test21: seated, either stick click sounds a driver's horn (the crouch control) */
+int vr_horn_held(void);
 /* a hand's (0 left, 1 right) recent peak speed about the room, in metres a
 second, and vr.melee_speed, the speed a blow needs */
 float vr_hand_speed(int hand);

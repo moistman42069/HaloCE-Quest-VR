@@ -560,12 +560,16 @@ when held near it); "hidden" shows the gun alone; "animated" moves
 them with the gun as the game animates them.
 
 vr.two_handed [string]
-Default: "grip"
+Default: "auto"
 With vr.aim "hand": holding the gun in both hands steadies it, pointing
-from the weapon hand to the other. "grip": the other hand's grip held
-near the support grip, then locked to that point until release;
-"auto": attach by proximity without squeezing; "off": no attachment.
-Default is grip: a free hand can touch the gun without attaching.
+from the weapon hand to the other. "auto" (default): the other hand resting at the
+gun's support grip locks there, until pulled away; "grip": it locks only while its
+grip is squeezed there; "off": no attachment.
+
+vr.two_hand_auto_applied [boolean]
+Default: false
+Internal one-time migration (test21): a config on the old "grip" default moves to
+"auto" (two-hand grip locks automatically). A later choice is kept.
 
 vr.left_handed [boolean]
 Default: false
@@ -596,6 +600,11 @@ vr.melee_speed [real]
 Default: 2.0
 How fast a hand must move to strike (metres a second); 0 turns physical
 melee off (the right stick click still melees).
+
+vr.melee_multiplayer [boolean]
+Default: false
+Physical melee (impact or swing) in network games too. Off by default: online, a
+quick hand movement does not melee; the melee button always does.
 
 vr.flashlight_distance [real]
 Default: 0.2
@@ -762,9 +771,9 @@ Use right grip pose for aim too. Optional controller compatibility mode; false p
 vr.hand_tracking [string]
 Default: "ik"
 How tracked hands follow the controllers (with vr.arms "ik"): "ik" body-IK arms reach
-from the shoulders; "floating" hands go exactly where the controllers are and the arms
-hang from a shoulder that follows them (hidden with vr.body "hands"). The older
-"floating_arms" becomes "floating".
+from the shoulders; "floating" hands go exactly where the controllers are, with no
+arms; "floating_arms" hands go exactly to the controllers and arms hang from a
+shoulder that follows them.
 
 vr.hand_left_pitch [real]
 Default: -70.0

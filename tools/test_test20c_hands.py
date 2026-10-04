@@ -160,6 +160,8 @@ static boolean vr_node_under(struct animation_graph *g,short node,short root){
  if(root<0)return FALSE; for(short n=node;n>=0;n=g->parent[n]){if(n==root)return TRUE;if(g->parent[n]==n)break;}return FALSE;}
 '''
 run('arms',common+types+fn(render,'vr_length')+fn(render,'vr_point_minus')+fn(render,'vr_unit_vector')+
+    'static boolean vr_hand_back_axis(real_matrix4x3 const *m, struct animation_graph *g, short h, char const *s, real_vector3d *b)'
+    '{(void)m;(void)g;(void)h;(void)s;(void)b;return FALSE;} /* test21 covers the knuckle axis */\n'+
     fn(render,'vr_hide_forearms')+fn(render,'vr_float_shoulder')+r'''
 static unsigned seed=5;
 static float rnd(void){seed=seed*1664525u+1013904223u;return (float)((seed>>8)&0xffff)/65535.f;}
@@ -173,8 +175,8 @@ int main(void){
  m[4].position=(real_point3d){{0,1,0}};m[6].position=(real_point3d){{0.30f*units,1,0}};
  memcpy(orig,m,sizeof m);
  tracking=0;hands_only=0;vr_hide_forearms(m,&g,left,right);assert(!memcmp(m,orig,sizeof m));
- /* test20d: floating with arms shown (Body not Hands Only) draws the arms */
- tracking=1;hands_only=0;vr_hide_forearms(m,&g,left,right);assert(!memcmp(m,orig,sizeof m));
+ /* test21: floating hands and arms (2) draw the arms; floating hands (1) hide them as Hands Only does */
+ tracking=2;hands_only=0;vr_hide_forearms(m,&g,left,right);assert(!memcmp(m,orig,sizeof m));
  for(int mode=0;mode<2;mode++){
   memcpy(m,orig,sizeof m);hands_only=1;tracking=mode;vr_hide_forearms(m,&g,left,right);
   for(int s=0;s<2;s++){short *c=s?right:left;

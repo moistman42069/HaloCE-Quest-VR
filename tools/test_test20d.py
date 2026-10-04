@@ -67,8 +67,9 @@ assert 'if (gun_anchor)' in ik and 'config_boolean("vr.gun_anchor")' in ik
 walls = fn(render, 'weapon_out_of_walls'); camera = fn(render, 'vr_render_weapon_camera')
 assert 'pullback->i = -forward->i * back;' in walls
 assert camera.index('vr_render.weapon_pullback = (real_vector3d){ 0.0f, 0.0f, 0.0f };') < camera.index('weapon_out_of_walls(')
-assert 'tracking = vr_hand_tracking_mode() ? (vr_render_hands_only() ? 1 : 2) : 0;' in ik
-assert 'if (!vr_render_hands_only()) return;' in fn(render, 'vr_hide_forearms')
+# test21 restored separate floating modes (test_test21 checks them)
+assert 'int tracking = vr_hand_tracking_mode();' in ik
+assert 'if (!vr_render_hands_only() && vr_hand_tracking_mode() != 1) return;' in fn(render, 'vr_hide_forearms')
 begin = fn(frame, 'frame_begin')
 assert begin.index('if (vr.controls_mirrored)') < begin.index('layout_controls();'), 'sticks swap before anything reads them'
 assert 'vr.frame.thumb[0] = vr.frame.thumb[2];' in begin and 'vr.frame.thumb[2] = move[0];' in begin
@@ -230,8 +231,9 @@ int main(void){
 
 # --- the menu: every combined row identifies what it wrote, and shows the defaults
 rows = re.findall(r'\{ "([A-Z +\-]+)", "[\w.]+", _vr_setting_multi, (\d+), \{ (.*?) \} \},', menu)
-assert {r[0] for r in rows} == {'TURNING', 'WEAPONS', 'HOLSTERS', 'HANDS', 'ARM RUN'}, rows
-domains = {'vr.arms': {'ik', 'hidden', 'animated'}, 'vr.hand_tracking': {'ik', 'floating'},
+assert {r[0] for r in rows} == {'TURNING', 'WEAPONS', 'HOLSTERS', 'HANDS', 'ARM RUN', 'MELEE'}, rows
+domains = {'vr.arms': {'ik', 'hidden', 'animated'}, 'vr.hand_tracking': {'ik', 'floating', 'floating_arms'},
+           'vr.melee': {'impact', 'swing'},
            'vr.weapons': {'locked', 'physical'}}
 for label, count, values in rows:
     pairs = re.findall(r'\{ "([^"]+)", "([^"]+)" \}', values)
@@ -355,10 +357,10 @@ int main(void){
  /* an existing left-handed player keeps the layout they learned, once */
  applied=0;left=1;migrate_handedness();assert(applied&&!strcmp(mirror,"off"));
  strcpy(mirror,"auto");migrate_handedness();assert(!strcmp(mirror,"auto"));
- /* test20c's floating_arms becomes floating (every run, idempotent) */
- strcpy(tracking,"floating_arms");migrate_handedness();assert(!strcmp(tracking,"floating"));
+ /* test21: floating_arms is its own mode again and is left alone */
+ strcpy(tracking,"floating_arms");migrate_handedness();assert(!strcmp(tracking,"floating_arms"));
  /* a failed save retries next launch */
  applied=0;fail=1;migrate_handedness();assert(!applied);
- puts("PASS: handedness migration keeps existing left-handed controls standard once, leaves right-handed configs alone, retries failed saves; floating_arms -> floating");
+ puts("PASS: handedness migration keeps existing left-handed controls standard once, leaves right-handed configs alone, retries failed saves; floating_arms kept");
 }
 ''')

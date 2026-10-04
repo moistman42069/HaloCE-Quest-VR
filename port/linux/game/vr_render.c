@@ -1114,6 +1114,9 @@ unsigned long vr_render_actions(
 	/* a hand's blows are damage this machine causes: not a network game's
 	client (whose host decides damage), which keeps the swing gesture */
 	vr_set_impact_melee_allowed(!network_game_distributed_client());
+	/* test21: physical melee is off in any network game unless the player
+	turns it on (vr.melee_multiplayer); the melee button always works */
+	vr_set_network_game(game_connection() != _game_connection_local);
 	return vr_take_actions() | vr_diag_zoom(local_player_index);
 }
 
@@ -2264,32 +2267,84 @@ static struct {
     real_point3d shoulders[2];
 } vr_body_pose;
 
+/* The head's yaw that stays steady at any pitch: looking straight down the
+forward vector has no horizontal part (and its remains flip), but the top of
+the head points forward then; looking up, the back of it does (test21) */
+static boolean vr_head_yaw_vector(real_vector3d const *forward, real_vector3d const *up, real_vector3d *out)
+{
+    out->i = forward->i - forward->k * up->i;
+    out->j = forward->j - forward->k * up->j;
+    out->k = 0.0f;
+    return vr_unit_vector(out);
+}
+
+/* the torso's wanted yaw: the head's, drawn halfway toward the hands when
+both are tracked ahead (turning the body turns both; looking around turns
+only the head), within 45 degrees */
+static real vr_body_wanted_yaw(real_vector3d const *head_yaw, boolean hands_valid,
+    real_point3d const *head, real_point3d const hands[2])
+{
+    real yaw = atan2f(head_yaw->j, head_yaw->i);
+    if (hands_valid) {
+        real units = vr_units_per_metre();
+        real_vector3d mid = {{(hands[0].x + hands[1].x) * 0.5f - head->x, (hands[0].y + hands[1].y) * 0.5f - head->y, 0.0f}};
+        if (vr_length(&mid) > 0.12f * units) {
+            real toward = atan2f(mid.j, mid.i);
+            real difference = atan2f(sinf(toward - yaw), cosf(toward - yaw));
+            if (fabsf(difference) < 1.745f)
+                yaw += 0.5f * PIN(difference, -0.785f, 0.785f);
+        }
+    }
+    return yaw;
+}
+
 static real_vector3d vr_body_heading(long unit)
 {
-    real_vector3d heading = vr_render.head_camera.forward;
+    real_vector3d heading;
     double now = vr_pose_time(), dt = now - vr_body_pose.time;
     real wanted, difference;
-    heading.k = 0.0f;
-    if (!vr_unit_vector(&heading)) {
+    real_point3d hands[2];
+    real_vector3d f, u;
+    boolean hands_valid = vr_hand_world(0, vr_render.game_camera_position.n, hands[0].n, f.n, u.n) &&
+        vr_hand_world(1, vr_render.game_camera_position.n, hands[1].n, f.n, u.n);
+    if (!vr_head_yaw_vector(&vr_render.head_camera.forward, &vr_render.head_camera.up, &heading)) {
         if (!vr_heading_forward(heading.n)) heading = (real_vector3d){1, 0, 0};
     }
-    wanted = atan2f(heading.j, heading.i);
+    wanted = vr_body_wanted_yaw(&heading, hands_valid, &vr_render.head_camera.position, hands);
     if (!vr_body_pose.valid || vr_body_pose.unit != unit || dt < 0 || dt > 0.25) {
         vr_body_pose.yaw = wanted;
         vr_body_pose.valid = TRUE;
     } else if (dt > 0) {
         difference = atan2f(sinf(wanted - vr_body_pose.yaw), cosf(wanted - vr_body_pose.yaw));
-        /* The neck can look around; the torso follows beyond a 25-degree
-        comfort cone, with a bounded, frame-rate independent turn. */
-        if (fabsf(difference) > 0.436332f) {
-            real turn = difference - copysignf(0.436332f, difference);
-            vr_body_pose.yaw += turn * (1.0f - expf(-8.0f * MIN(dt, 0.05)));
+        /* The neck can look around; the torso follows beyond a 15-degree
+        comfort cone (test21: 25 before, with the head alone deciding), with a
+        bounded, frame-rate independent turn. */
+        if (fabsf(difference) > 0.261799f) {
+            real turn = difference - copysignf(0.261799f, difference);
+            vr_body_pose.yaw += turn * (1.0f - expf(-10.0f * MIN(dt, 0.05)));
+            vr_body_pose.yaw = atan2f(sinf(vr_body_pose.yaw), cosf(vr_body_pose.yaw));
         }
     }
     vr_body_pose.unit = unit;
     vr_body_pose.time = now;
     heading = (real_vector3d){cosf(vr_body_pose.yaw), sinf(vr_body_pose.yaw), 0};
     return heading;
+}
+
+/* the neck pivot below and behind the eyes (vr_render_body_matrices) */
+static void vr_neck_pivot(real_point3d const *eye, real_vector3d const *forward, real_vector3d const *up,
+    real units, real_point3d *neck)
+{
+    real_vector3d yaw;
+    real pitch, c, s;
+    if (!vr_head_yaw_vector(forward, up, &yaw)) yaw = (real_vector3d){{1.0f, 0.0f, 0.0f}};
+    pitch = asinf(PIN(forward->k, -1.0f, 1.0f));
+    pitch = PIN(pitch, -1.0472f, 0.5236f);
+    c = cosf(pitch); s = sinf(pitch);
+    /* f' = yaw*c + z*s, u' = -yaw*s + z*c; neck = eye - (0.14 f' + 0.20 u') */
+    for (int axis = 0; axis < 2; axis++)
+        neck->n[axis] = eye->n[axis] - (0.14f * c - 0.20f * s) * yaw.n[axis] * units;
+    neck->z = eye->z - (0.14f * s + 0.20f * c) * units;
 }
 
 /* Reuse the analytic limb solver with a fixed hip, a clamped ankle target
@@ -2489,17 +2544,45 @@ gun) shrink to nothing. Test19 shrank each bone onto its own origin, so the
 glove's wrist vertices (shared with the forearm) were dragged toward the elbow
 and the hand looked cut off. Test20c gathers the arm onto a point 3.5 cm back
 from the wrist along the forearm: the cuff closes just behind the hand. */
+/* the way from the knuckles back through the wrist (finger bases to wrist),
+whatever the forearm bone is doing: a floating hand is moved without an arm
+solve, so its forearm bone can be anywhere (test21) */
+static boolean vr_hand_back_axis(real_matrix4x3 const *m, struct animation_graph *graph, short hand,
+    char const *side, real_vector3d *back)
+{
+    short joints[5][3];
+    real_point3d knuckles = {{0.0f, 0.0f, 0.0f}};
+    int f, found = 0;
+
+    vr_finger_nodes(graph, hand, side, joints);
+    /* the four fingers' bases (the thumb's sits off the axis) */
+    for (f = 1; f < 5; f++) {
+        if (joints[f][0] == NONE) continue;
+        for (int axis = 0; axis < 3; axis++) knuckles.n[axis] += m[joints[f][0]].position.n[axis];
+        found++;
+    }
+    if (!found) return FALSE;
+    for (int axis = 0; axis < 3; axis++) knuckles.n[axis] /= (real)found;
+    vr_point_minus(&m[hand].position, &knuckles, back);
+    return vr_unit_vector(back);
+}
+
+/* Hands Only, and floating hands (test21: no arms, as in test20c) */
 static void vr_hide_forearms(real_matrix4x3 *m, struct animation_graph *graph, short left[3], short right[3])
 {
     short gun = vr_find_node(graph, "frame", "gun");
     real units = vr_units_per_metre();
-    if (!vr_render_hands_only()) return;
+    if (!vr_render_hands_only() && vr_hand_tracking_mode() != 1) return;
     for (int side = 0; side < 2; side++) {
         short *chain = side ? right : left;
         real_point3d centre = m[chain[2]].position;
         real_vector3d back;
-        vr_point_minus(&m[chain[1]].position, &m[chain[2]].position, &back);
-        if (vr_unit_vector(&back))
+        boolean along = vr_hand_back_axis(m, graph, chain[2], side ? "r " : "l ", &back);
+        if (!along) {
+            vr_point_minus(&m[chain[1]].position, &m[chain[2]].position, &back);
+            along = vr_unit_vector(&back);
+        }
+        if (along)
             for (int axis = 0; axis < 3; axis++) centre.n[axis] += back.n[axis] * 0.035f * units;
         for (short n = 0; n < graph->nodes.count; n++) {
             if (!vr_node_under(graph, n, chain[0]) || vr_node_under(graph, n, chain[2]) || vr_node_under(graph, n, gun))
@@ -2679,17 +2762,23 @@ real_matrix4x3 *vr_render_body_matrices(long object_index)
         if (spine >= 0 && spine < graph_count && neck >= 0 && neck < graph_count &&
             vr_node_under(graph, neck, spine)) {
             real units = vr_units_per_metre();
-            real_point3d target = vr_render.head_camera.position;
+            real_point3d target;
             real_vector3d delta, from, to;
             real rotation[3][3], horizontal;
-            target.x -= forward.i * 0.14f * units;
-            target.y -= forward.j * 0.14f * units;
-            target.z -= 0.20f * units;
+            /* test21: the neck is where the head turns about, 14 cm behind
+            and 20 cm below the eyes in the head's own frame (pitch limited to
+            -60..+30 degrees). Looking down swings the eyes forward and down
+            about it, so the torso stays behind and below them instead of
+            following them into the camera (the old fixed offset took only
+            the torso's yaw, and room-scale moves the character with the
+            eyes) */
+            vr_neck_pivot(&vr_render.head_camera.position, &vr_render.head_camera.forward,
+                &vr_render.head_camera.up, units, &target);
             vr_point_minus(&target, &matrices[neck].position, &delta);
             horizontal = sqrtf(delta.i * delta.i + delta.j * delta.j);
-            if (horizontal > 0.30f * units) {
-                delta.i *= 0.30f * units / horizontal;
-                delta.j *= 0.30f * units / horizontal;
+            if (horizontal > 0.45f * units) {
+                delta.i *= 0.45f * units / horizontal;
+                delta.j *= 0.45f * units / horizontal;
             }
             /* Give the tracked head priority when crouching deeply. The old
              * 40 cm downward cap left the chest above the eyes when kneeling. */
@@ -3031,10 +3120,14 @@ void vr_render_first_person_ik(
 		real_point3d head = vr_render.head_camera.position, shoulder, target;
 		real_vector3d forward, right_side, up = { 0.0f, 0.0f, 1.0f }, pole;
 
-		if (vr_body_setting() && vr_body_pose.valid && vr_body_pose.time == vr_pose_time())
+		/* test21: the torso's heading (vr_body_heading) in every body mode.
+		Without a drawn body the shoulders used to face the turn heading
+		(vr.heading: stick turns only), so turning the real body left them
+		behind and the arms twisted across */
+		if (vr_body_pose.valid && vr_body_pose.time == vr_pose_time() && vr_body_pose.unit == unit)
 			forward = (real_vector3d){cosf(vr_body_pose.yaw), sinf(vr_body_pose.yaw), 0};
-		else if (!vr_heading_forward(forward.n))
-			forward = vr_render.head_camera.forward;
+		else
+			forward = vr_body_heading(unit);
 		forward.k = 0.0f;
 		normalize3d(&forward);
 		right_side.i = forward.j;
@@ -3044,9 +3137,11 @@ void vr_render_first_person_ik(
 		mirrored, so that arm is the left one and the other reaches the right
 		controller */
 		int weapon_hand = vr_weapon_hand();
-		/* 0 body IK; floating: 1 hands alone (Body: Hands Only), 2 with the
-		arms drawn from a floating shoulder */
-		int tracking = vr_hand_tracking_mode() ? (vr_render_hands_only() ? 1 : 2) : 0;
+		/* 0 body IK; 1 floating hands (no arms); 2 floating hands with arms
+		hung from a floating shoulder (with Body: Hands Only, as 1) */
+		int tracking = vr_hand_tracking_mode();
+		if (tracking == 2 && vr_render_hands_only())
+			tracking = 1;
 
 		for (side = 0; side < 2; side++)
 		{

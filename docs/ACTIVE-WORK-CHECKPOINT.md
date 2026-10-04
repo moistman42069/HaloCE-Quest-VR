@@ -3,6 +3,10 @@
 Updated 2026-10-04. This is the current handoff for Claude Code/Claude Cloud.
 The canonical source is `moistman42069/HaloCE-Quest-VR`, branch `main`.
 
+## Progress (test21, 2026-10-04)
+
+Private candidate **test21** (1.0.2 / code 26, branch `test21-hands-body`) addresses this report plus the owner's later additions (floating toggle kept arms, Warthog horn, easy online melee, automatic two-hand lock on by default). Causes, changes and headset checks: [TEST21-PROGRESS.md](TEST21-PROGRESS.md); delivery: [TEST21-DELIVERY.md](TEST21-DELIVERY.md). The video/log mismatch is resolved: the overlay and the `body legs` lines are different moments of one session (video starts 12:45:58). Signing key matches v1.0.2. Nothing is accepted until the owner tests on a headset.
+
 ## Accepted release and work boundary
 
 - The latest public release is [`v1.0.2`](https://github.com/moistman42069/HaloCE-Quest-VR/releases/tag/v1.0.2), the exact test20e APK pair, Android version code 25. Its provenance and SHA-256 values are in [`RELEASE-PROVENANCE-1.0.2.md`](RELEASE-PROVENANCE-1.0.2.md). Preserve the release and prior releases; do not replace or withdraw them based only on this report.

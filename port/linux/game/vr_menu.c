@@ -168,7 +168,9 @@ static struct vr_menu_setting const vr_menu_controls[] =
 	{ "MIRROR CONTROLS", "vr.mirror_controls", _vr_setting_string, 2, { { "AUTO", "auto" }, { "OFF", "off" } } },
 	{ "TURNING", "vr.snap_turn", _vr_setting_multi, 10, { { "SMOOTH 60", "vr.snap_turn=0;vr.smooth_turn_speed=60" }, { "SMOOTH 90", "vr.snap_turn=0;vr.smooth_turn_speed=90" }, { "SMOOTH 120", "vr.snap_turn=0;vr.smooth_turn_speed=120" }, { "SMOOTH 150", "vr.snap_turn=0;vr.smooth_turn_speed=150" }, { "SMOOTH 180", "vr.snap_turn=0;vr.smooth_turn_speed=180" }, { "SMOOTH 240", "vr.snap_turn=0;vr.smooth_turn_speed=240" }, { "SMOOTH 300", "vr.snap_turn=0;vr.smooth_turn_speed=300" }, { "SNAP 30", "vr.snap_turn=30" }, { "SNAP 45", "vr.snap_turn=45" }, { "SNAP 90", "vr.snap_turn=90" } } },
 	{ "MOVE WITH", "vr.move_relative", _vr_setting_string, 3, { { "HEAD", "head" }, { "LEFT HAND", "left" }, { "RIGHT HAND", "right" } } },
-	{ "TWO HANDS", "vr.two_handed", _vr_setting_string, 3, { { "GRIP", "grip" }, { "AUTO", "auto" }, { "OFF", "off" } } },
+	/* test21: AUTO LOCK (default) locks the off hand at the support grip
+	without squeezing; SQUEEZE needs the grip held there */
+	{ "TWO HANDS", "vr.two_handed", _vr_setting_string, 3, { { "AUTO LOCK", "auto" }, { "SQUEEZE", "grip" }, { "OFF", "off" } } },
 	{ "WEAPONS", "vr.weapons", _vr_setting_multi, 3, { { "LOCKED", "vr.weapons=locked" }, { "PHYSICAL", "vr.weapons=physical;vr.physical_multiplayer=false" }, { "PHYSICAL + MP", "vr.weapons=physical;vr.physical_multiplayer=true" } } },
 	{ "HOLSTERS", "vr.holsters", _vr_setting_multi, 7, { { "OFF", "vr.holsters=false" }, { "10 CM", "vr.holsters=true;vr.holster_size=0.1" }, { "15 CM", "vr.holsters=true;vr.holster_size=0.15" }, { "20 CM", "vr.holsters=true;vr.holster_size=0.2" }, { "25 CM", "vr.holsters=true;vr.holster_size=0.25" }, { "30 CM", "vr.holsters=true;vr.holster_size=0.3" }, { "40 CM", "vr.holsters=true;vr.holster_size=0.4" } } },
 	{ "AIM", "vr.aim", _vr_setting_string, 2, { { "HAND", "hand" }, { "HEAD", "head" } } },
@@ -180,12 +182,16 @@ static struct vr_menu_setting const vr_menu_body[] =
 	{ "BODY", "vr.body", _vr_setting_string, 4, { { "ARMS + HANDS", "arms" }, { "FULL", "full" }, { "LEGS + ARMS", "legs" }, { "HANDS ONLY", "hands" } } },
 	/* how the hands follow: body IK, floating (arms as BODY shows them),
 	Halo's own arm animation, or the gun alone */
-	{ "HANDS", "vr.hand_tracking", _vr_setting_multi, 4, { { "BODY IK", "vr.arms=ik;vr.hand_tracking=ik" }, { "FLOATING", "vr.arms=ik;vr.hand_tracking=floating" }, { "ANIMATED", "vr.arms=animated;vr.hand_tracking=ik" }, { "GUN ONLY", "vr.arms=hidden;vr.hand_tracking=ik" } } },
+	/* test21: FLOATING is hands with no arms again (test20c); FLOAT + ARMS
+	hangs arms from a floating shoulder */
+	{ "HANDS", "vr.hand_tracking", _vr_setting_multi, 5, { { "BODY IK", "vr.arms=ik;vr.hand_tracking=ik" }, { "FLOATING", "vr.arms=ik;vr.hand_tracking=floating" }, { "FLOAT + ARMS", "vr.arms=ik;vr.hand_tracking=floating_arms" }, { "ANIMATED", "vr.arms=animated;vr.hand_tracking=ik" }, { "GUN ONLY", "vr.arms=hidden;vr.hand_tracking=ik" } } },
 	{ "FINGERS", "vr.fingers", _vr_setting_boolean, 2, { { "OFF", "false" }, { "TRACKED", "true" } } },
 	{ "ROOM-SCALE", "vr.roomscale", _vr_setting_boolean, 2, { { "OFF", "false" }, { "ON", "true" } } },
 	{ "CROUCH DEPTH", "vr.crouch_height", _vr_setting_real, 9, { { "OFF", "0" }, { "5 CM", "0.05" }, { "10 CM", "0.1" }, { "15 CM", "0.15" }, { "20 CM", "0.2" }, { "25 CM", "0.25" }, { "30 CM", "0.3" }, { "35 CM", "0.35" }, { "40 CM", "0.4" } } },
 	{ "ARM RUN", "vr.arm_run", _vr_setting_multi, 7, { { "OFF", "vr.arm_run=false" }, { "EASY 0.3", "vr.arm_run=true;vr.arm_run_speed=0.3" }, { "0.45", "vr.arm_run=true;vr.arm_run_speed=0.45" }, { "0.6", "vr.arm_run=true;vr.arm_run_speed=0.6" }, { "0.8", "vr.arm_run=true;vr.arm_run_speed=0.8" }, { "1.0", "vr.arm_run=true;vr.arm_run_speed=1.0" }, { "HARD 1.2", "vr.arm_run=true;vr.arm_run_speed=1.2" } } },
-	{ "MELEE", "vr.melee", _vr_setting_string, 2, { { "IMPACT", "impact" }, { "SWING", "swing" } } },
+	/* test21: physical melee in network games only with "+ ONLINE"
+	(vr.melee_multiplayer, off by default); the melee button always works */
+	{ "MELEE", "vr.melee", _vr_setting_multi, 4, { { "IMPACT", "vr.melee=impact;vr.melee_multiplayer=false" }, { "SWING", "vr.melee=swing;vr.melee_multiplayer=false" }, { "IMPACT + ONLINE", "vr.melee=impact;vr.melee_multiplayer=true" }, { "SWING + ONLINE", "vr.melee=swing;vr.melee_multiplayer=true" } } },
 	{ "MELEE SPEED", "vr.melee_speed", _vr_setting_real, 12, { { "OFF", "0" }, { "1.0", "1.0" }, { "1.2", "1.2" }, { "1.4", "1.4" }, { "1.6", "1.6" }, { "1.8", "1.8" }, { "2.0", "2.0" }, { "2.3", "2.3" }, { "2.6", "2.6" }, { "2.9", "2.9" }, { "3.2", "3.2" }, { "3.6", "3.6" } } },
 };
 

@@ -35,6 +35,14 @@ NETWORK_STRING = re.compile(rb"Internet play|browser: |signalling|UPnP|upnp|STUN
                             rb"halo://join|p2p|lobby|games\.txt|joining|join requested|Multiplayer join")
 
 
+def candidate_at_least(label, number, letter=""):
+    """test20d, test21 ... compared as candidates (test21 follows test20e)."""
+    match = re.fullmatch(r"test(\d+)([a-z]?)", label)
+    if not match:
+        return False
+    return (int(match.group(1)), match.group(2)) >= (number, letter)
+
+
 def printable_strings(data):
     return {m.group() for m in re.finditer(rb"[\x20-\x7e]{6,}", data)}
 
@@ -123,14 +131,18 @@ def main():
                     raise SystemExit("Test19 upstream downloads or native public browser missing")
                 if b"safe ordered uploads; CPU index rebasing" not in guest:
                     raise SystemExit("Test19 ordered Safe geometry path missing")
-            if args.label.startswith("test20"):
+            if candidate_at_least(args.label, 20):
                 if b"UpstreamDownloads;" not in dex or b"browser: signed public discovery started" not in guest:
                     raise SystemExit("Test20 upstream downloads or native public browser missing")
                 if b"safe streaming (fenced ring); CPU index rebasing" not in guest or b"[render-perf]" not in guest:
                     raise SystemExit("Test20 fenced Safe streaming or render diagnostics missing")
                 if b"safe ordered uploads" in guest:
                     raise SystemExit("Test20 still contains the 1.0.1 ordered Safe upload path")
-            if args.label.startswith("test20") and args.label >= "test20d" and vr:
+            if candidate_at_least(args.label, 21) and vr:
+                for marker in [b"FLOAT + ARMS", b"AUTO LOCK", b"SWING + ONLINE", b"support grip locked automatically",
+                               b"vr.melee_multiplayer", b"vr.two_hand_auto_applied", b"physical melee"]:
+                    if marker not in guest: raise SystemExit("Test21 hand mode, two-hand or melee marker missing: " + repr(marker))
+            if candidate_at_least(args.label, 20, "d") and vr:
                 for marker in [b"HANDS + GUN", b"MIRROR CONTROLS", b"GUN GRIP", b"anchored to the controller",
                                b"sticks and face buttons", b"vr.gun_anchor", b"vr.mirror_controls"]:
                     if marker not in guest: raise SystemExit("Test20d gun anchor, handedness or menu marker missing: " + repr(marker))
