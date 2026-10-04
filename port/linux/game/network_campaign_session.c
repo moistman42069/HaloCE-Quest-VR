@@ -15,6 +15,7 @@
 void platform_log(char const *format, ...);
 unsigned long system_milliseconds(void);
 int p2p_hosting_invite(char *text, int size);
+void p2p_set_hosting_public(int value);
 static char const *missions[] = {"a10", "a30", "a50", "b30", "b40", "c10", "c20", "c40", "d20", "d40"};
 static boolean requested, booted, player_added, start_requested, list_publicly;
 static short mission, difficulty;
@@ -53,6 +54,7 @@ boolean network_campaign_host_settings(struct network_game *game)
 }
 void network_campaign_session_end(void)
 {
+	p2p_set_hosting_public(FALSE);
 	requested = booted = player_added = start_requested = list_publicly = FALSE;
 	settle_seconds = 0.0f;
 	remove("d:\\coop_status.txt");

@@ -1,4 +1,4 @@
-# Game files & versions (test17)
+# Game files & versions
 
 Open **Game files & versions** in either launcher, including before first import.
 
@@ -63,7 +63,7 @@ finalization, then rename the complete set. Cancelled/failed imports clean their
 own staging folder; other complete imports in a batch remain available. An OS
 process kill can leave an inert `partial-*` folder; it is never selectable.
 No original ISO/extracted folder is deleted. Limits: 64 installed sets, 512 map
-files and 12 GiB per managed set; the ISO extractor retains its 256-entry bound.
+files and 12 GiB per managed set; the ISO extractor allows 4096 entries per directory table.
 Additional space is needed for the copied maps during import. Unreadable or
 invalid active selections stop launch and direct you to choose a complete set.
 
@@ -74,3 +74,19 @@ can remove its app-specific storage; updating with the signed APK preserves it.
 Imports and fingerprints stay on-device. Logs may include your chosen labels,
 paths, map identities and network invitations; review logs before sharing them.
 No game data is included in the project, APKs or source archives.
+
+## ISO/XISO troubleshooting (test19)
+
+The Android importer recognizes plain XDVDFS images and the three whole-disc
+partition offsets used by extract-xiso. It accepts deep valid directory trees,
+case-insensitive maps/UI names and 64-bit file offsets. Synthetic fixtures cover
+all four layouts and data beyond 4 GiB. This is not a guarantee for every disc,
+mod or transfer provider; managed imports still validate actual cache headers.
+
+Copy the complete image to local Downloads before importing. Compare byte size
+and SHA-256 with the source if it works on another device. Unpack ZIP/7z/RAR
+containers and merge split parts before selecting an image; selecting only one
+part cannot work. A readable original-Xbox Halo image or an extracted maps folder
+is required. PC/MCC disc containers are different formats. Cyclic directory
+entries, duplicate names, unsafe paths, damaged volume headers and out-of-file
+extents are rejected. Import never downloads game data or bypasses integrity checks.

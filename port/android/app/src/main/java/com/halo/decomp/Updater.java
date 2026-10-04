@@ -42,13 +42,13 @@ final class Updater {
         android.widget.LinearLayout box=new android.widget.LinearLayout(a);box.setOrientation(1);box.setPadding(28,16,28,16);
         TextView text=new TextView(a);text.setText(prefs(a).getString("status","No update check yet.")+"\n\nInstalled: "+BuildConfig.VERSION_NAME+" ("+BuildConfig.VERSION_CODE+")\n"+BuildConfig.APPLICATION_ID+
             "\nNative PvP: v"+BuildConfig.HALO_NETWORK_MINIMUM+"-"+BuildConfig.HALO_NETWORK_MAXIMUM+"; host v"+BuildConfig.HALO_NETWORK_VERSION+
-            "\nCampaign: CE01 (use matching project builds on both peers)\n\nThe launcher checks for compatible project releases and upstream network changes. A project update includes the integrated engine, VR, co-op and launcher together. New upstream changes require integration before they can update this mod safely. Reviewed upstream: 933aac6 (v11), with test17 join/control fixes.\n\nDownload verifies compatibility metadata, SHA-256, package, newer Android version and the current signing certificate. The current APK, active configuration and touch preferences are backed up privately before Android opens its installer. Game maps and saves are preserved. Android asks you to approve installation; rollback may require ADB. Test candidates are never offered as public updates.");box.addView(text);
+            "\nCampaign: CE01 (use matching project builds on both peers)\n\nThe launcher checks for compatible project releases and upstream network changes. A project update includes the integrated engine, VR, co-op and launcher together. New upstream changes require integration before they can update this mod safely. Reviewed upstream: build-84 / 3304965 (v11), signed public discovery with project join/control fixes.\n\nDownload verifies compatibility metadata, SHA-256, package, newer Android version and the current signing certificate. The current APK, active configuration and touch preferences are backed up privately before Android opens its installer. Game maps and saves are preserved. Android asks you to approve installation; rollback may require ADB. Test candidates are never offered as public updates.");box.addView(text);
         android.widget.CheckBox automatic=new android.widget.CheckBox(a);automatic.setText("Check automatically when the launcher opens (every 6 hours)");automatic.setChecked(prefs(a).getBoolean("automatic",true));box.addView(automatic);
         automatic.setOnCheckedChangeListener((b,v)->prefs(a).edit().putBoolean("automatic",v).apply());
         TextView privacy=new TextView(a);privacy.setText("Checks contact GitHub for release metadata and the upstream protocol header. No saves, logs, invites or configuration are uploaded. Offline play is always available.");box.addView(privacy);
         android.widget.ScrollView scroll=new android.widget.ScrollView(a);scroll.addView(box);
         new GamepadNavigation.Builder(a).setTitle("Versions & compatible updates").setView(scroll)
-            .setPositiveButton("Check now",(d,w)->check(a,gameRoot,false,null)).setNegativeButton("Close",null).show();
+            .setPositiveButton("Check now",(d,w)->check(a,gameRoot,false,null)).setNeutralButton("Official upstream",(d,w)->UpstreamDownloads.show(a)).setNegativeButton("Close",null).show();
     }
     private static void status(Activity a,TextView view,String text) {
         prefs(a).edit().putString("status",text).apply();
@@ -66,7 +66,7 @@ final class Updater {
         }catch(Exception e){return "Upstream status unavailable (offline or service limit).";}
     }
     private static void message(Activity a,String text) {a.runOnUiThread(()->{if(!a.isFinishing()&&!a.isDestroyed())new GamepadNavigation.Builder(a).setTitle("Project update").setMessage(text).setPositiveButton("OK",null).show();});}
-    private static HttpURLConnection open(String address) throws Exception {
+    static HttpURLConnection open(String address) throws Exception {
         for(int i=0;i<6;i++) {
             if(!UpdatePolicy.allowedUrl(address))throw new IOException("Untrusted update URL");
             HttpURLConnection c=(HttpURLConnection)new URL(address).openConnection();
@@ -79,7 +79,7 @@ final class Updater {
         }
         throw new IOException("Too many redirects");
     }
-    private static byte[] fetch(String url,int limit) throws Exception {
+    static byte[] fetch(String url,int limit) throws Exception {
         HttpURLConnection c=open(url);
         try(InputStream in=c.getInputStream();ByteArrayOutputStream out=new ByteArrayOutputStream()) {
             byte[] b=new byte[16384];int n;
@@ -96,7 +96,6 @@ final class Updater {
                 JSONObject release=new JSONObject(new String(fetch("https://api.github.com/repos/"+UpdatePolicy.REPOSITORY+"/releases/latest",1024*1024),StandardCharsets.UTF_8));
                 String tag=release.optString("tag_name"),name=UpdatePolicy.asset(tag,BuildConfig.APPLICATION_ID.endsWith(".vr"));
                 if(release.optBoolean("draft")||release.optBoolean("prerelease")||name==null)throw new IOException("No recognized stable project release");
-                if(!UpdatePolicy.newer(tag,BuildConfig.VERSION_NAME)){String text="No newer published project build. Installed "+BuildConfig.VERSION_NAME+"; public latest "+tag+". "+upstream;status(a,statusView,text);if(!silent)message(a,text);return;}
                 JSONArray assets=release.getJSONArray("assets");JSONObject found=null,manifestAsset=null;
                 for(int i=0;i<assets.length();i++){JSONObject item=assets.getJSONObject(i);if("compatibility.json".equals(item.optString("name"))){if(manifestAsset!=null)throw new IOException("Duplicate compatibility metadata");manifestAsset=item;}if(name.equals(item.optString("name"))){if(found!=null)throw new IOException("Duplicate release asset");found=item;}}
                 if(found==null)throw new IOException("The release has no APK for this edition");
@@ -113,8 +112,12 @@ final class Updater {
                     throw new IOException("This update needs a reviewed migration; your current installation is preserved");
                 JSONObject edition=compatibility.getJSONObject("editions").getJSONObject(BuildConfig.APPLICATION_ID);
                 if(!name.equals(edition.optString("apk"))||!digest.substring(7).equalsIgnoreCase(edition.optString("sha256"))||edition.optLong("bytes")!=size||
-                    edition.optInt("version_code")<=BuildConfig.VERSION_CODE||edition.optInt("min_sdk",Integer.MAX_VALUE)>android.os.Build.VERSION.SDK_INT)throw new IOException("Release edition metadata is inconsistent");
+                    edition.optInt("version_code")<=0||edition.optInt("min_sdk",Integer.MAX_VALUE)>android.os.Build.VERSION.SDK_INT)throw new IOException("Release edition metadata is inconsistent");
                 final int expectedVersion=edition.getInt("version_code");
+                if(!UpdatePolicy.newerCode(expectedVersion,BuildConfig.VERSION_CODE)) {
+                    String text=(expectedVersion==BuildConfig.VERSION_CODE?"You already have this published build.":"Your installed build is newer than the public release.")+" Installed "+BuildConfig.VERSION_NAME+" (code "+BuildConfig.VERSION_CODE+"); public "+tag+" (code "+expectedVersion+"). "+upstream;
+                    status(a,statusView,text);if(!silent)message(a,text);return;
+                }
                 int minimum=compatibility.optInt("native_minimum"),maximum=compatibility.optInt("native_maximum");
                 if(minimum<1||maximum<minimum||maximum>65535)throw new IOException("Invalid network compatibility range");
                 String available="Compatible update available: "+tag+" (native v"+minimum+"-"+maximum+"). Tap to check and install. "+upstream;
@@ -126,7 +129,7 @@ final class Updater {
             finally{busy.set(false);}
         },"project-update-check").start();
     }
-    private static String hex(byte[] bytes){StringBuilder b=new StringBuilder();for(byte v:bytes)b.append(String.format(java.util.Locale.ROOT,"%02x",v&255));return b.toString();}
+    static String hex(byte[] bytes){StringBuilder b=new StringBuilder();for(byte v:bytes)b.append(String.format(java.util.Locale.ROOT,"%02x",v&255));return b.toString();}
     private static void copy(File source,File target,long limit) throws IOException {
         File temporary=new File(target.getParentFile(),target.getName()+".tmp");
         try(InputStream in=new FileInputStream(source);FileOutputStream out=new FileOutputStream(temporary)){

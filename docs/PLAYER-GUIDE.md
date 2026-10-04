@@ -1,13 +1,13 @@
-# Player guide — release 1.0
+# Player guide — 1.0.1 testing candidate (test19)
 
 ## 1. Installation
 
-**Halo CE Quest VR + Android 1.0** is the first stable baseline for this project: standalone Quest VR and a separate flat Android edition. Release **1.0** publishes the exact delivered test18 APKs: Android internally reports **1.0-test18 / code 19**. Already installed test18? You already have these binaries; no reinstall is needed.
+**Private testing candidate:** both editions report **1.0.1 / code 20**. Install the Android/flat or Quest/VR APK supplied with this candidate. It is not a new public release. [Published 1.0 and its installation notes](RELEASE-1.0.0.md) remain unchanged.
 
-| Your device | Download |
+| Your device | Candidate file |
 | --- | --- |
-| Android phone/tablet — flat, touch or gamepad | **[HaloCE-Android-1.0.0.apk](https://github.com/moistman42069/HaloCE-Quest-VR/releases/download/v1.0.0/HaloCE-Android-1.0.0.apk)** |
-| Meta Quest — immersive standalone VR | **[HaloCE-Quest-1.0.0.apk](https://github.com/moistman42069/HaloCE-Quest-VR/releases/download/v1.0.0/HaloCE-Quest-1.0.0.apk)** |
+| Android phone/tablet — flat, touch or gamepad | HaloCE-Android-test19.apk |
+| Meta Quest — immersive standalone VR | HaloCE-Quest-test19.apk |
 
 1. **Install the appropriate APK.** On Quest, enable developer mode and sideload with SideQuest or your existing installer; open it from **Unknown Sources**. On Android, open the downloaded APK and allow installation from that source when prompted. Both require ARM64, Android 9/API 28 or newer and compatible graphics. **Quest 3 is the reference headset**; other devices are not equally verified.
 2. **Updating this project? Install over it.** Both APKs retain their package IDs and signing certificate. Do not uninstall or clear app data. Optional ADB command: `adb install -r <apk-file>`. Back up your maps, saves and settings first. Another fork using the same package ID but a different key cannot update in place.
@@ -17,22 +17,18 @@
 
 The launcher includes an offline **Field guide** with controls, settings and credits. Existing Quest data under `/sdcard/Documents/HaloCE/maps` is recognized when `ui.map` is present; otherwise each app uses its own external-files storage. VR and flat can coexist and have separate app data.
 
-**Coming from a test build:** install 1.0 manually once. Older test updaters do not recognize the new stable release names. From 1.0 onward, **Versions & updates** supports normal release versions. The previous test14 release remains available unchanged.
+**Updating from 1.0/test18:** install this signed candidate over the existing app. Do not uninstall. The project updater continues to offer approved public releases; it does not publish or distribute private candidates.
 
 ## 2. New Features / Major Changes
 
-This release brings the refinements since public test14 together into the 1.0 baseline:
-
-- **Campaign transition fix:** clears and validates cached vehicle-camera references across map changes, addressing the reported Pelican transition crash.
-- **Head-look tutorial and vehicle controls:** headset-based light detection; third-person/right-controller defaults, four steering modes and adjustable first-person seats.
-- **Multiplayer compatibility fixes:** running native PvP matches are no longer falsely rejected by the shared advertisement flag; the action-control bit responsible for the reported assertion is handled correctly. Includes reviewed upstream player departure/rejoin safeguards and Network 11 options, while accepting reviewed v9/v10 hosts.
-- **Managed game-data sets:** import multiple ISO/XISO or extracted installations, scan an import inbox, view detected builds/fingerprints, rename sets and switch without replacing the original installation. Saves remain separate per set.
-- **Smoother native weapon actions in VR:** reloads, grenade throws, melee, weapon swaps and other affected animations temporarily own the appropriate arm/hand, then blend back to tracking. Existing support grip is preserved through the action.
-- **Safe geometry by default in VR**, including a one-time migration of older settings. Flat Android retains Normal by default. Explicit later choices are preserved.
-- **Per-controller alignment controls** for unusual tracking/firmware orientation, plus a customizable flat touch HUD and expanded Xbox-style gamepad settings.
-- **Launcher PvP hosting**, population-sorted browsing, compatibility explanations, bundled help, detailed per-launch logs and verified project updates.
-
-Gameplay retains the test17 baseline plus test18 campaign vehicle-cache cleanup, headset-based tutorial checks and vehicle camera/control options. Existing body, grip and native action behavior is preserved. The release also includes stable-version update handling and bundled license information.
+- **In-game public server browser:** Multiplayer > System Link combines signed OpenCE public listings and native LAN games, most populated first. Seven games per page, Previous/Next and Refresh. The launcher browser remains available.
+- **Multiplayer crash guard:** safely deactivates invalid automatic object replicas outside a valid visibility cluster instead of asserting after joining a populated match.
+- **Updater correction:** same-code public promotions and an older public build no longer trigger the reported inconsistent-edition error. Integrity, signature and downgrade checks remain.
+- **Official upstream downloads:** Versions & updates > Official upstream exports verified OpenCE ZIPs separately. They do not replace this mod's VR/co-op engine.
+- **VR reticle alignment:** the world-space target follows the native pre-spread firing ray, including the offline guarded hand origin and online native camera origin. Handedness, weapon alignment and native action handoff remain unchanged.
+- **Safe geometry refinement:** ordered transient vertex/index uploads and restoration of the renderer's vertex-array state after compositor work. The reported intermittent left-eye corruption still needs device confirmation; Safe can cost performance.
+- **ISO/XISO import:** handles deeply unbalanced valid directory trees and provides clearer damaged-image, incomplete-transfer and unsupported-container errors. Revisions still use actual cache build IDs/fingerprints, not guessed disc labels.
+- **Clearer co-op instructions** in the launcher and guide. Existing two-player campaign, body sharing, touch/gamepad, vehicle controls and per-launch logging remain.
 
 ## 3. Controls / Inputs
 
@@ -109,9 +105,11 @@ In VR Settings, **A/right increases or advances; left decreases**. Next Page exp
 
 ### Regular PvP
 
-Open **Multiplayer servers → Refresh → Join**. After the invite tunnel connects, use **Multiplayer → System Link** in-game to select the host; other native ports may call it Direct Link. Saved invites and LAN discovery support unlisted hosts.
+In-game, open **Multiplayer → System Link** for OpenCE public games and LAN hosts. Select **Refresh** to update the population-sorted snapshot; **Next/Previous** pages through results. Select a game to resolve its real native advertisement (up to 30 seconds), then join. Move selection or press B to cancel. Browsing an empty directory stays in the list.
 
-The browser reads the ChupathingyCE native-port directory, retains valid listings and sorts by reported population before paging. Directory settings can merge up to four compatible HTTPS catalogs. Full/incompatible hosts show their status; a listing does not prove reachability or measure ping. No second independent compatible preset directory has been verified, and private/unadvertised games cannot all be enumerated.
+For community catalogs, open the launcher **Multiplayer servers → Refresh → Join**. After the invite tunnel connects, use **Multiplayer → System Link** in-game to select the host; other native ports may call it Direct Link. Saved invites and LAN discovery support unlisted hosts.
+
+The browser reads the ChupathingyCE native-port directory, retains valid listings and sorts by reported population before paging. Directory settings can merge up to four compatible HTTPS catalogs. Full/incompatible hosts show their status; a listing does not prove reachability or measure ping. OpenCE signed native discovery is now an additional in-game source. It is a different format from the launcher HTTPS catalogs, so do not paste its broker address into Directory settings. Private/unadvertised games cannot all be enumerated.
 
 **Host multiplayer** offers installed map, game type, name, score/time, friendly fire, radar, team balance, vehicle respawn, loadout/grenade options and **2–128 PvP slots**. Public listing is opt-in; private invites are available. Start with modest limits: 128 is protocol capacity, not a verified Quest-host performance target. Network settings expose Internet/LAN, UPnP, clipboard invites and tunnel port.
 
@@ -119,7 +117,11 @@ This build hosts native **Network 11** and accepts reviewed distributed hosts **
 
 ### Campaign co-op and avatars
 
-**Campaign co-op → Host campaign / Browse or join** is separate from PvP. Use **matching 1.0 builds and matching campaign/resource files** on both peers. Two Quests or Quest plus flat Android are the intended pairings; Quest-to-flat connectivity and remote VR body movement have prior owner confirmation.
+**Campaign co-op → Host campaign / Browse or join** is separate from PvP. Use **matching project builds (use this candidate on both devices when testing) and matching campaign/resource files** on both peers. Two Quests or Quest plus flat Android are the intended pairings; Quest-to-flat connectivity and remote VR body movement have prior owner confirmation.
+
+1. Host: choose **Campaign co-op > Host campaign**, mission and difficulty. Enable **List publicly** if you want the launcher co-op catalog to advertise the session, then enter the System Link lobby.
+2. Partner: choose **Campaign co-op > Browse / join**, refresh and select the host, or paste the host's private invite. Enter **Multiplayer > System Link**, select that host and join.
+3. Keep both apps foregrounded. The mission starts when both players enter. Public co-op listing uses the community service; the new OpenCE public PvP catalog does not advertise this project's campaign protocol.
 
 Both players join the lobby before starting. The host controls campaign scripts, AI, checkpoints and transitions. **Campaign supports two players**, not 128; joining mid-mission is disabled. Disconnects require a new lobby. Public campaign directory acceptance remains unverified; private invite/LAN is the fallback.
 
@@ -144,7 +146,7 @@ Use **Game files & versions** to import/switch, or place images/extracted roots 
 
 ## 8. Known Issues or Important Notes
 
-- **Version labels/update check:** these preserved APKs and their bundled guide retain test18/candidate wording. This release page records their public 1.0 approval. On code 19, the updater can report “Release edition metadata is inconsistent” when comparing this same-code promotion; you already have the release, so no update is needed. Future APK updates must have a higher code. Older test builds need one manual install from the links above.
+- **Candidate status:** the populated-server crash guard, native browser, reticle alignment and left-eye workaround require device testing. A build/test pass is not a campaign playthrough or proof that every server works.
 - **Co-op remains experimental:** not every mission, checkpoint, vehicle, cinematic, transition or device/network combination has a documented full playthrough. The 1.0 baseline is not universal certification.
 - Inferred body joints can still clip in extreme poses/custom rigs. Physical weapon drops/pickups online remain limited and **MP Physical defaults Off**.
 - Safe geometry can reduce performance. Refresh requests do not guarantee that frame rate; simulation remains 30 Hz with interpolated rendering.
@@ -156,13 +158,13 @@ Use **Game files & versions** to import/switch, or place images/extracted roots 
 
 ## 9. Additional Technical Details / Credits
 
-Both APKs are ARM64, **internal version 1.0-test18 / version code 19**, using package IDs `com.halo.decomp` and `com.halo.decomp.vr` with the established signing certificate. Only the download filenames change for this release; APK bytes and signatures are unchanged. Runtime build source is `f45e32dd73b15280a5db4e5d4a4b2643f2c28379`; **v1.0.0** contains that code plus finalized public documentation; GitHub's source ZIP/tar.gz downloads are sufficient. `compatibility.json` is the small metadata file required by the launcher updater; players do not need to install or edit it.
+Both APKs are ARM64, **1.0.1 / version code 20**, using package IDs `com.halo.decomp` and `com.halo.decomp.vr` and the established signing certificate. The private package includes exact source/runtime commits, APK hashes and a matching source ZIP. Public releases remain unchanged.
 
-Validation covers both flavor builds, package/version/signature checks, 16 KB ZIP alignment, payload/ZIP integrity and targeted networking, imports, animation, co-op, controller/touch and updater tests. The owner authorized these exact APKs for release; no new complete device playthrough was reported. These checks complement earlier device feedback; they do not substitute for real multiplayer or headset testing. Exact hashes/build provenance live in the tagged source documentation.
+Validation includes both flavor builds, signatures/versions, 16 KB ZIP alignment, payload integrity, targeted regressions and synthetic cache/import checks. These checks do not substitute for real multiplayer or headset testing. See TEST19-DELIVERY.md and TEST19-COMMUNITY-REVIEW.md for changes, evidence and follow-up cases.
 
 Credits: **Bungie/Microsoft and the original Halo team**; **punpckhdq/halo and bnunu/halo-1 contributors** for the decompilation; **bnunu/cybersecurity halo-ce-universal contributors** for the native port/networking; **astromaddie/Madison** for the OpenXR VR foundation; **ChupathingyCE and halo.milenko.org maintainers** for the directory; **moistman42069 and project contributors/testers** for this integration and refinements. Thanks also to LivingFray/HaloCEVR and the documented IK references, Andiweli's Android rendering work, and SnowyMouse's cache-format documentation.
 
-SDL3, OpenXR, musl, KCP, miniupnpc, Mbed TLS, tomlc17, stb, extract-xiso and other inherited dependencies retain their licenses. **This product includes software developed by in &lt;in@fishtank.com&gt;.** Full credits and notices are included inside each APK under **Field guide → Credits & licenses**, and in the tagged repository. This is an unofficial community project; supply your own game data.
+SDL3, OpenXR, Monocypher, musl, KCP, miniupnpc, Mbed TLS, tomlc17, stb, extract-xiso and other inherited dependencies retain their licenses. **This product includes software developed by in &lt;in@fishtank.com&gt;.** Full credits and notices are included inside each APK under **Field guide → Credits & licenses**, and in the tagged repository. This is an unofficial community project; supply your own game data.
 
 ## Storage reference
 

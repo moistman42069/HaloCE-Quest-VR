@@ -628,7 +628,9 @@ short vr_render_windows(
 		vr_hud_bounds((real)(camera->viewport_bounds.x1 - camera->viewport_bounds.x0) /
 			(real)(camera->viewport_bounds.y1 - camera->viewport_bounds.y0), vr_render.hud_bounds.n);
 	}
-	/* the hand's reticle, where its aim meets the world */
+	/* Reticle on the engine's pre-spread firing ray. Network play keeps the
+	 * native camera origin; offline uses the same guarded hand origin as
+	 * unit_adjust_projectile_ray. Rendering must not invent a second aim ray. */
 	if (vr_hand_aiming() && !vr_render.cinematic_view)
 	{
 		real_point3d origin;
@@ -640,6 +642,14 @@ short vr_render_windows(
 		{
 			long player_index = local_player_get_player_index(player.local_player_index);
 			long unit_index = player_index != NONE ? player_get(player_index)->unit_index : NONE;
+			real_point3d hit;
+
+			if (unit_index != NONE && object_get(unit_index)->object.parent_object_index == NONE)
+			{
+				unit_get_camera_position(unit_index, &origin);
+				vr_render_hand_origin(unit_index, &origin);
+				unit_get_aiming_vector(unit_index, &direction);
+			}
 
 			scale_vector3d(&direction, distance, &vector);
 			if (collision_test_vector(_collision_test_for_projectiles_flags, &origin, &vector, unit_index,
@@ -647,7 +657,8 @@ short vr_render_windows(
 			{
 				distance *= collision.t;
 			}
-			vr_set_reticle(distance);
+			point_from_line3d(&origin, &direction, distance, &hit);
+			vr_set_reticle_world(vr_render.game_camera_position.n, hit.n);
 		}
 	}
 	vr_render.stereo = TRUE;
@@ -1254,7 +1265,8 @@ int vr_render_hand_origin(
 	long unit_index,
 	real_point3d *origin)
 {
-	if (!vr_render.hand_origin_valid || unit_index != vr_render.hand_origin_unit)
+	if (!vr_render.hand_origin_valid || unit_index != vr_render.hand_origin_unit ||
+		!vr_hand_aiming() || game_connection() != _game_connection_local)
 		return FALSE;
 	*origin = vr_render.hand_origin;
 	return TRUE;

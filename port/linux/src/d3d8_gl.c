@@ -484,6 +484,7 @@ struct attribute_pointer
 static struct
 {
 	GLuint program;
+	GLuint vertex_array;
 	GLuint framebuffer;
 	GLint viewport[4];
 	GLint scissor[4];
@@ -573,6 +574,15 @@ static void state_sampler(int unit, GLuint sampler)
 	{
 		gl_state.samplers[unit] = sampler;
 		glBindSampler((GLuint)unit, sampler);
+	}
+}
+
+static void state_vertex_array(GLuint array)
+{
+	if (gl_state.vertex_array != array)
+	{
+		glBindVertexArray(array);
+		gl_state.vertex_array = array;
 	}
 }
 
@@ -1001,7 +1011,7 @@ static void gl_initialize(void)
 		safe_geometry = config_boolean("renderer.safe_geometry");
 		persist = !safe_geometry && host_gl_has_extension("GL_EXT_buffer_storage");
 		if (safe_geometry) xgpu_capabilities.base_vertex = FALSE;
-		platform_log("geometry compatibility: %s", safe_geometry ? "safe streaming; CPU index rebasing" : "normal");
+		platform_log("geometry compatibility: %s", safe_geometry ? "safe ordered uploads; CPU index rebasing" : "normal");
 
 		glGenBuffers(STREAM_BUFFER_RING, device.stream_buffers);
 		glGenBuffers(STREAM_BUFFER_RING, device.index_buffers);
@@ -2657,6 +2667,9 @@ static struct program_entry *prepare_draw(BOOL immediate)
 		return NULL;
 	}
 	apply_raster_state(has_depth);
+	/* The XR compositor owns a different VAO and unbinds it after its
+	 * copies. Restore ours before any attribute/element-buffer operations. */
+	state_vertex_array(device.vertex_array);
 
 	memset(&key, 0, sizeof(key));
 	memcpy(key.combiner_state, D3D__RenderState, sizeof(key.combiner_state));
@@ -3225,7 +3238,11 @@ static unsigned long stream_upload(const void *data, unsigned long size)
 	offset = device.stream_offset;
 	state_array_buffer(device.stream_buffer);
 #ifdef HALO_ANDROID
-	if (!device.stream_persistent ||
+	/* Safe mode must also avoid unsynchronized transient maps. Its purpose
+	 * is a driver-ordered upload path, including dynamic model/scene data. */
+	if (safe_geometry)
+		glBufferSubData(GL_ARRAY_BUFFER, (GLintptr)offset, (GLsizeiptr)size, data);
+	else if (!device.stream_persistent ||
 		!host_gl_buffer_write_persistent(device.stream_buffer, (unsigned int)offset, (unsigned int)size, data))
 	{
 		host_gl_buffer_write(GL_ARRAY_BUFFER, (unsigned int)offset, (unsigned int)size, data);
@@ -3298,7 +3315,9 @@ static unsigned long index_upload(const void *data, unsigned long size)
 	}
 	offset = device.index_offset;
 #ifdef HALO_ANDROID
-	if (!device.index_persistent ||
+	if (safe_geometry)
+		glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, (GLintptr)offset, (GLsizeiptr)size, data);
+	else if (!device.index_persistent ||
 		!host_gl_buffer_write_persistent(device.index_buffer, (unsigned int)offset, (unsigned int)size, data))
 	{
 		host_gl_buffer_write(GL_ELEMENT_ARRAY_BUFFER, (unsigned int)offset, (unsigned int)size, data);

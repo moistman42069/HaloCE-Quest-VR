@@ -56,3 +56,10 @@ Release 1.0 publishes the exact preserved test18 pair by explicit owner instruct
 See RELEASE-PROVENANCE-1.0.0.md under docs for build identity and filename mapping.
 Future APKs need code >19 and new publication approval; never rebuild an accepted
 APK just to change its public label.
+
+Test19 adds signed native discovery, replica activation guards, world-space reticle
+checks and synthetic XDVDFS deep-tree/large-offset tests. Run the complete current
+suite with `python3 tools/run-quest-checks.py` in Linux/WSL (clang + JDK), followed
+by `python3 -m pytest -q tools/test_cache_file_formats.py`. No game is launched.
+Per-suite logs stay in ignored `build/quest-regressions`. Private test19 packaging
+uses `--label test19 --version-name 1.0.1`; this does not authorize publication.

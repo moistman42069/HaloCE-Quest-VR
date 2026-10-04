@@ -15,6 +15,7 @@ long config_integer(char const *name);
 int config_boolean(char const *name);
 unsigned long system_milliseconds(void);
 int p2p_hosting_invite(char *text, int size);
+void p2p_set_hosting_public(int value);
 boolean network_game_server_game_is_open(struct network_game_server *server);
 static struct pvp_request request;
 static boolean requested, booted, player_added;
@@ -29,6 +30,7 @@ boolean network_pvp_host_settings(struct network_game *game)
     game_engine_get_variant_by_name(&game->variant, request.variant);
     if(request.score) game->variant.universal_variant.score_to_win=request.score;
     snprintf(game->map.name,sizeof(game->map.name),"levels\\test\\%s\\%s",request.map,request.map);
+    p2p_set_hosting_public(request.publish);
     game->map.version=0; game->minimum_players=2; game->maximum_players=(byte)request.maximum;
     game->maximum_teams=game->variant.universal_variant.teams ? 2 : 1;
     for(i=0;i<15 && request.name[i];i++) game->name[i]=(unsigned char)request.name[i];
@@ -49,6 +51,7 @@ boolean network_pvp_host_settings(struct network_game *game)
 }
 void network_pvp_session_end(void)
 {
+    p2p_set_hosting_public(FALSE);
     requested=booted=player_added=FALSE; settle=0.f;
     remove("d:\\pvp_status.txt");
 }

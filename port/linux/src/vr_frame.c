@@ -148,6 +148,7 @@ static struct
 	unsigned int actions;
 	/* the reticle where the hand's aim meets the world, metres away; 0 hides it */
 	float reticle_distance;
+	float reticle_position[3];
 	int crosshair_enabled;
 	float crosshair_size, crosshair_opacity, crosshair_uv[4];
 	GLuint crosshair_texture;
@@ -416,7 +417,7 @@ void vr_initialize(void)
 		return;
 	vr.initialized = 1;
 	config_vr_vehicle_defaults();
-	platform_log("vr: HaloCE Quest test18 candidate (campaign lifecycle, head tutorial, vehicle controls)");
+	platform_log("vr: HaloCE Quest test19 candidate (native browser, guarded replicas, ordered geometry, firing-ray reticle)");
 	if (!config_boolean("vr.enabled"))
 	{
 		platform_log("vr: off (vr.enabled)");
@@ -1968,9 +1969,31 @@ float vr_units_per_metre(void)
 	return vr.units_per_metre;
 }
 
-void vr_set_reticle(float distance_units)
+void vr_set_reticle_world(const float anchor[3], const float hit[3])
 {
-	vr.reticle_distance = distance_units > 0.0f ? distance_units / vr.units_per_metre : 0.0f;
+	float offset[3], relative[3], local[3], cosine = cosf(vr.heading), sine = sinf(vr.heading);
+	int axis;
+	vr.reticle_distance = 0.0f;
+	if (!vr.heading_valid || !isfinite(vr.heading) ||
+		!isfinite(vr.units_per_metre) || !(vr.units_per_metre > 0.0f)) return;
+	for (axis = 0; axis < 3; axis++) {
+		relative[axis] = (hit[axis] - anchor[axis]) / vr.units_per_metre;
+		if (!isfinite(relative[axis])) return;
+	}
+	/* Inverse of view()/to_halo(), including the same room-scale/lean
+	 * correction as the stereo eyes. A compositor quad is in XR LOCAL space,
+	 * not in the game's world and not necessarily on the raw controller ray. */
+	local[0] = relative[0] * sine - relative[1] * cosine;
+	local[1] = relative[2];
+	local[2] = -(relative[0] * cosine + relative[1] * sine);
+	head_offset(offset);
+	for (axis = 0; axis < 3; axis++) {
+		local[axis] -= offset[axis];
+		vr.reticle_position[axis] = vr.frame.head.position[axis] + local[axis];
+		if (!isfinite(vr.reticle_position[axis])) return;
+	}
+	vr.reticle_distance = sqrtf(local[0]*local[0] + local[1]*local[1] + local[2]*local[2]);
+	if (!isfinite(vr.reticle_distance)) vr.reticle_distance = 0.0f;
 }
 
 int vr_crosshair_enabled(void)
@@ -2756,11 +2779,12 @@ int vr_present(unsigned int source, unsigned int texture, int width, int height)
 			const struct halo_xr_pose *pose = vr.hand_aiming ? &vr.aim_pose : &vr.frame.head;
 			int axis;
 
-			/* Native HUD angular scale, positioned on the actual weapon ray.
-			 * Head aim retains the original HUD plane; size is independently adjustable. */
+			/* The game supplied a collision point on its firing ray. Preserve
+			 * the authored crosshair and angular size; head aim keeps its HUD plane. */
 			rotate(pose->orientation, xr_forward, direction);
 			for (axis = 0; axis < 3; axis++)
-				layers.reticle_pose.position[axis] = pose->position[axis] + direction[axis] * distance;
+				layers.reticle_pose.position[axis] = vr.hand_aiming ? vr.reticle_position[axis] :
+					pose->position[axis] + direction[axis] * distance;
 			memcpy(layers.reticle_pose.orientation, vr.frame.head.orientation, sizeof(layers.reticle_pose.orientation));
 			layers.reticle_size[0] = layers.reticle_size[1] =
 				0.4f * vr.hud_width / fmaxf(0.1f, vr.hud_distance) * distance * vr.crosshair_size;

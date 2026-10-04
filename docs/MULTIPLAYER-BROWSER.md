@@ -1,3 +1,28 @@
+# Current browser behavior (test19 candidate)
+
+**In game: Multiplayer > System Link.** Signed OpenCE public discovery is
+integrated from upstream build 84. Up to 256 public games plus nine native LAN
+advertisements, deduplicated by host ID and sorted by reported population.
+Seven games per page leave rows for Previous/Next/Refresh. Results stay stable
+until refresh/navigation. A public selection resolves the host's actual native
+advertisement before the normal version/content join gate. Join waits up to
+30 seconds and cancels on selection movement or Back. Empty discovery remains
+in the list; no automatic public host is created.
+
+The launcher retains community HTTPS catalogs, saved/private invites and its
+separate campaign browser. OpenCE signed discovery is not an HTTP directory URL.
+PvP public hosting is opt-in. CE01 campaign is not published into the OpenCE PvP
+catalog; use the existing co-op directory/private invite/LAN flow. Protocol host
+version remains 11; reviewed distributed hosts 9–11 are accepted, with content
+and connectivity requirements. No source can enumerate all private servers or
+guarantee reachability. Same ISO/revision, missing maps, modified content, NAT,
+closed/full sessions and protocol differences have different failure causes.
+
+See [test19 evidence](TEST19-PROGRESS.md) and [player guide](PLAYER-GUIDE.md).
+The sections below are historical implementation/research records.
+
+---
+
 > Test15 candidate update: native clients accept v9-v11, PvP hosts advertise v11, and campaign retains CE01 legacy settings serialization. Launcher hosting and controlled updates are described in [TEST15-UPSTREAM.md](TEST15-UPSTREAM.md). Earlier version-specific sections below are historical audit evidence.
 
 # Quest multiplayer browser
@@ -78,7 +103,7 @@ blindly incremented, and no version outside this reviewed pair is accepted.
 
 The Android `BuildConfig` version range is generated from
 `halo_port_limits.h`, so its join buttons use the same range as the native
-client. Tests cover versions 0–14 with/without the distributed flag, missing
+client. Tests cover versions 0â€“14 with/without the distributed flag, missing
 client state, and an invalid advertised-game slot. Actual Quest-to-desktop/Mac
 play is still **unverified on hardware**; do not call these tests a multiplayer
 session result. Matching maps and compatible game rules are still required.

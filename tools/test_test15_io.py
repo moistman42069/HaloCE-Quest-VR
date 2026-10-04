@@ -120,19 +120,24 @@ run('upload',r'''
 #define GL_STREAM_DRAW 3
 static struct {unsigned long stream_offset,index_offset;int stream_buffer,index_buffer,stream_persistent,index_persistent;} device;
 static unsigned long expected;
+static int safe_geometry;
 static char sink[4096];
 static void stream_reserve(unsigned long n){assert(n%16==0);}
 static void state_array_buffer(int b){(void)b;}
 static void state_element_array_buffer(int b){(void)b;}
 static void glFinish(void){}
 static void glBufferData(int a,int b,void*c,int d){(void)a;(void)b;(void)c;(void)d;}
-static void host_gl_buffer_write(int target,unsigned offset,unsigned size,const void*data){(void)target;(void)offset;assert(size==expected);memcpy(sink,data,size);}
-static int host_gl_buffer_write_persistent(int b,unsigned o,unsigned n,const void*d){(void)b;(void)o;assert(n==expected);memcpy(sink,d,n);return 1;}
+typedef long GLintptr;
+typedef long GLsizeiptr;
+static void glBufferSubData(int target,GLintptr offset,GLsizeiptr size,const void*data){(void)target;(void)offset;assert(size==expected);memcpy(sink,data,size);}
+static void host_gl_buffer_write(int target,unsigned offset,unsigned size,const void*data){(void)target;(void)offset;assert(!safe_geometry);assert(size==expected);memcpy(sink,data,size);}
+static int host_gl_buffer_write_persistent(int b,unsigned o,unsigned n,const void*d){(void)b;(void)o;assert(!safe_geometry);assert(n==expected);memcpy(sink,d,n);return 1;}
 '''+fn(s,'static unsigned long stream_upload(')+fn(s,'static unsigned long index_upload(')+r'''
-int main(void){for(int mode=0;mode<2;mode++)for(int n=1;n<257;n++){
+int main(void){for(int mode=0;mode<3;mode++)for(int n=1;n<257;n++){
+ safe_geometry=mode==2;
  expected=n;char *data=malloc(n);memset(data,42,n);device.stream_persistent=device.index_persistent=mode;device.stream_offset=device.index_offset=0;
  assert(stream_upload(data,n)==0);assert(device.stream_offset==((n+15)&~15));assert(index_upload(data,n)==0);assert(device.index_offset==((n+15)&~15));free(data);
- }puts("PASS: exact payload bytes for 512 stream/index sizes and persistent/fallback paths (ASAN)");}
+ }puts("PASS: exact payload bytes for 768 stream/index sizes; Safe uses ordered uploads, Normal retains persistent/fallback paths (ASAN)");}
 ''')
 java=OUT/'MobileCheck.java';java.write_text(r'''
 package com.halo.decomp;

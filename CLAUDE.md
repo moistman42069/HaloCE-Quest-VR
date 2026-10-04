@@ -1,5 +1,10 @@
 # Agent and contributor continuation
 
+## Active candidate: test19 (unpublished)
+
+Continue `test19-network-browser`; read [TEST19-PROGRESS.md](docs/TEST19-PROGRESS.md) for current implementation, verification and the newly authorized Discord/DM review. Preserve public releases; final APKs pending.
+
+
 Canonical repository: `moistman42069/HaloCE-Quest-VR`, default branch `main`.
 Read docs/CURRENT-STATE.md, docs/RELEASE-PROVENANCE-1.0.0.md, CONTRIBUTING.md,
 and relevant player/architecture/protocol documents before changes.

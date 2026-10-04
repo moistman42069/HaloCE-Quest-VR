@@ -1105,6 +1105,16 @@ void objects_dispose(
 	return;
 }
 
+/* Detached/inventory replicas can be reactivated before they have a BSP
+ * cluster. Automatic objects outside the map must stay dormant until a later
+ * reconnect finds a cluster; never index a PVS bit-vector with NONE. */
+static boolean object_activation_has_cluster(struct object_header_datum const *header)
+{
+    return !TEST_FLAG(header->flags, _object_header_automatically_deactivate_bit) ||
+        !TEST_FLAG(header->flags, _object_header_connected_to_map_bit) ||
+        header->cluster_index != NONE;
+}
+
 void object_activate(
 	long object_index)
 {
@@ -1113,6 +1123,7 @@ void object_activate(
 
 	if (!TEST_FLAG(header->flags, _object_header_active_bit) &&
 		!TEST_FLAG(object->object.flags, _object_cannot_be_activated_bit) &&
+        object_activation_has_cluster(header) &&
 		object->object.parent_object_index==NONE)
 	{
 		SET_FLAG(header->flags, _object_header_active_bit, TRUE);
@@ -1814,6 +1825,7 @@ void object_reconnect_to_map(
 		{
 			if (header->cluster_index==NONE || !BIT_VECTOR_TEST_FLAG(players_get_combined_pvs(), header->cluster_index))
 			{
+                object_deactivate(object_index);
 				if (TEST_FLAG(object->object.flags, _object_deleted_when_deactivated_bit))
 				{
 					object_delete(object_index);
@@ -4197,9 +4209,20 @@ void objects_update(
 				TEST_FLAG(object_header->flags, _object_header_automatically_deactivate_bit) &&
 				TEST_FLAG(object_header->flags, _object_header_connected_to_map_bit))
 			{
-				if (TEST_FLAG(object_header->flags, _object_header_active_bit))
-				{
-					match_assert("c:\\halo\\SOURCE\\objects\\objects.c", 369, object_header->cluster_index!=NONE);
+                if (!VALID_INDEX(object_header->cluster_index, cluster_count))
+                {
+                    if (TEST_FLAG(object_header->flags, _object_header_active_bit))
+                    {
+                        /* Keep the host-owned replica: visibility/PVS is not
+                         * authority to delete a distributed object. */
+                        error(_error_log, "object PVS recovery: slot %d type %d cluster %d flags %04x", i,
+                            object_header->type, object_header->cluster_index, object_header->flags);
+                        object_deactivate(i);
+                    }
+                }
+                else if (TEST_FLAG(object_header->flags, _object_header_active_bit))
+                {
+                    match_assert("c:\\halo\\SOURCE\\objects\\objects.c", 369, object_header->cluster_index!=NONE);
 					if (!BIT_VECTOR_TEST_FLAG(active_cluster_bits, object_header->cluster_index))
 					{
 						if (TEST_FLAG(object_header->datum->object.flags, _object_deleted_when_deactivated_bit))

@@ -335,6 +335,7 @@ symbols in this file:
 /* ---------- headers */
 
 #include "cseries/cseries.h"
+#include "network_browser.h"
 #include "cseries/cseries_windows.h"
 #include "cseries/errors.h"
 #include "bungie_net/network/transport.h"
@@ -977,11 +978,8 @@ static void server_list_menu_update(
 	{
 		struct ui_widget_definition *definition = ui_widget_definition_get(
 			widget->definition_tag_index);
-		struct network_advertised_game *available_games =
-			network_game_client_get_available_games(client);
-		struct widget_instance *item;
+				struct widget_instance *item;
 		unsigned long milliseconds_since_creation;
-		long game_index;
 		long item_index;
 
 		match_vassert(
@@ -991,31 +989,8 @@ static void server_list_menu_update(
 				definition->child_count == 9,
 			"this doesn't look like the net game server list widget");
 
-		for (game_index = 0;
-			game_index < MAXIMUM_NETWORK_ADVERTISED_GAMES;
-			game_index++)
-		{
-			if (network_game_client_advertised_game_is_valid(&available_games[game_index]) &&
-				available_games[game_index].platform == _network_game_platform_xbox &&
-				available_games[game_index].open)
-			{
-				displayed_servers[displayed_server_count] = &available_games[game_index];
-				displayed_server_count++;
-			}
-		}
-
-		for (game_index = 0;
-			game_index < MAXIMUM_NETWORK_ADVERTISED_GAMES;
-			game_index++)
-		{
-			if (network_game_client_advertised_game_is_valid(&available_games[game_index]) &&
-				available_games[game_index].platform == _network_game_platform_xbox &&
-				!available_games[game_index].open)
-			{
-				displayed_servers[displayed_server_count] = &available_games[game_index];
-				displayed_server_count++;
-			}
-		}
+        displayed_server_count = network_browser_rows(displayed_servers,
+            widget->parameters.list.selected_list_item_index, widget->local_player_index);
 
 		widget->parameters.list.list_items = displayed_servers;
 		widget->parameters.list.number_of_items = (word)displayed_server_count;
@@ -1057,6 +1032,7 @@ static void server_list_menu_update(
 						displayed_servers[item_index]->game_name);
 				}
 				item->parameters.text_box.text[0x1F] = 0;
+                network_browser_text(item_index, item->parameters.text_box.text, 32);
 			}
 		}
 
@@ -1340,6 +1316,21 @@ static void server_list_menu_update(
 					(milliseconds_since_creation >= 1000) ? 1 : 0;
 				message_text->visible = TRUE;
 			}
+            {
+                char const *status=network_browser_status();long k,length=(long)strlen(status);
+                short choice=widget->parameters.list.selected_list_item_index;
+                struct network_advertised_game *chosen=choice>=0 && choice<displayed_server_count?displayed_servers[choice]:NULL;
+                boolean details=chosen && chosen->valid;
+                game_type_bitmap->visible=map_bitmap->visible=description_container->visible=details;
+                score_limit_text->visible=score_limit_type_text->visible=details && chosen->score_limit!=NONE;
+                message_text->parameters.text_box.text=ui_widget_realloc(message_text->parameters.text_box.text,
+                    (word)((length+1)*2), "port/linux/game/network_browser.c", 0);
+                if(message_text->parameters.text_box.text) {
+                    for(k=0;k<=length;k++)message_text->parameters.text_box.text[k]=(unsigned char)status[k];
+                    message_text->parameters.text_box.string_list_index=NONE;message_text->visible=TRUE;
+                }
+            }
+
 		}
 	}
 	return;

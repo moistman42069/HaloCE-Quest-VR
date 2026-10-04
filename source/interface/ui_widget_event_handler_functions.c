@@ -908,6 +908,7 @@ symbols in this file:
 /* ---------- headers */
 
 #include "cseries.h"
+#include "network_browser.h"
 #include "cache/cache_files.h"
 #include "bungie_net/network/transport.h"
 #include "bungie_net/network/transport_endpoint_winsock.h"
@@ -1920,6 +1921,8 @@ static boolean network_game_join_game_from_server_list(
 			if ((word)generated_count > (word)zero)
 			{
 				server = ((byte **)widget->generated_list)[widget->data3C.selected_index];
+                server=(byte *)network_browser_select((struct network_advertised_game *)server,event->controller_index);
+                if(!server)return TRUE;
 				if (server[0xE0] == TRUE)
 				{
 					if (*(short *)(server + 0xDE) == zero)
@@ -2077,6 +2080,7 @@ static boolean clear_multiplayer_player_joins(
 {
 	dispose_global_network_game_client();
 	dispose_global_network_game_server();
+	network_browser_end();
 	player_ui_clear_multiplayer_joins();
 	player_ui_clear_multiplayer_variant();
 	return TRUE;
@@ -2087,6 +2091,7 @@ static boolean network_server_list_dispose(
 	struct event_record *event,
 	boolean *widget_deleted)
 {
+	network_browser_end();
 	widget->generated_list = NULL;
 	widget->generated_count = 0;
 	return TRUE;
@@ -2097,6 +2102,7 @@ static boolean network_game_cancel(
 	struct event_record *event,
 	boolean *widget_deleted)
 {
+    network_browser_end();
 	dispose_global_network_game_server();
 	dispose_global_network_game_client();
 	player_ui_clear_multiplayer_variant();
@@ -2297,7 +2303,10 @@ static boolean network_game_server_list_initialize(
 	dispose_global_network_game_server();
 	player_ui_clear_multiplayer_variant();
 	if (create_global_network_game_client())
-		game_connection_set(1);
+    {
+        game_connection_set(1);
+        network_browser_begin();
+    }
 	else
 	{
 		error(2, "failed to create network client to initiate game search");
@@ -2311,6 +2320,7 @@ static boolean main_menu_initialize(
 	struct event_record *event,
 	boolean *widget_deleted)
 {
+    network_browser_end();
 	player_ui_clear_multiplayer_joins();
 	player_ui_clear_multiplayer_variant();
 	dispose_global_network_game_client();

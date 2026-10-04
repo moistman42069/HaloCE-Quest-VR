@@ -34,3 +34,15 @@ The public repository begins with a privacy-clean current snapshot. Earlier priv
 Selected v10/v11 networking and gameplay changes are adapted from bnunu/cybersecurity halo-ce-universal contributors; pinned commits and integration boundaries are in [the upstream audit](docs/TEST15-UPSTREAM.md). Ordered static GPU uploads follow Andiweli's [HaloCE-Android-AAOS fix](https://github.com/Andiweli/HaloCE-Android-AAOS/commit/a88f25763b8a51335554ef02e613127ee92677d4). SnowyMouse's [Halo cache format documentation](https://gist.github.com/SnowyMouse/39168bddd597549038a35d78aee39513) (CC BY 3.0) informed header reporting; the recognition code is adapted for this launcher. Activision's official mobile control guides informed HUD usability only; no shooter code/art was imported. Launcher backgrounds are procedural original drawings, with no extracted Halo artwork bundled.
 
 Test15 Android controller support retains SDL 3.4.16 mappings and Android input APIs. Local SDL changes are recorded under `port/android/patches`, including generic Android digital-only L2/R2 mapping and the existing clipboard-service guard. SDL copyright/license remains in the bundled third-party notices. Controller settings/navigation/visibility are project code.
+
+## Test19 additions
+
+Signed OpenCE lobby discovery and Ed25519/X25519 identity binding are adapted
+from cybersecurity/halo-ce-universal build 84, principally commit
+`c04765d7f49f49bda706a258826134ef41c566ca`. The stock Xbox widget integration is
+project code. [Monocypher](https://monocypher.org/) by Loup Vaillant and its
+contributors supplies the cryptographic primitives; complete licenses accompany
+`port/third_party/monocypher` and the bundled notices. XboxDev/extract-xiso's
+format handling and deep-tree warning informed the importer correction. Khronos
+OpenGL ES and OpenXR specifications informed renderer-state and reticle-space
+review. These references establish API/format behavior, not device acceptance.

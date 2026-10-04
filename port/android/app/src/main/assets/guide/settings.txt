@@ -136,7 +136,7 @@ Where saved games and profiles go; empty for the usual place
 renderer.safe_geometry [boolean]
 Default: true in VR; false in flat Android
 Geometry compatibility mode (Android; restart required). Streams geometry
-without persistent buffers/static mirrors and rebases indices on CPU.
+with ordered uploads, no persistent buffers/static mirrors, and CPU index rebasing.
 Default on in VR, off in flat Android. Can reduce performance. Not a data revision selector.
 
 renderer.vr_geometry_revision [integer]
@@ -177,6 +177,14 @@ Let internet play ask the router (UPnP) to forward its port, for
 networks whose NAT stops connections: when a player joins this
 machine's game, and when joining a game takes too long. False never
 asks.
+
+network.public_lobby [boolean]
+Default: true
+Discover signed public OpenCE games in the in-game System Link list.
+
+network.host_public [boolean]
+Default: false
+List native PvP hosts publicly. Launcher PUBLIC overrides this per session. Campaign remains separate.
 
 network.signalling_brokers [string]
 Default: "broker.emqx.io:1883,broker.hivemq.com:1883,test.mosquitto.org:1883"

@@ -73,7 +73,7 @@ final class XisoExtractor {
     private static final int ATTRIBUTE_DIRECTORY = 0x10;
     /* directory tables are a few sectors; anything much larger is not one */
     private static final long MAXIMUM_DIRECTORY_SIZE = 4 << 20;
-    private static final int MAXIMUM_FILES = 256;
+    private static final int MAXIMUM_FILES = 4096;
     private static final int COPY_BUFFER_SIZE = 1 << 20;
     private static final byte[] VOLUME_MAGIC = "MICROSOFT*XBOX*MEDIA".getBytes(StandardCharsets.US_ASCII);
 
@@ -119,7 +119,10 @@ final class XisoExtractor {
     private void readAt(long offset, ByteBuffer buffer) throws IOException {
         while (buffer.hasRemaining()) {
             if(Thread.currentThread().isInterrupted())throw new java.io.InterruptedIOException("Import cancelled");
-            int count = image.read(buffer, offset);
+            int count;
+            try { count = image.read(buffer, offset); }
+            catch (java.nio.channels.ClosedByInterruptException e) { throw new java.io.InterruptedIOException("Import cancelled"); }
+            catch (IOException e) { throw new ExtractException("Cannot seek/read the image. Copy the complete ISO/XISO to this device's Downloads folder, then select that local copy. " + e.getMessage()); }
 
             if (count <= 0)
                 throw new ExtractException("Could not read the disc image (is it complete?).");
@@ -138,28 +141,35 @@ final class XisoExtractor {
 
     /** the partition's volume descriptor: the root directory's sector and size */
     private long[] findVolume() throws IOException {
+        if (Thread.currentThread().isInterrupted()) throw new java.io.InterruptedIOException("Import cancelled");
+        long size = image.size();
+        if (size < VOLUME_DESCRIPTOR_OFFSET + SECTOR_SIZE)
+            throw new ExtractException("Image is too short (" + size + " bytes). Finish transferring the complete ISO/XISO to local Downloads first.");
+        boolean damaged = false;
         for (long offset : PARTITION_OFFSETS) {
+            if (offset + VOLUME_DESCRIPTOR_OFFSET + SECTOR_SIZE > size) continue;
             ByteBuffer descriptor = ByteBuffer.allocate(SECTOR_SIZE).order(ByteOrder.LITTLE_ENDIAN);
-
-            try {
-                readAt(offset + VOLUME_DESCRIPTOR_OFFSET, descriptor);
-            } catch (IOException e) {
-                continue;
-            }
-            if (!magicAt(descriptor, 0) || !magicAt(descriptor, 0x7EC))
+            readAt(offset + VOLUME_DESCRIPTOR_OFFSET, descriptor);
+            boolean first = magicAt(descriptor, 0), last = magicAt(descriptor, 0x7EC);
+            damaged |= first != last;
+            if (!first || !last)
                 continue;
             partition = offset;
             return new long[] {
                 descriptor.getInt(20) & 0xFFFFFFFFL, descriptor.getInt(24) & 0xFFFFFFFFL,
             };
         }
-        throw new ExtractException("This is not an Xbox disc image.");
+        throw new ExtractException(damaged ?
+            "The Xbox volume header is damaged. Compare the file size/checksum with the source and copy the complete image again." :
+            "No Xbox game partition found in " + size + " bytes. Use a complete original-Xbox Halo CE ISO/XISO, or import its extracted maps folder. Unpack ZIP/7z/RAR archives and merge split image parts first. PC/MCC disc images are different formats. If this file works on another device, compare file sizes/checksums and copy it again to local Downloads.");
     }
 
     /** a directory's table, read whole */
     private ByteBuffer readDirectory(long sector, long size, String what) throws IOException {
         if (size <= 0 || size > MAXIMUM_DIRECTORY_SIZE)
             throw new ExtractException(what);
+        if (partition + sector * SECTOR_SIZE > image.size() - size)
+            throw new ExtractException("Truncated disc image: directory extends past the file. Complete the transfer before importing.");
         ByteBuffer table = ByteBuffer.allocate((int) size).order(ByteOrder.LITTLE_ENDIAN);
         readAt(partition + sector * SECTOR_SIZE, table);
         return table;
@@ -169,34 +179,41 @@ final class XisoExtractor {
      * collects the entries of the subtree at offset (4-byte units), files or
      * directories as asked
      */
-    private static void walk(ByteBuffer table, long offset, int depth, boolean directories, List<Entry> out,
-        int[] visited) {
-        offset *= 4;
-        /* a malformed table must not loop or run off its end */
-        if (depth > 64 || ++visited[0] > 4096 || offset + ENTRY_HEADER_SIZE > table.limit())
-            return;
-        int at = (int) offset;
-        int left = table.getShort(at) & 0xFFFF;
-        int right = table.getShort(at + 2) & 0xFFFF;
-        /* 0xFFFF: padding, an empty directory */
-        if (left == 0xFFFF)
-            return;
-        int nameLength = table.get(at + 13) & 0xFF;
-        if (left != 0)
-            walk(table, left, depth + 1, directories, out, visited);
-        boolean isDirectory = (table.get(at + 12) & ATTRIBUTE_DIRECTORY) != 0;
-        if (at + ENTRY_HEADER_SIZE + nameLength <= table.limit() && nameLength > 0 && isDirectory == directories
-            && out.size() < MAXIMUM_FILES) {
+    private static void walk(ByteBuffer table, boolean directories, List<Entry> out) throws IOException {
+        /* Valid repacked images can have a very deep, unbalanced tree (also
+         * documented by extract-xiso). Do not silently truncate it at depth 64.
+         * Offsets are uint16 units of four bytes; an explicit stack plus visited
+         * set bounds work without consuming the Java call stack. */
+        java.util.ArrayDeque<Integer> pending = new java.util.ArrayDeque<>();
+        java.util.BitSet visited = new java.util.BitSet(65536);
+        pending.push(0);
+        while (!pending.isEmpty()) {
+            if (Thread.currentThread().isInterrupted()) throw new java.io.InterruptedIOException("Import cancelled");
+            int offset = pending.pop(), at = offset * 4;
+            if (visited.get(offset) || at + ENTRY_HEADER_SIZE > table.limit())
+                throw new ExtractException("Damaged Xbox directory tree (repeated or out-of-range entry).");
+            visited.set(offset);
+            int left = table.getShort(at) & 0xFFFF;
+            int right = table.getShort(at + 2) & 0xFFFF;
+            if (left == 0xFFFF) continue; // empty table/padding
+            int nameLength = table.get(at + 13) & 0xFF;
+            if (nameLength == 0 || at + ENTRY_HEADER_SIZE + nameLength > table.limit())
+                throw new ExtractException("Damaged Xbox directory filename.");
             byte[] bytes = new byte[nameLength];
             for (int index = 0; index < nameLength; index++)
                 bytes[index] = table.get(at + ENTRY_HEADER_SIZE + index);
             String name = new String(bytes, StandardCharsets.ISO_8859_1);
             /* (as extract-xiso refuses them: no name may leave the folder) */
-            if (!name.equals(".") && !name.equals("..") && name.indexOf('/') < 0 && name.indexOf('\\') < 0)
+            if (name.equals(".") || name.equals("..") || name.indexOf('/') >= 0 || name.indexOf('\\') >= 0 || name.indexOf('\0') >= 0)
+                throw new ExtractException("Unsafe filename in Xbox directory.");
+            boolean isDirectory = (table.get(at + 12) & ATTRIBUTE_DIRECTORY) != 0;
+            if (isDirectory == directories) {
+                if (out.size() >= MAXIMUM_FILES) throw new ExtractException("Xbox directory exceeds import limit (4096 entries).");
                 out.add(new Entry(name, table.getInt(at + 4) & 0xFFFFFFFFL, table.getInt(at + 8) & 0xFFFFFFFFL));
+            }
+            if (right != 0) pending.push(right);
+            if (left != 0) pending.push(left);
         }
-        if (right != 0)
-            walk(table, right, depth + 1, directories, out, visited);
     }
 
     private void extract(File destination, Progress progress) throws IOException {
@@ -205,11 +222,13 @@ final class XisoExtractor {
         /* the root's maps folder */
         ByteBuffer table = readDirectory(root[0], root[1], "The disc image's file system is damaged.");
         List<Entry> directories = new ArrayList<>();
-        walk(table, 0, 0, true, directories, new int[1]);
+        walk(table, true, directories);
         Entry maps = null;
         for (Entry entry : directories) {
-            if (entry.name.equalsIgnoreCase("maps"))
+            if (entry.name.equalsIgnoreCase("maps")) {
+                if (maps != null) throw new ExtractException("Duplicate maps folders in Xbox image.");
                 maps = entry;
+            }
         }
         if (maps == null)
             throw new ExtractException("The disc image has no maps folder: it is not a Halo disc.");
@@ -217,7 +236,7 @@ final class XisoExtractor {
         /* its files */
         table = readDirectory(maps.sector, maps.size, "The disc image's maps folder is damaged.");
         List<Entry> files = new ArrayList<>();
-        walk(table, 0, 0, false, files, new int[1]);
+        walk(table, false, files);
         long total = 0;
         java.util.Set<String> unique=new java.util.HashSet<>();
         boolean hasUi = false;
@@ -256,8 +275,10 @@ final class XisoExtractor {
                     done += count;
                     progress.report(file.name, done, total);
                 }
+            } catch (java.io.InterruptedIOException e) {
+                throw e;
             } catch (ExtractException e) {
-                throw new ExtractException("Could not read " + file.name + " from the disc image (is it complete?).");
+                throw new ExtractException("Could not read " + file.name + ": " + e.getMessage());
             } catch (IOException e) {
                 throw new ExtractException("Could not write " + path + " (is the storage full?).");
             }
@@ -266,6 +287,8 @@ final class XisoExtractor {
         /* (the maps folder may be there, empty: the app makes it for adb) */
         if (!finished.isDirectory() && !finished.mkdirs())
             throw new ExtractException("Could not create " + finished + ".");
+        /* Publish ui.map last: haveData() uses it as the completion marker. */
+        files.sort(java.util.Comparator.comparing(file -> file.name.equals("ui.map")));
         for (Entry file : files) {
             File from = new File(partial, file.name);
             File to = new File(finished, file.name);

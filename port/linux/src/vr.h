@@ -216,8 +216,8 @@ int vr_ui_pointer(int menus_active, struct halo_ui_pointer *pointer);
 void vr_haptic(int hand, float amplitude, float seconds);
 /* the player's weapon zoom level (-1 none), for the aim's smoothing */
 void vr_set_zoom_level(int zoom_level);
-/* how far along the hand's ray the reticle shows this frame, in world units */
-void vr_set_reticle(float distance_units);
+/* World-space impact point and the same camera anchor used by the stereo eyes. */
+void vr_set_reticle_world(const float anchor[3], const float hit[3]);
 
 #else
 

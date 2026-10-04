@@ -163,7 +163,7 @@ static const struct config_setting config_settings[] =
 
 	{ "renderer.safe_geometry", _config_boolean, "false", "HALO_SAFE_GEOMETRY", _environment_value, _platform_all,
 		"Geometry compatibility mode (Android; restart required). Streams geometry\n"
-		"without persistent buffers/static mirrors and rebases indices on CPU.\n"
+		"with ordered uploads, no persistent buffers/static mirrors, and CPU index rebasing.\n"
 		"Default on in VR, off in flat Android. Can reduce performance. Not a data revision selector." },
     { "renderer.vr_geometry_revision", _config_integer, "1", "HALO_VR_GEOMETRY_REVISION", _environment_value, _platform_vr,
         "Internal VR geometry-default migration revision. Keep at 1 after choosing Safe or Normal." },
@@ -192,6 +192,10 @@ static const struct config_setting config_settings[] =
 		"networks whose NAT stops connections: when a player joins this\n"
 		"machine's game, and when joining a game takes too long. False never\n"
 		"asks." },
+    { "network.public_lobby", _config_boolean, "true", "HALO_NET_PUBLIC_LOBBY", _environment_value, _platform_all,
+        "Discover signed public OpenCE games in the in-game System Link list." },
+    { "network.host_public", _config_boolean, "false", "HALO_NET_HOST_PUBLIC", _environment_value, _platform_all,
+        "List native PvP hosts publicly. Launcher PUBLIC overrides this per session. Campaign remains separate." },
 	{ "network.signalling_brokers", _config_string,
 		"\"broker.emqx.io:1883,broker.hivemq.com:1883,test.mosquitto.org:1883\"",
 		"HALO_NET_BROKERS", _environment_value, _platform_all,

@@ -35,6 +35,7 @@ def main():
     parser.add_argument("--build-tools", type=Path, required=True)
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--label", default="test17")
+    parser.add_argument("--version-name", help="Internal APK version for a private candidate; does not authorize publication")
     parser.add_argument("--stable", action="store_true", help="Use semantic release identity; requires owner publication authorization")
     parser.add_argument("--runtime-source", help="Exact build commit when later commits change documentation only")
     args = parser.parse_args()
@@ -42,7 +43,9 @@ def main():
         parser.error("label must contain letters, digits, underscore or dash")
     if args.stable and not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", args.label):
         parser.error("stable label must be major.minor.patch")
-    version_name=args.label if args.stable else "1.0-"+args.label
+    if args.version_name and (args.stable or not re.fullmatch(r"[A-Za-z0-9_.-]+",args.version_name)):
+        parser.error("--version-name requires a private candidate and a simple version string")
+    version_name=args.version_name or (args.label if args.stable else "1.0-"+args.label)
     release_tag="v"+args.label if args.stable else "halo-ce-quest-"+args.label
     subprocess.run(["git", "diff", "--exit-code", "HEAD", "--"], cwd=ROOT, check=True, stdout=subprocess.DEVNULL)
     untracked = subprocess.check_output(["git", "ls-files", "--others", "--exclude-standard"], cwd=ROOT)
@@ -65,7 +68,7 @@ def main():
             if archive.testzip() is not None:
                 raise SystemExit("APK ZIP checksum failure")
             names = archive.namelist()
-            for guide in ["player-guide", "controls", "touch", "settings"]+(["credits"] if args.stable else []):
+            for guide in ["player-guide", "controls", "touch", "settings", "credits"]:
                 if "assets/guide/"+guide+".txt" not in names:
                     raise SystemExit("Bundled guide missing: "+guide)
             guest = archive.read("assets/halo_guest.elf")
@@ -79,6 +82,11 @@ def main():
                 raise SystemExit("Missing native ELF payload")
             if b"/active-data.txt" not in host or b"/profile.properties" not in host:
                 raise SystemExit("Native managed-data selection missing")
+            if args.label=="test19":
+                if b"UpstreamDownloads;" not in dex or b"browser: signed public discovery started" not in guest:
+                    raise SystemExit("Test19 upstream downloads or native public browser missing")
+                if b"safe ordered uploads; CPU index rebasing" not in guest:
+                    raise SystemExit("Test19 ordered Safe geometry path missing")
             if b"vr pose: host negotiated visual avatars v1" not in guest:
                 raise SystemExit("Negotiated avatar support missing")
             if vr and (b"HANDS ONLY" not in guest or b"NEXT PAGE (%ld/%ld)" not in guest):
@@ -108,7 +116,7 @@ def main():
     manifest = {"candidate": args.label, "created_utc": datetime.now(timezone.utc).isoformat(),
                 "source_commit": commit, "runtime_source_commit": runtime_commit, "branch": branch, "runtime_accepted": args.stable,
                 "publication": "owner-authorized 1.0 baseline" if args.stable else "held pending owner candidate testing and approval",
-                "prior_device_report": "test14 accepted for release; owner reports test16 action animations improved; test16 multiplayer log faults addressed in test17; candidate testing pending",
+                "prior_device_report": "Public 1.0 preserves owner-authorized test18; current candidate requires separate device testing and publication approval",
                 "certificate_sha256": CERTIFICATE, "apks": records,
                 "source_zip": {"file": source.name, "sha256": sha(source)},
                 "native_host_version": network_value("HALO_PORT_NETWORK_VERSION"), "accepted_host_versions": list(range(network_value("HALO_PORT_NETWORK_VERSION_MINIMUM"), network_value("HALO_PORT_NETWORK_VERSION_MAXIMUM")+1)),

@@ -26,9 +26,14 @@ final class CoopLauncher {
 
     void show() {
         new GamepadNavigation.Builder(activity).setTitle("Campaign co-op")
-            .setMessage("Two players: Quest VR or flat Android, using the same build and identical maps/resources. "
-                + "The mission starts when both players enter the host's System Link lobby. "
-                + "Campaign currently supports two players; the higher PvP limits do not apply to campaign.")
+            .setMessage("1. Install the same project build and select identical campaign maps/resources on both devices.\n\n"
+                + "2. Host: choose Host campaign, mission and difficulty, then enter the game's System Link lobby. "
+                + "To appear in the launcher co-op browser, enable public listing before hosting.\n\n"
+                + "3. Partner: choose Browse / join, refresh and select the host, or paste its private invite. "
+                + "Then enter Multiplayer > System Link and join that host. The mission starts with both players present.\n\n"
+                + "Quest + Quest and Quest + flat Android are supported pairings. Keep both apps open. "
+                + "Campaign supports two players and cannot join mid-mission. If disconnected, create a new lobby. "
+                + "If a public listing does not appear, use a private invite or LAN; directory availability varies.")
             .setPositiveButton("Host campaign", (dialog, which) -> host())
             .setNeutralButton("Browse / join", (dialog, which) -> new ServerBrowser(activity, join, true))
             .setNegativeButton("Back", null).show();

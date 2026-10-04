@@ -17,6 +17,7 @@ final class UpdatePolicy {
         if(tag==null || !tag.matches("halo-ce-quest-test[0-9]+[a-z]?")) return null;
         return "HaloCE-"+(vr?"Quest-":"Android-")+tag.substring("halo-ce-quest-".length())+".apk";
     }
+    static boolean newerCode(int release,int installed) { return release>0 && installed>0 && release>installed; }
     static boolean newer(String tag,String installed) {
         // A candidate newer than the public release must never be offered a downgrade.
         if(tag==null||installed==null)return false;
