@@ -24,6 +24,23 @@ swapchain images, whose GL texture names work in this context as they are.
 #include <stdlib.h>
 #include <string.h>
 
+/* test21: the kinds of gun with their own aim adjustment (VR_GUN_*): the
+config key's part and the menu's name */
+static const struct { const char *key, *label; } gun_classes[VR_GUN_CLASSES] =
+{
+	{ "other", "OTHER GUN" },
+	{ "pistol", "PISTOL" },
+	{ "plasma_pistol", "PLASMA PISTOL" },
+	{ "assault_rifle", "ASSAULT RIFLE" },
+	{ "plasma_rifle", "PLASMA RIFLE" },
+	{ "shotgun", "SHOTGUN" },
+	{ "sniper_rifle", "SNIPER RIFLE" },
+	{ "rocket_launcher", "ROCKET LAUNCHER" },
+	{ "needler", "NEEDLER" },
+	{ "fuel_rod", "FUEL ROD" },
+	{ "flamethrower", "FLAMETHROWER" },
+};
+
 static struct
 {
 	int initialized, active;
@@ -150,6 +167,13 @@ static struct
 	/* test21: a network game (vr_set_network_game) and whether physical
 	melee works in one (vr.melee_multiplayer, off by default) */
 	int network_game, melee_multiplayer;
+	/* test21: the held gun's kind (VR_GUN_*, -1 none: vr_set_gun_class) and
+	each kind's aim adjustment (vr.aim_<kind>_up/_right, degrees), turning
+	the shots, reticle and scope off the gun's own aim (never the gun);
+	shot_pose is aim_pose so turned */
+	int gun_class, gun_aim_turned[VR_GUN_CLASSES];
+	float gun_aim[VR_GUN_CLASSES][2], gun_aim_rotation[VR_GUN_CLASSES][4];
+	struct halo_xr_pose shot_pose;
 	/* the holsters' reach (vr.holster_size, metres) and which one the
 	weapon hand is in (0 none, 1 + HOLSTER_*) */
 	float holster_size;
@@ -360,6 +384,18 @@ static void migrate_two_hand_auto(void)
 		config_write_boolean("vr.two_hand_auto_applied", 1);
 }
 
+/* test21: a gun's aim adjustment as a turn of its aim (OpenXR: pitch
+about x turns the aim up, yaw about y to the left), degrees */
+static void gun_aim_quaternion(float up, float right, float out[4])
+{
+	float degrees[3];
+
+	degrees[0] = up;
+	degrees[1] = -right;
+	degrees[2] = 0.0f;
+	vr_alignment_rotation(degrees, out);
+}
+
 void vr_reload_settings(void)
 {
 	static int left_handed = -1;
@@ -469,6 +505,23 @@ void vr_reload_settings(void)
 		vr.controls_mirrored ? "mirrored (move on the right stick, turn on the left)" : "standard (move on the left stick)");
 	vr.melee_speed = (float)config_real("vr.melee_speed");
 	vr.melee_multiplayer = config_boolean("vr.melee_multiplayer");
+	{
+		char key[64];
+		int kind;
+
+		for (kind = 0; kind < VR_GUN_CLASSES; kind++)
+		{
+			snprintf(key, sizeof(key), "vr.aim_%s_up", gun_classes[kind].key);
+			vr.gun_aim[kind][0] = vr_alignment_bound(config_real(key), VR_GUN_AIM_LIMIT);
+			snprintf(key, sizeof(key), "vr.aim_%s_right", gun_classes[kind].key);
+			vr.gun_aim[kind][1] = vr_alignment_bound(config_real(key), VR_GUN_AIM_LIMIT);
+			gun_aim_quaternion(vr.gun_aim[kind][0], vr.gun_aim[kind][1], vr.gun_aim_rotation[kind]);
+			vr.gun_aim_turned[kind] = vr.gun_aim[kind][0] != 0.0f || vr.gun_aim[kind][1] != 0.0f;
+			if (vr.gun_aim_turned[kind])
+				platform_log("vr: %s aim adjusted %.1f up, %.1f right (degrees; shots, reticle and scope)",
+					gun_classes[kind].label, vr.gun_aim[kind][0], vr.gun_aim[kind][1]);
+		}
+	}
 	vr.melee_impact = !strcmp(config_string("vr.melee"), "impact");
 	vr.fingers = config_boolean("vr.fingers");
 	vr.arm_run = config_boolean("vr.arm_run");
@@ -557,7 +610,7 @@ void vr_initialize(void)
 		return;
 	vr.initialized = 1;
 	config_vr_vehicle_defaults();
-	platform_log("vr: HaloCE Quest test21 candidate (floating hands restored, torso-following arms, neck-pivot full body, auto two-hand lock, horn, online melee off, two-hand gun roll)");
+	platform_log("vr: HaloCE Quest test21 candidate (floating hands restored, torso-following arms, neck-pivot full body, auto two-hand lock, horn, online melee off, two-hand gun roll, pistol shots from the hand, per-gun aim)");
 	if (!config_boolean("vr.enabled"))
 	{
 		platform_log("vr: off (vr.enabled)");
@@ -595,6 +648,7 @@ void vr_initialize(void)
 	vr.zoom_level = -1;
 	vr.flashlight_armed = 1;
 	vr.noted_weapon = -1;
+	vr.gun_class = -1;
 	vr.pending_state = -1;
 	vr.hand_state = HAND_LOOSE;
 	vr.force_render = config_boolean("vr.force_render");
@@ -668,6 +722,62 @@ void vr_set_impact_melee_allowed(int allowed)
 
 /* test21: physical melee (impact and swing) stays off in network games
 unless vr.melee_multiplayer; the melee button always works */
+/* test21: the held gun's kind by its tag's name (VR_GUN_OTHER when none
+matches: a custom map's gun, or protected names) */
+int vr_gun_class_of_name(const char *name)
+{
+	static const struct { const char *pattern; int kind; } patterns[] =
+	{
+		{ "plasma pistol", VR_GUN_PLASMA_PISTOL }, /* before "pistol" */
+		{ "plasma_pistol", VR_GUN_PLASMA_PISTOL },
+		{ "pistol", VR_GUN_PISTOL },
+		{ "assault rifle", VR_GUN_ASSAULT_RIFLE },
+		{ "assault_rifle", VR_GUN_ASSAULT_RIFLE },
+		{ "plasma rifle", VR_GUN_PLASMA_RIFLE },
+		{ "plasma_rifle", VR_GUN_PLASMA_RIFLE },
+		{ "sniper", VR_GUN_SNIPER_RIFLE },
+		{ "shotgun", VR_GUN_SHOTGUN },
+		{ "rocket", VR_GUN_ROCKET_LAUNCHER },
+		{ "needler", VR_GUN_NEEDLER },
+		{ "plasma_cannon", VR_GUN_FUEL_ROD },
+		{ "fuel rod", VR_GUN_FUEL_ROD },
+		{ "fuel_rod", VR_GUN_FUEL_ROD },
+		{ "flamethrower", VR_GUN_FLAMETHROWER },
+	};
+	int index;
+
+	for (index = 0; name && index < (int)(sizeof(patterns) / sizeof(patterns[0])); index++)
+	{
+		if (strstr(name, patterns[index].pattern))
+			return patterns[index].kind;
+	}
+	return VR_GUN_OTHER;
+}
+
+void vr_set_gun_class(int kind)
+{
+	kind = kind >= 0 && kind < VR_GUN_CLASSES ? kind : -1;
+	if (kind != vr.gun_class && kind >= 0)
+		platform_log("vr: holding %s (aim %.1f up, %.1f right)", gun_classes[kind].label,
+			vr.gun_aim[kind][0], vr.gun_aim[kind][1]);
+	vr.gun_class = kind;
+}
+
+int vr_gun_class(void)
+{
+	return vr.gun_class;
+}
+
+const char *vr_gun_class_label(int kind)
+{
+	return kind >= 0 && kind < VR_GUN_CLASSES ? gun_classes[kind].label : "NO GUN";
+}
+
+const char *vr_gun_class_key(int kind)
+{
+	return kind >= 0 && kind < VR_GUN_CLASSES ? gun_classes[kind].key : NULL;
+}
+
 void vr_set_network_game(int network)
 {
 	network = network != 0;
@@ -1999,10 +2109,20 @@ static void compute_aim_pose(void)
 	vr.two_handed = 1;
 }
 
+/* test21: the shots' aim: the gun's, turned by its kind's adjustment
+(none: exactly the gun's) */
+static void update_shot_pose(void)
+{
+	vr.shot_pose = vr.aim_pose;
+	if (vr.gun_class >= 0 && vr.gun_class < VR_GUN_CLASSES && vr.gun_aim_turned[vr.gun_class])
+		vr_alignment_multiply(vr.aim_pose.orientation, vr.gun_aim_rotation[vr.gun_class], vr.shot_pose.orientation);
+}
+
 static void update_aim_pose(void)
 {
 	compute_aim_pose();
 	steady_aim();
+	update_shot_pose();
 }
 
 /* the weapon hand's aim in Halo's axes at heading 0; 0 untracked */
@@ -2013,7 +2133,7 @@ static int hand_forward(float out[3])
 
 	if (!(vr.frame.hand_valid[vr.weapon_hand] & 2))
 		return 0;
-	rotate(vr.aim_pose.orientation, xr_forward, local);
+	rotate(vr.shot_pose.orientation, xr_forward, local);
 	to_halo(local, 1.0f, 0.0f, out);
 	return 1;
 }
@@ -2178,7 +2298,7 @@ int vr_hand_ray(const float position[3], float out_origin[3], float out_directio
 
 	if (!vr_hand_aiming() || !(vr.frame.hand_valid[vr.weapon_hand] & 2))
 		return 0;
-	return hand_view(&vr.aim_pose, NULL, position, out_origin, out_direction, up);
+	return hand_view(&vr.shot_pose, NULL, position, out_origin, out_direction, up);
 }
 
 int vr_weapon_view(const float position[3], float out_position[3], float out_forward[3], float out_up[3])
@@ -2818,7 +2938,7 @@ int vr_scope_view(const float position[3], float out_position[3], float out_forw
 		return 0;
 	/* the gun's aim, rolled with it: the image keeps the world's way up on
 	the layer, which rolls with the gun too */
-	if (!hand_view(&vr.aim_pose, NULL, position, out_position, out_forward, out_up))
+	if (!hand_view(&vr.shot_pose, NULL, position, out_position, out_forward, out_up))
 		return 0;
 	*out_pixels = pixels < vr.eye_size ? pixels : vr.eye_size;
 	return 1;

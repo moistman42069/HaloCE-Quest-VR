@@ -2203,6 +2203,9 @@ static void trigger_create_projectiles(
 		long target_object_index= NONE;
 		long projectile_definition_index;
 		short projectile_count;
+#ifdef HALO_VR
+		boolean vr_hand_shot= FALSE;
+#endif
 
 		if (!TEST_FLAG(trigger_definition->flags, _weapon_trigger_projectiles_cannot_be_aimed_bit) &&
 			unit &&
@@ -2234,6 +2237,19 @@ static void trigger_create_projectiles(
 			}
 
 			unit_adjust_projectile_ray(owner_object_index, &origin, &forward, &velocity, adjust_origin, use_aiming_vector);
+#ifdef HALO_VR
+			/* test21: the shot left from the VR hand (a local game, the hand
+			aiming): a gun that fires from its own model ("uses weapon
+			origin", the pistol) keeps it too, on the reticle's ray, instead
+			of starting at the unseen third-person gun (shots landed above and
+			beside the reticle) */
+			if (adjust_origin)
+			{
+				real_point3d hand;
+
+				vr_hand_shot= vr_render_hand_origin(owner_object_index, &hand) != 0;
+			}
+#endif
 
 			if (player_index!=NONE)
 			{
@@ -2278,6 +2294,9 @@ static void trigger_create_projectiles(
 
 		if (TEST_FLAG(trigger_definition->flags, _weapon_trigger_uses_weapon_origin_bit))
 		{
+#ifdef HALO_VR
+			if (!vr_hand_shot)
+#endif
 			origin= markers[marker_index].matrix.position;
 		}
 

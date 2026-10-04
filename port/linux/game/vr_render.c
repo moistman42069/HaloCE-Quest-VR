@@ -524,6 +524,45 @@ static boolean scope_window(
 	return TRUE;
 }
 
+/* test21: the engine's shift of a shot off its aim, so the reticle marks
+where the shot flies: the primary trigger's first_person_weapon_offset
+along the aim, Halo's left and up (trigger_create_projectiles in
+weapons.c). FALSE when the shot is not aimed, or leaves from the gun's
+model (uses weapon origin) rather than from the hand */
+static boolean vr_shot_offset(
+	long unit_index,
+	boolean from_hand,
+	real_vector3d const *forward,
+	real_vector3d *offset)
+{
+	long weapon_index = unit_inventory_get_weapon(unit_index, unit_get(unit_index)->unit.current_weapon_index);
+	struct weapon_definition *definition;
+	struct weapon_trigger_definition *trigger;
+	real_vector3d left, up;
+
+	if (weapon_index == NONE)
+		return FALSE;
+	definition = weapon_definition_get(weapon_get(weapon_index)->definition_index);
+	if (definition->weapon.triggers.count < 1)
+		return FALSE;
+	trigger = TAG_BLOCK_GET_ELEMENT(&definition->weapon.triggers, 0, struct weapon_trigger_definition);
+	if (TEST_FLAG(trigger->flags, _weapon_trigger_projectiles_cannot_be_aimed_bit) ||
+		(TEST_FLAG(trigger->flags, _weapon_trigger_uses_weapon_origin_bit) && !from_hand))
+		return FALSE;
+	if (trigger->first_person_weapon_offset.x == 0.0f && trigger->first_person_weapon_offset.y == 0.0f &&
+		trigger->first_person_weapon_offset.z == 0.0f)
+		return FALSE;
+	cross_product3d(global_up3d, forward, &left);
+	if (normalize3d(&left) == 0.0f)
+		left = *global_left3d;
+	cross_product3d(forward, &left, &up);
+	normalize3d(&up);
+	for (int axis = 0; axis < 3; axis++)
+		offset->n[axis] = forward->n[axis] * trigger->first_person_weapon_offset.x +
+			left.n[axis] * trigger->first_person_weapon_offset.y + up.n[axis] * trigger->first_person_weapon_offset.z;
+	return isfinite(offset->i) && isfinite(offset->j) && isfinite(offset->k);
+}
+
 short vr_render_windows(
 	struct render_window *windows,
 	short window_count)
@@ -658,7 +697,8 @@ short vr_render_windows(
 			if (unit_index != NONE && object_get(unit_index)->object.parent_object_index == NONE)
 			{
 				real_point3d camera = vr_render.game_camera_position;
-				real_vector3d aiming, to_hand;
+				real_vector3d aiming, to_hand, shift;
+				boolean from_hand = TRUE;
 
 				unit_get_aiming_vector(unit_index, &aiming);
 				if (dot_product3d(&aiming, &direction) < 0.866f)
@@ -666,7 +706,18 @@ short vr_render_windows(
 				vector_from_points3d(&camera, &origin, &to_hand);
 				if (game_connection() != _game_connection_local ||
 					collision_test_vector(FLAG(_collision_test_structure_bit), &camera, &to_hand, unit_index, &collision))
+				{
 					origin = camera;
+					from_hand = FALSE;
+				}
+				/* test21: the shot's own offset from its aim (the pistol's
+				shots landed beside the reticle) */
+				if (vr_shot_offset(unit_index, from_hand, &direction, &shift))
+				{
+					origin.x += shift.i;
+					origin.y += shift.j;
+					origin.z += shift.k;
+				}
 			}
 
 			scale_vector3d(&direction, distance, &vector);
@@ -1106,6 +1157,20 @@ unsigned long vr_render_actions(
 	if (unit_index != NONE)
 		weapon_index = unit_inventory_get_weapon(unit_index, unit_get(unit_index)->unit.current_weapon_index);
 	vr_note_weapon(weapon_index);
+	/* test21: the held gun's kind, for its aim adjustment (by its tag's
+	name, looked up when the weapon changes) */
+	{
+		static long named_weapon = NONE;
+		static int kind = -1;
+
+		if (weapon_index != named_weapon)
+		{
+			named_weapon = weapon_index;
+			kind = weapon_index != NONE ?
+				vr_gun_class_of_name(tag_get_name(weapon_get(weapon_index)->definition_index)) : -1;
+		}
+		vr_set_gun_class(kind);
+	}
 	/* physical weapons (dropping and grabbing guns) change the inventory
 	here, which a network game's other machines would not see: in a local
 	game only, unless vr.physical_multiplayer */

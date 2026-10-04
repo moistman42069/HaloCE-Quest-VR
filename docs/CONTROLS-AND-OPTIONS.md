@@ -99,6 +99,12 @@ Quit before external edits. In `[vr]`, `body = "legs"` explicitly selects the de
 
 - **Upside-down hands or guns** (reported on Quest OS v78): use **Controller Left/Right → Flip Roll 180** for the affected controller; it turns hand, gun and two-hand aim together. Hand Roll turns only the visible hand and Gun Roll only the gun; since test21 Gun Roll also holds in two-hand grip (it used to flip back).
 
+## Shots, reticle and per-gun aim (test21)
+
+- **Pistol shots from the hand.** Some guns (the pistol among them) tell the game to start their shots at the gun model's own muzzle. In VR that was the unseen third-person body's gun, so the shots flew beside the reticle. Offline, with the hand aiming, such shots now start at your hand like every other gun's. Network play is unchanged (the host decides shots there).
+- **Reticle includes each gun's shot offset.** Halo shifts some guns' shots a few centimetres off the aim line (each gun's tag sets it). The reticle now includes that shift, so it marks where shots actually go.
+- **Aim For / Aim Up / Aim Right / Reset Aim** (Hands + Gun, second screen): fine-tune the gun you are holding. Aim For shows which gun the rows change (Pistol, Plasma Pistol, Assault Rifle, Plasma Rifle, Shotgun, Sniper Rifle, Rocket Launcher, Needler, Fuel Rod, Flamethrower, or Other Gun for custom maps). Aim Up/Right move that gun's shots, reticle and scope together in half-degree steps up to 10 degrees; the gun model stays where it is. Reset Aim sets that gun back to 0. Each gun keeps its own values (`vr.aim_<gun>_up` and `_right` in config.toml), the same in either hand.
+
 ## Body turns and Full Body (test21)
 
 - The arms hang from shoulders that face the torso in every Body mode. Before, without a drawn body (Arms + Hands, Hands Only), the shoulders faced the stick-turn heading, so turning your real body left them behind and the arms twisted across.

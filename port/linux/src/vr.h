@@ -190,6 +190,31 @@ object index, -1 none), each tick, for what the hand holds; and 1 while
 the hand holds nothing (a gun put away or let fall: the first-person gun
 is not drawn, the hand is free) */
 void vr_note_weapon(long weapon_index);
+/* test21: per-gun aim adjustment. The held gun's kind (from its tag's name,
+each tick: vr_set_gun_class, -1 none) selects vr.aim_<key>_up/_right
+(degrees, up to VR_GUN_AIM_LIMIT), which turn the shots, the reticle and
+the scope off the gun's own aim; the gun is drawn as before */
+enum
+{
+	VR_GUN_OTHER,
+	VR_GUN_PISTOL,
+	VR_GUN_PLASMA_PISTOL,
+	VR_GUN_ASSAULT_RIFLE,
+	VR_GUN_PLASMA_RIFLE,
+	VR_GUN_SHOTGUN,
+	VR_GUN_SNIPER_RIFLE,
+	VR_GUN_ROCKET_LAUNCHER,
+	VR_GUN_NEEDLER,
+	VR_GUN_FUEL_ROD,
+	VR_GUN_FLAMETHROWER,
+	VR_GUN_CLASSES
+};
+#define VR_GUN_AIM_LIMIT 10.0f
+int vr_gun_class_of_name(const char *name);
+void vr_set_gun_class(int kind);
+int vr_gun_class(void);
+const char *vr_gun_class_label(int kind);
+const char *vr_gun_class_key(int kind);
 int vr_hand_empty(void);
 /* vr.cutscenes "immersive": cutscenes seen around the player from their
 camera; the head's yaw in the headset's space (radians, left positive),

@@ -60,6 +60,19 @@ local copy of the release APK has the published SHA-256.
    design: Hand rotation is hand-only by design (test20c). Controller → Flip Roll
    180 corrects the raw pose for hand, gun and two hands together and was not
    affected. The v78 cause itself is still unconfirmed.
+9. **Pistol reticle low and a bit left** (tester, after the first test21
+   report: "most other weapons compensate with wider spread"). In
+   `trigger_create_projectiles` a trigger flagged *uses weapon origin* takes its
+   shot's start from the weapon's own marker, after the hand origin has been
+   applied, so in VR the shot left from the unseen third-person gun (where the
+   body animation holds it) and flew parallel to, but off, the hand's reticle
+   ray. Separately, every aimed shot is shifted by its trigger's
+   `first_person_weapon_offset` (along the aim, Halo's left and up), which the
+   VR reticle never included. The pistol-class weapon in the campaign maps on this
+   PC (SPV1 Custom Edition maps; protected names; latched, 5 shots/s) carries the
+   *uses weapon origin* flag; stock tag values could not be read here, so the
+   stock pistol is expected, not proven, to match. A precise gun shows the
+   difference; spread hides it on others.
 7. **Two-hand auto grip "removed".** "Auto" was a magnet: two-handed aim only
    while the off hand stayed within a narrow cone; it never locked. The default was
    Grip (squeeze).
@@ -99,6 +112,18 @@ local copy of the release APK has the published SHA-256.
   seated.
 - Two-handed aim takes the gun's up from its calibrated one-handed aim, so Gun
   Roll (and the rest of the gun angle's roll) survives two-hand grip.
+- Shots and reticle per gun:
+  - offline, with the hand aiming, a *uses weapon origin* gun now fires from the
+    hand like every other gun (`weapons.c`, VR build only; the hand origin
+    exists only in local games, so network play and the flat build are
+    unchanged);
+  - the reticle adds the trigger's own shot offset exactly as the engine does
+    (render only; nothing changes for guns without one);
+  - new per-gun **Aim Up / Aim Right** (Hands + Gun page, half-degree steps,
+    ±10°, `vr.aim_<gun>_up/_right`, default 0) turn the held gun's shots, reticle
+    and scope together, never the drawn gun. Eleven kinds by tag name (pistol,
+    plasma pistol, assault rifle, plasma rifle, shotgun, sniper, rocket, needler,
+    fuel rod, flamethrower, other). At 0 the aim is bit-identical to before.
 - Packaging recognises test21 labels and checks its markers.
 
 Kept: Legs + Arms default, gun anchoring, hand/gun calibration, fingers,
@@ -117,6 +142,7 @@ remains separate (FUTURE-RELEASE-FOLLOWUPS.md); nothing here links to it.
 | Auto two-hand lock | Yes | Static wiring and migration | No |
 | Horn | Yes | Button logic | No |
 | Online melee off | Yes | Gate logic | No |
+| Pistol shots off the reticle | Yes (hand origin offline, reticle offset, per-gun aim) | Yes (engine-equivalent offset over 5,000 aims; per-gun turn exact over 4,000 poses; zero = bit-identical; flat build unchanged) | No: needs the tester, offline and online |
 | v78: gun re-inverted in two hands | Yes (gun roll kept) | Yes (2,000 poses, both hands) | No: needs the reporter (Quest 3S, v78) |
 
 ## Headset checks needed
@@ -136,3 +162,18 @@ remains separate (FUTURE-RELEASE-FOLLOWUPS.md); nothing here links to it.
    two-hand grip must now keep the gun upright.
 6. Multiplayer: quick hand movements don't melee, the melee button does; Melee →
    Impact + Online re-enables physical melee.
+8. Pistol (offline campaign): shoot a wall at about 5 m and 20 m; the impacts
+   land on the reticle. Online, report whether it still differs. Hands + Gun →
+   Aim For shows the held gun; Aim Up/Right fine-tune it, Reset Aim clears it.
+   Other guns must behave as before.
+
+## Multiplayer VR avatars
+
+The owner asked for co-op's visible VR body movement in normal multiplayer.
+It is already one shared path: `network_vr_pose.c` runs in every
+`network_distributed_tick`, campaign or PvP, and PvP sessions use the same
+distributed transport (see NETWORK-VR-AVATARS.md). The saved logs contain no PvP
+session that reached a game, so there was no failure to trace; nothing was
+changed. It requires the host and the viewers to run this build (stock or older
+hosts relay nothing). Check for "vr pose: host negotiated visual avatars v1"
+(client) or "peer ... negotiated" (host) in the log after joining.

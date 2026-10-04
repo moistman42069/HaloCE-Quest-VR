@@ -139,6 +139,10 @@ enum
 	_vr_setting_multi,
 	_vr_setting_hand_degrees,
 	_vr_setting_handedness,
+	/* test21: the held gun's own aim adjustment (vr.aim_<kind>_up/_right):
+	key "gun" names the gun, "up" and "right" step half degrees, "reset"
+	clears both for that gun */
+	_vr_setting_gun_aim,
 };
 
 #define VR_MENU_MAXIMUM_VALUES 12
@@ -274,6 +278,10 @@ static struct vr_menu_setting const vr_menu_hands[] =
     { "GUN UP", "vr.gun_up", _vr_setting_centimetres, 0, { { NULL,NULL } } },
     { "GUN OUT", "vr.gun_out", _vr_setting_centimetres, 0, { { NULL,NULL } } },
     { "GUN GRIP", "vr.gun_anchor", _vr_setting_boolean, 2, { { "ANCHORED", "true" }, { "CLASSIC", "false" } } },
+    { "AIM FOR", "gun", _vr_setting_gun_aim, 0, { { NULL,NULL } } },
+    { "AIM UP", "up", _vr_setting_gun_aim, 0, { { NULL,NULL } } },
+    { "AIM RIGHT", "right", _vr_setting_gun_aim, 0, { { NULL,NULL } } },
+    { "RESET AIM", "reset", _vr_setting_gun_aim, 0, { { NULL,NULL } } },
 };
 
 static struct vr_menu_setting const vr_menu_align_left[] =
@@ -860,7 +868,16 @@ boolean vr_menu_setting_text(
 		struct vr_menu_setting const *setting = &vr_menu_pages[page].settings[setting_index];
 		long value_index = vr_menu_value_index(setting);
 
-        if(setting->type == _vr_setting_hand_degrees)
+        if(setting->type == _vr_setting_gun_aim) {
+            int kind=vr_gun_class(); char key[64];
+            if(!strcmp(setting->key,"gun")) snprintf(line,sizeof(line),"%s: %s",setting->label,vr_gun_class_label(kind));
+            else if(!strcmp(setting->key,"reset")) snprintf(line,sizeof(line),"%s: APPLY",setting->label);
+            else if(kind<0) snprintf(line,sizeof(line),"%s: HOLD A GUN",setting->label);
+            else { double value; snprintf(key,sizeof(key),"vr.aim_%s_%s",vr_gun_class_key(kind),setting->key);
+                value=config_real(key); if(!isfinite(value)) value=0;
+                snprintf(line,sizeof(line),"%s: < %.1f DEG >",setting->label,value+0.0); }
+        }
+        else if(setting->type == _vr_setting_hand_degrees)
             snprintf(line,sizeof(line),"%s: < %.0f DEG >",setting->label,vr_menu_hand_angle(setting->key));
         else if(setting->type == _vr_setting_degrees || setting->type == _vr_setting_centimetres || setting->type == _vr_setting_vehicle_centimetres) {
             double value=config_real(setting->key); if(!isfinite(value)) value=0;
@@ -900,6 +917,27 @@ boolean vr_menu_setting_change(
         value=step>0?(floor(value/unit+0.00001)+1)*unit:(ceil(value/unit-0.00001)-1)*unit;
         value=fmax(-limit,fmin(limit,value)); written=config_write_real(setting->key,value);
         vr_reload_settings(); platform_log("vr: %s %.3f%s",setting->key,value,written?"":" (save failed)");
+        return TRUE;
+    }
+    if(setting->type == _vr_setting_gun_aim) {
+        /* the held gun's kind only; nothing without a gun */
+        int kind=vr_gun_class(); char key[64];
+        if(kind<0||!strcmp(setting->key,"gun")) return TRUE;
+        if(!strcmp(setting->key,"reset")) {
+            snprintf(key,sizeof(key),"vr.aim_%s_up",vr_gun_class_key(kind)); written=config_write_real(key,0.0);
+            snprintf(key,sizeof(key),"vr.aim_%s_right",vr_gun_class_key(kind)); written=config_write_real(key,0.0)&&written;
+            vr_reload_settings(); platform_log("vr: reset %s aim%s",vr_gun_class_label(kind),written?"":" (save failed)");
+            return TRUE;
+        }
+        {
+            double value;
+            snprintf(key,sizeof(key),"vr.aim_%s_%s",vr_gun_class_key(kind),setting->key);
+            value=config_real(key); if(!isfinite(value)) value=0.0;
+            value=step>0?(floor(value/0.5+0.00001)+1)*0.5:(ceil(value/0.5-0.00001)-1)*0.5;
+            value=fmax(-VR_GUN_AIM_LIMIT,fmin(VR_GUN_AIM_LIMIT,value));
+            written=config_write_real(key,value+0.0); vr_reload_settings();
+            platform_log("vr: %s %.1f%s",key,value,written?"":" (save failed)");
+        }
         return TRUE;
     }
     if(setting->type == _vr_setting_hand_degrees) {

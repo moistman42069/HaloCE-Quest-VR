@@ -253,3 +253,159 @@ int main(void){
  puts("PASS: two-handed aim keeps the gun's calibrated roll (2000 poses, both hands): Gun Roll 180 no longer re-inverts in two hands");
 }
 ''')
+
+# --- the pistol's shots and per-gun aim (tester, 2026-10-04: "pistol reticle
+# still too low and a bit to the left, most other weapons compensate with
+# wider spread"). A trigger that "uses weapon origin" fired from the unseen
+# third-person gun's marker, parallel to but off the hand's reticle ray; the
+# reticle also ignored the trigger's first_person_weapon_offset.
+weapons = (ROOT / 'source/items/weapons.c').read_text(encoding='latin-1')
+fire = fn(weapons, 'trigger_create_projectiles')
+assert re.search(r'#ifdef HALO_VR\n\t\t\tif \(!vr_hand_shot\)\n#endif\n\t\t\torigin= markers\[marker_index\]\.matrix\.position;', fire)
+assert 'vr_hand_shot= vr_render_hand_origin(owner_object_index, &hand) != 0;' in fire
+# without HALO_VR (the flat build) the function reads exactly as before
+flat_fire = re.sub(r'#ifdef HALO_VR\n.*?#endif\n', '', fire, flags=re.S)
+assert ('if (TEST_FLAG(trigger_definition->flags, _weapon_trigger_uses_weapon_origin_bit))\n\t\t{\n'
+        '\t\t\torigin= markers[marker_index].matrix.position;\n\t\t}') in flat_fire
+assert 'vr_hand_shot' not in flat_fire
+# the hand origin exists only in a local game (online shots are unchanged)
+assert 'game_connection() != _game_connection_local' in fn(render, 'vr_render_hand_origin')
+# shots, reticle and scope follow the shot pose; the drawn gun and the scope's
+# quad keep the gun's own aim
+assert 'rotate(vr.shot_pose.orientation, xr_forward, local);' in fn(frame, 'hand_forward')
+assert 'hand_view(&vr.shot_pose, NULL' in fn(frame, 'vr_hand_ray')
+assert 'hand_view(&vr.shot_pose, NULL' in fn(frame, 'vr_scope_view')
+assert 'pose = vr.aim_pose;' in fn(frame, 'vr_weapon_view') and 'shot_pose' not in fn(frame, 'vr_weapon_view')
+assert 'shot_pose' not in fn(frame, 'place_scope') and 'shot_pose' not in fn(frame, 'compute_aim_pose')
+assert re.search(r'compute_aim_pose\(\);\n\tsteady_aim\(\);\n\tupdate_shot_pose\(\);', fn(frame, 'update_aim_pose'))
+assert 'vr_set_gun_class(kind);' in fn(render, 'vr_render_actions')
+reticle = fn(render, 'vr_render_windows')
+assert 'if (vr_shot_offset(unit_index, from_hand, &direction, &shift))' in reticle
+assert re.search(r'origin = camera;\n\t+from_hand = FALSE;', reticle)
+kinds = ['pistol', 'plasma_pistol', 'assault_rifle', 'plasma_rifle', 'shotgun', 'sniper_rifle', 'rocket_launcher',
+         'needler', 'fuel_rod', 'flamethrower', 'other']
+for kind in kinds:
+    for axis in ('up', 'right'):
+        assert re.search(r'\{ "vr\.aim_' + kind + '_' + axis + r'", _config_real, "0\.0"', config), (kind, axis)
+for row in ['{ "AIM FOR", "gun", _vr_setting_gun_aim', '{ "AIM UP", "up", _vr_setting_gun_aim',
+            '{ "AIM RIGHT", "right", _vr_setting_gun_aim', '{ "RESET AIM", "reset", _vr_setting_gun_aim']:
+    assert row in menu, row
+change = fn(menu, 'vr_menu_setting_change')
+assert 'value=step>0?(floor(value/0.5+0.00001)+1)*0.5:(ceil(value/0.5-0.00001)-1)*0.5;' in change
+assert 'value=fmax(-VR_GUN_AIM_LIMIT,fmin(VR_GUN_AIM_LIMIT,value));' in change
+assert 'if(kind<0||!strcmp(setting->key,"gun")) return TRUE;' in change
+hands = menu[menu.index('static struct vr_menu_setting const vr_menu_hands[] ='):]
+hands = hands[:hands.index('};')]
+assert len(re.findall(r'^\s*\{ "', hands, re.M)) == 16, 'Hands + Gun fills exactly two screens of eight'
+print('PASS: static wiring (pistol shots from the hand offline only, flat build unchanged, shot pose for shots/reticle/scope '
+      'not the gun, 22 per-gun keys at 0, menu rows)')
+
+run('gun_aim', r'''
+#include <assert.h>
+#include <math.h>
+#include <stdio.h>
+#include <string.h>
+#include "port/linux/src/vr_alignment.h"
+''' + re.search(r'enum\n\{\n\tVR_GUN_OTHER,.*?\};\n', (ROOT / 'port/linux/src/vr.h').read_text(encoding='utf-8'), re.S).group(0) + r'''
+struct halo_xr_pose { float position[3], orientation[4]; };
+static struct { int gun_class, gun_aim_turned[VR_GUN_CLASSES]; float gun_aim_rotation[VR_GUN_CLASSES][4];
+ struct halo_xr_pose aim_pose, shot_pose; } vr;
+''' + fn(frame, 'rotate') + fn(frame, 'gun_aim_quaternion') + fn(frame, 'update_shot_pose') +
+    fn(frame, 'vr_gun_class_of_name') + r'''
+static unsigned seed=21;
+static float rnd(void){seed=seed*1664525u+1013904223u;return (float)((seed>>8)&0xffff)/65535.f;}
+static float dot(const float*a,const float*b){return a[0]*b[0]+a[1]*b[1]+a[2]*b[2];}
+int main(void){
+ static const float xr_forward[3]={0,0,-1},xr_up[3]={0,1,0},xr_right[3]={1,0,0};
+ static const struct { const char *name; int kind; } names[]={
+  {"weapons\\pistol\\pistol",VR_GUN_PISTOL},{"weapons\\plasma pistol\\plasma pistol",VR_GUN_PLASMA_PISTOL},
+  {"weapons\\assault rifle\\assault rifle",VR_GUN_ASSAULT_RIFLE},{"weapons\\plasma rifle\\plasma rifle",VR_GUN_PLASMA_RIFLE},
+  {"weapons\\shotgun\\shotgun",VR_GUN_SHOTGUN},{"weapons\\sniper rifle\\sniper rifle",VR_GUN_SNIPER_RIFLE},
+  {"weapons\\rocket launcher\\rocket launcher",VR_GUN_ROCKET_LAUNCHER},{"weapons\\needler\\mp_needler",VR_GUN_NEEDLER},
+  {"weapons\\plasma_cannon\\plasma_cannon",VR_GUN_FUEL_ROD},{"weapons\\flamethrower\\flamethrower",VR_GUN_FLAMETHROWER},
+  {"cmt\\weapons\\plasma_pistol\\plasma_pistol",VR_GUN_PLASMA_PISTOL},{"<protected>",VR_GUN_OTHER},{"weapons\\ball\\ball",VR_GUN_OTHER},
+  {NULL,VR_GUN_OTHER}};
+ for(unsigned i=0;i<sizeof(names)/sizeof(names[0]);i++) assert(vr_gun_class_of_name(names[i].name)==names[i].kind);
+ for(int n=0;n<4000;n++){
+  float d[3]={rnd()*170-85,rnd()*360-180,rnd()*360-180};
+  vr_alignment_rotation(d,vr.aim_pose.orientation);
+  for(int k=0;k<3;k++)vr.aim_pose.position[k]=rnd()*2-1;
+  memset(vr.gun_aim_turned,0,sizeof(vr.gun_aim_turned));
+  /* no adjustment, no gun, or another gun's adjustment: exactly the gun's aim, bit for bit */
+  vr.gun_class=n%VR_GUN_CLASSES; update_shot_pose(); assert(!memcmp(&vr.shot_pose,&vr.aim_pose,sizeof(vr.aim_pose)));
+  vr.gun_class=-1; vr.gun_aim_turned[VR_GUN_PISTOL]=1; gun_aim_quaternion(3,2,vr.gun_aim_rotation[VR_GUN_PISTOL]);
+  update_shot_pose(); assert(!memcmp(&vr.shot_pose,&vr.aim_pose,sizeof(vr.aim_pose)));
+  vr.gun_class=VR_GUN_ASSAULT_RIFLE; update_shot_pose(); assert(!memcmp(&vr.shot_pose,&vr.aim_pose,sizeof(vr.aim_pose)));
+  /* the pistol's adjustment turns its aim up and right by the angles asked, in the gun's own frame */
+  {float up=rnd()*20-10,right=rnd()*20-10,f[3],u[3],r[3],s[3];
+   gun_aim_quaternion(up,right,vr.gun_aim_rotation[VR_GUN_PISTOL]); vr.gun_class=VR_GUN_PISTOL; update_shot_pose();
+   assert(!memcmp(vr.shot_pose.position,vr.aim_pose.position,sizeof(vr.aim_pose.position)));
+   rotate(vr.aim_pose.orientation,xr_forward,f);rotate(vr.aim_pose.orientation,xr_up,u);rotate(vr.aim_pose.orientation,xr_right,r);
+   rotate(vr.shot_pose.orientation,xr_forward,s);
+   float rad=0.0174532925f, gu=asinf(dot(s,u)), gr=atan2f(dot(s,r),dot(s,f));
+   assert(fabsf(gu-up*rad)<1e-3f); assert(fabsf(gr-right*rad)<1e-3f);}
+ }
+ puts("PASS: per-gun aim: 14 tag names map to their gun (plasma before pistol, others and protected names to OTHER); "
+      "no adjustment / no gun / another gun's leaves the aim bit-identical; the held gun's turns exactly up and right in its own frame (4000 poses)");
+}
+''')
+
+run('shot_offset', r'''
+#include <assert.h>
+#include <math.h>
+#include <stdio.h>
+#include <string.h>
+typedef float real; typedef int boolean;
+#define TRUE 1
+#define FALSE 0
+#define NONE (-1)
+#define FLAG(b) (1u<<(b))
+#define TEST_FLAG(f,b) (((f)&FLAG(b))!=0)
+typedef union { real n[3]; struct { real i,j,k; }; } real_vector3d;
+typedef union { real n[3]; struct { real x,y,z; }; } real_point3d;
+enum { _weapon_trigger_uses_weapon_origin_bit=5, _weapon_trigger_projectiles_cannot_be_aimed_bit=11 };
+struct weapon_trigger_definition { unsigned long flags; real_point3d first_person_weapon_offset; };
+struct tag_block { long count; struct weapon_trigger_definition *elements; };
+struct weapon_definition { struct { struct tag_block triggers; } weapon; };
+#define TAG_BLOCK_GET_ELEMENT(b,i,t) (&(b)->elements[i])
+static struct weapon_trigger_definition trigger; static struct weapon_definition definition={{{1,&trigger}}};
+struct unit_datum_t { struct { short current_weapon_index; } unit; }; static struct unit_datum_t unit_datum; static long held=7;
+struct weapon_datum_t { long definition_index; }; static struct weapon_datum_t weapon_datum;
+static struct unit_datum_t *unit_get(long u){(void)u;return &unit_datum;}
+static long unit_inventory_get_weapon(long u,short i){(void)u;(void)i;return held;}
+static struct weapon_datum_t *weapon_get(long w){(void)w;return &weapon_datum;}
+static struct weapon_definition *weapon_definition_get(long d){(void)d;return &definition;}
+static const real_vector3d up3d={{0,0,1}},left3d={{0,1,0}};
+static const real_vector3d *global_up3d=&up3d,*global_left3d=&left3d;
+static void cross_product3d(const real_vector3d*a,const real_vector3d*b,real_vector3d*o){real_vector3d r={{a->j*b->k-a->k*b->j,a->k*b->i-a->i*b->k,a->i*b->j-a->j*b->i}};*o=r;}
+static real normalize3d(real_vector3d*v){real l=sqrtf(v->i*v->i+v->j*v->j+v->k*v->k);if(l<1e-4f)return 0;v->i/=l;v->j/=l;v->k/=l;return l;}
+static void point_from_line3d(const real_point3d*p,const real_vector3d*v,real t,real_point3d*o){real_point3d r={{p->x+v->i*t,p->y+v->j*t,p->z+v->k*t}};*o=r;}
+''' + fn(render, 'vr_shot_offset') + r'''
+/* the engine's own lines (trigger_create_projectiles), applied to a point */
+static void engine(real_vector3d forward, real_point3d *origin){
+ struct weapon_trigger_definition *trigger_definition=&trigger; real_vector3d right, up;
+''' + re.search(r'\t\t\t\tcross_product3d\(global_up3d, &forward, &right\);.*?trigger_definition->first_person_weapon_offset\.z,\n\t\t\t\t\t&origin\);\n',
+                fire, re.S).group(0).replace('&origin', 'origin').replace('*global_left3d', '*global_left3d') + r'''}
+static unsigned seed=5;
+static float rnd(void){seed=seed*1664525u+1013904223u;return (float)((seed>>8)&0xffff)/65535.f;}
+int main(void){
+ real_vector3d f, o;
+ for(int n=0;n<5000;n++){
+  f.i=rnd()*2-1;f.j=rnd()*2-1;f.k=rnd()*2-1; if(n<4){f.i=f.j=0;f.k=n&1?1:-1;} if(!normalize3d(&f)&&n>=4)continue;
+  trigger.flags=0; for(int a=0;a<3;a++)trigger.first_person_weapon_offset.n[a]=(rnd()-.5f)*0.2f;
+  real_point3d p={{0,0,0}}; engine(f,&p);
+  assert(vr_shot_offset(1,TRUE,&f,&o)&&vr_shot_offset(1,FALSE,&f,&o));
+  for(int a=0;a<3;a++)assert(fabsf(o.n[a]-p.n[a])<1e-5f);
+  /* from the gun's model: only when the shot leaves from the hand (offline, our weapons.c) */
+  trigger.flags=FLAG(_weapon_trigger_uses_weapon_origin_bit);
+  assert(vr_shot_offset(1,TRUE,&f,&o)&&!vr_shot_offset(1,FALSE,&f,&o));
+  trigger.flags=FLAG(_weapon_trigger_projectiles_cannot_be_aimed_bit); assert(!vr_shot_offset(1,TRUE,&f,&o));
+ }
+ trigger.flags=0; memset(&trigger.first_person_weapon_offset,0,sizeof(trigger.first_person_weapon_offset));
+ assert(!vr_shot_offset(1,TRUE,&f,&o)); /* no offset: the reticle exactly as before */
+ held=NONE; trigger.first_person_weapon_offset.y=0.05f; assert(!vr_shot_offset(1,TRUE,&f,&o));
+ held=7; definition.weapon.triggers.count=0; assert(!vr_shot_offset(1,TRUE,&f,&o));
+ puts("PASS: reticle shot offset equals the engine's first_person_weapon_offset shift (5000 aims incl. straight up/down); "
+      "model-origin guns only when fired from the hand; unaimed, unarmed, triggerless or zero offset leave the reticle as before");
+}
+''')
