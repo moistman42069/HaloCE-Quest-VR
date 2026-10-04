@@ -141,7 +141,8 @@ def main():
             if candidate_at_least(args.label, 21) and vr:
                 for marker in [b"FLOAT + ARMS", b"AUTO LOCK", b"SWING + ONLINE", b"support grip locked automatically",
                                b"vr.melee_multiplayer", b"vr.two_hand_auto_applied", b"physical melee",
-                               b"AIM FOR", b"vr.aim_pistol_up", b"aim adjusted"]:
+                               b"AIM FOR", b"vr.aim_pistol_up", b"aim adjusted",
+                               b"vr.aim_reset_applied", b"horn: stick clicked", b"reticle converges"]:
                     if marker not in guest: raise SystemExit("Test21 hand mode, two-hand or melee marker missing: " + repr(marker))
             if candidate_at_least(args.label, 20, "d") and vr:
                 for marker in [b"HANDS + GUN", b"MIRROR CONTROLS", b"GUN GRIP", b"anchored to the controller",

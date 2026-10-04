@@ -73,6 +73,25 @@ local copy of the release APK has the published SHA-256.
    *uses weapon origin* flag; stock tag values could not be read here, so the
    stock pistol is expected, not proven, to match. A precise gun shows the
    difference; spread hides it on others.
+10. **First test21 reticle off the shots** (owner video 15:33:34 with log
+    15:30:41, b30: impacts above and left of the reticle on the assault rifle
+    and the pistol; "beforehand it was aligned"). The reticle had been shifted
+    by the trigger's `first_person_weapon_offset`, but every player shot is then
+    turned by `player_aim_projectile` toward where the camera's line hits (from
+    the unit's camera along its aim), within the weapon's deviation cone (the
+    larger of its deviation and autoaim angles), so that offset never shows in
+    the impacts; the shift moved the reticle away from them. The hand's own line
+    was never exactly the shots' either: they converge on the camera line's hit.
+11. **Horn still silent** (owner, 15:37 session). The chain (crouch control →
+    driver → vehicle flag 2 → the horn function) is intact in the engine. One
+    defect in `vr_horn_held`: its "both sticks = recentre" test read the VR pad,
+    where the right thumb is the zoom (off-hand trigger), so a stick click with
+    the off-hand trigger held counted as a recentre. Not proven to be the whole
+    cause; a log of the chain was added.
+12. **Ammo counter reversed in the left hand** (owner). The left hand's
+    first-person gun is the right-handed model mirrored, so its display reads
+    backwards on every gun with one. Un-mirroring only the display needs a
+    per-part winding decision in the renderer; not changed in this candidate.
 7. **Two-hand auto grip "removed".** "Auto" was a magnet: two-handed aim only
    while the off hand stayed within a narrow cone; it never locked. The default was
    Grip (squeeze).
@@ -117,8 +136,13 @@ local copy of the release APK has the published SHA-256.
     hand like every other gun (`weapons.c`, VR build only; the hand origin
     exists only in local games, so network play and the flat build are
     unchanged);
-  - the reticle adds the trigger's own shot offset exactly as the engine does
-    (render only; nothing changes for guns without one);
+  - the reticle follows the shot exactly as the engine aims it: the trigger's
+    offset, then the turn toward the camera line's hit within the weapon's cone,
+    through the engine's own code (`aim_assist_collision_direction`, factored
+    out of `player_aim_projectile` unchanged and shared by the reticle via
+    `vr_aim_assist_converge`; render only, no autoaim pull toward targets);
+  - per-gun aim values set while testing the first build reset to 0 once
+    (`vr.aim_reset_applied`);
   - new per-gun **Aim Up / Aim Right** (Hands + Gun page, half-degree steps,
     ±10°, `vr.aim_<gun>_up/_right`, default 0) turn the held gun's shots, reticle
     and scope together, never the drawn gun. Eleven kinds by tag name (pistol,
@@ -142,7 +166,9 @@ remains separate (FUTURE-RELEASE-FOLLOWUPS.md); nothing here links to it.
 | Auto two-hand lock | Yes | Static wiring and migration | No |
 | Horn | Yes | Button logic | No |
 | Online melee off | Yes | Gate logic | No |
-| Pistol shots off the reticle | Yes (hand origin offline, reticle offset, per-gun aim) | Yes (engine-equivalent offset over 5,000 aims; per-gun turn exact over 4,000 poses; zero = bit-identical; flat build unchanged) | No: needs the tester, offline and online |
+| Shots on the reticle (every gun) | Yes (engine convergence shared, pistol from the hand offline, per-gun aim) | Yes (reticle direction equals `player_aim_projectile` bit for bit over 20,000 aims; per-gun turn exact; zero = bit-identical) | First build failed (owner video); rebuilt candidate needs the owner and the tester |
+| Horn | Recentre test fixed; chain logged | Button logic | No: still silent in the first build; send the log after honking |
+| Ammo counter in the left hand | No (known issue) | — | Reversed (owner) |
 | v78: gun re-inverted in two hands | Yes (gun roll kept) | Yes (2,000 poses, both hands) | No: needs the reporter (Quest 3S, v78) |
 
 ## Headset checks needed

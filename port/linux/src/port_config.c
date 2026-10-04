@@ -429,6 +429,9 @@ static const struct config_setting config_settings[] =
 	{ "vr.two_hand_auto_applied", _config_boolean, "false", "HALO_VR_TWO_HAND_AUTO_APPLIED", _environment_value, _platform_vr,
 		"Internal one-time migration (test21): a config on the old \"grip\" default moves to\n"
 		"\"auto\" (two-hand grip locks automatically). A later choice is kept." },
+	{ "vr.aim_reset_applied", _config_boolean, "false", "HALO_VR_AIM_RESET_APPLIED", _environment_value, _platform_vr,
+		"Internal one-time reset (test21): per-gun aim values (vr.aim_*) set while testing the first\n"
+		"test21 build, whose reticle was off, return to 0 once." },
 	{ "vr.left_handed", _config_boolean, "false", "HALO_VR_LEFT_HANDED", _environment_value, _platform_vr,
 		"Left-handed play: the gun starts in the left hand (fire, grenade and zoom swap triggers\n"
 		"and bumpers) and, with vr.mirror_controls \"auto\", the sticks and face buttons mirror.\n"

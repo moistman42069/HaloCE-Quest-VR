@@ -571,6 +571,11 @@ Default: false
 Internal one-time migration (test21): a config on the old "grip" default moves to
 "auto" (two-hand grip locks automatically). A later choice is kept.
 
+vr.aim_reset_applied [boolean]
+Default: false
+Internal one-time reset (test21): per-gun aim values (vr.aim_*) set while testing the first
+test21 build, whose reticle was off, return to 0 once.
+
 vr.left_handed [boolean]
 Default: false
 Left-handed play: the gun starts in the left hand (fire, grenade and zoom swap triggers

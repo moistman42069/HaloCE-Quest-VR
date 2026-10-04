@@ -183,7 +183,7 @@ run('frame_bits', common + r'''
 #include <stdarg.h>
 #include "port/android/include/halo_android_abi.h"
 static struct { int active, layout_vr, seated, network_game, melee_multiplayer; float melee_speed; int melee_impact, impact_allowed;
- unsigned pad_buttons; struct { uint32_t flags; } frame; } vr;
+ unsigned pad_buttons; struct { uint32_t flags, buttons; } frame; } vr;
 static int logs;
 static void platform_log(const char*f,...){(void)f;logs++;}
 static char mode[16]="grip";static int applied,fail;
@@ -203,11 +203,15 @@ int main(void){
  vr.melee_speed=0;assert(!physical_melee_allowed());vr.melee_speed=2;
  /* the horn: seated, either stick click; not both (recentre), not on foot, not unfocused, not the pad layout */
  vr.layout_vr=1;vr.seated=1;vr.frame.flags=HALO_XR_FRAME_FOCUSED;
- vr.pad_buttons=HALO_XR_BUTTON_LEFT_THUMB;assert(vr_horn_held());
- vr.pad_buttons=HALO_XR_BUTTON_B;assert(vr_horn_held());
- vr.pad_buttons=HALO_XR_BUTTON_LEFT_THUMB|HALO_XR_BUTTON_RIGHT_THUMB;assert(!vr_horn_held());
- vr.pad_buttons=HALO_XR_BUTTON_A;assert(!vr_horn_held());
- vr.pad_buttons=HALO_XR_BUTTON_LEFT_THUMB;vr.seated=0;assert(!vr_horn_held());vr.seated=1;
+ /* the controllers' own stick clicks (frame.buttons), whatever the layout's pad says: a zoom
+ (the pad's right thumb) held with a stick click is not the recentre */
+ vr.frame.buttons=HALO_XR_BUTTON_LEFT_THUMB;assert(vr_horn_held());
+ vr.frame.buttons=HALO_XR_BUTTON_RIGHT_THUMB;assert(vr_horn_held());
+ vr.frame.buttons=HALO_XR_BUTTON_LEFT_THUMB;vr.pad_buttons=HALO_XR_BUTTON_LEFT_THUMB|HALO_XR_BUTTON_RIGHT_THUMB;assert(vr_horn_held());
+ vr.pad_buttons=0;
+ vr.frame.buttons=HALO_XR_BUTTON_LEFT_THUMB|HALO_XR_BUTTON_RIGHT_THUMB;assert(!vr_horn_held());
+ vr.frame.buttons=HALO_XR_BUTTON_A|HALO_XR_BUTTON_B;assert(!vr_horn_held());
+ vr.frame.buttons=HALO_XR_BUTTON_LEFT_THUMB;vr.seated=0;assert(!vr_horn_held());vr.seated=1;
  vr.frame.flags=0;assert(!vr_horn_held());vr.frame.flags=HALO_XR_FRAME_FOCUSED;vr.layout_vr=0;assert(!vr_horn_held());
  /* two-hand auto lock becomes the default once; a later choice is kept; a failed save retries */
  fail=1;migrate_two_hand_auto();assert(!applied&&!strcmp(mode,"grip"));fail=0;
@@ -416,3 +420,106 @@ assert 'if (!host_nonce && !client_unsupported_logged && now - client_since > 10
 assert tick.index('client_unsupported_logged = TRUE') < tick.index('if (game_time_get() % 2) return;')
 assert 'client_since = 0; client_unsupported_logged = FALSE;' in fn(pose, 'network_vr_pose_reset')
 print('PASS: a client says once, 10 s in, when its host offers no VR avatars (another build); reset each game')
+
+# --- the reticle converges as the shot does (owner video 2026-10-04 15:33:
+# impacts above and left of the reticle on the rifle and pistol). Every
+# player shot is turned by player_aim_projectile toward where the camera's
+# line hits, within the weapon's deviation cone; the reticle now shares that
+# code (aim_assist_collision_direction) through vr_aim_assist_converge.
+aim = (ROOT / 'source/game/aim_assist.c').read_text(encoding='latin-1')
+project = fn(aim, 'player_aim_projectile')
+assert ('aim_assist_collision_direction(player->unit_index, aiming_unit_index, camera_position, camera_direction,\n'
+        '\t\t\tposition, direction, &collision_direction);') in project
+assert 'collision_test_vector' not in project, 'the camera trace lives only in the shared helper'
+converge = re.search(r'#ifdef HALO_VR\n/\* test21: the VR reticle.*?#endif\n', aim, re.S).group(0)
+assert 'player->aim_assist_unit_index' not in converge and 'aim_assist(&' not in converge, \
+    'the reticle never changes the player or searches targets'
+reticle = fn(render, 'vr_render_windows')
+assert re.search(r'if \(vr_shot_offset\(unit_index, from_hand, &direction, &shift\)\).*?'
+                 r'aiming = direction;\n\t+vr_aim_assist_converge\(player_index, &camera, &aiming, &origin, &direction\);',
+                 reticle, re.S)
+run('converge', r'''
+#include <assert.h>
+#include <math.h>
+#include <stdio.h>
+#include <string.h>
+typedef float real; typedef int boolean;
+#define TRUE 1
+#define FALSE 0
+#define NONE (-1L)
+#define MAXIMUM_COLLISION_USER_STACK_DEPTH 8
+#define match_assert(...) ((void)0)
+#define match_assert_valid_real_normal3d(...) ((void)0)
+#define sine sinf
+#define cosine cosf
+typedef union { real n[3]; struct { real x,y,z; }; } real_point3d;
+typedef union { real n[3]; struct { real i,j,k; }; } real_vector3d;
+enum { _collision_test_for_projectiles_flags = 1, _collision_user_aim_assist = 3 };
+struct collision_result { real t; real_point3d point; };
+struct aim_assist_parameters { real autoaim_angle, autoaim_distance, magnetism_angle, magnetism_distance, deviation_angle, unused; };
+struct aim_assist_target { real_point3d position; real autoaim_level; long object_index; };
+struct player_datum { long unit_index; short team_index; long aim_assist_unit_index, aim_assist_timestamp; };
+struct unit_datum { struct { real_point3d position; } object; };
+static short global_current_collision_user_depth = 1; static short global_current_collision_users[8];
+static struct player_datum the_player = { 7, 0, NONE, 0 }; static struct unit_datum the_unit;
+static real_point3d cam; static real_vector3d cam_dir; static real deviation; static int has_assist = 1; static real floor_z;
+static struct player_datum *player_get(long p){(void)p;return &the_player;}
+static long unit_get_aiming_unit_index(long u){return u;}
+static short unit_get_zoom_level(long u){(void)u;return NONE;}
+static struct unit_datum *unit_get(long u){(void)u;return &the_unit;}
+static boolean unit_get_aim_assist_parameters(long u, short z, struct aim_assist_parameters *p){(void)u;(void)z;
+ memset(p,0,sizeof(*p));p->deviation_angle=deviation;return has_assist;}
+static short director_camera_deterministic(long u, real_point3d *p, real_vector3d *f){(void)u;*p=cam;*f=cam_dir;return 0;}
+static boolean aim_assist(struct aim_assist_parameters const *p, real_point3d const *a, real_vector3d const *b, long u, short t,
+ struct aim_assist_target *g){(void)p;(void)a;(void)b;(void)u;(void)t;(void)g;return FALSE;}
+static long game_time_get(void){return 0;}
+static real dot_product3d(const real_vector3d*a,const real_vector3d*b){return a->i*b->i+a->j*b->j+a->k*b->k;}
+static real magnitude3d(const real_vector3d*v){return sqrtf(dot_product3d(v,v));}
+static real normalize3d(real_vector3d*v){real l=magnitude3d(v);if(l<1e-6f)return 0;v->i/=l;v->j/=l;v->k/=l;return l;}
+static void fast_normalize3d(real_vector3d*v){normalize3d(v);}
+static void vector_from_points3d(const real_point3d*a,const real_point3d*b,real_vector3d*o){o->i=b->x-a->x;o->j=b->y-a->y;o->k=b->z-a->z;}
+static void scale_vector3d(const real_vector3d*v,real s,real_vector3d*o){o->i=v->i*s;o->j=v->j*s;o->k=v->k*s;}
+static void set_real_point3d(real_point3d*p,real x,real y,real z){p->x=x;p->y=y;p->z=z;}
+static void cross_product3d(const real_vector3d*a,const real_vector3d*b,real_vector3d*o){real_vector3d r={{a->j*b->k-a->k*b->j,a->k*b->i-a->i*b->k,a->i*b->j-a->j*b->i}};*o=r;}
+static void perpendicular3d(const real_vector3d*v,real_vector3d*o){o->i=-v->j;o->j=v->i;o->k=0;}
+static void rotate_vector_about_axis(real_vector3d*v,const real_vector3d*a,real s,real c){real_vector3d x;cross_product3d(a,v,&x);
+ real d=dot_product3d(a,v);v->i=v->i*c+x.i*s+a->i*d*(1-c);v->j=v->j*c+x.j*s+a->j*d*(1-c);v->k=v->k*c+x.k*s+a->k*d*(1-c);}
+/* the floor z = floor_z (the trace's only surface), 128 units out */
+static boolean collision_test_vector(int f,const real_point3d*p,const real_vector3d*v,long ignore,struct collision_result*r){(void)f;(void)ignore;
+ real t=v->k<0?(floor_z-p->z)/v->k:2;if(t<0||t>1)t=1;r->t=t;r->point.x=p->x+v->i*t;r->point.y=p->y+v->j*t;r->point.z=p->z+v->k*t;return t<1;}
+''' + fn((ROOT / 'source/math/real_math.c').read_text(encoding='latin-1'), 'fast_normals_interpolate') +
+    fn((ROOT / 'source/math/real_math.c').read_text(encoding='latin-1'), 'pin_normal_to_cone3d') +
+    fn(aim, 'aim_assist_collision_direction') + project +
+    converge.replace('#ifdef HALO_VR\n', '').replace('#endif\n', '') + r'''
+static unsigned seed=33;
+static float rnd(void){seed=seed*1664525u+1013904223u;return (float)((seed>>8)&0xffff)/65535.f;}
+int main(void){
+ int pinned=0;
+ for(int n=0;n<20000;n++){
+  real_point3d hand; real_vector3d shot, mine;
+  cam.x=rnd()*4-2;cam.y=rnd()*4-2;cam.z=0.62f+rnd()*0.1f; floor_z=0;
+  the_unit.object.position.x=cam.x;the_unit.object.position.y=cam.y;the_unit.object.position.z=cam.z-0.2f;
+  cam_dir.i=rnd()*2-1;cam_dir.j=rnd()*2-1;cam_dir.k=-rnd()*0.8f-0.02f;normalize3d(&cam_dir);
+  /* the shot from the hand (offline) or the camera (online), shifted by a trigger's offset */
+  hand.x=cam.x+(rnd()-.5f)*0.3f;hand.y=cam.y+(rnd()-.5f)*0.3f;hand.z=cam.z-0.1f-rnd()*0.2f;
+  deviation=(n%4)*0.03f; has_assist=(n%7)!=0;
+  shot=cam_dir; player_aim_projectile(0,&hand,&shot);
+  mine=cam_dir; boolean ok=vr_aim_assist_converge(0,&cam,&cam_dir,&hand,&mine);
+  assert(ok==has_assist);
+  /* the reticle's direction is the shot's, bit for bit */
+  assert(!memcmp(&shot,&mine,sizeof(shot)));
+  if(has_assist&&dot_product3d(&shot,&cam_dir)<0.99999f)pinned++;
+ }
+ assert(global_current_collision_user_depth==1);
+ printf("PASS: the reticle turns the shot as player_aim_projectile does, bit for bit (20000 aims, hand or camera origin, "
+        "cones 0-5 deg, guns without aim assist untouched; %d turned toward the camera line's hit)\n",pinned);
+}
+''')
+
+reset = fn(frame, 'migrate_gun_aim_reset')
+assert 'if (config_boolean("vr.aim_reset_applied"))' in reset and 'config_write_real(key, 0.0)' in reset
+assert re.search(r'migrate_two_hand_auto\(\);\n\tmigrate_gun_aim_reset\(\);\n\tvr_reload_settings\(\);', frame)
+assert re.search(r'\{ "vr\.aim_reset_applied", _config_boolean, "false"', config)
+assert 'unsigned int sticks = vr.frame.buttons & both;' in fn(frame, 'vr_horn_held')
+assert 'horn: the vehicle %s the crouch control from its driver' in fn(render, 'vr_render_actions')
+print('PASS: per-gun aim values reset once before settings load; horn reads the real stick clicks and logs its chain')

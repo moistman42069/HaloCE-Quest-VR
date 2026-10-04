@@ -710,14 +710,19 @@ short vr_render_windows(
 					origin = camera;
 					from_hand = FALSE;
 				}
-				/* test21: the shot's own offset from its aim (the pistol's
-				shots landed beside the reticle) */
+				/* test21: the shot's own offset from its aim, then the
+				engine's turn of the shot toward where the camera's line hits,
+				within the weapon's cone (player_aim_projectile, sharing its
+				code): the shot converges there, not on the hand's line (the
+				impacts landed above and beside the reticle) */
 				if (vr_shot_offset(unit_index, from_hand, &direction, &shift))
 				{
 					origin.x += shift.i;
 					origin.y += shift.j;
 					origin.z += shift.k;
 				}
+				aiming = direction;
+				vr_aim_assist_converge(player_index, &camera, &aiming, &origin, &direction);
 			}
 
 			scale_vector3d(&direction, distance, &vector);
@@ -1182,7 +1187,32 @@ unsigned long vr_render_actions(
 	/* test21: physical melee is off in any network game unless the player
 	turns it on (vr.melee_multiplayer); the melee button always works */
 	vr_set_network_game(game_connection() != _game_connection_local);
-	return vr_take_actions() | vr_diag_zoom(local_player_index);
+	{
+		unsigned long actions = vr_take_actions() | vr_diag_zoom(local_player_index);
+		/* test21: the horn's chain while driving, once a press: the stick
+		click sends the crouch control; three ticks on, whether the vehicle
+		has it from its driver (vehicles.c sounds the horn from it) */
+		static boolean horn_down;
+		static int horn_check;
+		boolean horn = vr_render.seat.seated && vr_render.seat.driver && (actions & VR_RENDER_ACTION_CROUCH);
+
+		if (horn && !horn_down)
+		{
+			platform_log("vr: horn: stick clicked while driving; the crouch control goes to the game");
+			horn_check = 3;
+		}
+		else if (horn && horn_check > 0 && --horn_check == 0)
+		{
+			struct unit_datum *vehicle = vr_render.seat.vehicle_index != NONE ?
+				unit_try_and_get(vr_render.seat.vehicle_index) : NULL;
+
+			platform_log("vr: horn: the vehicle %s the crouch control from its driver",
+				!vehicle ? "is gone; no check of" :
+				TEST_FLAG(vehicle->unit.control_flags, _unit_control_crouch_modifier_bit) ? "has" : "does not have");
+		}
+		horn_down = horn;
+		return actions;
+	}
 }
 
 /* The visible gun and pickup reach follow the physical hand, independently

@@ -365,6 +365,35 @@ static void migrate_handedness(void)
 		config_write_boolean("vr.handedness_applied", 1);
 }
 
+/* Test21: the first test21 build's reticle was off the shots, so per-gun aim
+values set against it (vr.aim_<gun>_up/_right) return to 0 once */
+static void migrate_gun_aim_reset(void)
+{
+	static const char *const axes[] = { "up", "right" };
+	char key[64];
+	int kind, axis, ok = 1, changed = 0;
+
+	if (config_boolean("vr.aim_reset_applied"))
+		return;
+	for (kind = 0; kind < VR_GUN_CLASSES; kind++)
+	{
+		for (axis = 0; axis < 2; axis++)
+		{
+			snprintf(key, sizeof(key), "vr.aim_%s_%s", gun_classes[kind].key, axes[axis]);
+			if (config_real(key) != 0.0)
+			{
+				ok = config_write_real(key, 0.0) && ok;
+				changed++;
+			}
+		}
+	}
+	if (changed)
+		platform_log("vr: %d per-gun aim value(s) reset to 0 (set against the first test21 reticle)%s",
+			changed, ok ? "" : " (save failed)");
+	if (ok)
+		config_write_boolean("vr.aim_reset_applied", 1);
+}
+
 /* Test21: two-hand grip locks automatically when the off hand rests at the
 gun's support grip (vr.two_handed "auto", the new default). Configs still on
 the old "grip" default move to it once; a later choice is kept. */
@@ -610,7 +639,7 @@ void vr_initialize(void)
 		return;
 	vr.initialized = 1;
 	config_vr_vehicle_defaults();
-	platform_log("vr: HaloCE Quest test21 candidate (floating hands restored, torso-following arms, neck-pivot full body, auto two-hand lock, horn, online melee off, two-hand gun roll, pistol shots from the hand, per-gun aim)");
+	platform_log("vr: HaloCE Quest test21 candidate (floating hands restored, torso-following arms, neck-pivot full body, auto two-hand lock, horn, online melee off, two-hand gun roll, pistol shots from the hand, reticle converges as shots do, per-gun aim, horn from either stick)");
 	if (!config_boolean("vr.enabled"))
 	{
 		platform_log("vr: off (vr.enabled)");
@@ -644,6 +673,7 @@ void vr_initialize(void)
 	migrate_calibration_split();
 	migrate_handedness();
 	migrate_two_hand_auto();
+	migrate_gun_aim_reset();
 	vr_reload_settings();
 	vr.zoom_level = -1;
 	vr.flashlight_armed = 1;
@@ -804,11 +834,15 @@ lost. Seated, either stick click sounds it (the melee click does nothing
 for a driver); both together still recentre. */
 int vr_horn_held(void)
 {
+	/* the controllers' own stick clicks (vr.frame.buttons, as vr_aim's
+	recentre reads them): the VR layout's pad gives the right stick's as B
+	and the zoom trigger's as the right thumb, so a zoom held with a stick
+	click read as the recentre and silenced the horn */
 	unsigned int both = HALO_XR_BUTTON_LEFT_THUMB | HALO_XR_BUTTON_RIGHT_THUMB;
+	unsigned int sticks = vr.frame.buttons & both;
 
 	return vr.active && vr.layout_vr && vr.seated && (vr.frame.flags & HALO_XR_FRAME_FOCUSED) &&
-		(vr.pad_buttons & (HALO_XR_BUTTON_LEFT_THUMB | HALO_XR_BUTTON_B)) != 0 &&
-		(vr.pad_buttons & both) != both;
+		sticks != 0 && sticks != both;
 }
 
 float vr_hand_speed(int hand)

@@ -170,6 +170,13 @@ int vr_render_hand_aiming(void);
 the hand aims in a local game (the hand, unless a wall is in between);
 0 to leave the game's camera */
 int vr_render_hand_origin(long unit_index, union real_point3d *origin);
+/* source/game/aim_assist.c (test21): a player's shot from `position`
+turned toward where the camera's line hits, within the weapon's deviation
+cone, as player_aim_projectile turns it (no autoaim target); FALSE when
+the weapon has no aim assist. For the reticle only: changes nothing */
+union real_vector3d;
+boolean vr_aim_assist_converge(long player_index, union real_point3d const *camera_position,
+	union real_vector3d const *camera_direction, union real_point3d const *position, union real_vector3d *direction);
 /* clears the target being drawn to transparent black (the HUD pass) */
 void halo_vr_clear_transparent(void);
 /* copies the back buffer into an eye's image (port/linux/src/d3d8_gl.c) */
