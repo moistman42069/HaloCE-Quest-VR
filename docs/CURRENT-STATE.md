@@ -2,17 +2,19 @@
 
 ## Current public baseline: 1.0.2 (test20e APKs)
 
-The owner authorized publication of the exact test20e pair as `v1.0.2`, internal **1.0.2 / code 25**. The v1.0.1 release was withdrawn and is not an accepted baseline. Runtime source is `4e7e1e4a415727fdefdfe91ad3d1eb61d6968c68`; packaged candidate source `245d14ed3a067f9c92eeafba680c84212b20ccfc`; publication documentation follows. Performance recovery was confirmed on device in test20b. Test20e join diagnostics and crosshair still need device confirmation. Preserve test14, v1.0.0 and the withdrawal record. Track the unresolved Quest 1 `.xiso` transfer/import report in `docs/FUTURE-RELEASE-FOLLOWUPS.md`; verify file hashes and device/build details before changing the parser or claiming support. See `docs/RELEASE-PROVENANCE-1.0.2.md`, `docs/TEST20E-DELIVERY.md` and `docs/TEST20E-PROGRESS.md`.
+The owner authorized publication of the exact test20e pair as `v1.0.2`, internal **1.0.2 / code 25**. The v1.0.1 release was withdrawn and is not an accepted baseline. Runtime source is `4e7e1e4a415727fdefdfe91ad3d1eb61d6968c68`; packaged candidate source `245d14ed3a067f9c92eeafba680c84212b20ccfc`; publication documentation follows. Performance recovery was confirmed on device in test20b. Test20e join diagnostics and crosshair still need device confirmation. Preserve test14, v1.0.0 and the withdrawal record. Track the unresolved Quest 1 `.xiso` transfer/import and Quest OS v78 orientation reports in `docs/FUTURE-RELEASE-FOLLOWUPS.md`; verify file hashes and device/build details before changing the parser or claiming support. See `docs/RELEASE-PROVENANCE-1.0.2.md`, `docs/TEST20E-DELIVERY.md` and `docs/TEST20E-PROGRESS.md`.
 
-## Historical 1.0.1 and 1.0 notes
+**Active handoff (2026-10-04):** the owner reports that the previously fixed cut-off/floating-hand appearance has returned and arm IK fails to follow when the player turns. Start with [`ACTIVE-WORK-CHECKPOINT.md`](ACTIVE-WORK-CHECKPOINT.md) and [`REPORT-2026-10-04-HANDS-IK-REGRESSION.md`](REPORT-2026-10-04-HANDS-IK-REGRESSION.md). The supplied logs have both test20d and test20e runtime banners; confirm APK identity before calling this a regression in the public code-25 release. Raw media/logs are private and excluded from Git. No release is authorized.
+
+## Historical 1.0.1 withdrawal and original 1.0.0 release notes
 
 The withdrawn 1.0.1 record is `docs/RELEASE-PROVENANCE-1.0.1.md`. The 1.0/code-19 statements below remain historical context; the release status above supersedes them.
 
 
 
-Updated 2026-10-03. Canonical public repository: [moistman42069/HaloCE-Quest-VR](https://github.com/moistman42069/HaloCE-Quest-VR), branch **main**. Release 1.0 advances main to the complete current code and public documentation. The initial test13a import is historical; private identifying metadata remains excluded. Older private Git history remains a backup, not the continuation branch.
+The following entries record the earlier release-1.0 state as of 2026-10-03. They are historical and superseded by the test20e / v1.0.2 baseline at the top of this file. Canonical public repository: [moistman42069/HaloCE-Quest-VR](https://github.com/moistman42069/HaloCE-Quest-VR), branch **main**. Release 1.0 advanced main to the complete code and public documentation at that time. The initial test13a import is historical; private identifying metadata remains excluded. Older private Git history remains a backup, not the continuation branch.
 
-## Current release: 1.0 (exact delivered test18 APKs)
+## Historical release: 1.0.0 (exact delivered test18 APKs)
 
 The owner stated “go ahead and NOW proceed with the 1.0 release instructions
 using these recent apks”. This supersedes the publication hold for the exact

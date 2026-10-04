@@ -4,6 +4,8 @@
 
 The owner authorized publication of the exact test20e pair as `v1.0.2`, internal **1.0.2 / code 25**. The v1.0.1 release was withdrawn and is not an accepted baseline. Runtime source is `4e7e1e4a415727fdefdfe91ad3d1eb61d6968c68`; packaged candidate source `245d14ed3a067f9c92eeafba680c84212b20ccfc`; publication documentation follows. Performance recovery was confirmed on device in test20b. Test20e join diagnostics and crosshair still need device confirmation. Preserve test14, v1.0.0 and the withdrawal record. Track the unresolved Quest 1 `.xiso` transfer/import report in `docs/FUTURE-RELEASE-FOLLOWUPS.md`; verify file hashes and device/build details before changing the parser or claiming support. See `docs/RELEASE-PROVENANCE-1.0.2.md`, `docs/TEST20E-DELIVERY.md` and `docs/TEST20E-PROGRESS.md`.
 
+**Current active handoff (2026-10-04):** read `docs/ACTIVE-WORK-CHECKPOINT.md` and `docs/REPORT-2026-10-04-HANDS-IK-REGRESSION.md` before starting new work. The owner reports cut-off/floating hands returning and arm IK not following body turns. Do not presume v1.0.2 caused this: supplied logs include test20d and test20e runtime banners, while only the latter's launcher log explicitly confirms installed code 25; verify installed APK hash/version/source. Keep all raw logs/video private. No new release is authorized.
+
 ## Historical 1.0.1 and 1.0 notes
 
 The withdrawn 1.0.1 record is `docs/RELEASE-PROVENANCE-1.0.1.md`. The 1.0/code-19 statements below remain historical context; the release status above supersedes them.
