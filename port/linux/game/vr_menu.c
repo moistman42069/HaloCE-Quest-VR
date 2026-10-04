@@ -247,7 +247,7 @@ static struct vr_menu_setting const vr_menu_align_left[] =
     { "RIGHT", "vr.align_left_right", _vr_setting_centimetres, 0, { { NULL,NULL } } },
     { "UP", "vr.align_left_up", _vr_setting_centimetres, 0, { { NULL,NULL } } },
     { "BACK", "vr.align_left_back", _vr_setting_centimetres, 0, { { NULL,NULL } } },
-    { "AIM POSE", "vr.align_left_grip_aim", _vr_setting_boolean, 2, { { "NATIVE", "false" }, { "GRIP", "true" } } },
+    { "AIM SOURCE", "vr.align_left_grip_aim", _vr_setting_boolean, 2, { { "NATIVE", "false" }, { "GRIP", "true" } } },
     { "FLIP ROLL 180", "vr.align_left_roll", _vr_setting_flip_alignment, 0, { { NULL,NULL } } },
     { "RESET LEFT", "left", _vr_setting_reset_alignment, 0, { { NULL,NULL } } },
 };
@@ -260,7 +260,7 @@ static struct vr_menu_setting const vr_menu_align_right[] =
     { "RIGHT", "vr.align_right_right", _vr_setting_centimetres, 0, { { NULL,NULL } } },
     { "UP", "vr.align_right_up", _vr_setting_centimetres, 0, { { NULL,NULL } } },
     { "BACK", "vr.align_right_back", _vr_setting_centimetres, 0, { { NULL,NULL } } },
-    { "AIM POSE", "vr.align_right_grip_aim", _vr_setting_boolean, 2, { { "NATIVE", "false" }, { "GRIP", "true" } } },
+    { "AIM SOURCE", "vr.align_right_grip_aim", _vr_setting_boolean, 2, { { "NATIVE", "false" }, { "GRIP", "true" } } },
     { "FLIP ROLL 180", "vr.align_right_roll", _vr_setting_flip_alignment, 0, { { NULL,NULL } } },
     { "RESET RIGHT", "right", _vr_setting_reset_alignment, 0, { { NULL,NULL } } },
 };
@@ -281,8 +281,8 @@ static struct vr_menu_page
 	{ "GRAPHICS", vr_menu_graphics, NUMBEROF(vr_menu_graphics) },
 	{ "DISPLAY", vr_menu_effects, NUMBEROF(vr_menu_effects) },
 	{ "CROSSHAIR", vr_menu_crosshair, NUMBEROF(vr_menu_crosshair) },
-	{ "ALIGN LEFT", vr_menu_align_left, NUMBEROF(vr_menu_align_left) },
-	{ "ALIGN RIGHT", vr_menu_align_right, NUMBEROF(vr_menu_align_right) },
+	{ "CALIBRATE LEFT", vr_menu_align_left, NUMBEROF(vr_menu_align_left) },
+	{ "CALIBRATE RIGHT", vr_menu_align_right, NUMBEROF(vr_menu_align_right) },
 };
 
 #define VR_MENU_PAGE_COUNT ((long)NUMBEROF(vr_menu_pages))

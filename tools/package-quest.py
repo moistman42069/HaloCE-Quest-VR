@@ -87,7 +87,7 @@ def main():
                     raise SystemExit("Test19 upstream downloads or native public browser missing")
                 if b"safe ordered uploads; CPU index rebasing" not in guest:
                     raise SystemExit("Test19 ordered Safe geometry path missing")
-            if args.label=="test20":
+            if args.label.startswith("test20"):
                 if b"UpstreamDownloads;" not in dex or b"browser: signed public discovery started" not in guest:
                     raise SystemExit("Test20 upstream downloads or native public browser missing")
                 if b"safe streaming (fenced ring); CPU index rebasing" not in guest or b"[render-perf]" not in guest:

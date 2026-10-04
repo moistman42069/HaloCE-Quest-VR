@@ -1,5 +1,7 @@
 # Test20 — 1.0.2 performance-fix candidate (private)
 
+> **Superseded by [test20b](TEST20B-DELIVERY.md)** (code 22, adds rigid controller calibration). This code-21 pair was delivered but not reported tested.
+
 Not a release. v1.0.1 was withdrawn by the owner; the public release is v1.0.0.
 Do not publish this pair without explicit owner approval after device testing.
 

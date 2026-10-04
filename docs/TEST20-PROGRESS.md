@@ -1,7 +1,7 @@
 # Test20 checkpoint: 1.0.1 withdrawal and Quest performance regression
 
-Updated 2026-10-03. Branch `test20-safe-upload-performance`, from `main` at
-`17d75653`. Working version **1.0.2 / Android code 21**, label `test20`.
+Updated 2026-10-04 (test20b). Branch `test20-safe-upload-performance`, from `main` at
+`17d75653`. Working version **1.0.2 / Android code 22**, label `test20b` (test20 = code 21, superseded, untested).
 Private candidate only: no GitHub release without explicit owner approval.
 
 ## Release status
@@ -115,6 +115,69 @@ the corruption; do not call the left-eye issue fixed.
 4. Regression pass: reticle, two-hand grip, animation handoff, body/fingers,
    vehicles (third person, right hand), touch/gamepad on flat, co-op, PvP join,
    browser, Versions & updates (must not offer v1.0.0 as an update).
+
+## Status by item (test20b)
+
+| Item | Implemented | Automatically verified | Confirmed on device |
+| --- | --- | --- | --- |
+| 1.0.1 Safe-upload slowdown | Yes (test20, kept in test20b) | Yes: ring invariant, no `glBufferSubData`, packaging markers | **No** — awaiting Quest log |
+| `[render-perf]` diagnostics | Yes | Yes: line format, averages, reset | No |
+| Armed/unarmed calibration conflict | Yes (test20b) | Yes: `test_test20_alignment.py` | **No** — awaiting headset check (video welcome) |
+| Left-eye corruption | No change beyond test19 VAO restore | VAO restore test | No — open |
+| Co-op failures / populated-host crash guard | No new change | Existing suites | No — open (TEST19-COMMUNITY-REVIEW.md) |
+
+The test20 performance fix was re-inspected for test20b against the 1.0.1
+logs: Safe and non-persistent Normal stream/index uploads still use only the
+fenced ring write; nothing else in the render path changed. Preserved as is.
+
+## Flat2VR follow-up 2026-10-04: armed vs. unarmed hand alignment
+
+Report (Wr3nch, 9:07 a.m. ET): after adjusting an existing setting that seemed
+to set "armed" and "unarmed" positions, switching between an empty hand and a
+held weapon left only one state correct. The owner confirmed this was not the
+Body option. A video may follow.
+
+**Existing settings reviewed (source, not device):**
+
+| Setting | What it actually changes |
+| --- | --- |
+| VR Settings → Align Left / Align Right (now **Calibrate Left / Right**): Pitch, Yaw, Roll, Right, Up, Back, Flip Roll 180, Reset | One correction per *physical* controller (`vr.align_<side>_*`), applied once per frame before gestures, aiming, IK, contact and avatars |
+| Aim Pose (now **Aim Source**) Native/Grip | Whether the weapon/ray uses OpenXR's aim pose or the grip pose |
+| Body, Arms, Fingers | What body is shown and how arms are posed; no calibration |
+| Weapons Locked/Physical, Two Hands | Weapon handling; no calibration |
+| `vr.weapon_offset_*` (config file only) | Weapon model grip offset; affects a held weapon only |
+
+There are **no separate armed/unarmed calibration settings**. Save (each step
+writes config), reload (`vr_reload_settings`) and Reset (all seven keys per
+side) were checked and are consistent. Calibration is applied exactly once per
+frame from fresh runtime poses, so stale state and double application were
+ruled out in source.
+
+**Cause (established in source; device confirmation pending):** a held weapon
+takes its orientation from the controller's *aim* pose and an empty hand from
+its *grip* pose (both use the grip position; `vr_weapon_view`,
+`vr_hand_world`). Test15 applied the same local Pitch/Yaw/Roll to each pose
+separately. On Touch controllers the two frames are tilted apart, so the same
+Yaw or Roll value turns them about different world axes: tuning for the gun
+misaligns the empty hand and vice versa. A deterministic model with a 40°
+grip/aim tilt shows the old path breaking the hand-to-weapon relationship in
+all 2,000 random calibrations.
+
+**Change:** `vr_alignment_apply_controller` applies one rigid correction per
+controller. The aim rotation keeps its previous meaning, so a saved calibration
+leaves the held weapon's orientation and position bit-identical. The grip turns
+by the same world rotation, so the empty hand now matches the weapon. Offsets
+move both poses by one vector in the grip frame. With nonzero offsets, the aim
+ray origin can shift by up to the offset size, following the visible weapon.
+Aim Source Grip and missing-pose fallbacks behave as before. Labels now read
+Calibrate Left/Right and Aim Source; config keys and saved values are unchanged
+(no migration needed).
+
+**Device check needed:** with a nonzero Yaw/Roll calibration, go from empty hand
+→ pistol → another weapon → empty hand. The hand should line up with the
+controller in both states, in right- and left-handed modes, with support grip
+and reload. If only one state still looks right, a short video plus the log
+(it prints both calibrations at startup) is the next evidence needed.
 
 ## Unresolved / observations
 

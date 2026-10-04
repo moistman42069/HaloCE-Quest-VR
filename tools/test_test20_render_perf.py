@@ -136,7 +136,7 @@ public class PolicyCheck {
  static void check(boolean b){if(!b)throw new AssertionError();}
  public static void main(String[] a){
   check(!UpdatePolicy.newer("v1.0.0","1.0.2"));check(!UpdatePolicy.newer("v1.0.0","1.0.1"));
-  check(!UpdatePolicy.newerCode(19,21));check(!UpdatePolicy.newerCode(19,20));check(!UpdatePolicy.newerCode(21,21));
+  check(!UpdatePolicy.newerCode(19,21));check(!UpdatePolicy.newerCode(19,22));check(UpdatePolicy.newerCode(22,21));check(!UpdatePolicy.newerCode(19,20));check(!UpdatePolicy.newerCode(21,21));
   check(UpdatePolicy.newer("v1.0.2","1.0.1"));check(UpdatePolicy.newerCode(21,20));
   check("HaloCE-Quest-1.0.2.apk".equals(UpdatePolicy.asset("v1.0.2",true)));
   System.out.println("PASS: withdrawn 1.0.1 and candidate 1.0.2 never offered public 1.0.0 as an update");

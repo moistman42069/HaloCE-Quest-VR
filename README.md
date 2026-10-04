@@ -93,7 +93,7 @@ Use **MOVE** plus swipe aiming or **FIRE-and-drag** to move, fire and aim togeth
 - **Other views:** immersive, 3D-screen or flat cinematics; native crosshair artwork with size/opacity or Off.
 - **Opening look tutorial:** look toward the lights with your headset. Script gaze and head-movement checks use the tracked head, independently of the weapon reticle. This is headset direction, not eye tracking.
 - **Graphics:** Auto/Low/Medium/High/Max presets; render resolution; shadows, lights, specular, reflections, bump maps, grass, fog, decals, particles, contrails, weather, lens flares and camouflage. Refresh choices are 72/80/90/120 Hz requests, not guaranteed frame rates.
-- **Calibration:** Align Left/Right provides controller-local pitch/yaw/roll, position offsets, Flip Roll 180, Native/Grip aim source and separate resets. Correct only the affected hand; no automatic firmware-based flip is applied.
+- **Calibration:** Calibrate Left/Right (formerly Align Left/Right) provides controller-local pitch/yaw/roll, position offsets, Flip Roll 180, Native/Grip aim source and separate resets. It corrects the whole controller, so the held weapon and the empty hand move together (test20b candidate); there are no separate armed/unarmed settings, and Body/Arms only change what is shown. Correct only the affected hand; no automatic firmware-based flip is applied.
 
 In VR Settings, **A/right increases or advances; left decreases**. Next Page exposes more options; Back returns through pages/categories. Settings persist. **Safe geometry** can be changed in the launcher; restart afterward. It can trade performance for compatibility. Existing body preferences are retained when updating.
 

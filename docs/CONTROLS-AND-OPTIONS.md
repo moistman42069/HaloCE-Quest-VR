@@ -86,14 +86,16 @@ validation remain pending. [Inherited keyboard/mouse mappings](../port/linux/REA
 
 Quit before external edits. In `[vr]`, `body = "legs"` explicitly selects the default; alternatives: `arms`, `full`, `hands`. Generated comments and [port_config.c](../port/linux/src/port_config.c) document all keys. Advanced settings include HUD/screen size/distance, world scale, scope size, weapon offsets, cinematic separation/convergence and diagnostics. Diagnostic switches are for development. See [the player guide](PLAYER-GUIDE.md) for paths/backups.
 
-## Controller calibration (test15)
+## Controller calibration (test15; test20b rigid correction)
 
-Pause > VR Settings > Align Left / Align Right. These refer to the physical left/right controller, even in left-handed mode. Defaults are zero offsets and Native aim, preserving test14 poses. Correct only an affected controller; there is no firmware-based automatic flip.
+Pause > VR Settings > **Calibrate Left / Calibrate Right** (named Align Left / Align Right before test20b). These refer to the physical left/right controller, even in left-handed mode. Defaults are zero offsets and Native aim, preserving test14 poses. Correct only an affected controller; there is no firmware-based automatic flip.
+
+**What these pages adjust:** the whole tracked controller. Since test20b the correction is applied once, rigidly, so your **held weapon and your empty hand move together**; there are no separate armed and unarmed calibrations. Before test20b, Yaw/Roll could line up the weapon but tilt the empty hand (or the reverse), because a held weapon follows the controller's aim pose and an empty hand its grip pose. Saved values are kept and the held weapon looks the same as before; only the empty hand changes, to match it. **Body** (Legs + Arms, Full, Arms + Hands, Hands Only) and **Arms** only choose what body is shown; they do not change hand or weapon alignment. **Weapons** (Locked/Physical) changes weapon handling, not calibration. The advanced `vr.weapon_offset_*` config keys place the weapon model's grip in the hand and affect only a held weapon.
 
 - Pitch / Yaw / Roll: -180 to +180 degrees, in 5-degree steps, around controller-local X / Y / Z. Positive angles use the right-hand rule. Rotation composes yaw, pitch, roll.
 - Right / Up / Back: -20 to +20 cm, in 1 cm steps, along the original controller's axes. Negative values move left / down / forward.
 - Flip Roll 180: applies another half-turn around the controller's forward axis. Use this first for an upside-down hand/gun. Applying it twice returns to the prior roll.
-- Aim Pose: Native uses OpenXR's aim pose; Grip uses the grip pose as the aim source when firmware produces a bad aim pose. It changes the aiming ray as well as the weapon, so recalibrate carefully.
+- Aim Source (formerly Aim Pose): Native uses OpenXR's aim pose; Grip uses the grip pose as the aim source when firmware produces a bad aim pose. It changes the aiming ray as well as the weapon, so recalibrate carefully.
 - Reset Left / Right: zero that controller's offsets and restore Native aim, leaving the other controller alone.
 
 Offsets apply once per tracked frame before aiming, gesture speed, body/contact and avatar calculations. Changes clear velocity/support history so adjustment is not treated as a melee swing or run gesture. Head aim remains available. If a correction is wrong, reset that hand. These are Touch-controller calibration settings, not optical finger tracking.

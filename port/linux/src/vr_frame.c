@@ -417,7 +417,7 @@ void vr_initialize(void)
 		return;
 	vr.initialized = 1;
 	config_vr_vehicle_defaults();
-	platform_log("vr: HaloCE Quest test20 candidate (Safe fenced streaming performance fix, render diagnostics)");
+	platform_log("vr: HaloCE Quest test20b candidate (Safe fenced streaming performance fix, render diagnostics, rigid controller calibration)");
 	if (!config_boolean("vr.enabled"))
 	{
 		platform_log("vr: off (vr.enabled)");
@@ -1254,10 +1254,12 @@ static int frame_begin(void)
                 if(vr.frame.hand_valid[h]&1) { vr.frame.aim[h]=vr.frame.grip[h]; vr.frame.hand_valid[h]|=2; }
                 else vr.frame.hand_valid[h]&=~2u;
             }
-            if((vr.frame.hand_valid[h]&1) && !vr_alignment_apply(vr.frame.grip[h].position,
-                vr.frame.grip[h].orientation,vr.alignment_rotation[h],vr.alignment_offset[h])) vr.frame.hand_valid[h]&=~1u;
-            if((vr.frame.hand_valid[h]&2) && !vr_alignment_apply(vr.frame.aim[h].position,
-                vr.frame.aim[h].orientation,vr.alignment_rotation[h],vr.alignment_offset[h])) vr.frame.hand_valid[h]&=~2u;
+            /* one rigid correction per controller: armed (aim) and empty (grip)
+             * hands stay consistent with each other (vr_alignment.h) */
+            vr.frame.hand_valid[h] = (vr.frame.hand_valid[h] & ~3u) |
+                vr_alignment_apply_controller(vr.frame.grip[h].position, vr.frame.grip[h].orientation,
+                    vr.frame.aim[h].position, vr.frame.aim[h].orientation, vr.frame.hand_valid[h] & 3u,
+                    vr.alignment_rotation[h], vr.alignment_offset[h]);
         }
     }
 	update_gestures();
