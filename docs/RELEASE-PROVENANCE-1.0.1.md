@@ -1,4 +1,6 @@
-# Release 1.0.1 provenance
+# Release 1.0.1 provenance — WITHDRAWN
+
+> **Withdrawn 2026-10-03.** The owner deleted the v1.0.1 GitHub release after a severe Quest VR performance regression: owner logs on Quest 3 show 17–22 fps in menus and 4–7 fps in campaign/populated PvP, against 58–72 fps for test18/1.0 on the same headset and settings. The measured evidence and cause (Safe-mode per-draw `glBufferSubData` uploads) are in [TEST20-PROGRESS.md](TEST20-PROGRESS.md). Its source stays in history for continuation only; do not republish these APKs or treat them as accepted. The current public release is v1.0.0. The record below is preserved unchanged for traceability.
 
 Owner authorized publishing the delivered test19 pair as the new latest release. Existing v1.0.0 and test14 releases must remain unchanged. These APKs are renamed copies, never rebuilt or re-signed.
 

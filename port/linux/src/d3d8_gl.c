@@ -428,6 +428,68 @@ static struct
 	unsigned long mirrored_bytes, streamed_bytes;
 } stats;
 
+/* Always-on transient-upload accounting, logged every ten seconds as
+[render-perf]. Counting is free; one upload in UPLOAD_TIMING_SAMPLE is
+timed, so the hot path pays a clock read only rarely. This is what a device
+log needs to tell upload/driver stalls apart from game or GPU work. */
+#define UPLOAD_TIMING_SAMPLE 8
+#define RENDER_PERF_SECONDS 10
+
+static struct
+{
+	unsigned long long start_ns;
+	unsigned long frames, draws, uploads, orphans, timed_uploads;
+	/* 64-bit: Safe can stream several MB a frame on the 32-bit guest */
+	unsigned long long upload_bytes, timed_upload_ns, timed_upload_max_ns, ring_wait_ns, ring_wait_max_ns;
+} upload_perf;
+
+static unsigned long long perf_now_ns(void)
+{
+	struct timespec now;
+
+	clock_gettime(CLOCK_MONOTONIC, &now);
+	return (unsigned long long)now.tv_sec * 1000000000ULL + (unsigned long long)now.tv_nsec;
+}
+
+static void upload_perf_add_timed(unsigned long long start_ns)
+{
+	unsigned long long spent = perf_now_ns() - start_ns;
+
+	upload_perf.timed_uploads++;
+	upload_perf.timed_upload_ns += spent;
+	if (spent > upload_perf.timed_upload_max_ns)
+		upload_perf.timed_upload_max_ns = spent;
+}
+
+static void upload_perf_frame(BOOL safe)
+{
+	unsigned long long now = perf_now_ns();
+	double seconds, frames, upload_ms;
+
+	upload_perf.frames++;
+	if (!upload_perf.start_ns)
+	{
+		upload_perf.start_ns = now;
+		return;
+	}
+	seconds = (double)(now - upload_perf.start_ns) * 1e-9;
+	if (seconds < RENDER_PERF_SECONDS)
+		return;
+	frames = upload_perf.frames ? (double)upload_perf.frames : 1.0;
+	/* sampled average upload cost times every upload made */
+	upload_ms = upload_perf.timed_uploads ?
+		(double)upload_perf.timed_upload_ns / (double)upload_perf.timed_uploads * (double)upload_perf.uploads * 1e-6 / frames : 0.0;
+	platform_log("[render-perf] %.1f s, %lu frames, %s geometry: per frame %.0f draws, %.0f uploads (%.0f KB), "
+		"uploads about %.2f ms (sampled 1 in %d, longest sample %.2f ms); stream wraps %lu; "
+		"ring fence wait %.2f ms average (%.2f longest)",
+		seconds, upload_perf.frames, safe ? "safe" : "normal", (double)upload_perf.draws / frames,
+		(double)upload_perf.uploads / frames, (double)upload_perf.upload_bytes / frames / 1024.0, upload_ms,
+		UPLOAD_TIMING_SAMPLE, (double)upload_perf.timed_upload_max_ns * 1e-6, upload_perf.orphans,
+		(double)upload_perf.ring_wait_ns * 1e-6 / frames, (double)upload_perf.ring_wait_max_ns * 1e-6);
+	memset(&upload_perf, 0, sizeof(upload_perf));
+	upload_perf.start_ns = now;
+}
+
 static D3DDevice *device_pointer(void)
 {
 	return (D3DDevice *)&device;
@@ -1011,7 +1073,7 @@ static void gl_initialize(void)
 		safe_geometry = config_boolean("renderer.safe_geometry");
 		persist = !safe_geometry && host_gl_has_extension("GL_EXT_buffer_storage");
 		if (safe_geometry) xgpu_capabilities.base_vertex = FALSE;
-		platform_log("geometry compatibility: %s", safe_geometry ? "safe ordered uploads; CPU index rebasing" : "normal");
+		platform_log("geometry compatibility: %s", safe_geometry ? "safe streaming (fenced ring); CPU index rebasing" : "normal");
 
 		glGenBuffers(STREAM_BUFFER_RING, device.stream_buffers);
 		glGenBuffers(STREAM_BUFFER_RING, device.index_buffers);
@@ -2707,6 +2769,7 @@ static struct program_entry *prepare_draw(BOOL immediate)
 		stats.immediate_draws++;
 	else
 		stats.draws++;
+	upload_perf.draws++;
 	state_program(entry->program);
 #ifdef HALO_ANDROID
 	if (key.count_samples)
@@ -3219,6 +3282,7 @@ static void stream_reserve(unsigned long size)
 			logged = TRUE;
 			glFinish();
 			device.stream_offset = 0;
+			upload_perf.orphans++;
 			return;
 		}
 #endif
@@ -3226,23 +3290,31 @@ static void stream_reserve(unsigned long size)
 		state_array_buffer(device.stream_buffer);
 		glBufferData(GL_ARRAY_BUFFER, STREAM_BUFFER_SIZE, NULL, GL_STREAM_DRAW);
 		device.stream_offset = 0;
+		upload_perf.orphans++;
 	}
 }
 
 static unsigned long stream_upload(const void *data, unsigned long size)
 {
 	unsigned long offset;
+	unsigned long long timed = 0;
 
 	unsigned long reserved = (size + 15) & ~15UL;
+	if (++upload_perf.uploads % UPLOAD_TIMING_SAMPLE == 0)
+		timed = perf_now_ns();
+	upload_perf.upload_bytes += size;
 	stream_reserve(reserved);
 	offset = device.stream_offset;
 	state_array_buffer(device.stream_buffer);
 #ifdef HALO_ANDROID
-	/* Safe mode must also avoid unsynchronized transient maps. Its purpose
-	 * is a driver-ordered upload path, including dynamic model/scene data. */
-	if (safe_geometry)
-		glBufferSubData(GL_ARRAY_BUFFER, (GLintptr)offset, (GLsizeiptr)size, data);
-	else if (!device.stream_persistent ||
+	/* Safe and Normal both write the fence-managed ring without a GL-side
+	 * sync: ranges only grow within a frame (16-byte reserved, never reused
+	 * before present), a slot is reused only after host_gl_wait_frame has
+	 * passed its fence, and a full non-persistent buffer is orphaned. Test19
+	 * routed Safe through glBufferSubData instead; on Adreno that per-draw
+	 * write into a 16 MB buffer still read by queued draws cost 44-248 ms a
+	 * frame (1.0.1 logs; test18 2-13 ms), so it is not used here. */
+	if (!device.stream_persistent ||
 		!host_gl_buffer_write_persistent(device.stream_buffer, (unsigned int)offset, (unsigned int)size, data))
 	{
 		host_gl_buffer_write(GL_ARRAY_BUFFER, (unsigned int)offset, (unsigned int)size, data);
@@ -3251,6 +3323,8 @@ static unsigned long stream_upload(const void *data, unsigned long size)
 	glBufferSubData(GL_ARRAY_BUFFER, (GLintptr)offset, (GLsizeiptr)size, data);
 #endif
 	device.stream_offset += reserved;
+	if (timed)
+		upload_perf_add_timed(timed);
 	return offset;
 }
 
@@ -3299,8 +3373,12 @@ static unsigned long stream_upload_swizzled(const struct vertex_shader_object *d
 static unsigned long index_upload(const void *data, unsigned long size)
 {
 	unsigned long offset;
+	unsigned long long timed = 0;
 
 	unsigned long reserved = (size + 15) & ~15UL;
+	if (++upload_perf.uploads % UPLOAD_TIMING_SAMPLE == 0)
+		timed = perf_now_ns();
+	upload_perf.upload_bytes += size;
 	state_element_array_buffer(device.index_buffer);
 	if (device.index_offset + reserved > INDEX_BUFFER_SIZE)
 	{
@@ -3312,12 +3390,12 @@ static unsigned long index_upload(const void *data, unsigned long size)
 #endif
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, INDEX_BUFFER_SIZE, NULL, GL_STREAM_DRAW);
 		device.index_offset = 0;
+		upload_perf.orphans++;
 	}
 	offset = device.index_offset;
 #ifdef HALO_ANDROID
-	if (safe_geometry)
-		glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, (GLintptr)offset, (GLsizeiptr)size, data);
-	else if (!device.index_persistent ||
+	/* the same fence-managed ring rule as stream_upload */
+	if (!device.index_persistent ||
 		!host_gl_buffer_write_persistent(device.index_buffer, (unsigned int)offset, (unsigned int)size, data))
 	{
 		host_gl_buffer_write(GL_ELEMENT_ARRAY_BUFFER, (unsigned int)offset, (unsigned int)size, data);
@@ -3326,6 +3404,8 @@ static unsigned long index_upload(const void *data, unsigned long size)
 	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, (GLintptr)offset, (GLsizeiptr)size, data);
 #endif
 	device.index_offset += reserved;
+	if (timed)
+		upload_perf_add_timed(timed);
 	return offset;
 }
 
@@ -3894,7 +3974,15 @@ void WINAPI D3DDevice_Present(CONST RECT *source_rectangle, CONST RECT *destinat
 		}
 		host_gl_fence_frame((unsigned int)device.buffer_ring);
 		device.buffer_ring = (device.buffer_ring + 1) % STREAM_BUFFER_RING;
-		host_gl_wait_frame((unsigned int)device.buffer_ring);
+		{
+			unsigned long long wait_start = perf_now_ns(), waited;
+
+			host_gl_wait_frame((unsigned int)device.buffer_ring);
+			waited = perf_now_ns() - wait_start;
+			upload_perf.ring_wait_ns += waited;
+			if (waited > upload_perf.ring_wait_max_ns)
+				upload_perf.ring_wait_max_ns = waited;
+		}
 		/* the slot's last frame is done: its results before it is reused */
 		if (device.readback[device.buffer_ring].copied)
 			visibility_readback_collect(device.buffer_ring);
@@ -3912,6 +4000,11 @@ void WINAPI D3DDevice_Present(CONST RECT *source_rectangle, CONST RECT *destinat
 	}
 	device.frame++;
 	stats.presents++;
+#ifdef HALO_ANDROID
+	upload_perf_frame(safe_geometry);
+#else
+	upload_perf_frame(FALSE);
+#endif
 	if (debug_settings.statistics && device.frame % 60 == 0)
 	{
 		platform_log("frame %lu: %lu draws, %lu immediate, %lu clears, %lu target changes; skipped %lu no program, %lu no target, %lu link; "

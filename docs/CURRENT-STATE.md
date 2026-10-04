@@ -1,12 +1,14 @@
 # Current development state
 
-## Current public baseline: 1.0.1
+## Current public baseline: 1.0 — 1.0.1 withdrawn (2026-10-03)
 
-Owner-authorized publication of the exact delivered test19 APKs as `v1.0.1`, internal **1.0.1 / code 20**. Runtime source is `bc1f04465f68e3b14f1bf7de306854ae8cb36dc1`; subsequent commits change documentation/provenance only. Read `docs/RELEASE-PROVENANCE-1.0.1.md` and `docs/TEST19-PROGRESS.md` for continuation and unresolved device cases. Preserve 1.0 and test14. Future builds need code >20 and separate publication approval. Publication approval does not establish a new headset or full-campaign test result.
+The owner **deleted the v1.0.1 GitHub release** because its Quest VR build had a severe performance regression. Its source (runtime `bc1f04465f68e3b14f1bf7de306854ae8cb36dc1`) remains on `main` but is **not an accepted or working baseline**; never republish it. The current public release is **v1.0.0** (exact test18 APKs, 1.0-test18 / code 19). Preserve v1.0.0 and test14 unchanged. 1.0.1 installs carry code 20, so every future APK needs code >20; never offer v1.0.0 to them as an update.
 
-## Historical 1.0 baseline and earlier continuation notes
+Active continuation: `docs/TEST20-PROGRESS.md` (measured regression, cause, fix, checks) and `docs/TEST20-DELIVERY.md` (candidate 1.0.2 / code 21 hashes and test steps). Test20 is a private candidate; publication needs explicit owner approval after device testing. Unresolved test19 device cases remain in `docs/TEST19-COMMUNITY-REVIEW.md`.
 
-The following 1.0 status/code-19 statements are historical and superseded by the 1.0.1 baseline above.
+## Historical 1.0.1 and 1.0 notes
+
+The withdrawn 1.0.1 record is `docs/RELEASE-PROVENANCE-1.0.1.md`. The 1.0/code-19 statements below remain historical context; the release status above supersedes them.
 
 
 

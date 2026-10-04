@@ -64,6 +64,13 @@ by `python3 -m pytest -q tools/test_cache_file_formats.py`. No game is launched.
 Per-suite logs stay in ignored `build/quest-regressions`. Private test19 packaging
 uses `--label test19 --version-name 1.0.1`; this does not authorize publication.
 
+v1.0.1 was withdrawn for a Quest performance regression (docs/TEST20-PROGRESS.md).
+Test20 adds `tools/test_test20_render_perf.py` (16 suites in the runner) and
+packages with `--label test20 --version-name 1.0.2` (code 21). Do not route
+Android stream-ring uploads through glBufferSubData; check `[render-perf]` in
+device logs when changing the renderer. pytest may need PYTHONPATH to a
+private venv's site-packages under WSL (no ensurepip there).
+
 Read and write repository text explicitly as UTF-8, especially on Windows.
 Do not rely on the shell/Python locale for credits, notices or player guides.
 Regenerate the field guide after changes and inspect bundled text for encoding

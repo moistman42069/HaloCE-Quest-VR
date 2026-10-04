@@ -136,7 +136,7 @@ Where saved games and profiles go; empty for the usual place
 renderer.safe_geometry [boolean]
 Default: true in VR; false in flat Android
 Geometry compatibility mode (Android; restart required). Streams geometry
-with ordered uploads, no persistent buffers/static mirrors, and CPU index rebasing.
+through the fenced stream ring with no persistent buffers/static mirrors, and CPU index rebasing.
 Default on in VR, off in flat Android. Can reduce performance. Not a data revision selector.
 
 renderer.vr_geometry_revision [integer]

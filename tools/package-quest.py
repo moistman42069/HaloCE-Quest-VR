@@ -87,6 +87,13 @@ def main():
                     raise SystemExit("Test19 upstream downloads or native public browser missing")
                 if b"safe ordered uploads; CPU index rebasing" not in guest:
                     raise SystemExit("Test19 ordered Safe geometry path missing")
+            if args.label=="test20":
+                if b"UpstreamDownloads;" not in dex or b"browser: signed public discovery started" not in guest:
+                    raise SystemExit("Test20 upstream downloads or native public browser missing")
+                if b"safe streaming (fenced ring); CPU index rebasing" not in guest or b"[render-perf]" not in guest:
+                    raise SystemExit("Test20 fenced Safe streaming or render diagnostics missing")
+                if b"safe ordered uploads" in guest:
+                    raise SystemExit("Test20 still contains the 1.0.1 ordered Safe upload path")
             if b"vr pose: host negotiated visual avatars v1" not in guest:
                 raise SystemExit("Negotiated avatar support missing")
             if vr and (b"HANDS ONLY" not in guest or b"NEXT PAGE (%ld/%ld)" not in guest):

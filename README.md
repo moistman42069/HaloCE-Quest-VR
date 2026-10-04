@@ -1,15 +1,15 @@
 # Halo CE Quest VR + Android
 
-[Latest release: 1.0.1](https://github.com/moistman42069/HaloCE-Quest-VR/releases/tag/v1.0.1) | [Full controls/options](docs/CONTROLS-AND-OPTIONS.md) | [Development state](docs/CURRENT-STATE.md) | [Contributing/builds](CONTRIBUTING.md) | [Credits](CREDITS.md)
+[Latest release: 1.0](https://github.com/moistman42069/HaloCE-Quest-VR/releases/tag/v1.0.0) | [Full controls/options](docs/CONTROLS-AND-OPTIONS.md) | [Development state](docs/CURRENT-STATE.md) | [Contributing/builds](CONTRIBUTING.md) | [Credits](CREDITS.md)
 
 ## 1. Installation
 
-**Version 1.0.1 / code 20** brings in-game public server discovery, multiplayer crash protection, updater corrections, VR rendering/reticle refinements and improved game-data imports. Install the edition for your device. Previous releases remain available unchanged.
+**Current public release: 1.0** (tag `v1.0.0`, internal 1.0-test18 / code 19). **1.0.1 was withdrawn on 2026-10-03**: its Quest VR build had a severe performance regression (menus around 20 fps, gameplay as low as 4 fps on Quest 3). Its downloads were removed; its source remains in the repository history. A corrected 1.0.2 build is in private testing and is not yet published. Install the edition for your device. Earlier releases remain available unchanged.
 
 | Your device | Download |
 | --- | --- |
-| Android phone/tablet — flat, touch or gamepad | **[HaloCE-Android-1.0.1.apk](https://github.com/moistman42069/HaloCE-Quest-VR/releases/download/v1.0.1/HaloCE-Android-1.0.1.apk)** |
-| Meta Quest — immersive standalone VR | **[HaloCE-Quest-1.0.1.apk](https://github.com/moistman42069/HaloCE-Quest-VR/releases/download/v1.0.1/HaloCE-Quest-1.0.1.apk)** |
+| Android phone/tablet — flat, touch or gamepad | **[HaloCE-Android-1.0.0.apk](https://github.com/moistman42069/HaloCE-Quest-VR/releases/download/v1.0.0/HaloCE-Android-1.0.0.apk)** |
+| Meta Quest — immersive standalone VR | **[HaloCE-Quest-1.0.0.apk](https://github.com/moistman42069/HaloCE-Quest-VR/releases/download/v1.0.0/HaloCE-Quest-1.0.0.apk)** |
 
 1. **Install the appropriate APK.** On Quest, enable developer mode and sideload with SideQuest or your existing installer; open it from **Unknown Sources**. On Android, open the downloaded APK and allow installation from that source when prompted. Both require ARM64, Android 9/API 28 or newer and compatible graphics. **Quest 3 is the reference headset**; other devices are not equally verified.
 2. **Updating this project? Install over it.** Both APKs retain their package IDs and signing certificate. Do not uninstall or clear app data. Optional ADB command: `adb install -r <apk-file>`. Back up your maps, saves and settings first. Another fork using the same package ID but a different key cannot update in place.
@@ -19,16 +19,19 @@
 
 The launcher includes an offline **Field guide** with controls, settings and credits. Existing Quest data under `/sdcard/Documents/HaloCE/maps` is recognized when `ui.map` is present; otherwise each app uses its own external-files storage. VR and flat can coexist and have separate app data.
 
-**Updating from 1.0/test18:** install this signed release over the existing app. Do not uninstall. Older test updaters may require this manual installation once. Already installed the delivered test19 pair? These are the exact same APKs; no reinstall is necessary.
+**Installed the withdrawn 1.0.1?** It uses version code 20, so Android will not install 1.0 (code 19) over it as a normal update, and the in-app updater correctly does not offer 1.0 as a downgrade. Do not uninstall unless your maps, saves and settings are backed up; uninstalling can remove app data. The corrected build will use a higher version code so it can install over 1.0.1. Users still on 1.0 or test18 need no action.
 
 ## 2. New Features / Major Changes
+
+The items below were introduced by the withdrawn 1.0.1 and remain in the source for the corrected 1.0.2 candidate. **They are not in public release 1.0.** The 1.0.2 candidate additionally returns Safe geometry to test18's fenced streaming path and adds a `[render-perf]` diagnostic line to each launch log.
+
 
 - **In-game public server browser:** Multiplayer > System Link combines signed OpenCE public listings and native LAN games, most populated first. Seven games per page, Previous/Next and Refresh. The launcher browser remains available.
 - **Multiplayer crash guard:** safely deactivates invalid automatic object replicas outside a valid visibility cluster instead of asserting after joining a populated match.
 - **Updater correction:** same-code public promotions and an older public build no longer trigger the reported inconsistent-edition error. Integrity, signature and downgrade checks remain.
 - **Official upstream downloads:** Versions & updates > Official upstream exports verified OpenCE ZIPs separately. They do not replace this mod's VR/co-op engine.
 - **VR reticle alignment:** the world-space target follows the native pre-spread firing ray, including the offline guarded hand origin and online native camera origin. Handedness, weapon alignment and native action handoff remain unchanged.
-- **Safe geometry refinement:** ordered transient vertex/index uploads and restoration of the renderer's vertex-array state after compositor work. The reported intermittent left-eye corruption still needs device confirmation; Safe can cost performance.
+- **Safe geometry refinement:** restoration of the renderer's vertex-array state after compositor work. 1.0.1 also moved Safe transient uploads to `glBufferSubData`; that caused its severe Quest slowdown and is reverted in the 1.0.2 candidate. The reported intermittent left-eye corruption still needs device confirmation.
 - **ISO/XISO import:** handles deeply unbalanced valid directory trees and provides clearer damaged-image, incomplete-transfer and unsupported-container errors. Revisions still use actual cache build IDs/fingerprints, not guessed disc labels.
 - **Clearer co-op instructions** in the launcher and guide. Existing two-player campaign, body sharing, touch/gamepad, vehicle controls and per-launch logging remain.
 
@@ -119,7 +122,7 @@ This build hosts native **Network 11** and accepts reviewed distributed hosts **
 
 ### Campaign co-op and avatars
 
-**Campaign co-op → Host campaign / Browse or join** is separate from PvP. Use **matching project builds (use 1.0.1 on both devices) and matching campaign/resource files** on both peers. Two Quests or Quest plus flat Android are the intended pairings; Quest-to-flat connectivity and remote VR body movement have prior owner confirmation.
+**Campaign co-op → Host campaign / Browse or join** is separate from PvP. Use **matching project builds (the same release or candidate on both devices) and matching campaign/resource files** on both peers. Two Quests or Quest plus flat Android are the intended pairings; Quest-to-flat connectivity and remote VR body movement have prior owner confirmation.
 
 1. Host: choose **Campaign co-op > Host campaign**, mission and difficulty. Enable **List publicly** if you want the launcher co-op catalog to advertise the session, then enter the System Link lobby.
 2. Partner: choose **Campaign co-op > Browse / join**, refresh and select the host, or paste the host's private invite. Enter **Multiplayer > System Link**, select that host and join.
@@ -160,9 +163,9 @@ Use **Game files & versions** to import/switch, or place images/extracted roots 
 
 ## 9. Additional Technical Details / Credits
 
-Both APKs are ARM64, **1.0.1 / version code 20**, using package IDs `com.halo.decomp` and `com.halo.decomp.vr` and the established signing certificate. The release promotes the exact delivered test19 binaries without rebuilding or re-signing. Native log labels and the bundled offline guide retain the test19 candidate wording. GitHub provides tagged source archives; compatibility.json is the small metadata asset required by the updater. Prior releases are preserved.
+Public release 1.0 APKs are ARM64, **1.0-test18 / version code 19**, using package IDs `com.halo.decomp` and `com.halo.decomp.vr` and the established signing certificate. The withdrawn 1.0.1 used code 20; candidate 1.0.2 uses code 21 and the same certificate. GitHub provides tagged source archives; compatibility.json is the small metadata asset required by the updater. Earlier releases are preserved.
 
-Validation includes both flavor builds, signatures/versions, 16 KB ZIP alignment, payload integrity, targeted regressions and synthetic cache/import checks. These checks do not substitute for real multiplayer or headset testing. See [build provenance](docs/RELEASE-PROVENANCE-1.0.1.md), [delivery checks](docs/TEST19-DELIVERY.md) and [community review](docs/TEST19-COMMUNITY-REVIEW.md) for evidence and follow-up cases.
+Validation includes both flavor builds, signatures/versions, 16 KB ZIP alignment, payload integrity, targeted regressions and synthetic cache/import checks. These checks do not substitute for real multiplayer or headset testing. See [1.0 provenance](docs/RELEASE-PROVENANCE-1.0.0.md), [withdrawn 1.0.1 record](docs/RELEASE-PROVENANCE-1.0.1.md), [test20 performance investigation](docs/TEST20-PROGRESS.md) and [community review](docs/TEST19-COMMUNITY-REVIEW.md) for evidence and follow-up cases.
 
 Credits: **Bungie/Microsoft and the original Halo team**; **punpckhdq/halo and bnunu/halo-1 contributors** for the decompilation; **bnunu/cybersecurity halo-ce-universal contributors** for the native port/networking; **astromaddie/Madison** for the OpenXR VR foundation; **ChupathingyCE and halo.milenko.org maintainers** for the directory; **moistman42069 and project contributors/testers** for this integration and refinements. Thanks also to LivingFray/HaloCEVR and the documented IK references, Andiweli's Android rendering work, and SnowyMouse's cache-format documentation.
 

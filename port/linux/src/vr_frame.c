@@ -417,7 +417,7 @@ void vr_initialize(void)
 		return;
 	vr.initialized = 1;
 	config_vr_vehicle_defaults();
-	platform_log("vr: HaloCE Quest test19 candidate (native browser, guarded replicas, ordered geometry, firing-ray reticle)");
+	platform_log("vr: HaloCE Quest test20 candidate (Safe fenced streaming performance fix, render diagnostics)");
 	if (!config_boolean("vr.enabled"))
 	{
 		platform_log("vr: off (vr.enabled)");

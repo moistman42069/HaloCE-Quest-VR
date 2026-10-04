@@ -129,15 +129,22 @@ static void glFinish(void){}
 static void glBufferData(int a,int b,void*c,int d){(void)a;(void)b;(void)c;(void)d;}
 typedef long GLintptr;
 typedef long GLsizeiptr;
-static void glBufferSubData(int target,GLintptr offset,GLsizeiptr size,const void*data){(void)target;(void)offset;assert(size==expected);memcpy(sink,data,size);}
-static void host_gl_buffer_write(int target,unsigned offset,unsigned size,const void*data){(void)target;(void)offset;assert(!safe_geometry);assert(size==expected);memcpy(sink,data,size);}
+static int fenced_writes;
+/* test20: Android transient uploads never take glBufferSubData (1.0.1 regression) */
+static void glBufferSubData(int target,GLintptr offset,GLsizeiptr size,const void*data){(void)target;(void)offset;(void)size;(void)data;assert(!"glBufferSubData on the Android stream ring");}
+static void host_gl_buffer_write(int target,unsigned offset,unsigned size,const void*data){(void)target;(void)offset;assert(size==expected);memcpy(sink,data,size);fenced_writes++;}
 static int host_gl_buffer_write_persistent(int b,unsigned o,unsigned n,const void*d){(void)b;(void)o;assert(!safe_geometry);assert(n==expected);memcpy(sink,d,n);return 1;}
+#define UPLOAD_TIMING_SAMPLE 8
+static struct {unsigned long uploads,upload_bytes,orphans;} upload_perf;
+static unsigned long long perf_now_ns(void){return 1;}
+static void upload_perf_add_timed(unsigned long long t){(void)t;}
 '''+fn(s,'static unsigned long stream_upload(')+fn(s,'static unsigned long index_upload(')+r'''
 int main(void){for(int mode=0;mode<3;mode++)for(int n=1;n<257;n++){
  safe_geometry=mode==2;
- expected=n;char *data=malloc(n);memset(data,42,n);device.stream_persistent=device.index_persistent=mode;device.stream_offset=device.index_offset=0;
+ expected=n;char *data=malloc(n);memset(data,42,n);device.stream_persistent=device.index_persistent=mode==1;device.stream_offset=device.index_offset=0;
  assert(stream_upload(data,n)==0);assert(device.stream_offset==((n+15)&~15));assert(index_upload(data,n)==0);assert(device.index_offset==((n+15)&~15));free(data);
- }puts("PASS: exact payload bytes for 768 stream/index sizes; Safe uses ordered uploads, Normal retains persistent/fallback paths (ASAN)");}
+ }assert(fenced_writes==2*2*256&&upload_perf.uploads==2*3*256);
+ puts("PASS: exact payload bytes for 768 stream/index sizes; Safe and non-persistent Normal use the fenced ring write, never glBufferSubData; persistent path retained (ASAN)");}
 ''')
 java=OUT/'MobileCheck.java';java.write_text(r'''
 package com.halo.decomp;

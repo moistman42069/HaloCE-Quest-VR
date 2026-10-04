@@ -1,6 +1,6 @@
 # Test19 — 1.0.1 testing candidate
 
-> Publication update: the owner authorized promoting this exact APK pair as **v1.0.1**. Earlier publication holds below are historical. See [1.0.1 provenance](RELEASE-PROVENANCE-1.0.1.md). Device follow-up limitations remain.
+> **Withdrawn (2026-10-03):** this pair was published as v1.0.1, then the owner deleted that release because of a severe Quest VR performance regression (Safe-mode `glBufferSubData` uploads; see [TEST20-PROGRESS.md](TEST20-PROGRESS.md)). It is not an accepted baseline. Earlier publication notes below are historical.
 
 ## Installation
 

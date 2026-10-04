@@ -163,7 +163,7 @@ static const struct config_setting config_settings[] =
 
 	{ "renderer.safe_geometry", _config_boolean, "false", "HALO_SAFE_GEOMETRY", _environment_value, _platform_all,
 		"Geometry compatibility mode (Android; restart required). Streams geometry\n"
-		"with ordered uploads, no persistent buffers/static mirrors, and CPU index rebasing.\n"
+		"through the fenced stream ring with no persistent buffers/static mirrors, and CPU index rebasing.\n"
 		"Default on in VR, off in flat Android. Can reduce performance. Not a data revision selector." },
     { "renderer.vr_geometry_revision", _config_integer, "1", "HALO_VR_GEOMETRY_REVISION", _environment_value, _platform_vr,
         "Internal VR geometry-default migration revision. Keep at 1 after choosing Safe or Normal." },
