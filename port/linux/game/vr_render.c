@@ -632,9 +632,16 @@ short vr_render_windows(
 		vr_hud_bounds((real)(camera->viewport_bounds.x1 - camera->viewport_bounds.x0) /
 			(real)(camera->viewport_bounds.y1 - camera->viewport_bounds.y0), vr_render.hud_bounds.n);
 	}
-	/* Reticle on the engine's pre-spread firing ray. Network play keeps the
-	 * native camera origin; offline uses the same guarded hand origin as
-	 * unit_adjust_projectile_ray. Rendering must not invent a second aim ray. */
+	/* Reticle on the engine's pre-spread firing ray, as it is this frame.
+	 * Network play keeps the camera origin; offline the shot starts at the
+	 * hand unless a wall is between the camera and the hand (the rule of
+	 * vr_render_hand_origin and unit_adjust_projectile_ray). Test20e: the
+	 * unit's aiming vector, camera position and hand origin advance only on
+	 * the game's 30 Hz ticks, so a reticle built from them stepped at 30 fps
+	 * while the eyes and the gun moved at the headset's rate. The game takes
+	 * its aim from this same hand ray every tick (vr_aim), so this frame's
+	 * ray is the next shot's; where the two part by more than a tick's turn
+	 * could explain (the game clamping its aim), the game's direction wins. */
 	if (vr_hand_aiming() && !vr_render.cinematic_view)
 	{
 		real_point3d origin;
@@ -650,9 +657,16 @@ short vr_render_windows(
 
 			if (unit_index != NONE && object_get(unit_index)->object.parent_object_index == NONE)
 			{
-				unit_get_camera_position(unit_index, &origin);
-				vr_render_hand_origin(unit_index, &origin);
-				unit_get_aiming_vector(unit_index, &direction);
+				real_point3d camera = vr_render.game_camera_position;
+				real_vector3d aiming, to_hand;
+
+				unit_get_aiming_vector(unit_index, &aiming);
+				if (dot_product3d(&aiming, &direction) < 0.866f)
+					direction = aiming;
+				vector_from_points3d(&camera, &origin, &to_hand);
+				if (game_connection() != _game_connection_local ||
+					collision_test_vector(FLAG(_collision_test_structure_bit), &camera, &to_hand, unit_index, &collision))
+					origin = camera;
 			}
 
 			scale_vector3d(&direction, distance, &vector);

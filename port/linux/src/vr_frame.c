@@ -534,7 +534,7 @@ void vr_initialize(void)
 		return;
 	vr.initialized = 1;
 	config_vr_vehicle_defaults();
-	platform_log("vr: HaloCE Quest test20e candidate (gun anchored to the controller, left-handed controls, simplified settings, multiplayer join stages)");
+	platform_log("vr: HaloCE Quest test20e candidate (gun anchored to the controller, left-handed controls, simplified settings, multiplayer join stages, full-rate crosshair)");
 	if (!config_boolean("vr.enabled"))
 	{
 		platform_log("vr: off (vr.enabled)");

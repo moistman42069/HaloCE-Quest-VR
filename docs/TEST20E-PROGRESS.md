@@ -91,6 +91,26 @@ only one target.
 Not changed: the wire protocol, keys, STUN servers, timeouts, UPnP, the
 directory, and every VR/touch-specific behaviour.
 
+## Crosshair frame rate (owner report, 2026-10-04)
+
+The owner noticed the crosshair seemed to run at a lower frame rate than
+everything else. Cause, in source: on foot, `vr_render.c` placed the crosshair at
+the collision point of a ray built from the unit's aiming vector, the unit's
+camera position and the hand origin. All three advance only on the game's 30 Hz
+ticks, while the eyes, the gun and the crosshair layer are drawn every headset
+frame (72 Hz). The crosshair therefore jumped in 30 Hz steps against a smoothly
+moving scene. The owner's video (recorded at 30 fps) shows uneven steps, for
+example a 10 px move, then none, while the scenery behind kept moving
+(8.07-8.13 s), but it cannot show 72 Hz motion directly.
+
+Fix: the crosshair now follows this frame's hand ray (`vr_hand_ray` on the
+interpolated game camera), which is the ray the game takes its aim from on its
+next tick. It keeps the engine's shot-origin rules: the hand offline, unless a
+wall is between camera and hand; the camera in network play. Where the game's
+own aim differs by more than 30 degrees (the game clamping it, more than a
+tick's turn could explain), the game's direction is used. In vehicles the
+crosshair already used the per-frame ray. Guard: `tools/test_test20e_reticle.py`.
+
 ## Not possible without new infrastructure
 
 A strict-NAT phone reaching a strict or port-restricted host needs either a
@@ -107,6 +127,7 @@ practical fix.
 | Join stage logging and browser reasons | Yes | Yes (browser stage simulation, static checks) | No |
 | Network type in the run log | Yes | Static | No |
 | No red handler spam | Yes | Static | No |
+| Full-rate crosshair | Yes | Static (`test_test20e_reticle`) | No |
 | Gun anchor, left-handed mode, simple settings (test20d) | test20d | Yes | Owner satisfied with test20d |
 
 ## Device checks needed
@@ -116,3 +137,5 @@ practical fix.
 2. Phone on mobile data: the same join should now show the stages and, after
    about 90 s, "No direct path … Try Wi-Fi." in the browser, with no red lines.
 3. Quest: join as before; the log shows all three stages.
+4. Quest: sweep the gun slowly and quickly across the scenery on foot; the
+   crosshair should glide with the gun, with no stepping.
