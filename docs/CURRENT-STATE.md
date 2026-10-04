@@ -1,21 +1,27 @@
 # Current development state
 
-Updated 2026-10-03. Canonical public repository: [moistman42069/HaloCE-Quest-VR](https://github.com/moistman42069/HaloCE-Quest-VR), branch **main**. The 1.0 publication advances main to the complete release source and player/project documentation. The initial test13a import is historical; private identifying metadata remains excluded. Older private Git history remains a backup, not the continuation branch.
+Updated 2026-10-03. Canonical public repository: [moistman42069/HaloCE-Quest-VR](https://github.com/moistman42069/HaloCE-Quest-VR), branch **main**. The planned 1.0 publication will advance main after candidate acceptance; it is currently held. The initial test13a import is historical; private identifying metadata remains excluded. Older private Git history remains a backup, not the continuation branch.
 
-## Current baseline: 1.0 (owner-authorized publication)
+## Current candidate: test18; 1.0 publication held for owner testing
 
-The owner accepted the delivered test17 work as the first proper 1.0 baseline and
-explicitly authorized a new release, preserving test14 unchanged. Both APKs use
-version **1.0.0 / code 19**. Gameplay, protocols, body/grip and native action
-behavior remain test17. Publication changes version presentation, stable-version
-updater policy, current guides and bundled credit/license notices. Tag `v1.0.0`
-identifies the complete source; see [release notes](RELEASE-1.0.0.md) and
-[exact provenance](RELEASE-PROVENANCE-1.0.0.md).
+The newest instruction supersedes publication authorization: deliver new VR and
+flat APKs, wait for owner testing and a fresh instruction before publishing 1.0.
+No 1.0 release or tag exists. Public test14 is preserved. Prepared 1.0 notes are a
+draft. Candidate identity is **1.0-test18 / code 19**; eventual 1.0 must increment
+the Android version code again.
 
-Publish only the two clearly named APKs and required `compatibility.json`;
-GitHub supplies source archives. This authorization does not cover future
-releases or imply a new comprehensive device/campaign test matrix. Future
-release notes must follow [the release contract](RELEASE-TEMPLATE.md).
+Test18 retains test17's networking/data management and accepted action/body
+behavior. It fixes a symbolicated stale vehicle-seat camera after a campaign map
+transition, routes local script gaze/head tutorial movement through the headset,
+and adds explicit right/left/head/stick vehicle controls and per-vehicle interior
+seat offsets. **Third-person chase + right controller** are the new defaults,
+applied once to existing VR configs; later choices persist. Flat steering is
+unchanged. [Evidence/scope/checks](TEST18-PROGRESS.md), [artifacts](TEST18-DELIVERY.md).
+
+Automated tests and compilation do not establish headset comfort or completion
+of the reported transition/tutorial. Those are owner test items, not acceptance.
+The future release still follows the nine-section [release contract](RELEASE-TEMPLATE.md),
+with two APKs and required updater metadata only. Preserve old releases.
 
 ## Historical candidate: test17 (basis of 1.0)
 

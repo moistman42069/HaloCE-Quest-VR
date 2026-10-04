@@ -365,13 +365,53 @@ static const struct config_setting config_settings[] =
 		"Native crosshair size multiplier (0.25 to 3)." },
 	{ "vr.crosshair_opacity", _config_real, "1.0", "HALO_VR_CROSSHAIR_OPACITY", _environment_value, _platform_vr,
 		"Native crosshair opacity (0 to 1). Does not change the menu pointer." },
-	{ "vr.vehicle_view", _config_string, "\"first_person\"", "HALO_VR_VEHICLE_VIEW", _environment_value, _platform_vr,
+    { "vr.vehicle_defaults_applied", _config_boolean, "false", "HALO_VR_VEHICLE_DEFAULTS_APPLIED", _environment_value, _platform_vr,
+        "Internal one-time third-person/right-controller default migration. Later saved choices are preserved." },
+	{ "vr.vehicle_view", _config_string, "\"chase\"", "HALO_VR_VEHICLE_VIEW", _environment_value, _platform_vr,
 		"Vehicles seen from the seat, turning with the vehicle and the horizon\n"
 		"kept level (\"first_person\"), or from the game's chase camera (\"chase\")." },
-	{ "vr.vehicle_steering", _config_string, "\"stick\"", "HALO_VR_VEHICLE_STEERING", _environment_value, _platform_vr,
-		"What a driver steers with: \"stick\" (the right stick, as on a flat\n"
-		"screen; the head only looks), \"head\" (where you look) or \"hand\" (where\n"
-		"the right controller points). Gunners aim with the head." },
+	{ "vr.vehicle_steering", _config_string, "\"right\"", "HALO_VR_VEHICLE_STEERING", _environment_value, _platform_vr,
+        "Driver steering: \"right\" (default), \"left\", \"head\", or \"stick\".\n"
+        "Right/left use that physical controller, independent of weapon grip.\n"
+        "Legacy \"hand\" means right. Gunners retain head aim. Left stick drives." },
+
+	{ "vr.vehicle_all_up", _config_real, "0.0", "HALO_VR_VEHICLE_ALL_UP", _environment_value, _platform_vr,
+		"First-person seat up offset in metres (-0.50 to 0.50), all. Global and matching vehicle offsets add; final axis is bounded to 0.50 m." },
+	{ "vr.vehicle_all_forward", _config_real, "0.0", "HALO_VR_VEHICLE_ALL_FORWARD", _environment_value, _platform_vr,
+		"First-person seat forward offset in metres (-0.50 to 0.50), all. Global and matching vehicle offsets add; final axis is bounded to 0.50 m." },
+	{ "vr.vehicle_all_right", _config_real, "0.0", "HALO_VR_VEHICLE_ALL_RIGHT", _environment_value, _platform_vr,
+		"First-person seat right offset in metres (-0.50 to 0.50), all. Global and matching vehicle offsets add; final axis is bounded to 0.50 m." },
+	{ "vr.vehicle_warthog_up", _config_real, "0.0", "HALO_VR_VEHICLE_WARTHOG_UP", _environment_value, _platform_vr,
+		"First-person seat up offset in metres (-0.50 to 0.50), warthog. Global and matching vehicle offsets add; final axis is bounded to 0.50 m." },
+	{ "vr.vehicle_warthog_forward", _config_real, "0.0", "HALO_VR_VEHICLE_WARTHOG_FORWARD", _environment_value, _platform_vr,
+		"First-person seat forward offset in metres (-0.50 to 0.50), warthog. Global and matching vehicle offsets add; final axis is bounded to 0.50 m." },
+	{ "vr.vehicle_warthog_right", _config_real, "0.0", "HALO_VR_VEHICLE_WARTHOG_RIGHT", _environment_value, _platform_vr,
+		"First-person seat right offset in metres (-0.50 to 0.50), warthog. Global and matching vehicle offsets add; final axis is bounded to 0.50 m." },
+	{ "vr.vehicle_ghost_up", _config_real, "0.0", "HALO_VR_VEHICLE_GHOST_UP", _environment_value, _platform_vr,
+		"First-person seat up offset in metres (-0.50 to 0.50), ghost. Global and matching vehicle offsets add; final axis is bounded to 0.50 m." },
+	{ "vr.vehicle_ghost_forward", _config_real, "0.0", "HALO_VR_VEHICLE_GHOST_FORWARD", _environment_value, _platform_vr,
+		"First-person seat forward offset in metres (-0.50 to 0.50), ghost. Global and matching vehicle offsets add; final axis is bounded to 0.50 m." },
+	{ "vr.vehicle_ghost_right", _config_real, "0.0", "HALO_VR_VEHICLE_GHOST_RIGHT", _environment_value, _platform_vr,
+		"First-person seat right offset in metres (-0.50 to 0.50), ghost. Global and matching vehicle offsets add; final axis is bounded to 0.50 m." },
+	{ "vr.vehicle_banshee_up", _config_real, "0.0", "HALO_VR_VEHICLE_BANSHEE_UP", _environment_value, _platform_vr,
+		"First-person seat up offset in metres (-0.50 to 0.50), banshee. Global and matching vehicle offsets add; final axis is bounded to 0.50 m." },
+	{ "vr.vehicle_banshee_forward", _config_real, "0.0", "HALO_VR_VEHICLE_BANSHEE_FORWARD", _environment_value, _platform_vr,
+		"First-person seat forward offset in metres (-0.50 to 0.50), banshee. Global and matching vehicle offsets add; final axis is bounded to 0.50 m." },
+	{ "vr.vehicle_banshee_right", _config_real, "0.0", "HALO_VR_VEHICLE_BANSHEE_RIGHT", _environment_value, _platform_vr,
+		"First-person seat right offset in metres (-0.50 to 0.50), banshee. Global and matching vehicle offsets add; final axis is bounded to 0.50 m." },
+	{ "vr.vehicle_scorpion_up", _config_real, "0.0", "HALO_VR_VEHICLE_SCORPION_UP", _environment_value, _platform_vr,
+		"First-person seat up offset in metres (-0.50 to 0.50), scorpion. Global and matching vehicle offsets add; final axis is bounded to 0.50 m." },
+	{ "vr.vehicle_scorpion_forward", _config_real, "0.0", "HALO_VR_VEHICLE_SCORPION_FORWARD", _environment_value, _platform_vr,
+		"First-person seat forward offset in metres (-0.50 to 0.50), scorpion. Global and matching vehicle offsets add; final axis is bounded to 0.50 m." },
+	{ "vr.vehicle_scorpion_right", _config_real, "0.0", "HALO_VR_VEHICLE_SCORPION_RIGHT", _environment_value, _platform_vr,
+		"First-person seat right offset in metres (-0.50 to 0.50), scorpion. Global and matching vehicle offsets add; final axis is bounded to 0.50 m." },
+	{ "vr.vehicle_pelican_up", _config_real, "0.0", "HALO_VR_VEHICLE_PELICAN_UP", _environment_value, _platform_vr,
+		"First-person seat up offset in metres (-0.50 to 0.50), pelican. Global and matching vehicle offsets add; final axis is bounded to 0.50 m." },
+	{ "vr.vehicle_pelican_forward", _config_real, "0.0", "HALO_VR_VEHICLE_PELICAN_FORWARD", _environment_value, _platform_vr,
+		"First-person seat forward offset in metres (-0.50 to 0.50), pelican. Global and matching vehicle offsets add; final axis is bounded to 0.50 m." },
+	{ "vr.vehicle_pelican_right", _config_real, "0.0", "HALO_VR_VEHICLE_PELICAN_RIGHT", _environment_value, _platform_vr,
+		"First-person seat right offset in metres (-0.50 to 0.50), pelican. Global and matching vehicle offsets add; final axis is bounded to 0.50 m." },
+
 	{ "vr.arms", _config_string, "\"ik\"", "HALO_VR_ARMS", _environment_value, _platform_vr,
 		"With vr.aim \"hand\": the first-person arms. \"ik\" reaches them from the\n"
 		"shoulders to the hands (the left to the left controller, or to the gun\n"
@@ -1029,7 +1069,7 @@ static int config_write_geometry_migration(const char *path, const char *complet
     return 1;
 }
 
-static char *config_replace_geometry_line(const char *text, const char *key, const char *value, int *found)
+static char *config_replace_section_line(const char *text, const char *wanted, const char *key, const char *value, int *found)
 {
     struct config_text out = {0};
     char section[64] = "", replacement[128];
@@ -1039,7 +1079,7 @@ static char *config_replace_geometry_line(const char *text, const char *key, con
     while (*line) {
         const char *end = line + strcspn(line, "\n"), *next = *end ? end + 1 : end;
         config_line_section(line, end, section, sizeof(section));
-        if (!strcmp(section, "renderer") && config_line_key(line, end, key)) {
+        if (!strcmp(section, wanted) && config_line_key(line, end, key)) {
             config_append(&out, replacement); *found = 1;
         } else {
             char *copy = config_copy(line, next - line);
@@ -1049,6 +1089,11 @@ static char *config_replace_geometry_line(const char *text, const char *key, con
     }
     return out.buffer;
 }
+static char *config_replace_geometry_line(const char *text, const char *key, const char *value, int *found)
+{
+    return config_replace_section_line(text, "renderer", key, value, found);
+}
+
 #endif
 
 static void config_load(void)
@@ -1356,3 +1401,45 @@ const char *config_string(const char *name)
 
 	return string ? string : "";
 }
+
+#ifdef HALO_VR
+void config_vr_vehicle_defaults(void)
+{
+    char path[1024], backup[1100], temporary[1100];
+    char *original, *changed;
+    size_t size;
+    int ok = 1, found, i;
+    const char *keys[] = {"vehicle_view", "vehicle_steering", "vehicle_defaults_applied"};
+    const char *values[] = {"\"chase\"", "\"right\"", "true"};
+    if (config_boolean("vr.vehicle_defaults_applied")) return;
+    pthread_mutex_lock(&config_lock);
+    config_path(path, sizeof(path));
+    original = config_read_file(path, &size);
+    changed = original ? strdup(original) : NULL;
+    for (i = 0; changed && i < 3; i++) {
+        char *next = config_replace_section_line(changed, "vr", keys[i], values[i], &found);
+        free(changed); changed = next;
+        if (!found) ok = 0; /* Preserve nonstandard TOML syntax, no guessed edits. */
+    }
+    if (changed) {
+        toml_result_t parsed = toml_parse(changed, (int)strlen(changed));
+        ok = ok && parsed.ok; toml_free(parsed);
+    } else ok = 0;
+    snprintf(backup, sizeof(backup), "%s.pre-vehicle-defaults", path);
+    snprintf(temporary, sizeof(temporary), "%s.vehicle-defaults.tmp", path);
+    if (ok) {
+        FILE *prior = fopen(backup, "rb");
+        if (prior) fclose(prior); else ok = config_write_file(backup, original);
+    }
+    if (ok) {
+        ok = config_write_file(temporary, changed) && rename(temporary, path) == 0;
+        if (!ok) remove(temporary);
+    }
+    config_set_from_text(&config_values[config_setting_index("vr.vehicle_view")], _config_string, "chase");
+    config_set_from_text(&config_values[config_setting_index("vr.vehicle_steering")], _config_string, "right");
+    config_values[config_setting_index("vr.vehicle_defaults_applied")].boolean = ok;
+    pthread_mutex_unlock(&config_lock);
+    free(changed); free(original);
+    platform_log("vr: third-person/right-controller defaults%s; later saved vehicle choices preserved", ok ? " saved" : " in memory only (migration will retry)");
+}
+#endif

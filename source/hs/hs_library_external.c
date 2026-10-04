@@ -243,6 +243,17 @@ boolean hs_trigger_volume_test_objects(
 	return result;
 }
 
+/* Only script gaze checks use the headset. AI vision and weapon aiming retain
+ * their native vectors; remote players retain their replicated native view. */
+static boolean hs_script_can_see_point(long unit_index, const real_point3d *point, real field_of_view)
+{
+#ifdef HALO_VR
+    boolean result;
+    if (vr_script_can_see_point(unit_index, point, field_of_view, &result)) return result;
+#endif
+    return unit_can_see_point(unit_index, point, field_of_view);
+}
+
 boolean hs_unit_can_see_object(
 	long unit_index,
 	long object_index,
@@ -260,7 +271,7 @@ boolean hs_unit_can_see_object(
 		else
 			target_point = object_get(object_index)->object.bounding_sphere_center;
 
-		result = unit_can_see_point(
+		result = hs_script_can_see_point(
 			unit_index,
 			&target_point,
 			DEGREES_TO_RADIANS(degrees));
@@ -305,9 +316,9 @@ boolean hs_unit_can_see_flag(
 	boolean result;
 
 	result = FALSE;
-	if (cutscene_flag_index)
+	if (cutscene_flag_index >= 0 && cutscene_flag_index < global_scenario_get()->cutscene_flags.count)
 	{
-		result = unit_can_see_point(
+		result = hs_script_can_see_point(
 			unit_index,
 			&TAG_BLOCK_GET_ELEMENT(
 				&global_scenario_get()->cutscene_flags,

@@ -1,15 +1,15 @@
 # Halo CE Quest VR + Android
 
-[Release 1.0](https://github.com/moistman42069/HaloCE-Quest-VR/releases/tag/v1.0.0) | [Full controls/options](docs/CONTROLS-AND-OPTIONS.md) | [Development state](docs/CURRENT-STATE.md) | [Contributing/builds](CONTRIBUTING.md) | [Credits](CREDITS.md)
+[Current public release: test14](https://github.com/moistman42069/HaloCE-Quest-VR/releases/tag/halo-ce-quest-test14) | [Full controls/options](docs/CONTROLS-AND-OPTIONS.md) | [Development state](docs/CURRENT-STATE.md) | [Contributing/builds](CONTRIBUTING.md) | [Credits](CREDITS.md)
 
 ## 1. Installation
 
-**Halo CE Quest VR + Android 1.0** is the first stable baseline for this project: standalone Quest VR and a separate flat Android edition. App version: **1.0.0**.
+**Current private candidate: 1.0-test18 (code 19).** Public test14 remains available; the planned 1.0 release is held for owner testing. This guide describes the current candidate features.
 
 | Your device | Download |
 | --- | --- |
-| Android phone/tablet — flat, touch or gamepad | **[HaloCE-Android-1.0.0.apk](https://github.com/moistman42069/HaloCE-Quest-VR/releases/download/v1.0.0/HaloCE-Android-1.0.0.apk)** |
-| Meta Quest — immersive standalone VR | **[HaloCE-Quest-1.0.0.apk](https://github.com/moistman42069/HaloCE-Quest-VR/releases/download/v1.0.0/HaloCE-Quest-1.0.0.apk)** |
+| Android phone/tablet — flat, touch or gamepad | **HaloCE-Android-test18.apk — private test download supplied with the candidate** |
+| Meta Quest — immersive standalone VR | **HaloCE-Quest-test18.apk — private test download supplied with the candidate** |
 
 1. **Install the appropriate APK.** On Quest, enable developer mode and sideload with SideQuest or your existing installer; open it from **Unknown Sources**. On Android, open the downloaded APK and allow installation from that source when prompted. Both require ARM64, Android 9/API 28 or newer and compatible graphics. **Quest 3 is the reference headset**; other devices are not equally verified.
 2. **Updating this project? Install over it.** Both APKs retain their package IDs and signing certificate. Do not uninstall or clear app data. Optional ADB command: `adb install -r <apk-file>`. Back up your maps, saves and settings first. Another fork using the same package ID but a different key cannot update in place.
@@ -23,7 +23,7 @@ The launcher includes an offline **Field guide** with controls, settings and cre
 
 ## 2. New Features / Major Changes
 
-This release brings the refinements since public test14 together into the 1.0 baseline:
+This candidate brings the refinements since public test14 together for the planned 1.0 baseline:
 
 - **Multiplayer compatibility fixes:** running native PvP matches are no longer falsely rejected by the shared advertisement flag; the action-control bit responsible for the reported assertion is handled correctly. Includes reviewed upstream player departure/rejoin safeguards and Network 11 options, while accepting reviewed v9/v10 hosts.
 - **Managed game-data sets:** import multiple ISO/XISO or extracted installations, scan an import inbox, view detected builds/fingerprints, rename sets and switch without replacing the original installation. Saves remain separate per set.
@@ -32,7 +32,7 @@ This release brings the refinements since public test14 together into the 1.0 ba
 - **Per-controller alignment controls** for unusual tracking/firmware orientation, plus a customizable flat touch HUD and expanded Xbox-style gamepad settings.
 - **Launcher PvP hosting**, population-sorted browsing, compatibility explanations, bundled help, detailed per-launch logs and verified project updates.
 
-Gameplay is based on the delivered test17 build. The 1.0 publication changes version presentation, stable-version update handling, documentation and bundled license information; it does not introduce another body, grip or combat redesign.
+Gameplay retains the test17 baseline plus test18 campaign vehicle-cache cleanup, headset-based tutorial checks and vehicle camera/control options. Existing body, grip and native action behavior is preserved. The prepared 1.0 presentation also includes stable-version update handling and bundled license information.
 
 ## 3. Controls / Inputs
 
@@ -86,7 +86,11 @@ Use **MOVE** plus swipe aiming or **FIRE-and-drag** to move, fire and aim togeth
 - **Hands and contact:** controller-driven finger poses and smoothing, palm/finger/world contact, approximate held-weapon contact and haptics. These are controller sensors, not optical finger tracking or fully simulated rigid-body hands.
 - **Weapons:** deliberate support grip at a fixed anchor, optional Auto proximity grip or Off, physical/locked holding, first-grip protection, hand transfer and shoulder/hip holsters. Reload uses native animations and the button; physical magazine reloading is not implemented.
 - **Movement and gestures:** physical crouch, off-hand-near-head flashlight, impact or swing melee, optional arm-run effort and up to 1.5× offline sprint. Online movement speed/collision remain stock; network clients use native swing melee.
-- **View choices:** inside/chase vehicles; stick/head/hand steering; immersive, 3D-screen or flat cinematics; native crosshair artwork with size/opacity or Off.
+- **Vehicles:** third-person chase and right-controller steering default. **VR Settings > Vehicles** selects Third Person / First Person and Right Hand / Left Hand / Head / Stick steering. Left stick supplies movement/throttle; the selected physical controller points the driving direction independently of weapon handedness or support grip. Tracking loss holds native facing. Gunners retain head aiming.
+- **First-person seats:** level horizon with head leaning; Up, Forward and Right adjustments in 1 cm steps, ±50 cm. Global offsets plus Warthog, Ghost, Banshee, Scorpion and Pelican profiles; custom vehicles use global values. Combined offsets clamp to ±50 cm per axis and are shortened at map collision. Zero restores the native seat location. Offsets affect First Person only. First-person heading follows the vehicle; chase steering uses the world heading with normal stick turns.
+- **Upgrade defaults:** the first test18 VR launch applies chase/right once and backs up the prior settings as `config.toml.pre-vehicle-defaults`. Your subsequent vehicle choices persist. Other body, grip, action and graphics preferences are retained.
+- **Other views:** immersive, 3D-screen or flat cinematics; native crosshair artwork with size/opacity or Off.
+- **Opening look tutorial:** look toward the lights with your headset. Script gaze and head-movement checks use the tracked head, independently of the weapon reticle. This is headset direction, not eye tracking.
 - **Graphics:** Auto/Low/Medium/High/Max presets; render resolution; shadows, lights, specular, reflections, bump maps, grass, fog, decals, particles, contrails, weather, lens flares and camouflage. Refresh choices are 72/80/90/120 Hz requests, not guaranteed frame rates.
 - **Calibration:** Align Left/Right provides controller-local pitch/yaw/roll, position offsets, Flip Roll 180, Native/Grip aim source and separate resets. Correct only the affected hand; no automatic firmware-based flip is applied.
 

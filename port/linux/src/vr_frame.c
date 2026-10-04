@@ -415,7 +415,8 @@ void vr_initialize(void)
 	if (vr.initialized)
 		return;
 	vr.initialized = 1;
-	platform_log("vr: HaloCE Quest 1.0.0 release (test17 gameplay baseline)");
+	config_vr_vehicle_defaults();
+	platform_log("vr: HaloCE Quest test18 candidate (campaign lifecycle, head tutorial, vehicle controls)");
 	if (!config_boolean("vr.enabled"))
 	{
 		platform_log("vr: off (vr.enabled)");
@@ -1777,6 +1778,7 @@ int vr_aim(float game_yaw, int seated, int hand_may_aim, const float *base_headi
 	const unsigned int needed = HALO_XR_FRAME_SHOULD_RENDER | HALO_XR_FRAME_VIEWS_VALID;
 	unsigned int both = HALO_XR_BUTTON_LEFT_THUMB | HALO_XR_BUTTON_RIGHT_THUMB;
 	float head[3], aim[3], head_yaw, cosine, sine;
+	int steering_valid = 1;
 
 	vr.aiming = 0;
 	vr.hand_aiming = 0;
@@ -1806,7 +1808,20 @@ int vr_aim(float game_yaw, int seated, int hand_may_aim, const float *base_headi
 	/* the hand aims where the caller allows it (on foot; a driver's seat
 	steered by hand), the head otherwise */
 	memcpy(aim, head, sizeof(aim));
-	if (vr.hand_aim && hand_may_aim && hand_forward(aim))
+	if (hand_may_aim >= 2)
+	{
+		/* Vehicle controls use the selected physical controller, independent
+		 * of weapon hand, support grip, scope and weapon smoothing. */
+		static const float xr_forward[3] = {0.0f, 0.0f, -1.0f};
+		int hand = hand_may_aim == 2 ? 1 : 0;
+		float local[3];
+		steering_valid = (vr.frame.hand_valid[hand] & 2) != 0;
+		if (steering_valid) {
+			rotate(vr.frame.aim[hand].orientation, xr_forward, local);
+			to_halo(local, 1.0f, 0.0f, aim);
+		}
+	}
+	else if (vr.hand_aim && hand_may_aim == 1 && hand_forward(aim))
 		vr.hand_aiming = 1;
 	/* the heading is kept so that the aim comes out as the game had it */
 	head_yaw = atan2f(aim[1], aim[0]);
@@ -1833,9 +1848,12 @@ int vr_aim(float game_yaw, int seated, int hand_may_aim, const float *base_headi
 			vr.heading = wrap_angle(game_yaw - vr.head_yaw);
 			vr.heading_valid = 1;
 		}
-		turn();
+		if (hand_may_aim >= 0) turn();
 	}
 	vr.seated = seated;
+	/* Stick steering keeps the native look input. Update seat state even
+	 * here so entering/exiting never inherits on-foot movement rotation. */
+	if (hand_may_aim < 0) return 0;
 	/* the game limits its pitch short of straight up or down (85.5
 	degrees): so does the aim, keeping its heading */
 	{
@@ -1859,7 +1877,9 @@ int vr_aim(float game_yaw, int seated, int hand_may_aim, const float *base_headi
 	out_forward[2] = aim[2];
 	vr.last_aim_yaw = atan2f(out_forward[1], out_forward[0]);
 	vr.aiming = 1;
-	return 1;
+	/* Lost steering tracking holds native facing; head movement must not
+	 * unexpectedly steer a vehicle while a controller reconnects. */
+	return steering_valid;
 }
 
 int vr_aiming(void)
@@ -2013,6 +2033,47 @@ int vr_heading_forward(float out_forward[3])
 	out_forward[1] = sinf(vr.heading);
 	out_forward[2] = 0.0f;
 	return 1;
+}
+
+/* Script checks run before stereo rendering: use this frame's tracked head,
+ * not the previous rendered camera or the weapon's looking vector. */
+static int vr_script_head_valid(void)
+{
+	const unsigned int needed = HALO_XR_FRAME_SHOULD_RENDER | HALO_XR_FRAME_VIEWS_VALID | HALO_XR_FRAME_FOCUSED;
+	return vr.active && vr.stereo_enabled && frame_begin() && (vr.frame.flags & needed) == needed;
+}
+
+int vr_script_head_view(const float position[3], float out_position[3], float out_forward[3])
+{
+	float offset[3], heading[3], up[3];
+	if (!vr_script_head_valid() || !vr_heading_forward(heading)) return 0;
+	head_offset(offset);
+	view(offset, vr.frame.head.orientation, position, heading, out_position, out_forward, up);
+	return 1;
+}
+
+static struct { int valid; float yaw, pitch; } tutorial_look;
+void vr_head_look_reset(void) { tutorial_look.valid = 0; }
+
+unsigned int vr_head_look_actions(void)
+{
+	float forward[3], yaw, pitch, delta;
+	unsigned int actions = 0;
+	if (!vr_script_head_valid()) { vr_head_look_reset(); return 0; }
+	head_forward(forward);
+	yaw = atan2f(forward[1], forward[0]);
+	pitch = atan2f(forward[2], hypotf(forward[0], forward[1]));
+	if (!isfinite(yaw) || !isfinite(pitch)) { vr_head_look_reset(); return 0; }
+	if (!tutorial_look.valid || (vr.frame.flags & HALO_XR_FRAME_RECENTRED)) {
+		tutorial_look.valid = 1; tutorial_look.yaw = yaw; tutorial_look.pitch = pitch; return 0;
+	}
+	/* Accumulate slow deliberate movement as well as fast turns. World turns,
+	 * weapon movement and controller grip cannot pass the head-look test. */
+	delta = wrap_angle(yaw - tutorial_look.yaw);
+	if (fabsf(delta) > 0.02f) { actions |= delta > 0 ? 4u : 8u; tutorial_look.yaw = yaw; }
+	delta = pitch - tutorial_look.pitch;
+	if (fabsf(delta) > 0.02f) { actions |= delta > 0 ? 1u : 2u; tutorial_look.pitch = pitch; }
+	return actions;
 }
 
 int vr_head_view(const float position[3], const float forward[3],

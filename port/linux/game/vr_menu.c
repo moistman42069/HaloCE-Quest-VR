@@ -125,6 +125,7 @@ enum
 	_vr_setting_string,
 	_vr_setting_degrees,
 	_vr_setting_centimetres,
+	_vr_setting_vehicle_centimetres,
 	_vr_setting_reset_alignment,
 	_vr_setting_flip_alignment,
 };
@@ -177,11 +178,34 @@ static struct vr_menu_setting const vr_menu_vr[] =
 	{ "FLASHLIGHT", "vr.flashlight_distance", _vr_setting_real_choice, 2, { { "GESTURE", "0.2" }, { "BUTTON", "0" } } },
 	{ "HOLSTER SIZE", "vr.holster_size", _vr_setting_real, 6, { { "10 CM", "0.1" }, { "15 CM", "0.15" }, { "20 CM", "0.2" }, { "25 CM", "0.25" }, { "30 CM", "0.3" }, { "40 CM", "0.4" } } },
 	{ "SCOPE", "vr.scope", _vr_setting_boolean, 2, { { "OFF", "false" }, { "ON", "true" } } },
-	{ "VEHICLES", "vr.vehicle_view", _vr_setting_string, 2, { { "INSIDE", "first_person" }, { "CHASE", "chase" } } },
-	{ "STEERING", "vr.vehicle_steering", _vr_setting_string, 3, { { "STICK", "stick" }, { "HEAD", "head" }, { "HAND", "hand" } } },
+
 	{ "CUTSCENES", "vr.cutscenes", _vr_setting_string, 3, { { "IMMERSIVE", "immersive" }, { "3D SCREEN", "screen" }, { "FLAT", "flat" } } },
 	{ "MP PHYSICAL", "vr.physical_multiplayer", _vr_setting_boolean, 2, { { "OFF", "false" }, { "ON", "true" } } },
 	{ "CLOSE CONTACT", "vr.close_contact", _vr_setting_boolean, 2, { { "OFF", "false" }, { "ON", "true" } } },
+};
+
+static struct vr_menu_setting const vr_menu_vehicles[] =
+{
+	{ "VIEW", "vr.vehicle_view", _vr_setting_string, 2, { { "THIRD PERSON", "chase" }, { "FIRST PERSON", "first_person" } } },
+	{ "STEERING", "vr.vehicle_steering", _vr_setting_string, 4, { { "RIGHT HAND", "right" }, { "LEFT HAND", "left" }, { "HEAD", "head" }, { "STICK", "stick" } } },
+	{ "ALL UP", "vr.vehicle_all_up", _vr_setting_vehicle_centimetres, 0, { { NULL, NULL } } },
+	{ "ALL FORWARD", "vr.vehicle_all_forward", _vr_setting_vehicle_centimetres, 0, { { NULL, NULL } } },
+	{ "ALL RIGHT", "vr.vehicle_all_right", _vr_setting_vehicle_centimetres, 0, { { NULL, NULL } } },
+	{ "HOG UP", "vr.vehicle_warthog_up", _vr_setting_vehicle_centimetres, 0, { { NULL, NULL } } },
+	{ "HOG FORWARD", "vr.vehicle_warthog_forward", _vr_setting_vehicle_centimetres, 0, { { NULL, NULL } } },
+	{ "HOG RIGHT", "vr.vehicle_warthog_right", _vr_setting_vehicle_centimetres, 0, { { NULL, NULL } } },
+	{ "GHOST UP", "vr.vehicle_ghost_up", _vr_setting_vehicle_centimetres, 0, { { NULL, NULL } } },
+	{ "GHOST FORWARD", "vr.vehicle_ghost_forward", _vr_setting_vehicle_centimetres, 0, { { NULL, NULL } } },
+	{ "GHOST RIGHT", "vr.vehicle_ghost_right", _vr_setting_vehicle_centimetres, 0, { { NULL, NULL } } },
+	{ "BANSHEE UP", "vr.vehicle_banshee_up", _vr_setting_vehicle_centimetres, 0, { { NULL, NULL } } },
+	{ "BANSHEE FORWARD", "vr.vehicle_banshee_forward", _vr_setting_vehicle_centimetres, 0, { { NULL, NULL } } },
+	{ "BANSHEE RIGHT", "vr.vehicle_banshee_right", _vr_setting_vehicle_centimetres, 0, { { NULL, NULL } } },
+	{ "TANK UP", "vr.vehicle_scorpion_up", _vr_setting_vehicle_centimetres, 0, { { NULL, NULL } } },
+	{ "TANK FORWARD", "vr.vehicle_scorpion_forward", _vr_setting_vehicle_centimetres, 0, { { NULL, NULL } } },
+	{ "TANK RIGHT", "vr.vehicle_scorpion_right", _vr_setting_vehicle_centimetres, 0, { { NULL, NULL } } },
+	{ "PELICAN UP", "vr.vehicle_pelican_up", _vr_setting_vehicle_centimetres, 0, { { NULL, NULL } } },
+	{ "PELICAN FORWARD", "vr.vehicle_pelican_forward", _vr_setting_vehicle_centimetres, 0, { { NULL, NULL } } },
+	{ "PELICAN RIGHT", "vr.vehicle_pelican_right", _vr_setting_vehicle_centimetres, 0, { { NULL, NULL } } },
 };
 
 static struct vr_menu_setting const vr_menu_crosshair[] =
@@ -253,6 +277,7 @@ static struct vr_menu_page
 	{ "CONTROLS", vr_menu_controls, NUMBEROF(vr_menu_controls) },
 	{ "BODY", vr_menu_body, NUMBEROF(vr_menu_body) },
 	{ "VR", vr_menu_vr, NUMBEROF(vr_menu_vr) },
+	{ "VEHICLES", vr_menu_vehicles, NUMBEROF(vr_menu_vehicles) },
 	{ "GRAPHICS", vr_menu_graphics, NUMBEROF(vr_menu_graphics) },
 	{ "DISPLAY", vr_menu_effects, NUMBEROF(vr_menu_effects) },
 	{ "CROSSHAIR", vr_menu_crosshair, NUMBEROF(vr_menu_crosshair) },
@@ -746,11 +771,11 @@ boolean vr_menu_setting_text(
 		struct vr_menu_setting const *setting = &vr_menu_pages[page].settings[setting_index];
 		long value_index = vr_menu_value_index(setting);
 
-        if(setting->type == _vr_setting_degrees || setting->type == _vr_setting_centimetres) {
+        if(setting->type == _vr_setting_degrees || setting->type == _vr_setting_centimetres || setting->type == _vr_setting_vehicle_centimetres) {
             double value=config_real(setting->key); if(!isfinite(value)) value=0;
             snprintf(line,sizeof(line),"%s: < %.0f %s >",setting->label,
-                setting->type==_vr_setting_centimetres?value*100:value,
-                setting->type==_vr_setting_centimetres?"CM":"DEG");
+                setting->type!=_vr_setting_degrees?value*100:value,
+                setting->type!=_vr_setting_degrees?"CM":"DEG");
         } else if((setting->type == _vr_setting_reset_alignment || setting->type == _vr_setting_flip_alignment))
             snprintf(line,sizeof(line),"%s: APPLY",setting->label);
         else
@@ -776,9 +801,9 @@ boolean vr_menu_setting_change(
 	if (vr_menu_widget_kind(definition_tag_index, &page, &setting_index) != _vr_menu_setting)
 		return FALSE;
 	setting = &vr_menu_pages[page].settings[setting_index];
-    if(setting->type == _vr_setting_degrees || setting->type == _vr_setting_centimetres) {
+    if(setting->type == _vr_setting_degrees || setting->type == _vr_setting_centimetres || setting->type == _vr_setting_vehicle_centimetres) {
         double value=config_real(setting->key), unit=setting->type==_vr_setting_degrees?5.0:0.01;
-        double limit=setting->type==_vr_setting_degrees?180.0:0.20;
+        double limit=setting->type==_vr_setting_degrees?180.0:setting->type==_vr_setting_vehicle_centimetres?0.50:0.20;
         if(!isfinite(value)) value=0.0;
         value=step>0?(floor(value/unit+0.00001)+1)*unit:(ceil(value/unit-0.00001)-1)*unit;
         value=fmax(-limit,fmin(limit,value)); written=config_write_real(setting->key,value);

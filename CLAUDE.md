@@ -4,11 +4,13 @@ Canonical repository: `moistman42069/HaloCE-Quest-VR`, default branch `main`.
 Read docs/CURRENT-STATE.md, docs/RELEASE-PROVENANCE-1.0.0.md, CONTRIBUTING.md,
 and relevant player/architecture/protocol documents before changes.
 
-Current baseline: **1.0.0 / Android code 19**, tag `v1.0.0`, derived from delivered
-test17. The owner explicitly authorized this new release and required the prior
-test14 release to remain untouched. See docs/RELEASE-1.0.0.md. Historical TEST*
-files retain dated investigation results; their older publication holds do not
-block this authorized 1.0 release. Future releases need new authorization.
+Current candidate: **test18 / Android code 19**, branch `release-1.0.0`.
+Read docs/TEST18-PROGRESS.md and docs/TEST18-DELIVERY.md. Publication is ON HOLD:
+the owner now requires both APKs in chat, then device testing, then a new explicit
+instruction to resume the 1.0 plan. Do not create/upload/publish a GitHub release
+or tag for this candidate. Existing public test14 must remain untouched.
+The prepared 1.0 notes/template and updater support remain pending; they are not
+evidence that 1.0 exists. Final 1.0 will need a version code above candidate 19.
 
 Preserve accepted VR animation handoff, Legs + Arms, room-scale legs, fingers,
 contact/grip, online native melee, Safe VR geometry and Normal flat geometry.

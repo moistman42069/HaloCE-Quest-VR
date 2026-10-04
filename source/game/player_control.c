@@ -782,32 +782,14 @@ static void handle_one_player_input(
 				input.facing_delta.pitch);
 			player_control_angle_step_ticks = 1.f;
 #ifdef HALO_VR
-			/* in the headset the head aims (port/linux/game/vr_render.c);
-			its turns count as looking for the scripts that wait for the
-			player to look around (the first level's look test), which
-			otherwise watch the stick */
-			{
-				real_euler_angles2d before = *player_control_get_facing_angles(local_player_index);
-				real_euler_angles2d const *after;
-				real yaw_turn;
-
-				vr_player_control_facing(local_player_index);
-				after = player_control_get_facing_angles(local_player_index);
-				yaw_turn = after->yaw - before.yaw;
-				if (yaw_turn > _pi)
-					yaw_turn -= 2.f * _pi;
-				else if (yaw_turn < -_pi)
-					yaw_turn += 2.f * _pi;
-				/* more than the head's tremor: about 15 degrees a second */
-				if (after->pitch - before.pitch > 0.004f)
-					player_control_globals->action_flags |= FLAG(_player_control_look_relative_up_bit);
-				else if (after->pitch - before.pitch < -0.004f)
-					player_control_globals->action_flags |= FLAG(_player_control_look_relative_down_bit);
-				if (yaw_turn > 0.004f)
-					player_control_globals->action_flags |= FLAG(_player_control_look_relative_left_bit);
-				else if (yaw_turn < -0.004f)
-					player_control_globals->action_flags |= FLAG(_player_control_look_relative_right_bit);
-			}
+            vr_player_control_facing(local_player_index);
+            if (local_player_index == local_player_get_next(NONE)) {
+                unsigned int look = vr_head_look_actions();
+                if (look & 1) player_control_globals->action_flags |= FLAG(_player_control_look_relative_up_bit);
+                if (look & 2) player_control_globals->action_flags |= FLAG(_player_control_look_relative_down_bit);
+                if (look & 4) player_control_globals->action_flags |= FLAG(_player_control_look_relative_left_bit);
+                if (look & 8) player_control_globals->action_flags |= FLAG(_player_control_look_relative_right_bit);
+            }
 #endif
 		}
 
@@ -1623,6 +1605,9 @@ void player_control_action_test_reset(
 
 	globals->action_flags = 0;
 	globals->action_test_flags = 0;
+#ifdef HALO_VR
+	vr_head_look_reset();
+#endif
 	return;
 }
 

@@ -1,10 +1,6 @@
-# Release 1.0.0 provenance
+# Planned release 1.0.0 provenance
 
-The owner authorized a new public 1.0 baseline from delivered test17, preserving
-test14 exactly. Both editions use 1.0.0/code 19, existing package IDs and the
-established signing certificate. Runtime gameplay is test17; version/launcher
-updater/docs/license presentation changes are separately verified.
-
-Final runtime/source commits, APK hashes and checks are recorded here after
-serial builds and before publication. No new complete headset/phone/campaign
-matrix is claimed from the publication instruction.
+Publication is held by the newest owner instruction. No 1.0 APK, tag or release
+is finalized. Test18/code 19 is a private candidate; see TEST18-DELIVERY.md.
+Final 1.0 must use a higher Android code, finalized notes and hashes, and renewed
+owner publication approval after testing. Preserve public test14 exactly.

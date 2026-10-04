@@ -591,6 +591,9 @@ void network_objects_placed(void);
 void game_initialize_for_new_map(
 	void)
 {
+#ifdef HALO_VR
+	vr_render_reset_vehicle_view();
+#endif
 	match_assert(
 		"c:\\halo\\SOURCE\\game\\game.c",
 		0x1D1,
@@ -855,6 +858,7 @@ void game_dispose_from_old_map(
 	void)
 {
 #ifdef HALO_VR
+	vr_render_reset_vehicle_view();
 	vr_body_geometry_dispose();
 #endif
 	rasterizer_dispose_from_old_map();

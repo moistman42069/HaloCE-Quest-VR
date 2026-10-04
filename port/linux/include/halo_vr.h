@@ -19,6 +19,12 @@ eye only.
 
 #ifdef HALO_VR
 boolean vr_render_script_message(char const *message);
+void vr_render_reset_vehicle_view(void);
+union real_point3d;
+boolean vr_script_can_see_point(long unit_index, const union real_point3d *point, real field_of_view, boolean *result);
+/* Head-only tutorial directions: up/down/left/right bits 0/1/2/3. */
+unsigned int vr_head_look_actions(void);
+void vr_head_look_reset(void);
 
 struct render_window;
 struct render_camera;

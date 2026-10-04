@@ -1,6 +1,6 @@
 NATIVE SETTINGS REFERENCE
 
-Defaults apply to new settings. Existing saved values win except the one-time VR Safe geometry migration (revision 1); subsequent explicit Safe/Normal choices are preserved. VR settings apply to Quest only; desktop-only options do not affect Android. Restart for renderer, networking and other startup options. Use the in-game VR pages for live supported adjustments. The integrated project updater checks automatically in the launcher; Versions & updates controls checks and installation; inherited update.auto does not replace the mod with upstream.
+Defaults apply to new settings. Existing saved values win except the one-time VR Safe geometry migration (revision 1); subsequent explicit Safe/Normal choices are preserved. Test18 also applies third-person/right-controller vehicle defaults once; later vehicle selections persist. VR settings apply to Quest only; desktop-only options do not affect Android. Restart for renderer, networking and other startup options. Use the in-game VR pages for live supported adjustments. The integrated project updater checks automatically in the launcher; Versions & updates controls checks and installation; inherited update.auto does not replace the mod with upstream.
 
 pvp.time_limit [integer]
 Default: 0
@@ -457,16 +457,92 @@ vr.crosshair_opacity [real]
 Default: 1.0
 Native crosshair opacity (0 to 1). Does not change the menu pointer.
 
+vr.vehicle_defaults_applied [boolean]
+Default: false
+Internal one-time third-person/right-controller default migration. Later saved choices are preserved.
+
 vr.vehicle_view [string]
-Default: "first_person"
+Default: "chase"
 Vehicles seen from the seat, turning with the vehicle and the horizon
 kept level ("first_person"), or from the game's chase camera ("chase").
 
 vr.vehicle_steering [string]
-Default: "stick"
-What a driver steers with: "stick" (the right stick, as on a flat
-screen; the head only looks), "head" (where you look) or "hand" (where
-the right controller points). Gunners aim with the head.
+Default: "right"
+Driver steering: "right" (default), "left", "head", or "stick".
+Right/left use that physical controller, independent of weapon grip.
+Legacy "hand" means right. Gunners retain head aim. Left stick drives.
+
+vr.vehicle_all_up [real]
+Default: 0.0
+First-person seat up offset in metres (-0.50 to 0.50), all. Global and matching vehicle offsets add; final axis is bounded to 0.50 m.
+
+vr.vehicle_all_forward [real]
+Default: 0.0
+First-person seat forward offset in metres (-0.50 to 0.50), all. Global and matching vehicle offsets add; final axis is bounded to 0.50 m.
+
+vr.vehicle_all_right [real]
+Default: 0.0
+First-person seat right offset in metres (-0.50 to 0.50), all. Global and matching vehicle offsets add; final axis is bounded to 0.50 m.
+
+vr.vehicle_warthog_up [real]
+Default: 0.0
+First-person seat up offset in metres (-0.50 to 0.50), warthog. Global and matching vehicle offsets add; final axis is bounded to 0.50 m.
+
+vr.vehicle_warthog_forward [real]
+Default: 0.0
+First-person seat forward offset in metres (-0.50 to 0.50), warthog. Global and matching vehicle offsets add; final axis is bounded to 0.50 m.
+
+vr.vehicle_warthog_right [real]
+Default: 0.0
+First-person seat right offset in metres (-0.50 to 0.50), warthog. Global and matching vehicle offsets add; final axis is bounded to 0.50 m.
+
+vr.vehicle_ghost_up [real]
+Default: 0.0
+First-person seat up offset in metres (-0.50 to 0.50), ghost. Global and matching vehicle offsets add; final axis is bounded to 0.50 m.
+
+vr.vehicle_ghost_forward [real]
+Default: 0.0
+First-person seat forward offset in metres (-0.50 to 0.50), ghost. Global and matching vehicle offsets add; final axis is bounded to 0.50 m.
+
+vr.vehicle_ghost_right [real]
+Default: 0.0
+First-person seat right offset in metres (-0.50 to 0.50), ghost. Global and matching vehicle offsets add; final axis is bounded to 0.50 m.
+
+vr.vehicle_banshee_up [real]
+Default: 0.0
+First-person seat up offset in metres (-0.50 to 0.50), banshee. Global and matching vehicle offsets add; final axis is bounded to 0.50 m.
+
+vr.vehicle_banshee_forward [real]
+Default: 0.0
+First-person seat forward offset in metres (-0.50 to 0.50), banshee. Global and matching vehicle offsets add; final axis is bounded to 0.50 m.
+
+vr.vehicle_banshee_right [real]
+Default: 0.0
+First-person seat right offset in metres (-0.50 to 0.50), banshee. Global and matching vehicle offsets add; final axis is bounded to 0.50 m.
+
+vr.vehicle_scorpion_up [real]
+Default: 0.0
+First-person seat up offset in metres (-0.50 to 0.50), scorpion. Global and matching vehicle offsets add; final axis is bounded to 0.50 m.
+
+vr.vehicle_scorpion_forward [real]
+Default: 0.0
+First-person seat forward offset in metres (-0.50 to 0.50), scorpion. Global and matching vehicle offsets add; final axis is bounded to 0.50 m.
+
+vr.vehicle_scorpion_right [real]
+Default: 0.0
+First-person seat right offset in metres (-0.50 to 0.50), scorpion. Global and matching vehicle offsets add; final axis is bounded to 0.50 m.
+
+vr.vehicle_pelican_up [real]
+Default: 0.0
+First-person seat up offset in metres (-0.50 to 0.50), pelican. Global and matching vehicle offsets add; final axis is bounded to 0.50 m.
+
+vr.vehicle_pelican_forward [real]
+Default: 0.0
+First-person seat forward offset in metres (-0.50 to 0.50), pelican. Global and matching vehicle offsets add; final axis is bounded to 0.50 m.
+
+vr.vehicle_pelican_right [real]
+Default: 0.0
+First-person seat right offset in metres (-0.50 to 0.50), pelican. Global and matching vehicle offsets add; final axis is bounded to 0.50 m.
 
 vr.arms [string]
 Default: "ik"

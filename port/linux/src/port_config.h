@@ -26,4 +26,8 @@ backslashes in it) */
 int config_write_real(const char *name, double value);
 int config_write_string(const char *name, const char *value);
 
+#ifdef HALO_VR
+void config_vr_vehicle_defaults(void);
+#endif
+
 #endif

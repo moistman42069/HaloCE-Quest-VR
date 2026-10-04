@@ -49,7 +49,8 @@ Open the stock campaign pause menu, then **VR Settings**. Screens have four rows
 | --- | --- |
 | Controls | VR / Xbox layout; Hand / Head aim; Right / Left gun hand; Smooth / Snap 30 / Snap 45; Turn Speed 45–300 degrees/s; Move With Head / Left Hand / Right Hand; Two Hands Grip / Auto / Off; Weapons Locked / Physical; Holsters Off / On |
 | Body | Arms + Hands / Full / Legs + Arms / Hands Only; Arms IK / Hidden / Animated; Fingers Off / Tracked; Room-scale Off / On; Crouch Depth Off or 5–40 cm; Arm Run Off / On; Run Effort 0.2–1.2; Melee Impact / Swing; Melee Speed Off or 1.0–3.6 m/s |
-| VR | Haptics 0–100%; Flashlight Gesture / Button; Holster Size 10–40 cm; Scope Off / On; Vehicles Inside / Chase; Steering Stick / Head / Hand; Cutscenes Immersive / 3D Screen / Flat; MP Physical Off / On; Close Contact Off / On |
+| VR | Haptics 0–100%; Flashlight Gesture / Button; Holster Size 10–40 cm; Scope Off / On; Cutscenes Immersive / 3D Screen / Flat; MP Physical Off / On; Close Contact Off / On |
+| Vehicles | Third Person (default) / First Person; Steering Right Hand (default) / Left Hand / Head / Stick; global and Warthog/Ghost/Banshee/Scorpion/Pelican Up/Forward/Right seat offsets ±50 cm |
 | Graphics | Preset Auto / Low / Medium / High / Max; Resolution Auto / 70 / 85 / 100 / 115 / 130%; Shadows, Lights, Specular, Reflections, Bump Maps, Grass, Fog Layers: Auto / On / Off |
 | Display | Decals, Particles, Contrails, Weather, Lens Flares, Camo: Auto / On / Off; Refresh 72 / 80 / 90 / 120 Hz |
 | Crosshair | Native / Off; Size 25–300%; Opacity 0–100% |
@@ -133,3 +134,11 @@ content fingerprints. Do not change map headers to bypass compatibility checks.
 Test17 addresses false rejection of running v11 matches, an action-control
 assertion, and reviewed departed-player/rejoin issues. The test16 animation
 handoff is preserved. [Full data-library instructions](GAME-DATA-LIBRARY.md).
+
+## Vehicle controls and opening tutorial (test18)
+
+- **Vehicles:** third-person chase and right-controller steering default. **VR Settings > Vehicles** selects Third Person / First Person and Right Hand / Left Hand / Head / Stick steering. Left stick supplies movement/throttle; the selected physical controller points the driving direction independently of weapon handedness or support grip. Tracking loss holds native facing. Gunners retain head aiming.
+- **First-person seats:** level horizon with head leaning; Up, Forward and Right adjustments in 1 cm steps, ±50 cm. Global offsets plus Warthog, Ghost, Banshee, Scorpion and Pelican profiles; custom vehicles use global values. Combined offsets clamp to ±50 cm per axis and are shortened at map collision. Zero restores the native seat location. Offsets affect First Person only. First-person heading follows the vehicle; chase steering uses the world heading with normal stick turns.
+- **Upgrade defaults:** the first test18 VR launch applies chase/right once and backs up the prior settings as `config.toml.pre-vehicle-defaults`. Your subsequent vehicle choices persist. Other body, grip, action and graphics preferences are retained.
+- **Other views:** immersive, 3D-screen or flat cinematics; native crosshair artwork with size/opacity or Off.
+- **Opening look tutorial:** look toward the lights with your headset. Script gaze and head-movement checks use the tracked head, independently of the weapon reticle. This is headset direction, not eye tracking.
