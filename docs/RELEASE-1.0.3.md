@@ -1,5 +1,7 @@
 # Halo CE Quest VR + Android 1.0.3 - Release notes
 
+> **Campaign co-op notice:** Recent upstream decomp changes may have broken campaign co-op. A future upstream update is expected to fix this; co-op may not work reliably until that update is integrated.
+
 ## 1. Installation
 
 **Current release: v1.0.3, built from the test21b candidate.** The exact signed APKs report internal version name **1.0.2 / version code 27**; the assets and stable tag are named 1.0.3 as requested. Their established signing certificate lets them install over the previous v1.0.2/code-25 APKs. The older v1.0.2 release and the original test21b-tag release remain available. No APK contents were rebuilt or re-signed to change the internal version label. Test21b visual/input changes have not had a phone/headset session; review Known Issues and retain the previous APK for rollback.

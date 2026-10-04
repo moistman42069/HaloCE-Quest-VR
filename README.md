@@ -2,6 +2,8 @@
 
 [Latest release and downloads](https://github.com/moistman42069/HaloCE-Quest-VR/releases/tag/v1.0.3) | [Previous test21b build](https://github.com/moistman42069/HaloCE-Quest-VR/releases/tag/halo-ce-quest-test21b) | [Previous v1.0.2 release](https://github.com/moistman42069/HaloCE-Quest-VR/releases/tag/v1.0.2) | [Controls and options](docs/CONTROLS-AND-OPTIONS.md) | [Current state](docs/CURRENT-STATE.md) | [Contributing](CONTRIBUTING.md) | [Credits](CREDITS.md)
 
+> **Campaign co-op notice:** Recent upstream decomp changes may have broken campaign co-op. A future upstream update is expected to fix this; co-op may not work reliably until that update is integrated.
+
 ## 1. Installation
 
 **Latest release: v1.0.3.** The APKs contain the exact signed test21b build and internally report version name 1.0.2 / code 27. The stable tag and download names are 1.0.3 so the release sorts correctly and the updater can find the assets. Their signing certificate lets them install over v1.0.2/code 25. The prior v1.0.2 release and test21b-tag release remain unchanged. The test21b visuals have not had a phone/headset session yet. Keep the previous APK for rollback and back up maps, saves and settings before updating.
