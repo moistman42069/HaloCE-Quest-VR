@@ -1,6 +1,4 @@
-# Halo CE Quest VR + Android
-
-[Latest release: 1.0.1](https://github.com/moistman42069/HaloCE-Quest-VR/releases/tag/v1.0.1) | [Full controls/options](docs/CONTROLS-AND-OPTIONS.md) | [Development state](docs/CURRENT-STATE.md) | [Contributing/builds](CONTRIBUTING.md) | [Credits](CREDITS.md)
+# Halo CE Quest VR + Android 1.0.1
 
 ## 1. Installation
 
@@ -162,7 +160,7 @@ Use **Game files & versions** to import/switch, or place images/extracted roots 
 
 Both APKs are ARM64, **1.0.1 / version code 20**, using package IDs `com.halo.decomp` and `com.halo.decomp.vr` and the established signing certificate. The release promotes the exact delivered test19 binaries without rebuilding or re-signing. Native log labels and the bundled offline guide retain the test19 candidate wording. GitHub provides tagged source archives; compatibility.json is the small metadata asset required by the updater. Prior releases are preserved.
 
-Validation includes both flavor builds, signatures/versions, 16 KB ZIP alignment, payload integrity, targeted regressions and synthetic cache/import checks. These checks do not substitute for real multiplayer or headset testing. See [build provenance](docs/RELEASE-PROVENANCE-1.0.1.md), [delivery checks](docs/TEST19-DELIVERY.md) and [community review](docs/TEST19-COMMUNITY-REVIEW.md) for evidence and follow-up cases.
+Validation includes both flavor builds, signatures/versions, 16 KB ZIP alignment, payload integrity, targeted regressions and synthetic cache/import checks. These checks do not substitute for real multiplayer or headset testing. See [build provenance](https://github.com/moistman42069/HaloCE-Quest-VR/blob/v1.0.1/docs/RELEASE-PROVENANCE-1.0.1.md), [delivery checks](https://github.com/moistman42069/HaloCE-Quest-VR/blob/v1.0.1/docs/TEST19-DELIVERY.md) and [community review](https://github.com/moistman42069/HaloCE-Quest-VR/blob/v1.0.1/docs/TEST19-COMMUNITY-REVIEW.md) for evidence and follow-up cases.
 
 Credits: **Bungie/Microsoft and the original Halo team**; **punpckhdq/halo and bnunu/halo-1 contributors** for the decompilation; **bnunu/cybersecurity halo-ce-universal contributors** for the native port/networking; **astromaddie/Madison** for the OpenXR VR foundation; **ChupathingyCE and halo.milenko.org maintainers** for the directory; **moistman42069 and project contributors/testers** for this integration and refinements. Thanks also to LivingFray/HaloCEVR and the documented IK references, Andiweli's Android rendering work, and SnowyMouse's cache-format documentation.
 

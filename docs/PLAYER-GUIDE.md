@@ -1,13 +1,13 @@
-# Player guide — 1.0.1 testing candidate (test19)
+# Player guide — 1.0.1
 
 ## 1. Installation
 
-**Private testing candidate:** both editions report **1.0.1 / code 20**. Install the Android/flat or Quest/VR APK supplied with this candidate. It is not a new public release. [Published 1.0 and its installation notes](RELEASE-1.0.0.md) remain unchanged.
+**Version 1.0.1 / code 20** brings in-game public server discovery, multiplayer crash protection, updater corrections, VR rendering/reticle refinements and improved game-data imports. Install the edition for your device. Previous releases remain available unchanged.
 
-| Your device | Candidate file |
+| Your device | Download |
 | --- | --- |
-| Android phone/tablet — flat, touch or gamepad | HaloCE-Android-test19.apk |
-| Meta Quest — immersive standalone VR | HaloCE-Quest-test19.apk |
+| Android phone/tablet — flat, touch or gamepad | **[HaloCE-Android-1.0.1.apk](https://github.com/moistman42069/HaloCE-Quest-VR/releases/download/v1.0.1/HaloCE-Android-1.0.1.apk)** |
+| Meta Quest — immersive standalone VR | **[HaloCE-Quest-1.0.1.apk](https://github.com/moistman42069/HaloCE-Quest-VR/releases/download/v1.0.1/HaloCE-Quest-1.0.1.apk)** |
 
 1. **Install the appropriate APK.** On Quest, enable developer mode and sideload with SideQuest or your existing installer; open it from **Unknown Sources**. On Android, open the downloaded APK and allow installation from that source when prompted. Both require ARM64, Android 9/API 28 or newer and compatible graphics. **Quest 3 is the reference headset**; other devices are not equally verified.
 2. **Updating this project? Install over it.** Both APKs retain their package IDs and signing certificate. Do not uninstall or clear app data. Optional ADB command: `adb install -r <apk-file>`. Back up your maps, saves and settings first. Another fork using the same package ID but a different key cannot update in place.
@@ -17,7 +17,7 @@
 
 The launcher includes an offline **Field guide** with controls, settings and credits. Existing Quest data under `/sdcard/Documents/HaloCE/maps` is recognized when `ui.map` is present; otherwise each app uses its own external-files storage. VR and flat can coexist and have separate app data.
 
-**Updating from 1.0/test18:** install this signed candidate over the existing app. Do not uninstall. The project updater continues to offer approved public releases; it does not publish or distribute private candidates.
+**Updating from 1.0/test18:** install this signed release over the existing app. Do not uninstall. Older test updaters may require this manual installation once. Already installed the delivered test19 pair? These are the exact same APKs; no reinstall is necessary.
 
 ## 2. New Features / Major Changes
 
@@ -117,7 +117,7 @@ This build hosts native **Network 11** and accepts reviewed distributed hosts **
 
 ### Campaign co-op and avatars
 
-**Campaign co-op → Host campaign / Browse or join** is separate from PvP. Use **matching project builds (use this candidate on both devices when testing) and matching campaign/resource files** on both peers. Two Quests or Quest plus flat Android are the intended pairings; Quest-to-flat connectivity and remote VR body movement have prior owner confirmation.
+**Campaign co-op → Host campaign / Browse or join** is separate from PvP. Use **matching project builds (use 1.0.1 on both devices) and matching campaign/resource files** on both peers. Two Quests or Quest plus flat Android are the intended pairings; Quest-to-flat connectivity and remote VR body movement have prior owner confirmation.
 
 1. Host: choose **Campaign co-op > Host campaign**, mission and difficulty. Enable **List publicly** if you want the launcher co-op catalog to advertise the session, then enter the System Link lobby.
 2. Partner: choose **Campaign co-op > Browse / join**, refresh and select the host, or paste the host's private invite. Enter **Multiplayer > System Link**, select that host and join.
@@ -146,7 +146,7 @@ Use **Game files & versions** to import/switch, or place images/extracted roots 
 
 ## 8. Known Issues or Important Notes
 
-- **Candidate status:** the populated-server crash guard, native browser, reticle alignment and left-eye workaround require device testing. A build/test pass is not a campaign playthrough or proof that every server works.
+- **Device follow-up:** the populated-server crash guard, native browser, reticle alignment and intermittent left-eye workaround still need broader real-device confirmation. A build/test pass is not a campaign playthrough or proof that every server works.
 - **Co-op remains experimental:** not every mission, checkpoint, vehicle, cinematic, transition or device/network combination has a documented full playthrough. The 1.0 baseline is not universal certification.
 - Inferred body joints can still clip in extreme poses/custom rigs. Physical weapon drops/pickups online remain limited and **MP Physical defaults Off**.
 - Safe geometry can reduce performance. Refresh requests do not guarantee that frame rate; simulation remains 30 Hz with interpolated rendering.
@@ -158,9 +158,9 @@ Use **Game files & versions** to import/switch, or place images/extracted roots 
 
 ## 9. Additional Technical Details / Credits
 
-Both APKs are ARM64, **1.0.1 / version code 20**, using package IDs `com.halo.decomp` and `com.halo.decomp.vr` and the established signing certificate. The private package includes exact source/runtime commits, APK hashes and a matching source ZIP. Public releases remain unchanged.
+Both APKs are ARM64, **1.0.1 / version code 20**, using package IDs `com.halo.decomp` and `com.halo.decomp.vr` and the established signing certificate. The release promotes the exact delivered test19 binaries without rebuilding or re-signing. Native log labels and the bundled offline guide retain the test19 candidate wording. GitHub provides tagged source archives; compatibility.json is the small metadata asset required by the updater. Prior releases are preserved.
 
-Validation includes both flavor builds, signatures/versions, 16 KB ZIP alignment, payload integrity, targeted regressions and synthetic cache/import checks. These checks do not substitute for real multiplayer or headset testing. See TEST19-DELIVERY.md and TEST19-COMMUNITY-REVIEW.md for changes, evidence and follow-up cases.
+Validation includes both flavor builds, signatures/versions, 16 KB ZIP alignment, payload integrity, targeted regressions and synthetic cache/import checks. These checks do not substitute for real multiplayer or headset testing. See [build provenance](RELEASE-PROVENANCE-1.0.1.md), [delivery checks](TEST19-DELIVERY.md) and [community review](TEST19-COMMUNITY-REVIEW.md) for evidence and follow-up cases.
 
 Credits: **Bungie/Microsoft and the original Halo team**; **punpckhdq/halo and bnunu/halo-1 contributors** for the decompilation; **bnunu/cybersecurity halo-ce-universal contributors** for the native port/networking; **astromaddie/Madison** for the OpenXR VR foundation; **ChupathingyCE and halo.milenko.org maintainers** for the directory; **moistman42069 and project contributors/testers** for this integration and refinements. Thanks also to LivingFray/HaloCEVR and the documented IK references, Andiweli's Android rendering work, and SnowyMouse's cache-format documentation.
 

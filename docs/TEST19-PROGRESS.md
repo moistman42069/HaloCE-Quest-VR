@@ -1,5 +1,7 @@
 # Test19 checkpoint: multiplayer crash, native browser, updater
 
+> Publication update: the owner authorized promoting this exact APK pair as **v1.0.1**. Earlier publication holds below are historical. See [1.0.1 provenance](RELEASE-PROVENANCE-1.0.1.md). Device follow-up limitations remain.
+
 Private candidate branch: `test19-network-browser`. Public 1.0/test18 and test14
 remain unchanged. No new release approval. Working version: 1.0.1 / Android code
 20; both final APKs built and package preflight verified. All work remains on D: on the maintainer's

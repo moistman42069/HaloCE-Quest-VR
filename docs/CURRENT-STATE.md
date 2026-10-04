@@ -1,8 +1,13 @@
 # Current development state
 
-## Active candidate: test19 (unpublished)
+## Current public baseline: 1.0.1
 
-Candidate `test19-network-browser`: both APKs use **1.0.1 / code 20**. Read [TEST19-PROGRESS.md](TEST19-PROGRESS.md) and the test19 delivery/community review for verification and unresolved device cases. Preserve public 1.0/test14; wait for candidate feedback before a new release.
+Owner-authorized publication of the exact delivered test19 APKs as `v1.0.1`, internal **1.0.1 / code 20**. Runtime source is `bc1f04465f68e3b14f1bf7de306854ae8cb36dc1`; subsequent commits change documentation/provenance only. Read `docs/RELEASE-PROVENANCE-1.0.1.md` and `docs/TEST19-PROGRESS.md` for continuation and unresolved device cases. Preserve 1.0 and test14. Future builds need code >20 and separate publication approval. Publication approval does not establish a new headset or full-campaign test result.
+
+## Historical 1.0 baseline and earlier continuation notes
+
+The following 1.0 status/code-19 statements are historical and superseded by the 1.0.1 baseline above.
+
 
 
 Updated 2026-10-03. Canonical public repository: [moistman42069/HaloCE-Quest-VR](https://github.com/moistman42069/HaloCE-Quest-VR), branch **main**. Release 1.0 advances main to the complete current code and public documentation. The initial test13a import is historical; private identifying metadata remains excluded. Older private Git history remains a backup, not the continuation branch.

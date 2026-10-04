@@ -1,5 +1,7 @@
 # Test19 — 1.0.1 testing candidate
 
+> Publication update: the owner authorized promoting this exact APK pair as **v1.0.1**. Earlier publication holds below are historical. See [1.0.1 provenance](RELEASE-PROVENANCE-1.0.1.md). Device follow-up limitations remain.
+
 ## Installation
 
 - Android/flat: `HaloCE-Android-test19.apk`
