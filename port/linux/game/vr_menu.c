@@ -132,6 +132,13 @@ enum
 	angle and place (key "weapon") to their built-in defaults */
 	_vr_setting_reset_hand,
 	_vr_setting_reset_weapon,
+	/* test20d: a row that sets several settings at once, each value
+	"key=value;key=value" (vr_menu_multi); both hands' angle on one axis
+	(key "pitch", "yaw" or "roll"; the left hand mirrored); handedness,
+	which also mirrors the hand-specific defaults */
+	_vr_setting_multi,
+	_vr_setting_hand_degrees,
+	_vr_setting_handedness,
 };
 
 #define VR_MENU_MAXIMUM_VALUES 12
@@ -150,43 +157,49 @@ struct vr_menu_setting
 #define VR_MENU_EFFECT(label, key) \
 	{ label, key, _vr_setting_string, 3, { { "AUTO", "auto" }, { "ON", "on" }, { "OFF", "off" } } }
 
+/* test20d: one row per decision. Rows that only mattered with another
+(turn speed with smooth turning, holster size with holsters, multiplayer
+with physical weapons, run effort with arm run, the arms with the hand
+mode) are folded into it; a combination set in config.toml by hand shows
+as CUSTOM. */
 static struct vr_menu_setting const vr_menu_controls[] =
 {
-	{ "CONTROLS", "vr.controls", _vr_setting_string, 2, { { "VR", "vr" }, { "XBOX", "pad" } } },
-	{ "AIM", "vr.aim", _vr_setting_string, 2, { { "HAND", "hand" }, { "HEAD", "head" } } },
-	{ "GUN HAND", "vr.left_handed", _vr_setting_boolean, 2, { { "RIGHT", "false" }, { "LEFT", "true" } } },
-	{ "TURNING", "vr.snap_turn", _vr_setting_real, 3, { { "SMOOTH", "0" }, { "SNAP 30", "30" }, { "SNAP 45", "45" } } },
-	{ "TURN SPEED", "vr.smooth_turn_speed", _vr_setting_real, 12, { { "45", "45" }, { "60", "60" }, { "75", "75" }, { "90", "90" }, { "105", "105" }, { "120", "120" }, { "150", "150" }, { "180", "180" }, { "210", "210" }, { "240", "240" }, { "270", "270" }, { "300", "300" } } },
+	{ "HANDEDNESS", "vr.left_handed", _vr_setting_handedness, 2, { { "RIGHT", "false" }, { "LEFT", "true" } } },
+	{ "MIRROR CONTROLS", "vr.mirror_controls", _vr_setting_string, 2, { { "AUTO", "auto" }, { "OFF", "off" } } },
+	{ "TURNING", "vr.snap_turn", _vr_setting_multi, 10, { { "SMOOTH 60", "vr.snap_turn=0;vr.smooth_turn_speed=60" }, { "SMOOTH 90", "vr.snap_turn=0;vr.smooth_turn_speed=90" }, { "SMOOTH 120", "vr.snap_turn=0;vr.smooth_turn_speed=120" }, { "SMOOTH 150", "vr.snap_turn=0;vr.smooth_turn_speed=150" }, { "SMOOTH 180", "vr.snap_turn=0;vr.smooth_turn_speed=180" }, { "SMOOTH 240", "vr.snap_turn=0;vr.smooth_turn_speed=240" }, { "SMOOTH 300", "vr.snap_turn=0;vr.smooth_turn_speed=300" }, { "SNAP 30", "vr.snap_turn=30" }, { "SNAP 45", "vr.snap_turn=45" }, { "SNAP 90", "vr.snap_turn=90" } } },
 	{ "MOVE WITH", "vr.move_relative", _vr_setting_string, 3, { { "HEAD", "head" }, { "LEFT HAND", "left" }, { "RIGHT HAND", "right" } } },
 	{ "TWO HANDS", "vr.two_handed", _vr_setting_string, 3, { { "GRIP", "grip" }, { "AUTO", "auto" }, { "OFF", "off" } } },
-	{ "WEAPONS", "vr.weapons", _vr_setting_string, 2, { { "LOCKED", "locked" }, { "PHYSICAL", "physical" } } },
-	{ "HOLSTERS", "vr.holsters", _vr_setting_boolean, 2, { { "OFF", "false" }, { "ON", "true" } } },
+	{ "WEAPONS", "vr.weapons", _vr_setting_multi, 3, { { "LOCKED", "vr.weapons=locked" }, { "PHYSICAL", "vr.weapons=physical;vr.physical_multiplayer=false" }, { "PHYSICAL + MP", "vr.weapons=physical;vr.physical_multiplayer=true" } } },
+	{ "HOLSTERS", "vr.holsters", _vr_setting_multi, 7, { { "OFF", "vr.holsters=false" }, { "10 CM", "vr.holsters=true;vr.holster_size=0.1" }, { "15 CM", "vr.holsters=true;vr.holster_size=0.15" }, { "20 CM", "vr.holsters=true;vr.holster_size=0.2" }, { "25 CM", "vr.holsters=true;vr.holster_size=0.25" }, { "30 CM", "vr.holsters=true;vr.holster_size=0.3" }, { "40 CM", "vr.holsters=true;vr.holster_size=0.4" } } },
+	{ "AIM", "vr.aim", _vr_setting_string, 2, { { "HAND", "hand" }, { "HEAD", "head" } } },
+	{ "CONTROLS", "vr.controls", _vr_setting_string, 2, { { "VR", "vr" }, { "XBOX", "pad" } } },
 };
 
 static struct vr_menu_setting const vr_menu_body[] =
 {
 	{ "BODY", "vr.body", _vr_setting_string, 4, { { "ARMS + HANDS", "arms" }, { "FULL", "full" }, { "LEGS + ARMS", "legs" }, { "HANDS ONLY", "hands" } } },
-	{ "ARMS", "vr.arms", _vr_setting_string, 3, { { "IK", "ik" }, { "HIDDEN", "hidden" }, { "ANIMATED", "animated" } } },
+	/* how the hands follow: body IK, floating (arms as BODY shows them),
+	Halo's own arm animation, or the gun alone */
+	{ "HANDS", "vr.hand_tracking", _vr_setting_multi, 4, { { "BODY IK", "vr.arms=ik;vr.hand_tracking=ik" }, { "FLOATING", "vr.arms=ik;vr.hand_tracking=floating" }, { "ANIMATED", "vr.arms=animated;vr.hand_tracking=ik" }, { "GUN ONLY", "vr.arms=hidden;vr.hand_tracking=ik" } } },
 	{ "FINGERS", "vr.fingers", _vr_setting_boolean, 2, { { "OFF", "false" }, { "TRACKED", "true" } } },
-	{ "HANDS", "vr.hand_tracking", _vr_setting_string, 3, { { "BODY IK", "ik" }, { "FLOATING", "floating" }, { "FLOAT + ARMS", "floating_arms" } } },
 	{ "ROOM-SCALE", "vr.roomscale", _vr_setting_boolean, 2, { { "OFF", "false" }, { "ON", "true" } } },
 	{ "CROUCH DEPTH", "vr.crouch_height", _vr_setting_real, 9, { { "OFF", "0" }, { "5 CM", "0.05" }, { "10 CM", "0.1" }, { "15 CM", "0.15" }, { "20 CM", "0.2" }, { "25 CM", "0.25" }, { "30 CM", "0.3" }, { "35 CM", "0.35" }, { "40 CM", "0.4" } } },
-	{ "ARM RUN", "vr.arm_run", _vr_setting_boolean, 2, { { "OFF", "false" }, { "ON", "true" } } },
-	{ "RUN EFFORT", "vr.arm_run_speed", _vr_setting_real, 11, { { "0.2", "0.2" }, { "0.3", "0.3" }, { "0.4", "0.4" }, { "0.45", "0.45" }, { "0.5", "0.5" }, { "0.6", "0.6" }, { "0.7", "0.7" }, { "0.8", "0.8" }, { "0.9", "0.9" }, { "1.0", "1.0" }, { "1.2", "1.2" } } },
+	{ "ARM RUN", "vr.arm_run", _vr_setting_multi, 7, { { "OFF", "vr.arm_run=false" }, { "EASY 0.3", "vr.arm_run=true;vr.arm_run_speed=0.3" }, { "0.45", "vr.arm_run=true;vr.arm_run_speed=0.45" }, { "0.6", "vr.arm_run=true;vr.arm_run_speed=0.6" }, { "0.8", "vr.arm_run=true;vr.arm_run_speed=0.8" }, { "1.0", "vr.arm_run=true;vr.arm_run_speed=1.0" }, { "HARD 1.2", "vr.arm_run=true;vr.arm_run_speed=1.2" } } },
 	{ "MELEE", "vr.melee", _vr_setting_string, 2, { { "IMPACT", "impact" }, { "SWING", "swing" } } },
 	{ "MELEE SPEED", "vr.melee_speed", _vr_setting_real, 12, { { "OFF", "0" }, { "1.0", "1.0" }, { "1.2", "1.2" }, { "1.4", "1.4" }, { "1.6", "1.6" }, { "1.8", "1.8" }, { "2.0", "2.0" }, { "2.3", "2.3" }, { "2.6", "2.6" }, { "2.9", "2.9" }, { "3.2", "3.2" }, { "3.6", "3.6" } } },
 };
 
+/* the feel of play, with the crosshair (formerly its own page) */
 static struct vr_menu_setting const vr_menu_vr[] =
 {
 	{ "HAPTICS", "vr.haptics", _vr_setting_real, 11, { { "0%", "0.0" }, { "10%", "0.1" }, { "20%", "0.2" }, { "30%", "0.3" }, { "40%", "0.4" }, { "50%", "0.5" }, { "60%", "0.6" }, { "70%", "0.7" }, { "80%", "0.8" }, { "90%", "0.9" }, { "100%", "1.0" } } },
 	{ "FLASHLIGHT", "vr.flashlight_distance", _vr_setting_real_choice, 2, { { "GESTURE", "0.2" }, { "BUTTON", "0" } } },
-	{ "HOLSTER SIZE", "vr.holster_size", _vr_setting_real, 6, { { "10 CM", "0.1" }, { "15 CM", "0.15" }, { "20 CM", "0.2" }, { "25 CM", "0.25" }, { "30 CM", "0.3" }, { "40 CM", "0.4" } } },
 	{ "SCOPE", "vr.scope", _vr_setting_boolean, 2, { { "OFF", "false" }, { "ON", "true" } } },
-
 	{ "CUTSCENES", "vr.cutscenes", _vr_setting_string, 3, { { "IMMERSIVE", "immersive" }, { "3D SCREEN", "screen" }, { "FLAT", "flat" } } },
-	{ "MP PHYSICAL", "vr.physical_multiplayer", _vr_setting_boolean, 2, { { "OFF", "false" }, { "ON", "true" } } },
 	{ "CLOSE CONTACT", "vr.close_contact", _vr_setting_boolean, 2, { { "OFF", "false" }, { "ON", "true" } } },
+	{ "CROSSHAIR", "vr.crosshair", _vr_setting_string, 2, { { "NATIVE", "native" }, { "OFF", "off" } } },
+	{ "CROSSHAIR SIZE", "vr.crosshair_size", _vr_setting_real, 8, { { "25%", "0.25" }, { "50%", "0.5" }, { "75%", "0.75" }, { "100%", "1" }, { "125%", "1.25" }, { "150%", "1.5" }, { "200%", "2" }, { "300%", "3" } } },
+	{ "CROSSHAIR OPACITY", "vr.crosshair_opacity", _vr_setting_real, 11, { { "0%", "0" }, { "10%", "0.1" }, { "20%", "0.2" }, { "30%", "0.3" }, { "40%", "0.4" }, { "50%", "0.5" }, { "60%", "0.6" }, { "70%", "0.7" }, { "80%", "0.8" }, { "90%", "0.9" }, { "100%", "1" } } },
 };
 
 static struct vr_menu_setting const vr_menu_vehicles[] =
@@ -213,13 +226,6 @@ static struct vr_menu_setting const vr_menu_vehicles[] =
 	{ "PELICAN RIGHT", "vr.vehicle_pelican_right", _vr_setting_vehicle_centimetres, 0, { { NULL, NULL } } },
 };
 
-static struct vr_menu_setting const vr_menu_crosshair[] =
-{
-	{ "CROSSHAIR", "vr.crosshair", _vr_setting_string, 2, { { "NATIVE", "native" }, { "OFF", "off" } } },
-	{ "SIZE", "vr.crosshair_size", _vr_setting_real, 8, { { "25%", "0.25" }, { "50%", "0.5" }, { "75%", "0.75" }, { "100%", "1" }, { "125%", "1.25" }, { "150%", "1.5" }, { "200%", "2" }, { "300%", "3" } } },
-	{ "OPACITY", "vr.crosshair_opacity", _vr_setting_real, 11, { { "0%", "0" }, { "10%", "0.1" }, { "20%", "0.2" }, { "30%", "0.3" }, { "40%", "0.4" }, { "50%", "0.5" }, { "60%", "0.6" }, { "70%", "0.7" }, { "80%", "0.8" }, { "90%", "0.9" }, { "100%", "1" } } },
-};
-
 static struct vr_menu_setting const vr_menu_graphics[] =
 {
 	{ "PRESET", "graphics.preset", _vr_setting_string, 5, { { "AUTO", "auto" }, { "LOW", "low" }, { "MEDIUM", "medium" }, { "HIGH", "high" }, { "MAX", "max" } } },
@@ -244,33 +250,24 @@ static struct vr_menu_setting const vr_menu_effects[] =
 	{ "REFRESH", "vr.refresh_rate", _vr_setting_real, 4, { { "72 HZ", "72" }, { "80 HZ", "80" }, { "90 HZ", "90" }, { "120 HZ", "120" } } },
 };
 
-/* test20c: the visible hand alone (never the gun) */
-static struct vr_menu_setting const vr_menu_hand_left[] =
+/* test20c/d: the visible hands (never the gun: one row turns both, the
+left mirrored; per-hand values stay in config.toml as vr.hand_left_* and
+vr.hand_right_*), then the held gun: its angle (shots and reticle follow)
+and its place in the hand (vr.gun_*, with vr.gun_anchor) */
+static struct vr_menu_setting const vr_menu_hands[] =
 {
-    { "PITCH", "vr.hand_left_pitch", _vr_setting_degrees, 0, { { NULL,NULL } } },
-    { "YAW", "vr.hand_left_yaw", _vr_setting_degrees, 0, { { NULL,NULL } } },
-    { "ROLL", "vr.hand_left_roll", _vr_setting_degrees, 0, { { NULL,NULL } } },
-    { "RESET LEFT HAND", "left", _vr_setting_reset_hand, 0, { { NULL,NULL } } },
-};
-
-static struct vr_menu_setting const vr_menu_hand_right[] =
-{
-    { "PITCH", "vr.hand_right_pitch", _vr_setting_degrees, 0, { { NULL,NULL } } },
-    { "YAW", "vr.hand_right_yaw", _vr_setting_degrees, 0, { { NULL,NULL } } },
-    { "ROLL", "vr.hand_right_roll", _vr_setting_degrees, 0, { { NULL,NULL } } },
-    { "RESET RIGHT HAND", "right", _vr_setting_reset_hand, 0, { { NULL,NULL } } },
-};
-
-/* test20c: the held gun alone, relative to the controller (shots follow it) */
-static struct vr_menu_setting const vr_menu_weapon[] =
-{
+    { "HAND PITCH", "pitch", _vr_setting_hand_degrees, 0, { { NULL,NULL } } },
+    { "HAND YAW", "yaw", _vr_setting_hand_degrees, 0, { { NULL,NULL } } },
+    { "HAND ROLL", "roll", _vr_setting_hand_degrees, 0, { { NULL,NULL } } },
+    { "RESET HANDS", "both", _vr_setting_reset_hand, 0, { { NULL,NULL } } },
     { "GUN PITCH", "vr.weapon_pitch", _vr_setting_degrees, 0, { { NULL,NULL } } },
     { "GUN YAW", "vr.weapon_yaw", _vr_setting_degrees, 0, { { NULL,NULL } } },
     { "GUN ROLL", "vr.weapon_roll", _vr_setting_degrees, 0, { { NULL,NULL } } },
     { "RESET GUN", "weapon", _vr_setting_reset_weapon, 0, { { NULL,NULL } } },
-    { "GUN RIGHT", "vr.weapon_offset_right", _vr_setting_centimetres, 0, { { NULL,NULL } } },
-    { "GUN UP", "vr.weapon_offset_up", _vr_setting_centimetres, 0, { { NULL,NULL } } },
-    { "GUN BACK", "vr.weapon_offset_back", _vr_setting_centimetres, 0, { { NULL,NULL } } },
+    { "GUN FORWARD", "vr.gun_forward", _vr_setting_centimetres, 0, { { NULL,NULL } } },
+    { "GUN UP", "vr.gun_up", _vr_setting_centimetres, 0, { { NULL,NULL } } },
+    { "GUN OUT", "vr.gun_out", _vr_setting_centimetres, 0, { { NULL,NULL } } },
+    { "GUN GRIP", "vr.gun_anchor", _vr_setting_boolean, 2, { { "ANCHORED", "true" }, { "CLASSIC", "false" } } },
 };
 
 static struct vr_menu_setting const vr_menu_align_left[] =
@@ -310,14 +307,12 @@ static struct vr_menu_page
 {
 	{ "CONTROLS", vr_menu_controls, NUMBEROF(vr_menu_controls) },
 	{ "BODY", vr_menu_body, NUMBEROF(vr_menu_body) },
-	{ "VR", vr_menu_vr, NUMBEROF(vr_menu_vr) },
+	{ "HANDS + GUN", vr_menu_hands, NUMBEROF(vr_menu_hands) },
+	{ "GAMEPLAY", vr_menu_vr, NUMBEROF(vr_menu_vr) },
 	{ "VEHICLES", vr_menu_vehicles, NUMBEROF(vr_menu_vehicles) },
 	{ "GRAPHICS", vr_menu_graphics, NUMBEROF(vr_menu_graphics) },
 	{ "DISPLAY", vr_menu_effects, NUMBEROF(vr_menu_effects) },
-	{ "CROSSHAIR", vr_menu_crosshair, NUMBEROF(vr_menu_crosshair) },
-	{ "LEFT HAND", vr_menu_hand_left, NUMBEROF(vr_menu_hand_left) },
-	{ "RIGHT HAND", vr_menu_hand_right, NUMBEROF(vr_menu_hand_right) },
-	{ "GUN", vr_menu_weapon, NUMBEROF(vr_menu_weapon) },
+	/* advanced: tracking corrections that move hand and gun together */
 	{ "CONTROLLER LEFT", vr_menu_align_left, NUMBEROF(vr_menu_align_left) },
 	{ "CONTROLLER RIGHT", vr_menu_align_right, NUMBEROF(vr_menu_align_right) },
 };
@@ -329,6 +324,52 @@ static struct vr_menu_page
 #define VR_MENU_SETTINGS_PER_SCREEN 8
 #define VR_MENU_PAGES(n) (((n) + VR_MENU_SETTINGS_PER_SCREEN - 1) / VR_MENU_SETTINGS_PER_SCREEN)
 
+
+/* a combined row's value, "key=value;key=value": whether every setting
+holds its value, or (write) each written; FALSE for a malformed value */
+static boolean vr_menu_multi(char const *values, boolean write, boolean *written)
+{
+	char pair[96];
+	char const *at = values;
+	boolean all = TRUE;
+
+	while (*at)
+	{
+		size_t length = strcspn(at, ";");
+		char *equals;
+
+		if (length >= sizeof(pair))
+			return FALSE;
+		memcpy(pair, at, length);
+		pair[length] = 0;
+		at += length + (at[length] == ';');
+		equals = strchr(pair, '=');
+		if (!equals)
+			return FALSE;
+		*equals = 0;
+		if (write)
+			*written = config_write_text(pair, equals + 1) && *written;
+		else if (!config_matches(pair, equals + 1))
+			all = FALSE;
+	}
+	return all;
+}
+
+/* both hands' angle on one axis, as the right hand's (the left's is its
+mirror image: the same pitch, yaw and roll the other way). Left-handed, the
+left hand's is shown, mirrored */
+static double vr_menu_hand_angle(char const *axis)
+{
+	char key[64];
+	double value, sign = strcmp(axis, "pitch") ? -1.0 : 1.0;
+	boolean left = config_boolean("vr.left_handed");
+
+	snprintf(key, sizeof(key), "vr.hand_%s_%s", left ? "left" : "right", axis);
+	value = config_real(key);
+	if (!isfinite(value))
+		value = 0.0;
+	return (left ? value * sign : value) + 0.0; /* never "-0" */
+}
 
 /* the setting's value now, as an index into its values (NONE: none of them) */
 static long vr_menu_value_index(
@@ -343,7 +384,12 @@ static long vr_menu_value_index(
 		switch (setting->type)
 		{
 		case _vr_setting_boolean:
+		case _vr_setting_handedness:
 			if (config_boolean(setting->key) == !strcmp(value, "true"))
+				return index;
+			break;
+		case _vr_setting_multi:
+			if (vr_menu_multi(value, FALSE, NULL))
 				return index;
 			break;
 		case _vr_setting_real:
@@ -808,7 +854,9 @@ boolean vr_menu_setting_text(
 		struct vr_menu_setting const *setting = &vr_menu_pages[page].settings[setting_index];
 		long value_index = vr_menu_value_index(setting);
 
-        if(setting->type == _vr_setting_degrees || setting->type == _vr_setting_centimetres || setting->type == _vr_setting_vehicle_centimetres) {
+        if(setting->type == _vr_setting_hand_degrees)
+            snprintf(line,sizeof(line),"%s: < %.0f DEG >",setting->label,vr_menu_hand_angle(setting->key));
+        else if(setting->type == _vr_setting_degrees || setting->type == _vr_setting_centimetres || setting->type == _vr_setting_vehicle_centimetres) {
             double value=config_real(setting->key); if(!isfinite(value)) value=0;
             snprintf(line,sizeof(line),"%s: < %.0f %s >",setting->label,
                 setting->type!=_vr_setting_degrees?value*100:value,
@@ -848,6 +896,17 @@ boolean vr_menu_setting_change(
         vr_reload_settings(); platform_log("vr: %s %.3f%s",setting->key,value,written?"":" (save failed)");
         return TRUE;
     }
+    if(setting->type == _vr_setting_hand_degrees) {
+        /* both hands at once, the left mirrored */
+        double value=vr_menu_hand_angle(setting->key), sign=strcmp(setting->key,"pitch")?-1.0:1.0;
+        char key[64];
+        value=step>0?(floor(value/5.0+0.00001)+1)*5.0:(ceil(value/5.0-0.00001)-1)*5.0;
+        value=fmax(-180.0,fmin(180.0,value));
+        snprintf(key,sizeof(key),"vr.hand_right_%s",setting->key); written=config_write_real(key,value);
+        snprintf(key,sizeof(key),"vr.hand_left_%s",setting->key); written=config_write_real(key,value*sign+0.0)&&written;
+        vr_reload_settings(); platform_log("vr: both hands %s %.1f (left %.1f)%s",setting->key,value,value*sign,written?"":" (save failed)");
+        return TRUE;
+    }
     if(setting->type == _vr_setting_flip_alignment) {
         double roll=config_real(setting->key);
         if(!isfinite(roll)) roll=0.0;
@@ -858,14 +917,18 @@ boolean vr_menu_setting_change(
     }
     if(setting->type == _vr_setting_reset_hand || setting->type == _vr_setting_reset_weapon) {
         static const char *const hand_axes[]={"pitch","yaw","roll"};
+        static const char *const hand_sides[]={"left","right"};
         static const char *const weapon_keys[]={"vr.weapon_pitch","vr.weapon_yaw","vr.weapon_roll",
+            "vr.gun_forward","vr.gun_up","vr.gun_out",
             "vr.weapon_offset_right","vr.weapon_offset_up","vr.weapon_offset_back"};
-        char key[64]; int a;
+        char key[64]; int a, h;
         written=TRUE;
         if(setting->type == _vr_setting_reset_hand) {
-            for(a=0;a<3;a++) { snprintf(key,sizeof(key),"vr.hand_%s_%s",setting->key,hand_axes[a]);
-                written=config_write_real(key,config_default_real(key))&&written; }
-        } else for(a=0;a<6;a++) written=config_write_real(weapon_keys[a],config_default_real(weapon_keys[a]))&&written;
+            /* key "left", "right" or "both" */
+            for(h=0;h<2;h++) if(!strcmp(setting->key,"both")||!strcmp(setting->key,hand_sides[h]))
+                for(a=0;a<3;a++) { snprintf(key,sizeof(key),"vr.hand_%s_%s",hand_sides[h],hand_axes[a]);
+                    written=config_write_real(key,config_default_real(key))&&written; }
+        } else for(a=0;a<(int)NUMBEROF(weapon_keys);a++) written=config_write_real(weapon_keys[a],config_default_real(weapon_keys[a]))&&written;
         vr_reload_settings();
         platform_log("vr: reset %s %s%s",setting->key,setting->type == _vr_setting_reset_hand ? "hand orientation" : "gun angle and place",
             written?"":" (save failed)"); return TRUE;
@@ -904,6 +967,26 @@ boolean vr_menu_setting_change(
 	case _vr_setting_boolean:
 		written = config_write_boolean(setting->key, !strcmp(value, "true"));
 		break;
+	case _vr_setting_multi:
+		written = TRUE;
+		if (!vr_menu_multi(value, TRUE, &written))
+			written = FALSE;
+		break;
+	case _vr_setting_handedness:
+	{
+		/* the gun's hand, and what was chosen for the old hand follows it:
+		vehicle steering and Move With (the sticks and face buttons mirror
+		through vr.mirror_controls) */
+		boolean left = !strcmp(value, "true");
+		char const *from = left ? "right" : "left", *to = left ? "left" : "right";
+
+		written = config_write_boolean(setting->key, left);
+		if (!strcmp(config_string("vr.vehicle_steering"), from))
+			written = config_write_string("vr.vehicle_steering", to) && written;
+		if (!strcmp(config_string("vr.move_relative"), from))
+			written = config_write_string("vr.move_relative", to) && written;
+		break;
+	}
 	case _vr_setting_real:
 	case _vr_setting_real_choice:
 		written = config_write_real(setting->key, atof(value));

@@ -30,6 +30,7 @@ built from the game's camera and the headset's pose (port/linux/src/vr.h).
 #include "halo_vr.h"
 #include "network_vr_pose.h"
 #include "vr_action_blend.h"
+#include "vr_gun_anchor.h"
 #include "../src/vr.h"
 #include "../src/port_config.h"
 
@@ -83,6 +84,9 @@ static struct
 	/* the camera the first-person weapon was posed from this frame */
 	struct render_camera weapon_camera;
 	boolean weapon_camera_valid;
+	/* how far the camera was pulled back out of a wall this frame
+	(weapon_out_of_walls); the anchored gun keeps it */
+	real_vector3d weapon_pullback;
 	/* the local player's seat (vr_update_seat): in a vehicle, its kind, and
 	the heading the view turns with (the vehicle's, plus the seat's own turn
 	from it) */
@@ -826,7 +830,8 @@ static void vr_pressure_buzz(int hand, real depth_metres);
 
 static void weapon_out_of_walls(
 	real_point3d *position,
-	real_vector3d const *forward)
+	real_vector3d const *forward,
+	real_vector3d *pullback)
 {
 	real units = vr_units_per_metre();
 	real_point3d head = vr_render.head_camera.position, muzzle;
@@ -845,6 +850,9 @@ static void weapon_out_of_walls(
 		position->x -= forward->i * back;
 		position->y -= forward->j * back;
 		position->z -= forward->k * back;
+		pullback->i = -forward->i * back;
+		pullback->j = -forward->j * back;
+		pullback->k = -forward->k * back;
 		/* the gun pushed into the wall, felt in the hands holding it */
 		if (units > 0.0f)
 		{
@@ -865,10 +873,11 @@ void vr_render_weapon_camera(
 
 	/* in the hand when it aims, else with the head */
 	vr_render.weapon_camera_valid = FALSE;
+	vr_render.weapon_pullback = (real_vector3d){ 0.0f, 0.0f, 0.0f };
 	if (vr_render.stereo && !vr_render.cinematic_view &&
 		vr_weapon_view(vr_render.game_camera_position.n, position.n, forward.n, up.n))
 	{
-		weapon_out_of_walls(&position, &forward);
+		weapon_out_of_walls(&position, &forward, &vr_render.weapon_pullback);
 		camera->position = position;
 		camera->forward = forward;
 		camera->up = up;
@@ -2461,7 +2470,7 @@ boolean vr_render_hands_only(void)
     return vr_render.stereo && !vr_render.cinematic_view && !strcmp(config_string("vr.body"), "hands");
 }
 
-/* Hands only, or floating hands: the arms' bones (not the hands, fingers or
+/* Hands Only (with any hand mode): the arms' bones (not the hands, fingers or
 gun) shrink to nothing. Test19 shrank each bone onto its own origin, so the
 glove's wrist vertices (shared with the forearm) were dragged toward the elbow
 and the hand looked cut off. Test20c gathers the arm onto a point 3.5 cm back
@@ -2470,7 +2479,7 @@ static void vr_hide_forearms(real_matrix4x3 *m, struct animation_graph *graph, s
 {
     short gun = vr_find_node(graph, "frame", "gun");
     real units = vr_units_per_metre();
-    if (!vr_render_hands_only() && vr_hand_tracking_mode() != 1) return;
+    if (!vr_render_hands_only()) return;
     for (int side = 0; side < 2; side++) {
         short *chain = side ? right : left;
         real_point3d centre = m[chain[2]].position;
@@ -2508,6 +2517,55 @@ static void vr_float_shoulder(real_matrix4x3 const *m, short chain[3], real_poin
     shoulder->x = target->x - reach.i * distance;
     shoulder->y = target->y - reach.j * distance;
     shoulder->z = target->z - reach.k * distance;
+}
+
+/* the held gun anchored to its controller (vr_gun_anchor.h): the gun
+hand's wrist goes where the empty hand's wrist would be (7.5 cm behind the
+grip along the hand), moved by the player's gun position (vr.gun_*:
+forward, up, outward, metres) and by any pullback out of a wall */
+static void vr_anchor_gun(real_matrix4x3 *matrices, struct animation_graph *graph,
+	short wrist, unsigned native_arms, real const gun_position[3])
+{
+	static struct vr_gun_anchor anchor = { .current = -1 };
+	real units = vr_units_per_metre();
+	int hand = vr_weapon_hand(), axis;
+	real outward = hand == 1 ? -1.0f : 1.0f;
+	real_point3d grip, target;
+	real_vector3d f, u, forward, left, up;
+	float axes[3][3], measured[3], move[3];
+	short n;
+
+	if (vr_hand_empty() || !vr_render.weapon_camera_valid || !(units > 0.0f) ||
+		!vr_hand_pose(hand, vr_render.game_camera_position.n, grip.n, f.n, u.n) || !vr_unit_vector(&f))
+	{
+		vr_gun_anchor_reset(&anchor);
+		return;
+	}
+	forward = vr_render.weapon_camera.forward;
+	up = vr_render.weapon_camera.up;
+	cross_product3d(&up, &forward, &left);
+	if (!vr_unit_vector(&forward) || !vr_unit_vector(&left))
+		return;
+	cross_product3d(&forward, &left, &up);
+	for (axis = 0; axis < 3; axis++)
+	{
+		target.n[axis] = grip.n[axis] - f.n[axis] * 0.075f * units + vr_render.weapon_pullback.n[axis] +
+			(forward.n[axis] * gun_position[0] + up.n[axis] * gun_position[1] +
+			left.n[axis] * outward * gun_position[2]) * units;
+		measured[axis] = target.n[axis] - matrices[wrist].position.n[axis];
+		axes[0][axis] = forward.n[axis];
+		axes[1][axis] = left.n[axis];
+		axes[2][axis] = up.n[axis];
+	}
+	if (!vr_gun_anchor_update(&anchor, graph, hand, axes, measured, (native_arms & 2) != 0,
+		vr_pose_time(), 0.6f * units, move))
+		return;
+	for (n = 0; n < graph->nodes.count && n < MAXIMUM_NODES_PER_ANIMATION; n++)
+	{
+		matrices[n].position.x += move[0];
+		matrices[n].position.y += move[1];
+		matrices[n].position.z += move[2];
+	}
 }
 
 real_matrix4x3 *vr_render_body_matrices(long object_index)
@@ -2753,7 +2811,8 @@ void vr_render_first_person_ik(
 	struct animation_graph *graph, long unit, long weapon, unsigned native_arms)
 {
 	static char const *const arms_setting_names[] = { "ik", "hidden", "animated" };
-	static int arms = -1, generation;
+	static int arms = -1, generation, gun_anchor;
+	static real gun_position[3];
 	static struct animation_graph *logged;
 	short left[NUMBER_OF_VR_ARM_BONES], right[NUMBER_OF_VR_ARM_BONES];
 	int side, bone, draw_arms;
@@ -2775,6 +2834,16 @@ void vr_render_first_person_ik(
 			;
 		if (arms == 3)
 			arms = 0;
+		gun_anchor = config_boolean("vr.gun_anchor");
+		gun_position[0] = PIN((real)config_real("vr.gun_forward"), -0.2f, 0.2f);
+		gun_position[1] = PIN((real)config_real("vr.gun_up"), -0.2f, 0.2f);
+		gun_position[2] = PIN((real)config_real("vr.gun_out"), -0.2f, 0.2f);
+		for (side = 0; side < 3; side++)
+			if (!isfinite(gun_position[side]))
+				gun_position[side] = 0.0f;
+		platform_log("vr: gun %s, position forward/up/out %.3f/%.3f/%.3f m",
+			gun_anchor ? "anchored to the controller" : "classic (camera-placed)",
+			gun_position[0], gun_position[1], gun_position[2]);
 	}
 	if (!vr_render.stereo || vr_render.cinematic_view || !vr_hand_aiming() || !graph ||
 		graph->nodes.count <= 0 || graph->nodes.count > MAXIMUM_NODES_PER_ANIMATION)
@@ -2850,6 +2919,9 @@ void vr_render_first_person_ik(
 		}
 	}
 
+    /* the gun in the hand before anything reaches for it */
+    if (gun_anchor)
+        vr_anchor_gun(matrices, graph, right[_vr_arm_hand], native_arms, gun_position);
     draw_arms = vr_render_hands_only() ? 0 : arms;
     if (draw_arms == 2) {
         vr_avatar_hands[0].valid = vr_avatar_hands[1].valid = FALSE;
@@ -2958,7 +3030,9 @@ void vr_render_first_person_ik(
 		mirrored, so that arm is the left one and the other reaches the right
 		controller */
 		int weapon_hand = vr_weapon_hand();
-		int tracking = vr_hand_tracking_mode();
+		/* 0 body IK; floating: 1 hands alone (Body: Hands Only), 2 with the
+		arms drawn from a floating shoulder */
+		int tracking = vr_hand_tracking_mode() ? (vr_render_hands_only() ? 1 : 2) : 0;
 
 		for (side = 0; side < 2; side++)
 		{

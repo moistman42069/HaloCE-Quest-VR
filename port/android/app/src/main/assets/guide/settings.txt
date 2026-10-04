@@ -443,7 +443,7 @@ stick click crouch, menu pause, view back (held a second, recentre).
 
 vr.move_relative [string]
 Default: "head"
-What the left stick moves you relative to: "head", or where the
+What the move stick moves you relative to: "head", or where the
 "left" or "right" controller points.
 
 vr.aim [string]
@@ -569,8 +569,21 @@ Default is grip: a free hand can touch the gun without attaching.
 
 vr.left_handed [boolean]
 Default: false
-Hold the weapon in the left hand (fire, grenade and zoom swap triggers
-and bumpers). Palms together and the other hand's grip also swaps.
+Left-handed play: the gun starts in the left hand (fire, grenade and zoom swap triggers
+and bumpers) and, with vr.mirror_controls "auto", the sticks and face buttons mirror.
+Changing it in the menu also mirrors vehicle steering and Move With when they used a
+hand. Palms together and the other hand's grip still pass the gun across.
+
+vr.mirror_controls [string]
+Default: "auto"
+"auto": with vr.left_handed, move on the right stick and turn on the left, and the
+face buttons swap hands (jump and reload on the left controller). "off": the standard
+layout (move on the left stick) whichever hand holds the gun.
+
+vr.handedness_applied [boolean]
+Default: false
+Internal one-time migration (test20d): a config already left-handed keeps standard
+sticks and buttons (vr.mirror_controls "off").
 
 vr.melee [string]
 Default: "impact"
@@ -749,9 +762,9 @@ Use right grip pose for aim too. Optional controller compatibility mode; false p
 vr.hand_tracking [string]
 Default: "ik"
 How tracked hands follow the controllers (with vr.arms "ik"): "ik" body-IK arms reach
-from the shoulders; "floating" hands go exactly where the controllers are, arms hidden;
-"floating_arms" hands go exactly to the controllers and arms hang from a floating
-shoulder that never pulls them back. Independent of vr.body visibility.
+from the shoulders; "floating" hands go exactly where the controllers are and the arms
+hang from a shoulder that follows them (hidden with vr.body "hands"). The older
+"floating_arms" becomes "floating".
 
 vr.hand_left_pitch [real]
 Default: -70.0
@@ -796,18 +809,39 @@ Default: false
 Internal one-time migration (test20c): hand-comfort rotations saved in vr.align_* move to
 vr.hand_*, so the gun returns to the controller's aim. Roll flips (+-180) stay.
 
+vr.gun_anchor [boolean]
+Default: true
+Anchors the held gun to the controller: the gun hand's wrist sits where the empty hand's
+wrist would, for every weapon, and the gun turns about the hand. false restores the
+older camera placement (each weapon's animation decides where the gun sits).
+
+vr.gun_forward [real]
+Default: 0.0
+With vr.gun_anchor: moves the held gun along its barrel, in metres (-0.2..0.2;
+negative pulls it back toward you).
+
+vr.gun_up [real]
+Default: 0.0
+As vr.gun_forward, up (negative is down).
+
+vr.gun_out [real]
+Default: 0.0
+As vr.gun_forward, away from your body's middle (right for the right hand, left for
+the left hand; negative is inward).
+
 vr.weapon_offset_right [real]
 Default: 0.10
-With vr.aim "hand": how far right of the game's eye the weapon's model
-holds its grip, in metres, so the grip sits in the hand.
+Advanced. How far right of the weapon camera the gun hand's grip sits, in metres
+(placing that camera). With vr.gun_anchor the gun stays in the hand whatever this is; it
+moves only the point the wall check measures from. Adjust the gun with vr.gun_* instead.
 
 vr.weapon_offset_up [real]
 Default: -0.12
-As vr.weapon_offset_right, above the eye (negative is below).
+Advanced; as vr.weapon_offset_right, above the camera (negative is below).
 
 vr.weapon_offset_back [real]
 Default: -0.20
-As vr.weapon_offset_right, behind the eye (negative is ahead).
+Advanced; as vr.weapon_offset_right, behind the camera (negative is ahead).
 
 vr.snap_turn [real]
 Default: 0.0

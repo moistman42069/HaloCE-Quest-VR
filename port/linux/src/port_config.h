@@ -27,6 +27,11 @@ int config_write_boolean(const char *name, int value);
 backslashes in it) */
 int config_write_real(const char *name, double value);
 int config_write_string(const char *name, const char *value);
+/* a setting compared with, or written from, its value as text ("true",
+"0.2", "floating"), as the setting's own type; for menu rows that set
+several settings at once */
+int config_matches(const char *name, const char *text);
+int config_write_text(const char *name, const char *text);
 
 #ifdef HALO_VR
 void config_vr_vehicle_defaults(void);

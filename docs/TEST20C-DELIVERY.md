@@ -1,5 +1,7 @@
 # Test20c — 1.0.2 candidate (private): hand/gun calibration and floating hands
 
+> **Superseded by [test20d](TEST20D-DELIVERY.md)** (code 24). Owner tested this pair on 2026-10-04: migration worked; the held pistol sat ahead of and above the real controller and swung around a point behind the hand, addressed in test20d.
+
 Not a release. v1.0.1 was withdrawn; the public release is v1.0.0. Supersedes
 test20b (code 22). Do not publish without explicit owner approval. Full
 evidence and status: [TEST20C-PROGRESS.md](TEST20C-PROGRESS.md).

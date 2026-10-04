@@ -4,7 +4,7 @@
 
 The owner **deleted the v1.0.1 GitHub release** because its Quest VR build had a severe performance regression. Its source (runtime `bc1f04465f68e3b14f1bf7de306854ae8cb36dc1`) remains on `main` but is **not an accepted or working baseline**; never republish it. The current public release is **v1.0.0** (exact test18 APKs, 1.0-test18 / code 19). Preserve v1.0.0 and test14 unchanged. 1.0.1 installs carry code 20, so every future APK needs code >20; never offer v1.0.0 to them as an update.
 
-Active continuation: `docs/TEST20-PROGRESS.md` (measured regression, cause, fix, armed/unarmed calibration finding, status table) and `docs/TEST20C-PROGRESS.md` / `docs/TEST20C-DELIVERY.md` (current candidate **test20c, 1.0.2 / code 23**: hand/gun calibration split, floating hands and arms; supersedes test20b code 22 and test20 code 21). Performance fix confirmed on device with test20b. Private candidates; publication needs explicit owner approval after device testing. Unresolved test19 device cases remain in `docs/TEST19-COMMUNITY-REVIEW.md`.
+Active continuation: `docs/TEST20-PROGRESS.md` (measured regression, cause, fix, armed/unarmed calibration finding, status table) and `docs/TEST20D-PROGRESS.md` / `docs/TEST20D-DELIVERY.md` (current candidate **test20d, 1.0.2 / code 24**: gun anchored to the controller, left-handed controls, simplified settings; supersedes test20c code 23 — see `docs/TEST20C-PROGRESS.md` for the hand/gun calibration split — test20b code 22 and test20 code 21). Performance fix confirmed on device with test20b. Private candidates; publication needs explicit owner approval after device testing. Unresolved test19 device cases remain in `docs/TEST19-COMMUNITY-REVIEW.md`.
 
 ## Historical 1.0.1 and 1.0 notes
 

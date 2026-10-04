@@ -6,8 +6,8 @@ These mappings follow the shipped code. Start with Controls = VR and a standard 
 
 | Input | Action |
 | --- | --- |
-| Left stick | Move/strafe relative to Head, Left Hand or Right Hand setting |
-| Right stick | Smooth/snap turn; vertical input can satisfy native look/tutorial prompts |
+| Left stick | Move/strafe relative to Head, Left Hand or Right Hand setting (right stick when left-handed, below) |
+| Right stick | Smooth/snap turn; vertical input can satisfy native look/tutorial prompts (left stick when left-handed) |
 | Weapon-hand trigger | Fire the held gun |
 | Other-hand trigger | Zoom; Scope places the zoomed view at the weapon |
 | Right A | Jump / confirm |
@@ -25,9 +25,9 @@ These mappings follow the shipped code. Start with Controls = VR and a standard 
 | Weapon pointer + trigger in menus | Select; right B goes back |
 | Off hand near head | Flashlight gesture when enabled |
 
-Left-handed mode changes weapon/off-hand trigger roles; Touch face-button sides are not all mirrored. Palms together plus the other hand's grip can transfer handedness. Controllers with bumpers/View use weapon-hand bumper for grenade, off-hand bumper for flashlight, and View tap/hold for Back/recenter. Use the Touch-specific table above on Quest.
+**Left-handed (test20d):** Controls → **Handedness: Left** puts the gun in the left hand and, with **Mirror Controls: Auto** (default), mirrors the whole table above: move on the right stick, turn on the left, jump on left X, reload/use on left Y, switch weapons on right B, grenades on right A, crouch on the right stick click, melee on the left stick click, and Back in menus on left Y. Triggers, grips, zoom, flashlight, holsters and the menu pointer already follow the gun hand. Switching Handedness in the menu also moves vehicle **Steering** and **Move With** to the other hand when they were set to a hand. **Mirror Controls: Off** keeps the right-handed button layout with the gun in the left hand. A config that was already left-handed before test20d keeps its standard buttons (Mirror Controls Off) until you change it. Palms together plus the other hand's grip still pass the gun across. Controllers with bumpers/View use weapon-hand bumper for grenade, off-hand bumper for flashlight, and View tap/hold for Back/recenter. Use the Touch-specific table above on Quest.
 
-**Physical weapons is the offline default. MP Physical defaults Off, so network play uses Locked weapon holding and its grenade inputs even if Weapons is set to Physical.** Enabling MP Physical opts into physical holding/drop behavior; this is independent of avatar visibility.
+**Physical weapons is the offline default. Weapons: Physical keeps network play on Locked weapon holding and its grenade inputs; Physical + MP opts multiplayer into physical holding/drop behavior.** This is independent of avatar visibility.
 
 Physical weapons is the local default. A gun supplied on load/pickup stays supported until the first grip. Two Hands = Grip requires a squeeze near the support area; simply touching the barrel does not attach. Auto restores proximity attachment; Off disables it. The support point remains fixed until release.
 
@@ -36,7 +36,7 @@ Physical weapons is the local default. A gun supplied on load/pickup stays suppo
 - Crouch compares height against the last recenter; default 35 cm, zero disables physical crouch.
 - Flashlight gesture: off hand within 20 cm of the head by default. Button mode disables proximity activation.
 - Shoulder/hip holsters: default region size 20 cm, with entry haptics. Locked and Physical modes use them differently as above.
-- Arm Run defaults off. Pumping or two-hand weapon bob supplies forward movement with a neutral stick. Lower Run Effort makes activation easier. Strong offline effort can reach 1.5x speed; network speed stays stock. Stick input wins.
+- Arm Run defaults off. Pumping or two-hand weapon bob supplies forward movement with a neutral stick. A lower Arm Run number (Easy 0.3) makes activation easier. Strong offline effort can reach 1.5x speed; network speed stays stock. Stick input wins.
 - Impact melee sweeps the hand/weapon; Swing requests native melee. Default threshold 2 m/s, zero disables motion melee. The button still works. Network clients use Swing.
 - Local finger poses use controller touch/trigger/grip sensors. Free-hand point/thumb/fist and a held gesture are available; this is not optical tracking of individual fingers.
 - Full-body IK infers untracked joints. Legs + Arms hides the local chest and retains legs/first-person arms. Supporting peers can still see the full body.
@@ -47,20 +47,22 @@ Open the stock campaign pause menu, then **VR Settings**. Screens have four rows
 
 | Category | Menu options |
 | --- | --- |
-| Controls | VR / Xbox layout; Hand / Head aim; Right / Left gun hand; Smooth / Snap 30 / Snap 45; Turn Speed 45–300 degrees/s; Move With Head / Left Hand / Right Hand; Two Hands Grip / Auto / Off; Weapons Locked / Physical; Holsters Off / On |
-| Body | Arms + Hands / Full / Legs + Arms / Hands Only; Arms IK / Hidden / Animated; Fingers Off / Tracked; Hands Body IK / Floating / Float + Arms; Room-scale Off / On; Crouch Depth Off or 5–40 cm; Arm Run Off / On; Run Effort 0.2–1.2; Melee Impact / Swing; Melee Speed Off or 1.0–3.6 m/s |
-| VR | Haptics 0–100%; Flashlight Gesture / Button; Holster Size 10–40 cm; Scope Off / On; Cutscenes Immersive / 3D Screen / Flat; MP Physical Off / On; Close Contact Off / On |
+Test20d gives each decision one row. Rows that only mattered together with another are combined: Turning includes the turn speed, Holsters the holster size, Weapons the multiplayer choice, Arm Run the effort, and Hands the old Arms row. The Crosshair rows moved to Gameplay, and the Left Hand, Right Hand and Gun pages became **Hands + Gun**. A combination set by hand in `config.toml` that matches no choice shows as **CUSTOM**. Pressing the row picks the first choice.
+
+| Category | Menu options |
+| --- | --- |
+| Controls | **Handedness** Right / Left; **Mirror Controls** Auto / Off; **Turning** Smooth 60–300 degrees/s or Snap 30 / 45 / 90; Move With Head / Left Hand / Right Hand; Two Hands Grip / Auto / Off; **Weapons** Locked / Physical / Physical + MP; **Holsters** Off or 10–40 cm; Aim Hand / Head; Controls VR / Xbox |
+| Body | Body Arms + Hands / Full / Legs + Arms / Hands Only; **Hands** Body IK / Floating / Animated / Gun Only; Fingers Off / Tracked; Room-scale Off / On; Crouch Depth Off or 5–40 cm; **Arm Run** Off or effort 0.3–1.2; Melee Impact / Swing; Melee Speed Off or 1.0–3.6 m/s |
+| Hands + Gun | Hand Pitch / Yaw / Roll (both hands, left mirrored; default −70 / 0 / 0); Reset Hands; Gun Pitch / Yaw / Roll (default 0); Reset Gun; Gun Forward / Up / Out ±20 cm; Gun Grip Anchored / Classic |
+| Gameplay | Haptics 0–100%; Flashlight Gesture / Button; Scope Off / On; Cutscenes Immersive / 3D Screen / Flat; Close Contact Off / On; Crosshair Native / Off; Crosshair Size 25–300%; Crosshair Opacity 0–100% |
 | Vehicles | Third Person (default) / First Person; Steering Right Hand (default) / Left Hand / Head / Stick; global and Warthog/Ghost/Banshee/Scorpion/Pelican Up/Forward/Right seat offsets ±50 cm |
 | Graphics | Preset Auto / Low / Medium / High / Max; Resolution Auto / 70 / 85 / 100 / 115 / 130%; Shadows, Lights, Specular, Reflections, Bump Maps, Grass, Fog Layers: Auto / On / Off |
 | Display | Decals, Particles, Contrails, Weather, Lens Flares, Camo: Auto / On / Off; Refresh 72 / 80 / 90 / 120 Hz |
-| Crosshair | Native / Off; Size 25–300%; Opacity 0–100% |
-| Left Hand / Right Hand | Visible hand only: Pitch / Yaw / Roll ±180° in 5° steps (default −70 / 0 / 0); Reset |
-| Gun | Gun Pitch / Yaw / Roll ±180° (default 0); Gun Right / Up / Back ±20 cm; Reset Gun |
-| Controller Left / Right | Tracking correction for hand and gun together (see below) |
+| Controller Left / Right | Advanced tracking correction for hand and gun together (see below) |
 
-Important defaults: body `legs`, arms `ik`, hands `ik` (Body IK); hand pitch −70°; gun angle 0; fingers/room-scale/holsters/scope on; hand aim/right gun hand; two-hand Grip; Physical weapons; Arm Run off; MP Physical off; Close Contact on; smooth turn 120 degrees/s; refresh request 72 Hz. Saved values override defaults. Hands Only forces hand IK even if Arms was set to hidden/animated.
+Important defaults: right-handed with Mirror Controls Auto; body `legs`; Hands Body IK; hand pitch −70°; gun angle 0, Gun Grip Anchored, gun position 0; fingers/room-scale/scope on; holsters 20 cm; hand aim; two-hand Grip; Physical weapons (not in multiplayer); Arm Run off; Close Contact on; smooth turn 120 degrees/s; refresh request 72 Hz. Saved values override defaults. Hands Only forces hand IK even if Hands was set to Animated or Gun Only.
 
-Close Contact reduces only the offline local VR capsule radius: up to 15%, at most 5 cm, never below 18 cm. Solid collision and height remain. MP Physical concerns weapon holding/drop behavior, not visual avatar sharing; peers may not reproduce physical drops/pickups correctly.
+Close Contact reduces only the offline local VR capsule radius: up to 15%, at most 5 cm, never below 18 cm. Solid collision and height remain. Physical + MP concerns weapon holding/drop behavior, not visual avatar sharing; peers may not reproduce physical drops/pickups correctly.
 
 Auto graphics effects follow the preset. Resolution is relative to runtime eye targets. Refresh requests a supported rate; it does not guarantee frame timing. The simulation remains 30 Hz with interpolated rendering.
 
@@ -89,25 +91,28 @@ validation remain pending. [Inherited keyboard/mouse mappings](../port/linux/REA
 
 Quit before external edits. In `[vr]`, `body = "legs"` explicitly selects the default; alternatives: `arms`, `full`, `hands`. Generated comments and [port_config.c](../port/linux/src/port_config.c) document all keys. Advanced settings include HUD/screen size/distance, world scale, scope size, weapon offsets, cinematic separation/convergence and diagnostics. Diagnostic switches are for development. See [the player guide](PLAYER-GUIDE.md) for paths/backups.
 
-## Hand, gun and controller calibration (test20c)
+## Hand, gun and controller calibration (test20c, test20d)
 
 Three separate things can be adjusted in Pause > VR Settings. Each changes only what its name says:
 
-| Page | Changes | Never changes |
+| Rows | Changes | Never changes |
 | --- | --- | --- |
-| **Left Hand / Right Hand** | How the visible empty (or free) hand sits on its controller: Pitch / Yaw / Roll. Default **−70 / 0 / 0**, taken from the owner's 2026-10-04 calibration video, so the glove lines up with a real hand holding a Touch controller. | The gun, its shots, the reticle, gestures |
-| **Gun** | The one-handed gun's angle on the controller (Gun Pitch / Yaw / Roll, default 0) and where its grip sits in the hand (Gun Right / Up / Back). Shots and the reticle turn with the gun, so the barrel and the bullets agree. In the left hand the angle is mirrored automatically. With both hands on the gun, the line between the hands aims it, as before. | The empty hands |
-| **Controller Left / Right** | Tracking correction for a misreported controller: rotates/moves **hand and gun together** (one rigid correction since test20b). Flip Roll 180, Aim Source, Reset. Normally leave at zero. | — |
+| **Hands + Gun → Hand Pitch / Yaw / Roll** | How the visible empty (or free) hands sit on the controllers. One row turns both hands; the left is the mirror image (same pitch, opposite yaw and roll). Default **−70 / 0 / 0**, taken from the owner's 2026-10-04 calibration video, so the glove lines up with a real hand holding a Touch controller. Different values per hand can still be set in `config.toml` (`vr.hand_left_*`, `vr.hand_right_*`). | The gun, its shots, the reticle, gestures |
+| **Hands + Gun → Gun rows** | Gun Pitch / Yaw / Roll: the one-handed gun's angle on the controller (default 0). Shots and the reticle turn with the gun, mirrored for the left hand. With both hands on the gun, the line between the hands aims it, as before. Gun Forward / Up / Out: where the gun sits in the hand (default 0; Out means away from your body's middle, so it mirrors for the left hand). Gun Grip: Anchored (default) or Classic (below). | The empty hands |
+| **Controller Left / Right** | Advanced tracking correction for a misreported controller: rotates/moves **hand and gun together** (one rigid correction since test20b). Flip Roll 180, Aim Source, Reset. Normally leave at zero. | — |
 
-**Upgrading:** the first launch of test20c moves any rotation you saved on the old Calibrate / Align pages into the matching **Hand** page (that was what you were adjusting) and clears it from the controller correction, so the gun points with the controller again. A Roll near ±180 (the firmware flip fix) stays on the Controller page. Each game-data set has its own settings file, so this happens per set.
+**Gun anchored to the controller (test20d).** The first-person gun is drawn from a "weapon camera" placed 20 cm behind, 12 cm above and 10 cm beside the controller's grip. Each weapon's animation then puts the gun hand somewhere in front of that camera, so where the gun sat in your hand depended on the weapon. The pistol sat ahead of, above and inward of the real controller in the owner's passthrough video, and because it turned around the camera rather than your hand, it swung as you turned your wrist. With **Gun Grip: Anchored**, every frame the whole first-person model (gun, hands and arms together) moves so that the gun hand's wrist is exactly where your empty hand's wrist is. The gun then turns about your hand. This works the same way for every weapon. Nothing is tuned per weapon: each weapon's own animation decides how the gun sits in the hand, and the anchor only moves that hand to your controller. During reload, melee, grenade throws and drawing a weapon, Halo's animation plays around your hand, and the gun returns to it within about 0.05 s afterwards. Pulling the gun back from a wall still works. **Classic** restores the older placement for comparison. The legacy `vr.weapon_offset_*` keys only position the weapon camera now; they no longer move an anchored gun.
+
+**Upgrading:** test20c moved any rotation you saved on the old Calibrate / Align pages into the hand rotation, once. Test20d keeps every saved value. Your Gun Pitch / Yaw / Roll stay as you set them, but they were tuned while the gun sat in the wrong place, so use **Reset Gun** before judging the new grip. Each game-data set has its own settings file, so this happens per set.
 
 **Hand tracking** (Body page → **Hands**), separate from what body is shown:
 
 - **Body IK** (default): unchanged. Arms reach from the body's shoulders; with Full or Legs + Arms the hands follow the body solution.
-- **Floating:** each free hand goes exactly where its controller is, with no arm solve, reach limit or shoulder pull. Arms are hidden; the glove cuff closes just behind the wrist. Torso and legs still follow the Body choice.
-- **Float + Arms:** hands go exactly to the controllers and arms are drawn, hanging from a shoulder that floats with the hand (it stays at the body's shoulder within reach and slides along beyond it), so the arm never pulls the hand back.
+- **Floating:** hands go exactly where the controllers are, with no reach limit or shoulder pull. If the Body setting shows arms, they hang from a shoulder that floats with the hand (it stays at the body's shoulder within reach and slides along beyond it). With **Body: Hands Only** you get floating hands alone, with the glove cuff closed just behind the wrist. Test20c's separate Floating and Float + Arms are now this one choice, and a saved `floating_arms` becomes `floating`.
+- **Animated:** Halo's own arm animation (the old Arms = Animated); the gun is still anchored.
+- **Gun Only:** arms and hands hidden (the old Arms = Hidden).
 
-In every mode, a held gun stays in the gun hand, the support hand stays locked to the gun while gripping, and reload/grenade/melee animations take over the hands as before. Hand tracking needs **Arms = IK** (the default); Arms Hidden/Animated keep their behaviour. **Hands Only** now gathers the hidden arm behind each wrist instead of toward the elbow, so the glove no longer looks cut off. **Body** and **Arms** never change calibration; **Weapons** (Locked/Physical) changes weapon handling only.
+In every mode, a held gun stays in the gun hand, the support hand stays locked to the gun while gripping, and reload/grenade/melee animations take over the hands as before. **Hands Only** gathers the hidden arm behind each wrist instead of toward the elbow, so the glove no longer looks cut off. **Body** and **Hands** never change calibration; **Weapons** (Locked/Physical) changes weapon handling only.
 
 ### Controller Left / Right details (test15)
 

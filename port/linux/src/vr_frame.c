@@ -75,8 +75,13 @@ static struct
 	and the one-handed gun's on the aim (vr.weapon_*, mirrored for the left
 	hand); separate, so a comfortable hand never tilts the gun */
 	float hand_rotation[2][4], weapon_rotation[2][4];
-	/* vr.hand_tracking: 0 body IK, 1 floating hands, 2 floating hands and arms */
+	/* vr.hand_tracking: 0 body IK, 1 floating (test20d: the arms drawn from
+	a floating shoulder unless the body shows hands only; the older
+	"floating_arms" is the same) */
 	int hand_tracking;
+	/* test20d: left-handed controls (vr.left_handed with vr.mirror_controls
+	"auto"): the sticks trade jobs and the face buttons swap hands */
+	int controls_mirrored;
 	/* the aim this frame: the right controller's, or with both hands on
 	the gun the line from the right to the left (vr.two_handed) */
 	struct halo_xr_pose aim_pose;
@@ -309,6 +314,32 @@ static void migrate_calibration_split(void)
 		config_write_boolean("vr.calibration_split_applied", 1);
 }
 
+/* Test20d: left-handed play now also mirrors the sticks and face buttons
+(vr.mirror_controls "auto"). Someone already playing left-handed keeps the
+layout they learned: once per config their controls stay standard. The old
+"floating_arms" hand mode is now plain "floating" (the arms follow vr.body). */
+static void migrate_handedness(void)
+{
+	int ok = 1;
+
+	if (!strcmp(config_string("vr.hand_tracking"), "floating_arms"))
+	{
+		ok = config_write_string("vr.hand_tracking", "floating");
+		platform_log("vr: hand tracking floating_arms is now floating (arms follow the Body setting)%s",
+			ok ? "" : " (save failed)");
+	}
+	if (config_boolean("vr.handedness_applied"))
+		return;
+	if (config_boolean("vr.left_handed"))
+	{
+		ok = config_write_string("vr.mirror_controls", "off") && ok;
+		platform_log("vr: left-handed config kept on standard sticks and buttons (Controls > Mirror Controls: Auto mirrors them)%s",
+			ok ? "" : " (save failed)");
+	}
+	if (ok)
+		config_write_boolean("vr.handedness_applied", 1);
+}
+
 void vr_reload_settings(void)
 {
 	static int left_handed = -1;
@@ -346,8 +377,8 @@ void vr_reload_settings(void)
 		for (vr.hand_tracking = 0; vr.hand_tracking < 3 &&
 			strcmp(config_string("vr.hand_tracking"), tracking[vr.hand_tracking]); vr.hand_tracking++)
 			;
-		if (vr.hand_tracking == 3)
-			vr.hand_tracking = 0;
+		/* "floating_arms" (test20c) is floating; unknown is body IK */
+		vr.hand_tracking = vr.hand_tracking == 0 || vr.hand_tracking == 3 ? 0 : 1;
 		platform_log("vr: gun pitch/yaw/roll %.1f/%.1f/%.1f degrees offset %.3f/%.3f/%.3f m; hand tracking %s",
 			weapon[0], weapon[1], weapon[2], vr.weapon_offset[0], vr.weapon_offset[1], vr.weapon_offset[2],
 			tracking[vr.hand_tracking]);
@@ -411,6 +442,9 @@ void vr_reload_settings(void)
 		left_handed = config_boolean("vr.left_handed");
 		vr.weapon_hand = left_handed ? 0 : 1;
 	}
+	vr.controls_mirrored = left_handed && strcmp(config_string("vr.mirror_controls"), "off") != 0;
+	platform_log("vr: %s-handed; sticks and face buttons %s", left_handed ? "left" : "right",
+		vr.controls_mirrored ? "mirrored (move on the right stick, turn on the left)" : "standard (move on the left stick)");
 	vr.melee_speed = (float)config_real("vr.melee_speed");
 	vr.melee_impact = !strcmp(config_string("vr.melee"), "impact");
 	vr.fingers = config_boolean("vr.fingers");
@@ -500,7 +534,7 @@ void vr_initialize(void)
 		return;
 	vr.initialized = 1;
 	config_vr_vehicle_defaults();
-	platform_log("vr: HaloCE Quest test20c candidate (separate hand and gun calibration, floating hands and arms, hands-only cuffs, 32 MB Safe stream)");
+	platform_log("vr: HaloCE Quest test20d candidate (gun anchored to the controller, left-handed controls, simplified settings)");
 	if (!config_boolean("vr.enabled"))
 	{
 		platform_log("vr: off (vr.enabled)");
@@ -532,6 +566,7 @@ void vr_initialize(void)
 	vr.snap_armed = 1;
 	vr.weapon_hand = config_boolean("vr.left_handed") ? 0 : 1;
 	migrate_calibration_split();
+	migrate_handedness();
 	vr_reload_settings();
 	vr.zoom_level = -1;
 	vr.flashlight_armed = 1;
@@ -731,7 +766,10 @@ back */
 static void layout_controls(void)
 {
 	static const float zoom_on = 0.6f, zoom_off = 0.45f;
-	unsigned int right = vr.frame.hand_buttons[1], left = vr.frame.hand_buttons[0];
+	/* "right" is the major hand's buttons, "left" the other's: mirrored
+	for left-handed play (vr.controls_mirrored) */
+	int major = vr.controls_mirrored ? 0 : 1;
+	unsigned int right = vr.frame.hand_buttons[major], left = vr.frame.hand_buttons[1 - major];
 	unsigned int buttons = 0;
 	double seconds = vr.frame.predicted_display_period * 1e-9;
 
@@ -1324,6 +1362,18 @@ static int frame_begin(void)
 		vr.room_previous[0] = vr.room_now[0] = vr.frame.head.position[0];
 		vr.room_previous[1] = vr.room_now[1] = vr.frame.head.position[2];
 		vr.room_held = 1;
+	}
+	/* left-handed (vr.controls_mirrored): the sticks trade jobs, so the
+	off hand moves and the gun hand turns; their clicks follow with the
+	face buttons (layout_controls) */
+	if (vr.controls_mirrored)
+	{
+		float move[2] = { vr.frame.thumb[0], vr.frame.thumb[1] };
+
+		vr.frame.thumb[0] = vr.frame.thumb[2];
+		vr.frame.thumb[1] = vr.frame.thumb[3];
+		vr.frame.thumb[2] = move[0];
+		vr.frame.thumb[3] = move[1];
 	}
 	layout_controls();
     /* Once per freshly acquired frame, before gestures/weapon rays/IK. Never
@@ -2565,7 +2615,8 @@ int vr_ui_pointer(int menus_active, struct halo_ui_pointer *pointer)
 	pointer->moved = x != vr.pointer_x || y != vr.pointer_y || !vr.pointer_age;
 	pointer->x = pointer->click_x = x;
 	pointer->y = pointer->click_y = y;
-	/* the weapon hand's trigger clicks; the right B goes back */
+	/* the weapon hand's trigger clicks; the major hand's upper face button
+	(right B; left-handed, left Y) goes back */
 	trigger = vr.frame.trigger[vr.weapon_hand];
 	trigger_down = vr.pointer_trigger ? trigger > trigger_off : trigger > trigger_on;
 	if (trigger_down && !vr.pointer_trigger)
@@ -2573,7 +2624,7 @@ int vr_ui_pointer(int menus_active, struct halo_ui_pointer *pointer)
 		pointer->left_clicks = 1;
 		vr_haptic(vr.weapon_hand, 0.3f, 0.02f);
 	}
-	back_down = (vr.frame.hand_buttons[1] & HALO_XR_HAND_EAST) != 0;
+	back_down = (vr.frame.hand_buttons[vr.controls_mirrored ? 0 : 1] & HALO_XR_HAND_EAST) != 0;
 	if (back_down && !vr.pointer_back)
 		pointer->right_clicks = 1;
 	if (!vr.pointer_age || pointer->left_clicks || pointer->right_clicks)

@@ -37,8 +37,10 @@ for key,default in [('vr.hand_left_pitch','"-70.0"'),('vr.hand_right_pitch','"-7
                     ('vr.hand_right_roll','"0.0"'),('vr.weapon_pitch','"0.0"'),('vr.weapon_yaw','"0.0"'),
                     ('vr.weapon_roll','"0.0"'),('vr.hand_tracking','"\\"ik\\""'),('vr.calibration_split_applied','"false"')]:
     assert re.search(r'\{ "'+re.escape(key)+r'", _config_\w+, '+re.escape(default),config), key
-assert '{ "HANDS", "vr.hand_tracking", _vr_setting_string, 3, { { "BODY IK", "ik" }, { "FLOATING", "floating" }, { "FLOAT + ARMS", "floating_arms" } } }' in menu
-for page in ('"LEFT HAND"','"RIGHT HAND"','"GUN"','"CONTROLLER LEFT"','"CONTROLLER RIGHT"'):
+# test20d folded the hand mode into one combined HANDS row and the hand/gun
+# pages into HANDS + GUN (test_test20d checks those rows in detail)
+assert '{ "FLOATING", "vr.arms=ik;vr.hand_tracking=floating" }' in menu
+for page in ('"HANDS + GUN"','"CONTROLLER LEFT"','"CONTROLLER RIGHT"'):
     assert page in menu, page
 assert 'config_default_real(key)' in menu and 'config_default_real(weapon_keys[a])' in menu
 ik=fn(render,'vr_render_first_person_ik')
@@ -171,8 +173,10 @@ int main(void){
  m[4].position=(real_point3d){{0,1,0}};m[6].position=(real_point3d){{0.30f*units,1,0}};
  memcpy(orig,m,sizeof m);
  tracking=0;hands_only=0;vr_hide_forearms(m,&g,left,right);assert(!memcmp(m,orig,sizeof m));
+ /* test20d: floating with arms shown (Body not Hands Only) draws the arms */
+ tracking=1;hands_only=0;vr_hide_forearms(m,&g,left,right);assert(!memcmp(m,orig,sizeof m));
  for(int mode=0;mode<2;mode++){
-  memcpy(m,orig,sizeof m);hands_only=mode==0;tracking=mode==0?0:1;vr_hide_forearms(m,&g,left,right);
+  memcpy(m,orig,sizeof m);hands_only=1;tracking=mode;vr_hide_forearms(m,&g,left,right);
   for(int s=0;s<2;s++){short *c=s?right:left;
    for(int b=0;b<2;b++){assert(m[c[b]].scale==0);
     /* gathered 3.5 cm behind the wrist toward the elbow, not onto the elbow */
@@ -195,7 +199,7 @@ int main(void){
   if(original<=reach*0.97f&&original>=(fabsf(0.28f-0.25f)*1.05f+0.01f)*units)assert(vr_length(&moved)==0);
  }
  assert(0.97f<0.996f); /* the arm solver keeps reachable targets exactly (its clamp starts at 0.996) */
- puts("PASS: hands-only and floating hands gather arms 3.5 cm behind each wrist, hands/fingers/gun untouched; IK unchanged");
+ puts("PASS: Hands Only (body IK or floating) gathers arms 3.5 cm behind each wrist, hands/fingers/gun untouched; IK and floating with arms unchanged");
  puts("PASS: 5000 floating-arm shoulders keep every controller target within reach without moving it");
 }
 ''')

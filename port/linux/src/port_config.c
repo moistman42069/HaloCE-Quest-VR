@@ -356,7 +356,7 @@ static const struct config_setting config_settings[] =
 		"stick click crouch, menu pause, view back (held a second, recentre).\n"
 		"\"pad\": as an Xbox controller." },
 	{ "vr.move_relative", _config_string, "\"head\"", "HALO_VR_MOVE_RELATIVE", _environment_value, _platform_vr,
-		"What the left stick moves you relative to: \"head\", or where the\n"
+		"What the move stick moves you relative to: \"head\", or where the\n"
 		"\"left\" or \"right\" controller points." },
 	{ "vr.aim", _config_string, "\"hand\"", "HALO_VR_AIM", _environment_value, _platform_vr,
 		"What aims on foot: \"head\" (where you look, with a reticle ahead) or\n"
@@ -428,8 +428,17 @@ static const struct config_setting config_settings[] =
 		"\"auto\": attach by proximity without squeezing; \"off\": no attachment.\n"
 		"Default is grip: a free hand can touch the gun without attaching." },
 	{ "vr.left_handed", _config_boolean, "false", "HALO_VR_LEFT_HANDED", _environment_value, _platform_vr,
-		"Hold the weapon in the left hand (fire, grenade and zoom swap triggers\n"
-		"and bumpers). Palms together and the other hand's grip also swaps." },
+		"Left-handed play: the gun starts in the left hand (fire, grenade and zoom swap triggers\n"
+		"and bumpers) and, with vr.mirror_controls \"auto\", the sticks and face buttons mirror.\n"
+		"Changing it in the menu also mirrors vehicle steering and Move With when they used a\n"
+		"hand. Palms together and the other hand's grip still pass the gun across." },
+	{ "vr.mirror_controls", _config_string, "\"auto\"", "HALO_VR_MIRROR_CONTROLS", _environment_value, _platform_vr,
+		"\"auto\": with vr.left_handed, move on the right stick and turn on the left, and the\n"
+		"face buttons swap hands (jump and reload on the left controller). \"off\": the standard\n"
+		"layout (move on the left stick) whichever hand holds the gun." },
+	{ "vr.handedness_applied", _config_boolean, "false", "HALO_VR_HANDEDNESS_APPLIED", _environment_value, _platform_vr,
+		"Internal one-time migration (test20d): a config already left-handed keeps standard\n"
+		"sticks and buttons (vr.mirror_controls \"off\")." },
 	{ "vr.melee", _config_string, "\"impact\"", "HALO_VR_MELEE", _environment_value, _platform_vr,
 		"\"impact\": a hand (the weapon hand with the gun) moving at vr.melee_speed\n"
 		"strikes what it sweeps through - enemies, vehicles, glass - harder the\n"
@@ -541,9 +550,9 @@ static const struct config_setting config_settings[] =
 		"Use right grip pose for aim too. Optional controller compatibility mode; false preserves native aim." },
 	{ "vr.hand_tracking", _config_string, "\"ik\"", "HALO_VR_HAND_TRACKING", _environment_value, _platform_vr,
 		"How tracked hands follow the controllers (with vr.arms \"ik\"): \"ik\" body-IK arms reach\n"
-		"from the shoulders; \"floating\" hands go exactly where the controllers are, arms hidden;\n"
-		"\"floating_arms\" hands go exactly to the controllers and arms hang from a floating\n"
-		"shoulder that never pulls them back. Independent of vr.body visibility." },
+		"from the shoulders; \"floating\" hands go exactly where the controllers are and the arms\n"
+		"hang from a shoulder that follows them (hidden with vr.body \"hands\"). The older\n"
+		"\"floating_arms\" becomes \"floating\"." },
 	{ "vr.hand_left_pitch", _config_real, "-70.0", "HALO_VR_HAND_LEFT_PITCH", _environment_value, _platform_vr,
 		"Left visible hand only: degrees (-180..180) around the controller's X axis. Default -70\n"
 		"lines the empty hand up with a hand holding a Touch controller. Does not move the gun." },
@@ -567,13 +576,26 @@ static const struct config_setting config_settings[] =
 	{ "vr.calibration_split_applied", _config_boolean, "false", "HALO_VR_CALIBRATION_SPLIT", _environment_value, _platform_vr,
 		"Internal one-time migration (test20c): hand-comfort rotations saved in vr.align_* move to\n"
 		"vr.hand_*, so the gun returns to the controller's aim. Roll flips (+-180) stay." },
+	{ "vr.gun_anchor", _config_boolean, "true", "HALO_VR_GUN_ANCHOR", _environment_value, _platform_vr,
+		"Anchors the held gun to the controller: the gun hand's wrist sits where the empty hand's\n"
+		"wrist would, for every weapon, and the gun turns about the hand. false restores the\n"
+		"older camera placement (each weapon's animation decides where the gun sits)." },
+	{ "vr.gun_forward", _config_real, "0.0", "HALO_VR_GUN_FORWARD", _environment_value, _platform_vr,
+		"With vr.gun_anchor: moves the held gun along its barrel, in metres (-0.2..0.2;\n"
+		"negative pulls it back toward you)." },
+	{ "vr.gun_up", _config_real, "0.0", "HALO_VR_GUN_UP", _environment_value, _platform_vr,
+		"As vr.gun_forward, up (negative is down)." },
+	{ "vr.gun_out", _config_real, "0.0", "HALO_VR_GUN_OUT", _environment_value, _platform_vr,
+		"As vr.gun_forward, away from your body's middle (right for the right hand, left for\n"
+		"the left hand; negative is inward)." },
 	{ "vr.weapon_offset_right", _config_real, "0.10", "HALO_VR_WEAPON_RIGHT", _environment_value, _platform_vr,
-		"With vr.aim \"hand\": how far right of the game's eye the weapon's model\n"
-		"holds its grip, in metres, so the grip sits in the hand." },
+		"Advanced. How far right of the weapon camera the gun hand's grip sits, in metres\n"
+		"(placing that camera). With vr.gun_anchor the gun stays in the hand whatever this is; it\n"
+		"moves only the point the wall check measures from. Adjust the gun with vr.gun_* instead." },
 	{ "vr.weapon_offset_up", _config_real, "-0.12", "HALO_VR_WEAPON_UP", _environment_value, _platform_vr,
-		"As vr.weapon_offset_right, above the eye (negative is below)." },
+		"Advanced; as vr.weapon_offset_right, above the camera (negative is below)." },
 	{ "vr.weapon_offset_back", _config_real, "-0.20", "HALO_VR_WEAPON_BACK", _environment_value, _platform_vr,
-		"As vr.weapon_offset_right, behind the eye (negative is ahead)." },
+		"Advanced; as vr.weapon_offset_right, behind the camera (negative is ahead)." },
 	{ "vr.snap_turn", _config_real, "0.0", "HALO_VR_SNAP_TURN", _environment_value, _platform_vr,
 		"Degrees the right stick turns you at a flick; 0 turns smoothly instead." },
 	{ "vr.smooth_turn_speed", _config_real, "120.0", "HALO_VR_SMOOTH_TURN_SPEED", _environment_value, _platform_vr,
@@ -1439,6 +1461,50 @@ double config_default_real(const char *name)
 	long index = config_setting_index(name);
 
 	return index >= 0 && config_settings[index].type == _config_real ? atof(config_settings[index].default_value) : 0.0;
+}
+
+/* test20d: the menu's combined rows. Whether a setting holds a value given
+as text, compared as the setting's own type (0 for an unknown name) */
+int config_matches(const char *name, const char *text)
+{
+	long index = config_setting_index(name);
+	double difference;
+
+	if (index < 0)
+		return 0;
+	switch (config_settings[index].type)
+	{
+	case _config_boolean:
+		return config_boolean(name) == !strcmp(text, "true");
+	case _config_integer:
+		return config_integer(name) == atol(text);
+	case _config_real:
+		difference = config_real(name) - atof(text);
+		return difference > -0.001 && difference < 0.001;
+	default:
+		return !strcmp(config_string(name), text);
+	}
+}
+
+/* writes a setting from its value as text, as the setting's own type; 1 on
+success (integers are not written) */
+int config_write_text(const char *name, const char *text)
+{
+	long index = config_setting_index(name);
+
+	if (index < 0)
+		return 0;
+	switch (config_settings[index].type)
+	{
+	case _config_boolean:
+		return config_write_boolean(name, !strcmp(text, "true"));
+	case _config_real:
+		return config_write_real(name, atof(text));
+	case _config_string:
+		return config_write_string(name, text);
+	default:
+		return 0;
+	}
 }
 
 const char *config_string(const char *name)

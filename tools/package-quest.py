@@ -94,6 +94,10 @@ def main():
                     raise SystemExit("Test20 fenced Safe streaming or render diagnostics missing")
                 if b"safe ordered uploads" in guest:
                     raise SystemExit("Test20 still contains the 1.0.1 ordered Safe upload path")
+            if args.label.startswith("test20") and args.label >= "test20d" and vr:
+                for marker in [b"HANDS + GUN", b"MIRROR CONTROLS", b"GUN GRIP", b"anchored to the controller",
+                               b"sticks and face buttons", b"vr.gun_anchor", b"vr.mirror_controls"]:
+                    if marker not in guest: raise SystemExit("Test20d gun anchor, handedness or menu marker missing: " + repr(marker))
             if b"vr pose: host negotiated visual avatars v1" not in guest:
                 raise SystemExit("Negotiated avatar support missing")
             if vr and (b"HANDS ONLY" not in guest or b"NEXT PAGE (%ld/%ld)" not in guest):

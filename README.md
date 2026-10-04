@@ -39,7 +39,7 @@ The items below were introduced by the withdrawn 1.0.1 and remain in the source 
 
 ### Quest Touch — default VR layout
 
-Use **Controls = VR** and the standard native controller profile. Right is the default weapon hand. Left-handed mode changes weapon/off-hand trigger roles; face-button sides are not all mirrored.
+Use **Controls = VR** and the standard native controller profile. Right is the default weapon hand. **Controls → Handedness: Left** (test20d candidate) mirrors the whole layout: gun, triggers, sticks (move on the right, turn on the left) and face buttons (jump on X, reload on Y, grenades on A, switch weapons on B); Mirror Controls Off keeps the standard buttons.
 
 | Input | Action |
 | --- | --- |
@@ -58,7 +58,7 @@ Use **Controls = VR** and the standard native controller profile. Right is the d
 | Left menu button | Pause/menu; online co-op continues running |
 | Weapon pointer + trigger | Select menu item; right B returns |
 
-**Online holding differs:** **MP Physical defaults Off**, so multiplayer uses **Locked** holding and the Locked grenade inputs above. Body sharing remains available. A newly supplied weapon stays held until the first grip action in Physical mode. Two Hands defaults to **Grip**: proximity alone does not attach it.
+**Online holding differs:** **Weapons: Physical** (the default) applies offline only, so multiplayer uses **Locked** holding unless you choose **Physical + MP**, with the Locked grenade inputs above. Body sharing remains available. A newly supplied weapon stays held until the first grip action in Physical mode. Two Hands defaults to **Grip**: proximity alone does not attach it.
 
 ### Flat Android — Xbox-style gamepad defaults
 
@@ -93,7 +93,7 @@ Use **MOVE** plus swipe aiming or **FIRE-and-drag** to move, fire and aim togeth
 - **Other views:** immersive, 3D-screen or flat cinematics; native crosshair artwork with size/opacity or Off.
 - **Opening look tutorial:** look toward the lights with your headset. Script gaze and head-movement checks use the tracked head, independently of the weapon reticle. This is headset direction, not eye tracking.
 - **Graphics:** Auto/Low/Medium/High/Max presets; render resolution; shadows, lights, specular, reflections, bump maps, grass, fog, decals, particles, contrails, weather, lens flares and camouflage. Refresh choices are 72/80/90/120 Hz requests, not guaranteed frame rates.
-- **Calibration (test20c candidate):** **Left Hand / Right Hand** turn only the visible hand (default pitch -70, from the owner's calibration video). **Gun** sets the one-handed gun's own angle and grip position; shots and reticle follow it, and it is mirrored for the left hand. **Controller Left/Right** is a tracking correction that moves hand and gun together (Flip Roll 180, Native/Grip aim source, resets); normally leave it at zero. Rotations saved on the old Calibrate/Align pages move to the Hand pages once on upgrade. **Hands** on the Body page chooses Body IK (default), Floating, or Float + Arms tracking, independently of which body parts are shown.
+- **Calibration and handedness (test20d candidate):** the held gun is **anchored to the controller**: the gun hand's wrist sits where your empty hand's wrist would, for every weapon, and the gun turns about your hand (Hands + Gun → Gun Grip: Anchored; Classic restores the old placement). **Hands + Gun** sets both visible hands at once (default pitch -70, left mirrored), the gun's angle (shots and reticle follow it) and its place in the hand (Gun Forward / Up / Out). **Controls → Handedness: Left** puts the gun in the left hand and, with Mirror Controls Auto, mirrors the sticks and face buttons too; vehicle Steering and Move With follow when they used a hand. **Controller Left/Right** is an advanced tracking correction that moves hand and gun together; normally leave it at zero. **Body → Hands** chooses Body IK (default), Floating, Animated or Gun Only; Floating draws arms unless Body is Hands Only.
 
 In VR Settings, **A/right increases or advances; left decreases**. Next Page exposes more options; Back returns through pages/categories. Settings persist. **Safe geometry** can be changed in the launcher; restart afterward. It can trade performance for compatibility. Existing body preferences are retained when updating.
 
@@ -153,7 +153,7 @@ Use **Game files & versions** to import/switch, or place images/extracted roots 
 
 - **Device follow-up:** the populated-server crash guard, native browser, reticle alignment and intermittent left-eye workaround still need broader real-device confirmation. A build/test pass is not a campaign playthrough or proof that every server works.
 - **Co-op remains experimental:** not every mission, checkpoint, vehicle, cinematic, transition or device/network combination has a documented full playthrough. The 1.0 baseline is not universal certification.
-- Inferred body joints can still clip in extreme poses/custom rigs. Physical weapon drops/pickups online remain limited and **MP Physical defaults Off**.
+- Inferred body joints can still clip in extreme poses/custom rigs. Physical weapon drops/pickups online remain limited, so **Physical + MP** is not the default.
 - Safe geometry can reduce performance. Refresh requests do not guarantee that frame rate; simulation remains 30 Hz with interpolated rendering.
 - Controller mappings/rumble depend on Android, driver, connection type and model. Other headsets/phones have less testing than Quest 3.
 - NAT/firewall/Wi-Fi isolation can block multiplayer; the native transport has no general relay fallback. Keep the app foregrounded during a match.
