@@ -1,10 +1,8 @@
-# Halo CE Quest VR + Android 1.0.2 (test21b, code 27)
-
-[Latest release and downloads](https://github.com/moistman42069/HaloCE-Quest-VR/releases/tag/halo-ce-quest-test21b) | [Previous v1.0.2 release](https://github.com/moistman42069/HaloCE-Quest-VR/releases/tag/v1.0.2) | [Controls and options](docs/CONTROLS-AND-OPTIONS.md) | [Current state](docs/CURRENT-STATE.md) | [Contributing](CONTRIBUTING.md) | [Credits](CREDITS.md)
+﻿# Halo CE Quest VR + Android 1.0.2 — Release notes
 
 ## 1. Installation
 
-**Latest release: test21b, APK version name 1.0.2 / version code 27.** This exact signed update installs over the previous v1.0.2/code-25 APKs. The prior v1.0.2 release and assets remain unchanged. The APK version name remains 1.0.2; code 27 is the distinguishing install/update version. The test21b visuals have not had a phone/headset session yet. Keep the previous APK for rollback and back up maps, saves and settings before updating.
+**Current release: test21b, APK version name 1.0.2 / version code 27.** This is the new Latest release. It installs over the previous v1.0.2/code-25 APKs using the established signing certificate. The previous v1.0.2 release and assets remain available unchanged. The APK version name remains 1.0.2; code 27 is the distinguishing install/update version. This release page is tagged `halo-ce-quest-test21b` to match the supplied, signed candidate and its updater metadata. The test21b visuals have not had a phone/headset session yet; read Known Issues before installing and retain the previous APK for rollback.
 
 | Your device | Download |
 | --- | --- |
@@ -17,13 +15,21 @@
 4. **Open the launcher → Game files & versions.** Import an ISO/XISO or select an extracted `maps` folder/game root. Wait for validation, then select **Use** beside the imported set. Allow roughly 1.8 GB for the usual maps, plus the source image, saves and import space. Multiple sets require additional storage.
 5. **Choose Play.** Existing installations remain available as **Existing game data**. In VR, stand normally and press both stick clicks together to recenter. Open the campaign pause menu → **VR Settings** to customize your experience.
 
-The launcher includes an offline **Field guide** with controls, settings and credits. Note: this exact test21b APK still bundles the previous code-25 guide text; use this README and the release notes for test21b-specific settings and controls. Existing Quest data under `/sdcard/Documents/HaloCE/maps` is recognized when `ui.map` is present; otherwise each app uses its own external-files storage. VR and flat can coexist and have separate app data.
+The launcher includes an offline **Field guide** with controls, settings and credits. This exact APK still bundles the previous code-25 guide text; use this release page for test21b-specific settings and controls. Existing Quest data under `/sdcard/Documents/HaloCE/maps` is recognized when `ui.map` is present; otherwise each app uses its own external-files storage. VR and flat can coexist and have separate app data.
 
-**Updating:** install this APK over the existing app. Code 27 updates the previous v1.0.2/code-25 build and earlier codes. Do not uninstall or clear data; back up maps, saves and settings first. Android may ask you to confirm installation. Android will not allow an in-place downgrade from code 27 to code 25; uninstalling can delete app data.
+**Updating:** install this APK over the existing app. Code 27 updates the previous public 1.0.2/code 25 build and prior codes without uninstalling or clearing data. Back up maps, saves and settings first. Android may ask you to confirm installation. After installing code 27, Android will not permit an in-place downgrade to code 25; uninstalling can delete app data. Keep a backup of the old APK and game data before updating.
 
 ## 2. New Features / Major Changes
 
-This release carries forward the v1.0.2 features and adds the test21b hand/body refinements. It preserves the restored fenced Safe geometry path; the withdrawn v1.0.1 upload path is not present. Test21b clarifies Hands Only Floating vs Float + Arms, refines torso/shoulder following and the Full Body look-down pivot, changes Two Hands to Auto Lock by default, preserves calibrated gun roll in two hands, aligns the reticle with engine shot convergence, adds online avatar-offer diagnostics, and logs stick-click horn handling. The visual/input changes still need headset confirmation.
+This release carries forward the v1.0.2 project features and adds the test21 hands/body refinements. It preserves the restored fenced Safe geometry path from v1.0.2; the withdrawn v1.0.1 upload path is not present. Test21b changes are: 
+
+- Floating mode now means hands only, with closed wrists; **Float + Arms** is a separate choice.
+- Body shoulders follow torso yaw across body modes, and the Full Body neck pivot is moved behind/below the headset to improve looking down. These visual changes are not headset-confirmed in this candidate. Legs + Arms remains the default.
+- **Two Hands: Auto Lock** is the new default: move the support hand to the foregrip to latch it, then pull it away to release. Squeeze and Off remain available. Existing old Grip defaults migrate once.
+- The two-hand solve retains the gun roll when the weapon was calibrated upright; controller Left/Right ? Flip Roll 180 remains the correction for a hand that is itself upside down.
+- The reticle uses the engine shot-convergence direction so it marks the native shot ray across weapons; fine per-gun Aim Up/Right adjustments remain available. The reticle/impact match still needs device confirmation.
+- Physical melee remains off by default online; the native melee button stays available. Impact + Online / Swing + Online opts into physical melee online. Multiplayer logs now report when a peer does not offer VR avatar movement.
+- Stick-click horn input now reads the individual controller stick-click states and logs the path for diagnosis; whether every vehicle receives the horn still needs headset confirmation.
 
 - **In-game public server browser:** Multiplayer > System Link combines signed OpenCE public listings and native LAN games, most populated first. Seven games per page, Previous/Next and Refresh. The launcher browser remains available.
 - **Multiplayer crash guard:** safely deactivates invalid automatic object replicas outside a valid visibility cluster instead of asserting after joining a populated match.
@@ -57,7 +63,7 @@ Use **Controls = VR** and the standard native controller profile. Right is the d
 | Left menu button | Pause/menu; online co-op continues running |
 | Weapon pointer + trigger | Select menu item; right B returns |
 
-**Online holding differs:** **Weapons: Physical** (the default) applies offline only, so multiplayer uses **Locked** holding unless you choose **Physical + MP**, with the Locked grenade inputs above. Body sharing remains available. A newly supplied weapon stays held until the first grip action in Physical mode. **Two Hands** defaults to **Auto Lock**: resting the off hand at the support grip locks it; pulling away releases (Squeeze restores the old way). Physical melee is off in network games unless Body → Melee is set to Impact + Online or Swing + Online; the melee button always works.
+**Online holding differs:** **Weapons: Physical** (the default) applies offline only, so multiplayer uses **Locked** holding unless you choose **Physical + MP**, with the Locked grenade inputs above. Body sharing remains available. A newly supplied weapon stays held until the first grip action in Physical mode. In test21b, Two Hands defaults to **Auto Lock**: reach the support grip to lock and pull away to release; Squeeze and Off remain available.
 
 ### Flat Android — Xbox-style gamepad defaults
 
@@ -92,7 +98,7 @@ Use **MOVE** plus swipe aiming or **FIRE-and-drag** to move, fire and aim togeth
 - **Other views:** immersive, 3D-screen or flat cinematics; native crosshair artwork with size/opacity or Off.
 - **Opening look tutorial:** look toward the lights with your headset. Script gaze and head-movement checks use the tracked head, independently of the weapon reticle. This is headset direction, not eye tracking.
 - **Graphics:** Auto/Low/Medium/High/Max presets; render resolution; shadows, lights, specular, reflections, bump maps, grass, fog, decals, particles, contrails, weather, lens flares and camouflage. Refresh choices are 72/80/90/120 Hz requests, not guaranteed frame rates.
-- **Calibration and handedness :** the held gun is **anchored to the controller**: the gun hand's wrist sits where your empty hand's wrist would, for every weapon, and the gun turns about your hand (Hands + Gun → Gun Grip: Anchored; Classic restores the old placement). **Hands + Gun** sets both visible hands at once (default pitch -70, left mirrored), the gun's angle (shots and reticle follow it) and its place in the hand (Gun Forward / Up / Out). **Controls → Handedness: Left** puts the gun in the left hand and, with Mirror Controls Auto, mirrors the sticks and face buttons too; vehicle Steering and Move With follow when they used a hand. **Controller Left/Right** is an advanced tracking correction that moves hand and gun together; normally leave it at zero. **Body → Hands** chooses Body IK (default), Floating (hands only), Float + Arms, Animated or Gun Only. While driving, either stick click sounds the horn. **Hands + Gun → Aim Up / Aim Right** fine-tune the held gun's shots and reticle (each gun separately; Reset Aim clears it).
+- **Calibration and handedness :** the held gun is **anchored to the controller**: the gun hand's wrist sits where your empty hand's wrist would, for every weapon, and the gun turns about your hand (Hands + Gun → Gun Grip: Anchored; Classic restores the old placement). **Hands + Gun** sets both visible hands at once (default pitch -70, left mirrored), the gun's angle (shots and reticle follow it) and its place in the hand (Gun Forward / Up / Out). **Controls → Handedness: Left** puts the gun in the left hand and, with Mirror Controls Auto, mirrors the sticks and face buttons too; vehicle Steering and Move With follow when they used a hand. **Controller Left/Right** is an advanced tracking correction that moves hand and gun together; normally leave it at zero. **Body → Hands** chooses Body IK (default), Floating, Animated or Gun Only; Floating draws arms unless Body is Hands Only.
 
 In VR Settings, **A/right increases or advances; left decreases**. Next Page exposes more options; Back returns through pages/categories. Settings persist. **Safe geometry** can be changed in the launcher; restart afterward. It can trade performance for compatibility. Existing body preferences are retained when updating.
 
@@ -121,7 +127,7 @@ This build hosts native **Network 11** and accepts reviewed distributed hosts **
 
 ### Campaign co-op and avatars
 
-Campaign sessions use a separate two-player flow and do not appear in the PvP browser. Use matching test21b / code-27 project builds and matching campaign/resource files on both devices. Two Quests or Quest plus flat Android are intended pairings.
+Campaign sessions use a separate two-player flow and do not appear in the PvP browser. Use matching test21b/code-27 project builds and matching campaign/resource files on both devices. Two Quests or Quest plus flat Android are intended pairings.
 
 1. **Host:** open launcher **Campaign co-op → Host campaign**, choose a mission and difficulty, and enable **List publicly** if you want the community co-op catalog to show the session. Create the session and enter the System Link lobby. Keep the app in the foreground.
 2. **Join:** the other player opens **Campaign co-op → Browse / join**, refreshes and selects the host, or enters a private invite. After connection, launch the game and open **Multiplayer → System Link**; select the host and join their lobby.
@@ -150,37 +156,24 @@ Use **Game files & versions** to import/switch, or place images/extracted roots 
 
 ## 8. Known Issues or Important Notes
 
-- **Device follow-up:** the populated-server crash guard, native browser, reticle alignment and intermittent left-eye workaround still need broader real-device confirmation. A build/test pass is not a campaign playthrough or proof that every server works.
+- **Test21b has no phone/headset session yet.** The body-turn/Full Body changes, new reticle convergence and horn input need device confirmation. Automated tests do not establish how the rig looks or prove that the horn reaches every vehicle. The populated-server crash guard, native browser and intermittent left-eye workaround also need broader device confirmation; no build/test pass proves that every server works.
 - **Co-op remains experimental:** not every mission, checkpoint, vehicle, cinematic, transition or device/network combination has a documented full playthrough. The 1.0 baseline is not universal certification.
-- Inferred body joints can still clip in extreme poses/custom rigs. Physical weapon drops/pickups online remain limited, so **Physical + MP** is not the default.
+- Inferred body joints can still clip in extreme poses/custom rigs; test21b has not been viewed in a headset. The left-hand mirrored gun ammo counter still reads backward. Physical weapon drops/pickups online remain limited, so **Physical + MP** is not the default.
 - Safe geometry can reduce performance. Refresh requests do not guarantee that frame rate; simulation remains 30 Hz with interpolated rendering.
 - Controller mappings/rumble depend on Android, driver, connection type and model. Other headsets/phones have less testing than Quest 3.
 - NAT/firewall/Wi-Fi isolation can block multiplayer; the native transport has no general relay fallback. Keep the app foregrounded during a match. **Mobile data is the usual cause when one device joins a server and another does not:** carrier networks give each connection its own public port (the log says "this network's NAT gives each destination its own port"), so hosts whose routers are also strict cannot be reached. Use Wi-Fi for multiplayer. The Quest and Android builds share the same multiplayer code; the log names the stage that failed (1 asking the host, 2 opening the direct connection, 3 connected) and the network type ("Network: Wi-Fi" or "mobile data").
+- The bundled Field Guide still identifies code 25 and has older Two Hands text; use this release page for current test21b behavior.
 - Custom Edition/SPV1/custom rigs/resources remain experimental; custom cache support does not add retail Custom Edition network compatibility.
 - **Logs:** each launch writes to `Download/HaloCE`, with app-storage fallback if needed. Include the matching log, build, map, device/OS and reproduction steps in a report. Review logs before posting: they may contain invites and device/path details.
 - Back up the whole data root, including `game-versions`, for all imported sets and saves. Uninstalling or clearing app data can remove app-specific files. Switching sets intentionally keeps progress separate.
 
 ## 9. Additional Technical Details / Credits
 
-Both release APKs are ARM64, **version name 1.0.2 / code 27**, using package IDs `com.halo.decomp` and `com.halo.decomp.vr` and the established signing certificate. GitHub provides tagged source archives; compatibility.json is the small metadata asset required by the updater. Earlier releases are preserved.
+Both APKs are ARM64, **version name 1.0.2 / code 27**, using package IDs `com.halo.decomp` and `com.halo.decomp.vr` and the established signing certificate. The release tag is `halo-ce-quest-test21b`; its compatibility.json matches this tag, APK names, hashes and codes. GitHub provides tagged source archives; only compatibility.json accompanies the two APKs. Previous releases, including v1.0.2/code 25, remain unchanged.
 
-Validation includes both flavor builds, signatures/versions, 16 KB ZIP alignment, payload integrity, targeted regressions and synthetic cache/import checks. These checks do not substitute for testing the test21b reticle/body/horn changes on a phone/headset or completing a full campaign playthrough. Performance recovery was confirmed on device with test20b; test21b networking and co-op still need device checks. See [test21b release notes](docs/RELEASE-TEST21B.md), [test21b provenance](docs/RELEASE-PROVENANCE-TEST21B.md), [1.0.2 provenance](docs/RELEASE-PROVENANCE-1.0.2.md), [withdrawn 1.0.1 record](docs/RELEASE-PROVENANCE-1.0.1.md), [test20 investigation](docs/TEST20-PROGRESS.md) and [test20e delivery](docs/TEST20E-DELIVERY.md).
+The candidate delivery records 22 runner suites passing, including the test21 checks for body yaw/pivot, closed wrist cuffs, Auto Lock migration, online melee gating, horn button logic, two-hand roll, engine-identical shot/reticle direction, per-gun aim and flat/VR separation. Cache checks report 127 passed and 4 missing-fixture skips. Package checks report matching package IDs/ARM64, code 27, the established signing certificate, payload integrity and 16 KB alignment. **No phone or headset session was performed for test21b**, so appearance and input behavior need your device test. This is not a full campaign run or universal multiplayer certification. See [test21b provenance](https://github.com/moistman42069/HaloCE-Quest-VR/blob/halo-ce-quest-test21b/docs/RELEASE-PROVENANCE-TEST21B.md), [test21b delivery](https://github.com/moistman42069/HaloCE-Quest-VR/blob/halo-ce-quest-test21b/docs/TEST21B-DELIVERY.md), [test21b progress](https://github.com/moistman42069/HaloCE-Quest-VR/blob/halo-ce-quest-test21b/docs/TEST21B-PROGRESS.md), [test21 investigation](https://github.com/moistman42069/HaloCE-Quest-VR/blob/halo-ce-quest-test21b/docs/TEST21-PROGRESS.md), [previous 1.0.2 provenance](https://github.com/moistman42069/HaloCE-Quest-VR/blob/halo-ce-quest-test21b/docs/RELEASE-PROVENANCE-1.0.2.md), [withdrawn 1.0.1 record](https://github.com/moistman42069/HaloCE-Quest-VR/blob/halo-ce-quest-test21b/docs/RELEASE-PROVENANCE-1.0.1.md) and [test20 investigation](https://github.com/moistman42069/HaloCE-Quest-VR/blob/halo-ce-quest-test21b/docs/TEST20-PROGRESS.md).
 
 Credits: **Bungie/Microsoft and the original Halo team**; **punpckhdq/halo and bnunu/halo-1 contributors** for the decompilation; **bnunu/cybersecurity halo-ce-universal contributors** for the native port/networking; **astromaddie/Madison** for the OpenXR VR foundation; **ChupathingyCE and halo.milenko.org maintainers** for the directory; **moistman42069 and project contributors/testers** for this integration and refinements. Thanks also to LivingFray/HaloCEVR and the documented IK references, Andiweli's Android rendering work, and SnowyMouse's cache-format documentation.
 
 SDL3, OpenXR, Monocypher, musl, KCP, miniupnpc, Mbed TLS, tomlc17, stb, extract-xiso and other inherited dependencies retain their licenses. **This product includes software developed by in &lt;in@fishtank.com&gt;.** Full credits and notices are included inside each APK under **Field guide → Credits & licenses**, and in the tagged repository. This is an unofficial community project; supply your own game data.
 
-## Storage reference
-
-| Data | Location |
-| --- | --- |
-| Quest shared game root, when present | `/sdcard/Documents/HaloCE` |
-| Quest app external root | `/sdcard/Android/data/com.halo.decomp.vr/files` |
-| Flat app external root | `/sdcard/Android/data/com.halo.decomp/files` |
-| Maps/config | `maps/`, `config.toml` under the active root |
-| Saves | Preserve app `save/` and any shared-root save data; consult startup log/config for active save root |
-| Public launch logs | `Download/HaloCE/halo_log_<date>_<time>_<pid>.txt` |
-
-Only VR selects the shared root, and only when `maps/ui.map` exists. Editing an inactive config has no effect. Android file-manager restrictions may require the system picker or authorized ADB access.
-
-Managed sets and their saves live under `game-versions/p-<id>` beneath the selected base. Quit before editing configuration manually.
