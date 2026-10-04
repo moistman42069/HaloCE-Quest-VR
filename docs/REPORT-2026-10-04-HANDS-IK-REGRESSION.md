@@ -18,14 +18,16 @@ observations here for cloud continuation.
 | `halo_log_2026-10-04_12-36-45-231_4154.txt` | Quest 3, Android 14 / SDK 34. Native runtime banner says “test20d candidate”. Settings report `arms ik`, `hand tracking floating`, body legs, fingers on, two-hand grip; hand orientation pitch is −70°. Controller interaction and arm/body nodes are logged. | APK version string is 1.0.2 but this log does not establish Android version code or APK hash. It must not be presumed byte-identical to public v1.0.2. |
 | `halo_log_2026-10-04_12-42-01-259_6322.txt` | Launcher reports installed 1.0.2/code 25 and public v1.0.2/code 25. It records the game data as Xbox cache v5, NTSC, build `01.10.12.2276`. | This launcher log identifies the build metadata but does not establish the hash of the installed Quest APK. |
 | `halo_log_2026-10-04_12-42-16-354_6426.txt` | Quest 3, Android 14 / SDK 34. Native runtime banner says test20e candidate. It logs Body `legs`, Arms `ik`, fingers on, two-hand grip, and later `vr.arms=ik;vr.hand_tracking=floating`. It cleanly exits with status 0. | The native build banner is not a substitute for checking installed APK identity. Clean exit means no crash was captured, not that IK/rendering was correct. |
-| `com.halo.decomp.vr-20261004-124558-0.mp4` | Roughly 107 seconds. The recording shows the hands/forearms close up and settings pages; the visible settings include a floating-hands mode. The owner specifically identifies cut-off hands and arm IK lagging body turns. | Video is 30 fps, so it cannot fully characterize 72 Hz tracking. Do not infer the source transform or device OS beyond what the logs report. |
+| `com.halo.decomp.vr-20261004-124558-0.mp4` | Roughly 107 seconds. Around 8 seconds, the overlay reads `BODY: ARMS + HANDS`, `HANDS: FLOATING`, `FINGERS: TRACKED`, `ROOM-SCALE: ON`; visible hands/forearms are shown close-up. The owner specifically identifies cut-off hands and arm IK lagging body turns. | The video setting differs from the `body legs` runtime snapshot in the logs; their exact temporal/config relationship is unknown and must be checked. Video is 30 fps, so it cannot fully characterize 72 Hz tracking. Do not infer the source transform or device OS beyond what the logs report. |
 
 The two VR logs list the runtime setting `vr.arms=ik;vr.hand_tracking=floating`.
 This is an observed combination, not yet a diagnosis: it may reflect a user
 selection, preserved config, migration/default behavior, or interaction between
-the IK and floating-hand paths. The video also shows floating mode selected;
-inspect the implementation and config history before changing its default or
-assuming it is the sole cause.
+the IK and floating-hand paths. The video shows `BODY: ARMS + HANDS` with
+`HANDS: FLOATING`, while a runtime snapshot says `body legs`. Determine when
+each was selected and whether the display/config/log update is stale or reflects
+separate session states. Inspect implementation and config history before
+changing defaults or assuming floating mode is the sole cause.
 
 The test20d lineage changed first-person gun anchoring and simplified the hands
 settings; see [`TEST20D-PROGRESS.md`](TEST20D-PROGRESS.md). Test20e is the public
