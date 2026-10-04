@@ -2,7 +2,7 @@
 
 ## Active candidate: test19 (unpublished)
 
-Continue `test19-network-browser`; read [TEST19-PROGRESS.md](docs/TEST19-PROGRESS.md) for current implementation, verification and the newly authorized Discord/DM review. Preserve public releases; final APKs pending.
+Candidate `test19-network-browser` is prepared for private testing: both APKs are **1.0.1 / code 20**. Read [TEST19-PROGRESS.md](docs/TEST19-PROGRESS.md) and the test19 delivery/community review for source identity, hashes, verification and unresolved device cases. Preserve public 1.0/test14; wait for candidate feedback before a new release.
 
 
 Canonical repository: `moistman42069/HaloCE-Quest-VR`, default branch `main`.

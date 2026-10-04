@@ -1,8 +1,8 @@
-ÃƒÂ¯Ã‚Â»Ã‚Â¿# Test19 checkpoint: multiplayer crash, native browser, updater
+ÃƒÆ’Ã‚Â¯Ãƒâ€šÃ‚Â»Ãƒâ€šÃ‚Â¿# Test19 checkpoint: multiplayer crash, native browser, updater
 
 Private candidate branch: `test19-network-browser`. Public 1.0/test18 and test14
 remain unchanged. No new release approval. Working version: 1.0.1 / Android code
-20; final artifacts not yet packaged. All work remains on D: on the maintainer's
+20; both final APKs built and package preflight verified. All work remains on D: on the maintainer's
 machine. Read CURRENT-STATE and CLAUDE before continuing.
 
 ## Current implementation (2026-10-03)
@@ -57,7 +57,7 @@ host harness (platform include replaced only). Actual ILP32 layout compiles in t
 APK build. First VR compile passed; subsequent UI polish and full regression run
 are in progress. Flat and final source-identified pair still pending.
 
-## Newly authorized scope, after finishing this implementation
+## Review scope (completed for the available reports)
 
 Review the Halo decomp thread in Flat2VR and **all available DMs with the specified tester** for
 reports. Read-only review is authorized; sending messages is not. Track every
@@ -81,6 +81,17 @@ The renderer workaround remains a hypothesis pending a headset reproduction.
 The final 15-suite regression runner passes, including 680 reticle inverse
 transforms, invalid-value rejection, compositor VAO restoration and ISO
 layouts/deep-tree/large-offset/rejection cases. Cache-format checks: 127 passed, 4 absent real-fixture skips. Interim VR
-compile passed. Final committed pair and package verification are the next step.
-The source identity, archive hashes and actual build results must be recorded
-at delivery. No device installation, live co-op match or public release occurred.
+compile passed, followed by both clean final builds and package preflight.
+Final APK identity/hashes and follow-up cases are recorded in TEST19-DELIVERY.md. No device installation, live co-op match or public release occurred.
+
+## Delivery / next action
+
+The implementation pass is complete for private candidate testing. Runtime source:
+`ff93009e2e56d1b31942822cc0bb1a339505b6e4`. See [TEST19-DELIVERY.md](TEST19-DELIVERY.md) for exact APK hashes,
+checks and prioritized device cases. Packaging uses `--label test19 --version-name
+1.0.1 --runtime-source ff93009e2e56d1b31942822cc0bb1a339505b6e4`. The final
+source archive can include documentation-only commits after that runtime commit.
+
+Do not rebuild/publish or claim the left-eye workaround accepted merely because
+the checks pass. Wait for new test results; compare their matching logs against
+the privately preserved reports. Public 1.0/test14 remain the accepted downloads.
