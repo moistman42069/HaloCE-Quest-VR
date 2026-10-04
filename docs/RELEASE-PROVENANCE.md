@@ -1,6 +1,6 @@
 # Current release provenance
 
-Current public release: test14 below, unchanged. [Test18](TEST18-DELIVERY.md) is a private candidate awaiting owner testing. [Planned 1.0](RELEASE-PROVENANCE-1.0.0.md) remains on hold; no 1.0 tag/release has been published.
+Current public baseline: [1.0](RELEASE-PROVENANCE-1.0.0.md), publishing the exact delivered test18 APKs under release filenames. The previous test14 release below remains unchanged.
 
 # Release provenance - test14
 

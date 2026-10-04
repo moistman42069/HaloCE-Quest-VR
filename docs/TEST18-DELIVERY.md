@@ -1,3 +1,5 @@
+> **Publication update:** the owner subsequently authorized these exact APKs as release 1.0. The historical candidate hold below is superseded for this pair. See [1.0 provenance](RELEASE-PROVENANCE-1.0.0.md). No new device playthrough was reported.
+
 # Test18 delivery
 
 **Private candidate, not a public release.** Version **1.0-test18 / code 19** for

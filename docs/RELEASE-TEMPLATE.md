@@ -28,3 +28,7 @@ Use GitHub's normal source archives; avoid duplicate bundles, logs and manifests
 Record detailed hashes/provenance in tagged source and metadata, without adding
 clutter to release assets. Check the exact source tag, APK payloads/signatures,
 version/ABI, links and published downloads before announcing completion.
+
+The owner explicitly requested exact preserved test18 APKs for 1.0. That one
+promotion retains internal 1.0-test18/code 19 and documents the updater/guide
+labels; do not generalize it into permission to mislabel or replace future builds.

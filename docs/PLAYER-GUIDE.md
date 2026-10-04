@@ -1,13 +1,13 @@
-# Halo CE Quest VR + Android 1.0 — player guide
+# Player guide — release 1.0
 
 ## 1. Installation
 
-**Current private candidate: 1.0-test18 (code 19).** Public test14 remains available; the planned 1.0 release is held for owner testing. This guide describes the current candidate features.
+**Halo CE Quest VR + Android 1.0** is the first stable baseline for this project: standalone Quest VR and a separate flat Android edition. Release **1.0** publishes the exact delivered test18 APKs: Android internally reports **1.0-test18 / code 19**. Already installed test18? You already have these binaries; no reinstall is needed.
 
 | Your device | Download |
 | --- | --- |
-| Android phone/tablet — flat, touch or gamepad | **HaloCE-Android-test18.apk — private test download supplied with the candidate** |
-| Meta Quest — immersive standalone VR | **HaloCE-Quest-test18.apk — private test download supplied with the candidate** |
+| Android phone/tablet — flat, touch or gamepad | **[HaloCE-Android-1.0.0.apk](https://github.com/moistman42069/HaloCE-Quest-VR/releases/download/v1.0.0/HaloCE-Android-1.0.0.apk)** |
+| Meta Quest — immersive standalone VR | **[HaloCE-Quest-1.0.0.apk](https://github.com/moistman42069/HaloCE-Quest-VR/releases/download/v1.0.0/HaloCE-Quest-1.0.0.apk)** |
 
 1. **Install the appropriate APK.** On Quest, enable developer mode and sideload with SideQuest or your existing installer; open it from **Unknown Sources**. On Android, open the downloaded APK and allow installation from that source when prompted. Both require ARM64, Android 9/API 28 or newer and compatible graphics. **Quest 3 is the reference headset**; other devices are not equally verified.
 2. **Updating this project? Install over it.** Both APKs retain their package IDs and signing certificate. Do not uninstall or clear app data. Optional ADB command: `adb install -r <apk-file>`. Back up your maps, saves and settings first. Another fork using the same package ID but a different key cannot update in place.
@@ -21,8 +21,10 @@ The launcher includes an offline **Field guide** with controls, settings and cre
 
 ## 2. New Features / Major Changes
 
-This candidate brings the refinements since public test14 together for the planned 1.0 baseline:
+This release brings the refinements since public test14 together into the 1.0 baseline:
 
+- **Campaign transition fix:** clears and validates cached vehicle-camera references across map changes, addressing the reported Pelican transition crash.
+- **Head-look tutorial and vehicle controls:** headset-based light detection; third-person/right-controller defaults, four steering modes and adjustable first-person seats.
 - **Multiplayer compatibility fixes:** running native PvP matches are no longer falsely rejected by the shared advertisement flag; the action-control bit responsible for the reported assertion is handled correctly. Includes reviewed upstream player departure/rejoin safeguards and Network 11 options, while accepting reviewed v9/v10 hosts.
 - **Managed game-data sets:** import multiple ISO/XISO or extracted installations, scan an import inbox, view detected builds/fingerprints, rename sets and switch without replacing the original installation. Saves remain separate per set.
 - **Smoother native weapon actions in VR:** reloads, grenade throws, melee, weapon swaps and other affected animations temporarily own the appropriate arm/hand, then blend back to tracking. Existing support grip is preserved through the action.
@@ -30,7 +32,7 @@ This candidate brings the refinements since public test14 together for the plann
 - **Per-controller alignment controls** for unusual tracking/firmware orientation, plus a customizable flat touch HUD and expanded Xbox-style gamepad settings.
 - **Launcher PvP hosting**, population-sorted browsing, compatibility explanations, bundled help, detailed per-launch logs and verified project updates.
 
-Gameplay retains the test17 baseline plus test18 campaign vehicle-cache cleanup, headset-based tutorial checks and vehicle camera/control options. Existing body, grip and native action behavior is preserved. The prepared 1.0 presentation also includes stable-version update handling and bundled license information.
+Gameplay retains the test17 baseline plus test18 campaign vehicle-cache cleanup, headset-based tutorial checks and vehicle camera/control options. Existing body, grip and native action behavior is preserved. The release also includes stable-version update handling and bundled license information.
 
 ## 3. Controls / Inputs
 
@@ -86,7 +88,7 @@ Use **MOVE** plus swipe aiming or **FIRE-and-drag** to move, fire and aim togeth
 - **Movement and gestures:** physical crouch, off-hand-near-head flashlight, impact or swing melee, optional arm-run effort and up to 1.5× offline sprint. Online movement speed/collision remain stock; network clients use native swing melee.
 - **Vehicles:** third-person chase and right-controller steering default. **VR Settings > Vehicles** selects Third Person / First Person and Right Hand / Left Hand / Head / Stick steering. Left stick supplies movement/throttle; the selected physical controller points the driving direction independently of weapon handedness or support grip. Tracking loss holds native facing. Gunners retain head aiming.
 - **First-person seats:** level horizon with head leaning; Up, Forward and Right adjustments in 1 cm steps, ±50 cm. Global offsets plus Warthog, Ghost, Banshee, Scorpion and Pelican profiles; custom vehicles use global values. Combined offsets clamp to ±50 cm per axis and are shortened at map collision. Zero restores the native seat location. Offsets affect First Person only. First-person heading follows the vehicle; chase steering uses the world heading with normal stick turns.
-- **Upgrade defaults:** the first test18 VR launch applies chase/right once and backs up the prior settings as `config.toml.pre-vehicle-defaults`. Your subsequent vehicle choices persist. Other body, grip, action and graphics preferences are retained.
+- **Upgrade defaults:** the first launch of this VR build applies chase/right once and backs up the prior settings as `config.toml.pre-vehicle-defaults`. Your subsequent vehicle choices persist. Other body, grip, action and graphics preferences are retained.
 - **Other views:** immersive, 3D-screen or flat cinematics; native crosshair artwork with size/opacity or Off.
 - **Opening look tutorial:** look toward the lights with your headset. Script gaze and head-movement checks use the tracked head, independently of the weapon reticle. This is headset direction, not eye tracking.
 - **Graphics:** Auto/Low/Medium/High/Max presets; render resolution; shadows, lights, specular, reflections, bump maps, grass, fog, decals, particles, contrails, weather, lens flares and camouflage. Refresh choices are 72/80/90/120 Hz requests, not guaranteed frame rates.
@@ -142,6 +144,7 @@ Use **Game files & versions** to import/switch, or place images/extracted roots 
 
 ## 8. Known Issues or Important Notes
 
+- **Version labels/update check:** these preserved APKs and their bundled guide retain test18/candidate wording. This release page records their public 1.0 approval. On code 19, the updater can report “Release edition metadata is inconsistent” when comparing this same-code promotion; you already have the release, so no update is needed. Future APK updates must have a higher code. Older test builds need one manual install from the links above.
 - **Co-op remains experimental:** not every mission, checkpoint, vehicle, cinematic, transition or device/network combination has a documented full playthrough. The 1.0 baseline is not universal certification.
 - Inferred body joints can still clip in extreme poses/custom rigs. Physical weapon drops/pickups online remain limited and **MP Physical defaults Off**.
 - Safe geometry can reduce performance. Refresh requests do not guarantee that frame rate; simulation remains 30 Hz with interpolated rendering.
@@ -153,14 +156,13 @@ Use **Game files & versions** to import/switch, or place images/extracted roots 
 
 ## 9. Additional Technical Details / Credits
 
-Both APKs are ARM64, **version 1.0.0 / version code 19**, using package IDs `com.halo.decomp` and `com.halo.decomp.vr` with the established signing certificate. The exact source is tagged **v1.0.0**; GitHub's source ZIP/tar.gz downloads are sufficient. `compatibility.json` is the small metadata file required by the launcher updater; players do not need to install or edit it.
+Both APKs are ARM64, **internal version 1.0-test18 / version code 19**, using package IDs `com.halo.decomp` and `com.halo.decomp.vr` with the established signing certificate. Only the download filenames change for this release; APK bytes and signatures are unchanged. Runtime build source is `f45e32dd73b15280a5db4e5d4a4b2643f2c28379`; **v1.0.0** contains that code plus finalized public documentation; GitHub's source ZIP/tar.gz downloads are sufficient. `compatibility.json` is the small metadata file required by the launcher updater; players do not need to install or edit it.
 
-Validation covers both flavor builds, package/version/signature checks, 16 KB ZIP alignment, payload/ZIP integrity and targeted networking, imports, animation, co-op, controller/touch and updater tests. These checks complement device feedback; they do not substitute for real multiplayer or headset testing. Exact hashes/build provenance live in the tagged source documentation.
+Validation covers both flavor builds, package/version/signature checks, 16 KB ZIP alignment, payload/ZIP integrity and targeted networking, imports, animation, co-op, controller/touch and updater tests. The owner authorized these exact APKs for release; no new complete device playthrough was reported. These checks complement earlier device feedback; they do not substitute for real multiplayer or headset testing. Exact hashes/build provenance live in the tagged source documentation.
 
 Credits: **Bungie/Microsoft and the original Halo team**; **punpckhdq/halo and bnunu/halo-1 contributors** for the decompilation; **bnunu/cybersecurity halo-ce-universal contributors** for the native port/networking; **astromaddie/Madison** for the OpenXR VR foundation; **ChupathingyCE and halo.milenko.org maintainers** for the directory; **moistman42069 and project contributors/testers** for this integration and refinements. Thanks also to LivingFray/HaloCEVR and the documented IK references, Andiweli's Android rendering work, and SnowyMouse's cache-format documentation.
 
 SDL3, OpenXR, musl, KCP, miniupnpc, Mbed TLS, tomlc17, stb, extract-xiso and other inherited dependencies retain their licenses. **This product includes software developed by in &lt;in@fishtank.com&gt;.** Full credits and notices are included inside each APK under **Field guide → Credits & licenses**, and in the tagged repository. This is an unofficial community project; supply your own game data.
-
 
 ## Storage reference
 

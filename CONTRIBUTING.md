@@ -51,3 +51,8 @@ Test17 adds `python3 tools/test_test17_network_data.py` for action flag/queue
 regressions, synthetic ISO imports and matching Java/native data selection.
 The browser suite now includes native in-progress flag combinations.
 See `docs/TEST17-PROGRESS.md`; run all eleven suites for this candidate.
+
+Release 1.0 publishes the exact preserved test18 pair by explicit owner instruction.
+See RELEASE-PROVENANCE-1.0.0.md under docs for build identity and filename mapping.
+Future APKs need code >19 and new publication approval; never rebuild an accepted
+APK just to change its public label.

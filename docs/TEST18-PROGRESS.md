@@ -1,4 +1,6 @@
-﻿# Test18: campaign transition, head tutorial and vehicle controls
+> **Publication update:** the owner subsequently authorized these exact APKs as release 1.0. The historical candidate hold below is superseded for this pair. See [1.0 provenance](RELEASE-PROVENANCE-1.0.0.md). No new device playthrough was reported.
+
+# Test18: campaign transition, head tutorial and vehicle controls
 
 ## Delivery/publication state
 

@@ -1,27 +1,38 @@
 # Current development state
 
-Updated 2026-10-03. Canonical public repository: [moistman42069/HaloCE-Quest-VR](https://github.com/moistman42069/HaloCE-Quest-VR), branch **main**. The planned 1.0 publication will advance main after candidate acceptance; it is currently held. The initial test13a import is historical; private identifying metadata remains excluded. Older private Git history remains a backup, not the continuation branch.
+Updated 2026-10-03. Canonical public repository: [moistman42069/HaloCE-Quest-VR](https://github.com/moistman42069/HaloCE-Quest-VR), branch **main**. Release 1.0 advances main to the complete current code and public documentation. The initial test13a import is historical; private identifying metadata remains excluded. Older private Git history remains a backup, not the continuation branch.
 
-## Current candidate: test18; 1.0 publication held for owner testing
+## Current release: 1.0 (exact delivered test18 APKs)
 
-The newest instruction supersedes publication authorization: deliver new VR and
-flat APKs, wait for owner testing and a fresh instruction before publishing 1.0.
-No 1.0 release or tag exists. Public test14 is preserved. Prepared 1.0 notes are a
-draft. Candidate identity is **1.0-test18 / code 19**; eventual 1.0 must increment
-the Android version code again.
+The owner stated “go ahead and NOW proceed with the 1.0 release instructions
+using these recent apks”. This supersedes the publication hold for the exact
+pair in TEST18-DELIVERY.md. Release `v1.0.0` uses professional 1.0 filenames but
+preserves **1.0-test18 / code 19** inside both APKs. No rebuild or re-sign occurs.
+Public test14 remains unchanged. [Release notes](RELEASE-1.0.0.md),
+[exact provenance](RELEASE-PROVENANCE-1.0.0.md).
 
-Test18 retains test17's networking/data management and accepted action/body
-behavior. It fixes a symbolicated stale vehicle-seat camera after a campaign map
-transition, routes local script gaze/head tutorial movement through the headset,
-and adds explicit right/left/head/stick vehicle controls and per-vehicle interior
-seat offsets. **Third-person chase + right controller** are the new defaults,
-applied once to existing VR configs; later choices persist. Flat steering is
-unchanged. [Evidence/scope/checks](TEST18-PROGRESS.md), [artifacts](TEST18-DELIVERY.md).
+The runtime includes test17 networking/data fixes plus test18 vehicle-camera map
+lifecycle cleanup, headset-based tutorial gaze, explicit vehicle steering and
+seat adjustments. **Third Person + Right Hand** are the vehicle defaults;
+**Legs + Arms** remains the body default. Prior animation/grip behavior remains.
+[Source evidence and tests](TEST18-PROGRESS.md).
 
-Automated tests and compilation do not establish headset comfort or completion
-of the reported transition/tutorial. Those are owner test items, not acceptance.
-The future release still follows the nine-section [release contract](RELEASE-TEMPLATE.md),
-with two APKs and required updater metadata only. Preserve old releases.
+All 13 targeted suites, both builds and packaging checks passed. Cache checks:
+127 passed, 4 missing-fixture skips. Publication approval is not a new detailed
+headset/phone/full-campaign test result; retain the device follow-up checklist.
+
+### Continuation
+
+- Future APKs need code >19 and a consistent semantic version; separate release
+  approval is required. Preserve both public releases and their exact assets.
+- The preserved code-19 updater can call the 1.0 promotion inconsistent because
+  it has the same version code. Documented workaround: test18 users already have
+  these binaries. In the next build, handle same-code promotions using version-code
+  metadata before offering an update; keep downgrade/signature/hash guards.
+- Bundled test18 guide/candidate wording is preserved inside the exact APKs;
+  current web docs explain public 1.0 status. A future rebuild regenerates guides.
+- Runtime source is `f45e32dd73b15280a5db4e5d4a4b2643f2c28379`; tag source adds
+  publication documents only. Historical holds below are superseded for this pair.
 
 ## Historical candidate: test17 (basis of 1.0)
 

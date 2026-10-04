@@ -4,13 +4,13 @@ Canonical repository: `moistman42069/HaloCE-Quest-VR`, default branch `main`.
 Read docs/CURRENT-STATE.md, docs/RELEASE-PROVENANCE-1.0.0.md, CONTRIBUTING.md,
 and relevant player/architecture/protocol documents before changes.
 
-Current candidate: **test18 / Android code 19**, branch `release-1.0.0`.
-Read docs/TEST18-PROGRESS.md and docs/TEST18-DELIVERY.md. Publication is ON HOLD:
-the owner now requires both APKs in chat, then device testing, then a new explicit
-instruction to resume the 1.0 plan. Do not create/upload/publish a GitHub release
-or tag for this candidate. Existing public test14 must remain untouched.
-The prepared 1.0 notes/template and updater support remain pending; they are not
-evidence that 1.0 exists. Final 1.0 will need a version code above candidate 19.
+Current public baseline: **release 1.0**, tag `v1.0.0`. The owner explicitly
+re-authorized publication using the exact delivered test18 APKs. This supersedes
+the test18 publication hold. Both APKs retain **1.0-test18 / code 19** internally;
+only release filenames change. Do not rebuild, re-sign or replace them. Public
+test14 stays unchanged. See RELEASE-PROVENANCE-1.0.0.md for hashes/build source.
+Publication authorization is not a newly reported headset/campaign playthrough.
+Future APK updates must use code >19 and need separate publication approval.
 
 Preserve accepted VR animation handoff, Legs + Arms, room-scale legs, fingers,
 contact/grip, online native melee, Safe VR geometry and Normal flat geometry.
@@ -31,7 +31,8 @@ Required third-party license notices remain intact.
 Every future release must have self-contained notes in the nine-section order
 in docs/RELEASE-TEMPLATE.md, installation and APK download links first. Upload
 only the two APKs plus updater compatibility metadata unless another asset has
-a concrete purpose. Preserve existing releases. Version names, monotonically
-increasing Android codes, stable tags, APK names and UpdatePolicy must agree.
+a concrete purpose. Preserve existing releases. Future version names, increasing Android codes, stable tags, APK names and
+UpdatePolicy must agree. The exact-byte test18-to-1.0 promotion is a documented
+owner-directed exception, including the same-code updater message.
 Older test updaters require one manual install of 1.0; do not disguise that
 limitation with fake compatibility metadata or duplicate legacy releases.
