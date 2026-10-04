@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "project": "moistman42069/HaloCE-Quest-VR",
+  "tag": "v1.0.3",
+  "source_commit": "3afa9b1156c685502b0a890f62ab489eaadb95b4",
+  "minimum_app_code": 15,
+  "save_policy": "preserve",
+  "config_policy": "preserve",
+  "vr_and_coop_integrated": true,
+  "native_minimum": 9,
+  "native_maximum": 11,
+  "campaign_protocol": 52737,
+  "editions": {
+    "com.halo.decomp.vr": {
+      "apk": "HaloCE-Quest-1.0.3.apk",
+      "sha256": "b2264664cd290411e3113cb815796cb0dd0e338f9c0b26a1ca81c33804c76550",
+      "bytes": 28084867,
+      "version_code": 27,
+      "min_sdk": 28
+    },
+    "com.halo.decomp": {
+      "apk": "HaloCE-Android-1.0.3.apk",
+      "sha256": "24bbdd4be22056dd8641fdfe6089f0852701efdd3d092847f1988d691eaa7905",
+      "bytes": 26077748,
+      "version_code": 27,
+      "min_sdk": 28
+    }
+  }
+}
