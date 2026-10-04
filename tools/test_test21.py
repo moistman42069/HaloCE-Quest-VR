@@ -409,3 +409,10 @@ int main(void){
       "model-origin guns only when fired from the hand; unaimed, unarmed, triggerless or zero offset leave the reticle as before");
 }
 ''')
+
+pose = (ROOT / 'port/linux/game/network_vr_pose.c').read_text(encoding='utf-8')
+tick = fn(pose, 'network_vr_pose_tick')
+assert 'if (!host_nonce && !client_unsupported_logged && now - client_since > 10000)' in tick
+assert tick.index('client_unsupported_logged = TRUE') < tick.index('if (game_time_get() % 2) return;')
+assert 'client_since = 0; client_unsupported_logged = FALSE;' in fn(pose, 'network_vr_pose_reset')
+print('PASS: a client says once, 10 s in, when its host offers no VR avatars (another build); reset each game')

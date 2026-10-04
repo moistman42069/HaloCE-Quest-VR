@@ -30,6 +30,10 @@ static struct { unsigned long nonce, seen; long player; boolean enabled; } peers
 static boolean host_enabled;
 static unsigned long host_nonce, host_seen, last_offer, next_nonce = 1;
 static long logged_local_unit = NONE;
+/* test21: when a client joined, and whether it said its host never offered
+ * avatars (a host on another build: everyone then sees stock animation) */
+static unsigned long client_since;
+static boolean client_unsupported_logged;
 static struct vr_pose_state {
     real_matrix4x3 pending[VR_POSE_NODES], previous[VR_POSE_NODES], current[VR_POSE_NODES];
     unsigned long sequence, pending_sequence, received, rendered_at, last_sent;
@@ -47,6 +51,7 @@ void network_vr_pose_reset(void)
     memset(&local_pose, 0, sizeof(local_pose));
     host_enabled = FALSE; host_nonce = host_seen = last_offer = 0;
     logged_local_unit = NONE;
+    client_since = 0; client_unsupported_logged = FALSE;
 }
 
 boolean network_vr_pose_wanted(void)
@@ -147,6 +152,14 @@ void network_vr_pose_tick(void)
         }
         for (short absent = 0; absent < NUMBEROF(peers); absent++)
             if (!present[absent]) memset(&peers[absent], 0, sizeof(peers[absent]));
+    }
+    if (game_connection() == _game_connection_network_client) {
+        if (!client_since) client_since = now ? now : 1;
+        if (!host_nonce && !client_unsupported_logged && now - client_since > 10000) {
+            client_unsupported_logged = TRUE;
+            platform_log("vr pose: this host offered no VR avatars in 10 s (it runs another build): players here see stock "
+                "animation. Host the game from this build for VR movement to be shared");
+        }
     }
     if (game_time_get() % 2) return; /* 15 Hz visual snapshots; simulation remains 30 Hz. */
     for (short n = 0; n < (server ? count : 1); n++) {

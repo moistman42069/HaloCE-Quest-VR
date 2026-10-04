@@ -169,11 +169,25 @@ remains separate (FUTURE-RELEASE-FOLLOWUPS.md); nothing here links to it.
 
 ## Multiplayer VR avatars
 
-The owner asked for co-op's visible VR body movement in normal multiplayer.
-It is already one shared path: `network_vr_pose.c` runs in every
-`network_distributed_tick`, campaign or PvP, and PvP sessions use the same
-distributed transport (see NETWORK-VR-AVATARS.md). The saved logs contain no PvP
-session that reached a game, so there was no failure to trace; nothing was
-changed. It requires the host and the viewers to run this build (stock or older
-hosts relay nothing). Check for "vr pose: host negotiated visual avatars v1"
-(client) or "peer ... negotiated" (host) in the log after joining.
+The owner asked for co-op's visible VR body movement in normal multiplayer
+and later sent Android logs of a game joined in VR where the phone saw a flat
+player. It is already one shared path: `network_vr_pose.c` runs in every
+`network_distributed_tick`, campaign or PvP (see NETWORK-VR-AVATARS.md), but
+the host must run this build: poses go client → host → viewers, and a host on
+another build never offers the capability. The logs show exactly that:
+
+| Log | Device / build | Game | Outcome |
+| --- | --- | --- | --- |
+| 11:42:41 | Quest, test20d | "the BIG CTF", bloodgulch, host 122f9b1c2e16, network v11, 35 players | Joined as machine #11; no avatar offer (no `vr pose` line) |
+| 11:39:53 | Android 1.0.2 (code 24) | same host | Joined at 11:41:29, left at 11:41:41, then could not reconnect (NAT) |
+| 11:43:27 | Android 1.0.2 | same host | Could not connect (NAT); ended up hosting its own empty carousel game |
+| 12:22:17 | Android | hangemhigh, host 96600ed501d8, network v11, 19 players | Joined; no avatar offer |
+| 21:20:20 (10-03) | Android test17 | — | Launch only |
+
+Both hosts were public games on another build, so neither device was offered
+avatars and the phone drew the Quest player with stock animation, as designed
+for compatibility. Clients have no link to each other, so this cannot work
+without the host. Change: a client now logs once, 10 s into a game whose host
+offered no avatars, "vr pose: this host offered no VR avatars ... Host the game
+from this build". To see VR movement, one player on this build hosts (Quest or
+phone) and the others join that game.
