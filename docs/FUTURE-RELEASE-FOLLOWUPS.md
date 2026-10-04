@@ -26,7 +26,7 @@ Source messages: [initial import report](https://discord.com/channels/7479671028
 
 ## Quest OS v78: tracked hand and weapon orientation
 
-**Status:** follow-up report; the latest weapon/two-hand symptom is not reproduced or tied to a confirmed APK build yet.
+**Status:** the two-hand step has a code-level cause, fixed in test21: two-handed aim rebuilt the gun's orientation from the raw controller and dropped the Gun Roll calibration, so a gun fixed with Gun Roll 180 turned upside down again in two hands. The v78 origin of the 180-degree hands is still unconfirmed. Recommended setting for affected players: Controller Left/Right → Flip Roll 180, which corrects hand, gun and two-hand aim together. Awaiting the reporter's headset result.
 
 ### Report
 

@@ -557,7 +557,7 @@ void vr_initialize(void)
 		return;
 	vr.initialized = 1;
 	config_vr_vehicle_defaults();
-	platform_log("vr: HaloCE Quest test21 candidate (floating hands restored, torso-following arms, neck-pivot full body, auto two-hand lock, horn, online melee off)");
+	platform_log("vr: HaloCE Quest test21 candidate (floating hands restored, torso-following arms, neck-pivot full body, auto two-hand lock, horn, online melee off, two-hand gun roll)");
 	if (!config_boolean("vr.enabled"))
 	{
 		platform_log("vr: off (vr.enabled)");
@@ -1990,7 +1990,11 @@ static void compute_aim_pose(void)
 	between[0] /= length;
 	between[1] /= length;
 	between[2] /= length;
-	rotate(vr.frame.aim[w].orientation, xr_up, up);
+	/* test21: the gun's up from its calibrated one-handed aim (vr.weapon_*,
+	set above), not the raw controller: a gun rolled upright with Gun Roll
+	(the Quest OS v78 report: hands 180 degrees off) stayed upright in one
+	hand but turned upside down again in two */
+	rotate(vr.aim_pose.orientation, xr_up, up);
 	look_rotation(between, up, vr.aim_pose.orientation);
 	vr.two_handed = 1;
 }

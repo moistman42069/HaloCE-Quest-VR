@@ -97,6 +97,8 @@ Quit before external edits. In `[vr]`, `body = "legs"` explicitly selects the de
 - **Melee online:** physical melee (Impact or Swing) is off in network games by default, because a quick hand movement there (reaching for a holster) could melee. The melee button (right stick click) always works. Body → Melee: **Impact + Online** / **Swing + Online** turns physical melee on in network games too.
 - **Horn:** a driver's horn is Halo's crouch control. While seated, either stick click sounds it, whatever the throttle (the game used to pass the left stick click only below 98% throttle, and the Warthog's throttle is that stick). Clicking both sticks still recentres. A lowered head no longer counts as crouching while seated.
 
+- **Upside-down hands or guns** (reported on Quest OS v78): use **Controller Left/Right → Flip Roll 180** for the affected controller; it turns hand, gun and two-hand aim together. Hand Roll turns only the visible hand and Gun Roll only the gun; since test21 Gun Roll also holds in two-hand grip (it used to flip back).
+
 ## Body turns and Full Body (test21)
 
 - The arms hang from shoulders that face the torso in every Body mode. Before, without a drawn body (Arms + Hands, Hands Only), the shoulders faced the stick-turn heading, so turning your real body left them behind and the arms twisted across.

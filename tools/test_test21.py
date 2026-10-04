@@ -218,3 +218,38 @@ int main(void){
  puts("      two-hand auto lock migrates once from the old default, keeps later choices, retries failed saves");
 }
 ''')
+
+# --- two-handed aim keeps the gun's calibrated roll (Quest OS v78 report)
+run('two_hand_roll', r'''
+#include <assert.h>
+#include <math.h>
+#include <stdio.h>
+#include <string.h>
+#include "port/linux/src/vr_alignment.h"
+struct halo_xr_pose { float position[3], orientation[4]; };
+static struct { int weapon_hand, two_handed, two_handed_enabled, two_hand_held;
+ struct halo_xr_pose aim_pose; float weapon_rotation[2][4];
+ struct { struct halo_xr_pose aim[2], grip[2]; unsigned hand_valid[2]; } frame; } vr;
+static int vr_hand_empty(void){return 0;}
+''' + fn(frame, 'rotate') + fn(frame, 'look_rotation') + fn(frame, 'compute_aim_pose') + r'''
+static unsigned seed=78;
+static float rnd(void){seed=seed*1664525u+1013904223u;return (float)((seed>>8)&0xffff)/65535.f;}
+int main(void){
+ static const float xr_up[3]={0,1,0},xr_forward[3]={0,0,-1};
+ vr.two_handed_enabled=1;vr.two_hand_held=1;vr.frame.hand_valid[0]=vr.frame.hand_valid[1]=3;
+ for(int n=0;n<2000;n++){
+  int w=n&1;float d[3]={rnd()*90-45,rnd()*360-180,rnd()*60-30},roll=(n&2)?180.f:0.f,g[3]={0,0,roll},m[3]={0,0,-roll};
+  vr.weapon_hand=w;vr_alignment_rotation(d,vr.frame.aim[w].orientation);
+  vr_alignment_rotation(w?g:m,vr.weapon_rotation[w]);
+  /* the off hand ahead along the controller's aim, a little off-line */
+  float f[3];rotate(vr.frame.aim[w].orientation,xr_forward,f);
+  for(int k=0;k<3;k++){vr.frame.grip[w].position[k]=0;vr.frame.grip[1-w].position[k]=f[k]*0.35f+(rnd()-.5f)*0.04f;}
+  compute_aim_pose();assert(vr.two_handed);
+  float raw[3],got[3];rotate(vr.frame.aim[w].orientation,xr_up,raw);rotate(vr.aim_pose.orientation,xr_up,got);
+  float dot=raw[0]*got[0]+raw[1]*got[1]+raw[2]*got[2];
+  /* roll 0: the gun's up stays the controller's; Gun Roll 180: it stays flipped in two hands too */
+  if(roll==0)assert(dot>0.9f);else assert(dot<-0.9f);
+ }
+ puts("PASS: two-handed aim keeps the gun's calibrated roll (2000 poses, both hands): Gun Roll 180 no longer re-inverts in two hands");
+}
+''')

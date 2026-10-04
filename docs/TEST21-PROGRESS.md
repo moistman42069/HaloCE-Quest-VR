@@ -51,6 +51,15 @@ local copy of the release APK has the published SHA-256.
    below 98%, and the Warthog's throttle is that stick.
 6. **Melee too easy online.** Swing melee fires on any hand moving faster than
    2 m/s vertically, in every game type.
+8. **Quest OS v78 report, last step (gun upside down again in two hands).**
+   `compute_aim_pose` built the two-handed gun's orientation from the raw
+   controller's up (`vr.frame.aim`), dropping the gun calibration
+   (`vr.weapon_*`, applied only to one-handed aim). A gun turned upright with Gun
+   Roll 180 stayed upright in one hand and flipped back in two. The earlier steps
+   (hands 180° off on v78; the hand option fixing hands but not guns) fit the
+   design: Hand rotation is hand-only by design (test20c). Controller → Flip Roll
+   180 corrects the raw pose for hand, gun and two hands together and was not
+   affected. The v78 cause itself is still unconfirmed.
 7. **Two-hand auto grip "removed".** "Auto" was a magnet: two-handed aim only
    while the off hand stayed within a narrow cone; it never locked. The default was
    Grip (squeeze).
@@ -88,6 +97,8 @@ local copy of the release APK has the published SHA-256.
 - Horn: seated, either stick click sets the crouch control whatever the throttle
   (`vr_horn_held` via `vr_take_actions`); a lowered head no longer crouches while
   seated.
+- Two-handed aim takes the gun's up from its calibrated one-handed aim, so Gun
+  Roll (and the rest of the gun angle's roll) survives two-hand grip.
 - Packaging recognises test21 labels and checks its markers.
 
 Kept: Legs + Arms default, gun anchoring, hand/gun calibration, fingers,
@@ -106,7 +117,7 @@ remains separate (FUTURE-RELEASE-FOLLOWUPS.md); nothing here links to it.
 | Auto two-hand lock | Yes | Static wiring and migration | No |
 | Horn | Yes | Button logic | No |
 | Online melee off | Yes | Gate logic | No |
-| v78 hand/weapon orientation | No | — | Separate report |
+| v78: gun re-inverted in two hands | Yes (gun roll kept) | Yes (2,000 poses, both hands) | No: needs the reporter (Quest 3S, v78) |
 
 ## Headset checks needed
 
@@ -120,5 +131,8 @@ remains separate (FUTURE-RELEASE-FOLLOWUPS.md); nothing here links to it.
 4. Two hands: bring the off hand to a rifle's support grip without squeezing; it
    locks. Pull away; it releases. Also try Squeeze and Off, and left-handed.
 5. Warthog: honk with either stick click while driving at full throttle.
+7. v78 tester: if hands are 180° off, use Controller Left/Right → Flip Roll 180
+   (fixes hand and gun together). If they used Hand Roll plus Gun Roll instead,
+   two-hand grip must now keep the gun upright.
 6. Multiplayer: quick hand movements don't melee, the melee button does; Melee →
    Impact + Online re-enables physical melee.
