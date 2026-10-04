@@ -63,3 +63,8 @@ suite with `python3 tools/run-quest-checks.py` in Linux/WSL (clang + JDK), follo
 by `python3 -m pytest -q tools/test_cache_file_formats.py`. No game is launched.
 Per-suite logs stay in ignored `build/quest-regressions`. Private test19 packaging
 uses `--label test19 --version-name 1.0.1`; this does not authorize publication.
+
+Read and write repository text explicitly as UTF-8, especially on Windows.
+Do not rely on the shell/Python locale for credits, notices or player guides.
+Regenerate the field guide after changes and inspect bundled text for encoding
+damage before packaging.

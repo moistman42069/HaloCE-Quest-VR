@@ -86,10 +86,14 @@ Final APK identity/hashes and follow-up cases are recorded in TEST19-DELIVERY.md
 
 ## Delivery / next action
 
-Both flavors and package preflight passed from `ff93009e`. A final package review
-found text encoding damage in bundled third-party notices and continuation docs.
-Those texts were corrected without changing runtime code. Rebuild the pair from
-the clean correction commit, then record its final hashes in TEST19-DELIVERY.md.
-Use `--label test19 --version-name 1.0.1`. Preserve old preflight files privately;
-do not deliver their superseded hashes. Device feedback and new publication
-approval remain required.
+The final pair is built from clean source `bc1f04465f68e3b14f1bf7de306854ae8cb36dc1`, following the
+UTF-8 notice correction. Runtime code matches tested `ff93009e`. Exact hashes,
+version/signing identity, checks and device cases are in TEST19-DELIVERY.md.
+Packaging uses `--label test19 --version-name 1.0.1 --runtime-source bc1f04465f68e3b14f1bf7de306854ae8cb36dc1`.
+Final source archives may include subsequent documentation-only commits.
+
+Wait for candidate device feedback. Reproduce the left-eye scene and verify
+reticle alignment, populated-host joins and co-op before claiming acceptance.
+Do not republish/rebuild accepted 1.0/test14 or upload this candidate to a release
+without new owner approval. Keep raw evidence private. The development branch
+and source ZIP contain everything needed for continuation without private chats.

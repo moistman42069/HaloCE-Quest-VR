@@ -53,3 +53,30 @@ settings, imports, multiplayer and co-op. No new headset/phone acceptance is imp
 
 Include the matching Download/HaloCE launch logs with each test result. Review
 private invites/device/path details before sharing logs publicly.
+
+## Final build provenance
+
+Both final flavors built serially from clean runtime source
+`bc1f04465f68e3b14f1bf7de306854ae8cb36dc1`. Subsequent delivery-note changes are documentation only.
+Both APKs use 1.0.1 / code 20, ARM64, API 28 minimum, and the existing certificate
+`53d416f7e123cc62b749940983209bc9a400002e033fd5f50900d4ffad8e2aa4`.
+Signing, 16 KB alignment and compaction payload comparison passed for both.
+The final pair includes the corrected UTF-8 credits and license text.
+
+| File | Bytes | SHA-256 |
+| --- | ---: | --- |
+| `HaloCE-Android-test19.apk` | 26,069,556 | `e31e47df5e9d01123c19411562f0460e7925bd38018560ed45abcb54b613afef` |
+| `HaloCE-Quest-test19.apk` | 28,060,291 | `a1bbfa09181c52abb5af728eac192c48595409b760edb3604b1288344d721bd0` |
+
+All 15 targeted suites pass; cache formats: 127 passed, 4 missing-fixture skips.
+The runtime code is unchanged from the tested `ff93009e` implementation; the
+later source commit corrects docs/credits. Package checks verify versions,
+editions, native markers, bundled guides, archives and established certificate.
+The final manifest records runtime and full source-documentation commits, with
+SHA256SUMS for both APKs and the matching source/build ZIPs. Public 1.0 asset
+hashes were independently rechecked and match the preserved baseline.
+
+No device installation or new hardware acceptance occurred. Keep candidate
+APKs private until testing and publication approval; the development source
+branch can be used for continuation. The old preflight pair was superseded
+by this rebuild and is not the delivery.
