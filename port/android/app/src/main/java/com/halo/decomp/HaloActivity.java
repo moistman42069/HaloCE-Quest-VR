@@ -30,6 +30,7 @@ public class HaloActivity extends SDLActivity {
     protected void onCreate(Bundle savedInstanceState) {
         RunLog.start(this);
         RunLog.line("Game activity creating; native logging will use the same launch file");
+        RunLog.line("Network: " + NetworkSettings.describe(this));
         java.io.File gameRoot = getExternalFilesDir(null);
         java.io.File shared = new java.io.File("/sdcard/Documents/HaloCE");
         if (BuildConfig.APPLICATION_ID.endsWith(".vr") && new java.io.File(shared, "maps/ui.map").isFile()) gameRoot = shared;

@@ -1,5 +1,7 @@
 # Test20d — 1.0.2 candidate (private): gun anchored to the controller, left-handed mode, simpler settings
 
+> **Superseded by [test20e](TEST20E-DELIVERY.md)** (code 25). Owner tested this pair on 2026-10-04 ("all right, great"); the phone could not reach one public host the Quest joined, traced to the phone's mobile-data NAT (TEST20E-PROGRESS.md).
+
 Not a release. v1.0.1 was withdrawn; the public release is v1.0.0. Supersedes
 test20c (code 23). Do not publish without explicit owner approval. Full
 evidence, cause and status: [TEST20D-PROGRESS.md](TEST20D-PROGRESS.md).

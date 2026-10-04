@@ -77,6 +77,9 @@ void p2p_lobby_refresh(void){refreshes++;}
 int p2p_lobby_games(struct p2p_listing *out,int max){assert(max==256);memcpy(out,public,sizeof(public));return public_count;}
 void p2p_lobby_mark_failed(const unsigned char *identifier){(void)identifier;failed++;}
 int p2p_join_invite(const char *s){assert(!strncmp(s,"halo://join/",12));joins++;return 1;}
+/* test20e: the join's stage as p2p.c reports it (default: no news, as before) */
+static int join_stage,join_tries,join_active;static char join_text[160];
+int p2p_join_status(char *text,int size,int *tries,int *active){snprintf(text,size,"%s",join_text);*tries=join_tries;*active=join_active;return join_stage;}
 struct network_advertised_game *network_game_client_get_available_games(struct network_game_client *c){(void)c;return lan;}
 int network_game_client_advertised_game_is_valid(struct network_advertised_game *g){return g->valid;}
 void event_manager_post_button(short controller,short button){assert(controller==0&&button==0);posted++;}
@@ -96,11 +99,23 @@ int main(void){
  assert(network_browser_select(rows[1],0)==&lan[0]);assert(browser.pending==NONE);
  memset(lan,0,sizeof(lan));network_browser_select(rows[1],0);network_browser_rows(rows,2,0);assert(browser.pending==NONE); // moving cancels
  network_browser_select(rows[1],0);clock_now+=30001;network_browser_rows(rows,1,0);assert(failed==1&&browser.pending==NONE);
+ // test20e: the browser follows the join's stages instead of a fixed 30 s
+ network_browser_select(rows[1],0);join_active=1;join_stage=P2P_JOIN_REACHING;join_tries=2;clock_now+=31000;network_browser_rows(rows,1,0);
+ assert(browser.pending==0&&failed==1&&strstr(browser.status,"direct connection (try 2)"));
+ join_stage=P2P_JOIN_FAILED;network_browser_rows(rows,1,0);assert(browser.pending==0&&strstr(browser.status,"asking again"));
+ join_active=0;strcpy(join_text,"No direct path to this host: your network (often mobile data) and its router both block it. Try Wi-Fi.");
+ clock_now+=1000;network_browser_rows(rows,1,0);assert(failed==2&&browser.pending==NONE&&strstr(browser.status,"Try Wi-Fi."));
+ network_browser_select(rows[1],0);join_stage=P2P_JOIN_CONNECTED;clock_now+=44000;network_browser_rows(rows,1,0);assert(browser.pending==0);
+ clock_now+=2000;network_browser_rows(rows,1,0);assert(failed==3&&browser.pending==NONE&&strstr(browser.status,"did not appear"));
+ network_browser_select(rows[1],0);join_active=1;join_stage=P2P_JOIN_ASKING;clock_now+=119000;network_browser_rows(rows,1,0);assert(browser.pending==0);
+ clock_now+=2000;network_browser_rows(rows,1,0);assert(failed==4&&browser.pending==NONE&&strstr(browser.status,"too long"));
+ join_active=0;join_stage=P2P_JOIN_NONE;join_text[0]=0;
  // A newly discovered unrelated LAN host must never be joined for the selected invite.
  lan[0].valid=1;lan[0].xnaddr[2]=42;lan[0].xnaddr[3]=42;
  assert(!network_browser_select(rows[1],0));assert(browser.pending==0);
  network_browser_end();assert(!started&&browser.pending==NONE);
  puts("PASS: 256 listings, population order, every page, refresh, stable selection, exact host, cancel, timeout, one deferred join event");
+ puts("PASS: test20e join stages: waits while the direct connection is tried, retries, reports the NAT reason, connected-but-missing and overall limits");
 }
 '''
 run('browser',prefix+b+stubs)

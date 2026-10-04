@@ -25,6 +25,13 @@ int p2p_hand_off_invite(void);
 /* joins the game an invite link or code leads to; text may hold other
 words around it. Returns nonzero if it held an invite */
 int p2p_join_invite(const char *text);
+/* test20e: how far the last join got: 0 none, 1 asking the host through
+signalling, 2 the host answered and a direct connection is being opened,
+3 connected, 4 failed (text: why, for players; "" otherwise); tries: the
+direct connection's tries so far; active: still joining (a failed try is
+followed by another until the join's own time runs out) */
+enum { P2P_JOIN_NONE, P2P_JOIN_ASKING, P2P_JOIN_REACHING, P2P_JOIN_CONNECTED, P2P_JOIN_FAILED };
+int p2p_join_status(char *text, int size, int *tries, int *active);
 
 /* this machine's identifier, which its XNADDR carries (6 bytes) */
 const unsigned char *p2p_identifier(void);

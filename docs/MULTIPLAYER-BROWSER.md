@@ -220,3 +220,33 @@ content fingerprints. Do not change map headers to bypass compatibility checks.
 Test17 addresses false rejection of running v11 matches, an action-control
 assertion, and reviewed departed-player/rejoin issues. The test16 animation
 handoff is preserved. [Full data-library instructions](GAME-DATA-LIBRARY.md).
+
+## Join stages and Quest/Android parity (test20e, 2026-10-04)
+
+The Quest and Android APKs build the same multiplayer code: no networking source
+has a VR-only branch, the Java browser/launcher classes, permissions and
+`network.*` defaults are shared, and `tools/package-quest.py` refuses a pair whose
+networking strings, app classes or entries differ (only the OpenXR loader is
+VR-only). `tools/test_test20e_network.py` guards the sources.
+
+A join logs three stages:
+
+1. `joining <host>'s game (stage 1/3: asking the host through signalling)`;
+   if nothing answers in 90 s, `no answer from the invite's host (stage 1/3 failed)`.
+2. `stage 2/3, the host answered through signalling with N addresses (...)`:
+   the direct UDP connection is tried for 30 s and asked for again until the
+   join's 90 s run out. A failure says whether packets arrived but did not
+   open (a session/build mismatch) or none arrived (a blocked path), and this
+   network's NAT class.
+3. `stage 3/3, direct connection open after N ms`: the game's own join
+   (version check, lobby) follows.
+
+The STUN lines classify this network: "keeps one public port for every
+destination" (lenient) or "gives each destination its own port" (strict, usual
+on mobile data). Two strict NATs, or a strict joiner and a port-restricted host,
+cannot connect without a forwarded port; there is no relay. The run log also
+records the device's network type (`Network: Wi-Fi ...` or `mobile data`). The
+in-game browser follows these stages instead of a fixed 30 s and shows the
+reason (for a strict NAT: "Try Wi-Fi."). With the browser active, the stock
+list's "start server if none advertised" fallback no longer prints a red
+warning each time A is pressed while a join is in progress.

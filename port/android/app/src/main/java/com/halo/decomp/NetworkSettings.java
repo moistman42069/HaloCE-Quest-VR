@@ -6,6 +6,26 @@ import java.io.File;
 import java.util.LinkedHashMap;
 
 final class NetworkSettings {
+    /** Test20e: the connection the device uses now, for the run log (Wi-Fi or
+     *  mobile data decides most direct-connection failures; see the native
+     *  "Internet play" NAT lines). Shared by the Quest and Android builds. */
+    static String describe(android.content.Context context) {
+        try {
+            android.net.ConnectivityManager manager=(android.net.ConnectivityManager)context.getSystemService(android.content.Context.CONNECTIVITY_SERVICE);
+            android.net.Network network=manager==null?null:manager.getActiveNetwork();
+            android.net.NetworkCapabilities caps=network==null?null:manager.getNetworkCapabilities(network);
+            if(caps==null) return "no active network";
+            StringBuilder kind=new StringBuilder();
+            if(caps.hasTransport(android.net.NetworkCapabilities.TRANSPORT_WIFI)) kind.append("Wi-Fi");
+            if(caps.hasTransport(android.net.NetworkCapabilities.TRANSPORT_ETHERNET)) kind.append(kind.length()>0?"+":"").append("Ethernet");
+            if(caps.hasTransport(android.net.NetworkCapabilities.TRANSPORT_CELLULAR)) kind.append(kind.length()>0?"+":"").append("mobile data");
+            if(caps.hasTransport(android.net.NetworkCapabilities.TRANSPORT_VPN)) kind.append(kind.length()>0?"+":"").append("VPN");
+            if(kind.length()==0) kind.append("other");
+            return kind+(caps.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_NOT_METERED)?", unmetered":", metered")
+                +(caps.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED)?", internet validated":", internet not validated");
+        } catch(Exception e) { return "unknown ("+e.getClass().getSimpleName()+")"; }
+    }
+
     static void show(Activity activity,File root) {
         LinearLayout layout=new LinearLayout(activity); layout.setOrientation(LinearLayout.VERTICAL);
         int p=(int)(16*activity.getResources().getDisplayMetrics().density); layout.setPadding(p,p,p,p);

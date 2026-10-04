@@ -10,4 +10,6 @@ long network_browser_rows(struct network_advertised_game **rows, short selected,
 struct network_advertised_game *network_browser_select(struct network_advertised_game *row, short controller);
 boolean network_browser_text(long row, wchar_t *text, long capacity);
 char const *network_browser_status(void);
+/* whether the public browser owns the System Link list (test20e) */
+boolean network_browser_active(void);
 #endif

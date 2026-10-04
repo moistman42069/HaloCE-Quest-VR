@@ -28,6 +28,41 @@ def network_value(name):
     return int(re.search(r"^#define " + name + r" (\d+)$", text, re.M)[1])
 
 
+# Test20e: the Quest and Android builds share every networking path; only
+# these platform pieces may differ between the two APKs.
+VR_ONLY_ENTRIES = {"lib/arm64-v8a/libopenxr_loader.so"}
+NETWORK_STRING = re.compile(rb"Internet play|browser: |signalling|UPnP|upnp|STUN|stun\.|tunnel|invite|network\.[a-z_]+|"
+                            rb"halo://join|p2p|lobby|games\.txt|joining|join requested|Multiplayer join")
+
+
+def printable_strings(data):
+    return {m.group() for m in re.finditer(rb"[\x20-\x7e]{6,}", data)}
+
+
+def networking_parity(vr_path, flat_path):
+    """Equal multiplayer code in both APKs: the same entries (but the VR-only
+    OpenXR loader), the same networking strings in the guest and host, and
+    the same app classes. Platform UI (touch, gamepad, VR) may differ."""
+    with zipfile.ZipFile(vr_path) as vr, zipfile.ZipFile(flat_path) as flat:
+        vr_names = {n for n in vr.namelist() if not n.startswith("META-INF/")}
+        flat_names = {n for n in flat.namelist() if not n.startswith("META-INF/")}
+        if vr_names - flat_names != VR_ONLY_ENTRIES or flat_names - vr_names:
+            raise SystemExit("APK entries differ beyond the OpenXR loader: VR-only "
+                             + repr(sorted(vr_names - flat_names)) + ", flat-only " + repr(sorted(flat_names - vr_names)))
+        for member in ["assets/halo_guest.elf", "lib/arm64-v8a/libmain.so"]:
+            a = {x for x in printable_strings(vr.read(member)) if NETWORK_STRING.search(x)}
+            b = {x for x in printable_strings(flat.read(member)) if NETWORK_STRING.search(x)}
+            if a != b:
+                raise SystemExit("Networking differs between the Quest and Android " + member + ": VR-only "
+                                 + repr(sorted(a - b)[:8]) + ", flat-only " + repr(sorted(b - a)[:8]))
+        def classes(archive):
+            dex = b"".join(archive.read(n) for n in archive.namelist() if re.fullmatch(r"classes\d*\.dex", n))
+            return set(re.findall(rb"Lcom/halo/decomp/[A-Za-z0-9_$/]+;", dex))
+        if classes(vr) != classes(flat):
+            raise SystemExit("App classes differ between the Quest and Android APKs")
+    print("Networking parity: same entries (but the OpenXR loader), networking strings and app classes in both APKs")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--vr", type=Path, required=True)
@@ -55,6 +90,7 @@ def main():
     branch = subprocess.check_output(["git", "branch", "--show-current"], cwd=ROOT, text=True).strip()
     runtime_commit=subprocess.check_output(["git","rev-parse",args.runtime_source or "HEAD"],cwd=ROOT,text=True).strip()
     records = []
+    networking_parity(args.vr, args.flat)
     for path, package, vr in [(args.vr, "com.halo.decomp.vr", True), (args.flat, "com.halo.decomp", False)]:
         signed = subprocess.check_output([str(args.build_tools / "apksigner"), "verify", "--print-certs", str(path)], text=True)
         if "certificate SHA-256 digest: " + CERTIFICATE not in signed:

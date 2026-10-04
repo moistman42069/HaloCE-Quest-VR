@@ -3377,7 +3377,11 @@ boolean ui_widget_event_handler_function_invoke(
 	if ((short)function_index >= 0 && function_index < 102)
 	{
 		result = event_handler_function_list.functions[(short)function_index](widget, event, widget_deleted);
-		if (!result)
+		/* port: with the public browser (network_browser.c) the System Link
+		list always has rows, so its "start server if none advertised" always
+		declines; that is not a failure worth a red line on the screen */
+		if (!result && !(event_handler_function_list.functions[(short)function_index] ==
+			start_network_game_if_no_advertised_servers && network_browser_active()))
 			console_warning("event handler '%s' failed", event_handler_function_list.names[(short)function_index]);
 		return result;
 	}

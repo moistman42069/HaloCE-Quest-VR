@@ -245,7 +245,8 @@ final class ServerBrowser {
             + (campaign ? "matching campaign build" : BuildConfig.HALO_NETWORK_MINIMUM + "–" + BuildConfig.HALO_NETWORK_MAXIMUM)));
         Button open = button(rows, "Join " + entry.name, () -> {
             Runnable connect=()->{
-                RunLog.line("Multiplayer join requested: " + entry.name + " network=" + entry.version + " map=" + entry.map);
+                RunLog.line("Multiplayer join requested: " + entry.name + " network=" + entry.version + " map=" + entry.map
+                    + " over " + NetworkSettings.describe(activity));
                 if (join.open(entry.invite)) dialog.dismiss();
                 else status.setText("Could not write the invite. Check game-data storage access, then try again.");
             };

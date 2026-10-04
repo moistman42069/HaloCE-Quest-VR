@@ -110,11 +110,32 @@ long network_browser_rows(struct network_advertised_game **rows, short selected,
         } else if(!browser.ready && find_game(browser.games[browser.pending].identifier)) {
             browser.ready=TRUE;
             event_manager_post_button(controller,0);
-        } else if(now-browser.joined>=30000) {
-            p2p_lobby_mark_failed(browser.games[browser.pending].identifier);
-            browser.pending=NONE;browser.ready=FALSE;
-            snprintf(browser.status,sizeof(browser.status),"Host did not answer. A: retry; refresh to find other games.");
-            platform_log("browser: selected public host did not advertise within 30 seconds");
+        } else if(!browser.ready) {
+            /* test20e: follow the join's stages (p2p_join_status) instead of a
+             * fixed 30 s, and say why it failed */
+            char failure[160];int tries=0,active=0,stage=p2p_join_status(failure,sizeof(failure),&tries,&active);
+            char const *give_up=NULL;
+            if(active || now-browser.joined<2000) {
+                if(stage==P2P_JOIN_REACHING)snprintf(browser.status,sizeof(browser.status),
+                    "Host answered. Opening a direct connection (try %d)... B: cancel.",tries);
+                else if(stage==P2P_JOIN_FAILED)snprintf(browser.status,sizeof(browser.status),
+                    "Try %d found no direct path; asking again... B: cancel.",tries);
+                else if(stage==P2P_JOIN_CONNECTED)snprintf(browser.status,sizeof(browser.status),
+                    "Connected. Waiting for the host's game to appear...");
+                else snprintf(browser.status,sizeof(browser.status),"Asking the host... B: cancel.");
+                if(now-browser.joined>=120000)give_up="The join took too long. Refresh and try again.";
+            } else if(stage==P2P_JOIN_FAILED)give_up=failure[0]?failure:"Could not reach the host. Refresh and try again.";
+            else if(stage==P2P_JOIN_CONNECTED) {
+                snprintf(browser.status,sizeof(browser.status),"Connected. Waiting for the host's game to appear...");
+                if(now-browser.joined>=45000)give_up="Connected, but the host's game did not appear. It may be closed or loading.";
+            } else if(now-browser.joined>=30000)give_up="Host did not answer. A: retry; refresh to find other games.";
+            if(give_up) {
+                p2p_lobby_mark_failed(browser.games[browser.pending].identifier);
+                browser.pending=NONE;browser.ready=FALSE;
+                snprintf(browser.status,sizeof(browser.status),"%s",give_up);
+                platform_log("browser: join of the selected public host ended after %lu ms at stage %d (%d direct tries): %s",
+                    now-browser.joined,stage,tries,give_up);
+            }
         }
     }
     /* Freeze nonempty snapshots until refresh/navigation: rows never jump under
@@ -151,7 +172,8 @@ struct network_advertised_game *network_browser_select(struct network_advertised
         snprintf(browser.status,sizeof(browser.status),"Host unavailable or Internet play is off. Refresh and try again.");return NULL;
     }
     browser.pending=index;browser.ready=FALSE;browser.controller=controller;browser.joined=system_milliseconds();
-    snprintf(browser.status,sizeof(browser.status),"Connecting (up to 30s). Move selection or B to cancel.");return NULL;
+    snprintf(browser.status,sizeof(browser.status),"Asking the host... Move selection or B to cancel.");
+    platform_log("browser: joining public listing '%s'",g->name);return NULL;
 }
 boolean network_browser_text(long row,wchar_t *text,long capacity) {
     char line[64];int n=MIN(PAGE_SIZE,browser.count-browser.page*PAGE_SIZE);
@@ -163,3 +185,6 @@ boolean network_browser_text(long row,wchar_t *text,long capacity) {
     wide(text,capacity,line);return TRUE;
 }
 char const *network_browser_status(void){return browser.status;}
+/* the stock list's "start server if none advertised" declines while this
+ * browser owns the list (it always has rows); its warning is noise then */
+boolean network_browser_active(void){return browser.active;}
