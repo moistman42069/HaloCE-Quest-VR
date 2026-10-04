@@ -121,6 +121,10 @@ int vr_weapon_view(const float position[3], float out_position[3], float out_for
 /* a hand's grip (0 left, 1 right) in the world, seen from where the game's
 camera is (`position`); 0 when it is not tracked */
 int vr_hand_world(int hand, const float position[3], float out_position[3], float out_forward[3], float out_up[3]);
+/* as vr_hand_world, turned by the visible hand's own orientation (vr.hand_*) */
+int vr_hand_pose(int hand, const float position[3], float out_position[3], float out_forward[3], float out_up[3]);
+/* vr.hand_tracking: 0 body IK, 1 floating hands, 2 floating hands and arms */
+int vr_hand_tracking_mode(void);
 /* the game's world units per metre (vr.world_scale) */
 float vr_units_per_metre(void);
 

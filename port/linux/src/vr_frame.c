@@ -71,6 +71,12 @@ static struct
 	float weapon_offset[3];
 	float alignment_rotation[2][4], alignment_offset[2][3];
 	int alignment_grip_aim[2];
+	/* test20c: the visible hand's rotation on its controller (vr.hand_*)
+	and the one-handed gun's on the aim (vr.weapon_*, mirrored for the left
+	hand); separate, so a comfortable hand never tilts the gun */
+	float hand_rotation[2][4], weapon_rotation[2][4];
+	/* vr.hand_tracking: 0 body IK, 1 floating hands, 2 floating hands and arms */
+	int hand_tracking;
 	/* the aim this frame: the right controller's, or with both hands on
 	the gun the line from the right to the left (vr.two_handed) */
 	struct halo_xr_pose aim_pose;
@@ -266,9 +272,86 @@ static void choose_refresh_rate(void)
 	}
 }
 
+/* Test20c: rotations that the owner and testers saved in vr.align_* to make
+the empty hand comfortable also tilted the gun. Once per config, move such
+rotations to vr.hand_* (hand only) and clear them from the controller
+correction. A roll flip (|roll| >= 135, the firmware fix) stays put. */
+static void migrate_calibration_split(void)
+{
+	static const char *const sides[] = {"left", "right"}, *const axes[] = {"pitch", "yaw", "roll"};
+	int h, a, ok = 1;
+
+	if (config_boolean("vr.calibration_split_applied"))
+		return;
+	for (h = 0; h < 2; h++)
+	{
+		char key[64];
+		double angle[3];
+
+		for (a = 0; a < 3; a++)
+		{
+			snprintf(key, sizeof(key), "vr.align_%s_%s", sides[h], axes[a]);
+			angle[a] = vr_alignment_bound(config_real(key), 180.f);
+		}
+		if ((angle[0] == 0.0 && angle[1] == 0.0 && angle[2] == 0.0) || fabs(angle[2]) >= 135.0)
+			continue;
+		for (a = 0; a < 3; a++)
+		{
+			snprintf(key, sizeof(key), "vr.hand_%s_%s", sides[h], axes[a]);
+			ok = config_write_real(key, angle[a]) && ok;
+			snprintf(key, sizeof(key), "vr.align_%s_%s", sides[h], axes[a]);
+			ok = config_write_real(key, 0.0) && ok;
+		}
+		platform_log("vr: %s hand comfort %.1f/%.1f/%.1f moved from controller calibration to hand orientation%s",
+			sides[h], angle[0], angle[1], angle[2], ok ? "" : " (save failed)");
+	}
+	if (ok)
+		config_write_boolean("vr.calibration_split_applied", 1);
+}
+
 void vr_reload_settings(void)
 {
 	static int left_handed = -1;
+
+	{
+		static const char *const sides[] = {"left", "right"}, *const axes[] = {"pitch", "yaw", "roll"};
+		static const char *const tracking[] = {"ik", "floating", "floating_arms"};
+		float angle[3], weapon[3], mirrored[3];
+		char key[64];
+		int h, a;
+
+		for (h = 0; h < 2; h++)
+		{
+			for (a = 0; a < 3; a++)
+			{
+				snprintf(key, sizeof(key), "vr.hand_%s_%s", sides[h], axes[a]);
+				angle[a] = vr_alignment_bound(config_real(key), 180.f);
+			}
+			vr_alignment_rotation(angle, vr.hand_rotation[h]);
+			platform_log("vr: %s hand orientation pitch/yaw/roll %.1f/%.1f/%.1f degrees (hand only)",
+				sides[h], angle[0], angle[1], angle[2]);
+		}
+		for (a = 0; a < 3; a++)
+		{
+			snprintf(key, sizeof(key), "vr.weapon_%s", axes[a]);
+			weapon[a] = vr_alignment_bound(config_real(key), 180.f);
+		}
+		/* the left hand holds a mirror image: yaw and roll turn the other way */
+		mirrored[0] = weapon[0]; mirrored[1] = -weapon[1]; mirrored[2] = -weapon[2];
+		vr_alignment_rotation(weapon, vr.weapon_rotation[1]);
+		vr_alignment_rotation(mirrored, vr.weapon_rotation[0]);
+		vr.weapon_offset[0] = (float)config_real("vr.weapon_offset_right");
+		vr.weapon_offset[1] = (float)config_real("vr.weapon_offset_up");
+		vr.weapon_offset[2] = (float)config_real("vr.weapon_offset_back");
+		for (vr.hand_tracking = 0; vr.hand_tracking < 3 &&
+			strcmp(config_string("vr.hand_tracking"), tracking[vr.hand_tracking]); vr.hand_tracking++)
+			;
+		if (vr.hand_tracking == 3)
+			vr.hand_tracking = 0;
+		platform_log("vr: gun pitch/yaw/roll %.1f/%.1f/%.1f degrees offset %.3f/%.3f/%.3f m; hand tracking %s",
+			weapon[0], weapon[1], weapon[2], vr.weapon_offset[0], vr.weapon_offset[1], vr.weapon_offset[2],
+			tracking[vr.hand_tracking]);
+	}
 
     {
         const char *sides[] = {"left", "right"};
@@ -417,7 +500,7 @@ void vr_initialize(void)
 		return;
 	vr.initialized = 1;
 	config_vr_vehicle_defaults();
-	platform_log("vr: HaloCE Quest test20b candidate (Safe fenced streaming performance fix, render diagnostics, rigid controller calibration)");
+	platform_log("vr: HaloCE Quest test20c candidate (separate hand and gun calibration, floating hands and arms, hands-only cuffs, 32 MB Safe stream)");
 	if (!config_boolean("vr.enabled"))
 	{
 		platform_log("vr: off (vr.enabled)");
@@ -448,15 +531,13 @@ void vr_initialize(void)
 	vr.units_per_metre = (float)config_real("vr.world_scale");
 	vr.snap_armed = 1;
 	vr.weapon_hand = config_boolean("vr.left_handed") ? 0 : 1;
+	migrate_calibration_split();
 	vr_reload_settings();
 	vr.zoom_level = -1;
 	vr.flashlight_armed = 1;
 	vr.noted_weapon = -1;
 	vr.pending_state = -1;
 	vr.hand_state = HAND_LOOSE;
-	vr.weapon_offset[0] = (float)config_real("vr.weapon_offset_right");
-	vr.weapon_offset[1] = (float)config_real("vr.weapon_offset_up");
-	vr.weapon_offset[2] = (float)config_real("vr.weapon_offset_back");
 	vr.force_render = config_boolean("vr.force_render");
 	vr.timing = config_boolean("vr.timing");
 	vr.gpu_finish = config_boolean("vr.timing_gpu");
@@ -1728,6 +1809,9 @@ static void compute_aim_pose(void)
 	int w = vr.weapon_hand, o = 1 - vr.weapon_hand;
 
 	vr.aim_pose = vr.frame.aim[w];
+	/* one-handed: the gun's own angle on the controller (vr.weapon_*);
+	both hands' line replaces it below */
+	vr_alignment_multiply(vr.frame.aim[w].orientation, vr.weapon_rotation[w], vr.aim_pose.orientation);
 	vr.two_handed = 0;
 	if (!vr.two_handed_enabled || vr_hand_empty() ||
 		(vr.frame.hand_valid[w] & 3) != 3 || !(vr.frame.hand_valid[o] & 1))
@@ -1964,6 +2048,24 @@ int vr_hand_world(int hand, const float position[3], float out_position[3], floa
 	if (hand < 0 || hand > 1 || !(vr.frame.hand_valid[hand] & 1))
 		return 0;
 	return hand_view(&vr.frame.grip[hand], NULL, position, out_position, out_forward, out_up);
+}
+
+int vr_hand_pose(int hand, const float position[3], float out_position[3], float out_forward[3], float out_up[3])
+{
+	struct halo_xr_pose pose;
+
+	if (hand < 0 || hand > 1 || !(vr.frame.hand_valid[hand] & 1))
+		return 0;
+	/* the visible hand's own rotation about the grip (vr.hand_*); the grip's
+	place, gestures and the gun are untouched */
+	pose = vr.frame.grip[hand];
+	vr_alignment_multiply(vr.frame.grip[hand].orientation, vr.hand_rotation[hand], pose.orientation);
+	return hand_view(&pose, NULL, position, out_position, out_forward, out_up);
+}
+
+int vr_hand_tracking_mode(void)
+{
+	return vr.hand_tracking;
 }
 
 float vr_units_per_metre(void)

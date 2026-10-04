@@ -18,6 +18,8 @@ long config_integer(const char *name);
 double config_real(const char *name);
 /* never NULL; "" when unset */
 const char *config_string(const char *name);
+/* the built-in default of a real setting (0 when unknown) */
+double config_default_real(const char *name);
 /* sets a boolean setting, and writes it into config.toml (only its line
 changes); 1 on success */
 int config_write_boolean(const char *name, int value);

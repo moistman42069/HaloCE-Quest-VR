@@ -686,15 +686,18 @@ How wide the scope is, in metres.
 
 vr.align_left_pitch [real]
 Default: 0.0
-Left controller local pitch: degrees (-180..180), applied to grip and aim. Zero preserves runtime tracking.
+Left controller tracking correction, local pitch: degrees (-180..180). Moves hand AND gun;
+for comfort use vr.hand_* (hand) or vr.weapon_* (gun). Zero preserves runtime tracking.
 
 vr.align_left_yaw [real]
 Default: 0.0
-Left controller local yaw: degrees (-180..180), applied to grip and aim. Zero preserves runtime tracking.
+Left controller tracking correction, local yaw: degrees (-180..180). Moves hand AND gun;
+for comfort use vr.hand_* (hand) or vr.weapon_* (gun). Zero preserves runtime tracking.
 
 vr.align_left_roll [real]
 Default: 0.0
-Left controller local roll: degrees (-180..180), applied to grip and aim. Zero preserves runtime tracking.
+Left controller tracking correction, local roll: degrees (-180..180). Moves hand AND gun;
+for comfort use vr.hand_* (hand) or vr.weapon_* (gun). Zero preserves runtime tracking.
 
 vr.align_left_right [real]
 Default: 0.0
@@ -714,15 +717,18 @@ Use left grip pose for aim too. Optional controller compatibility mode; false pr
 
 vr.align_right_pitch [real]
 Default: 0.0
-Right controller local pitch: degrees (-180..180), applied to grip and aim. Zero preserves runtime tracking.
+Right controller tracking correction, local pitch: degrees (-180..180). Moves hand AND gun;
+for comfort use vr.hand_* (hand) or vr.weapon_* (gun). Zero preserves runtime tracking.
 
 vr.align_right_yaw [real]
 Default: 0.0
-Right controller local yaw: degrees (-180..180), applied to grip and aim. Zero preserves runtime tracking.
+Right controller tracking correction, local yaw: degrees (-180..180). Moves hand AND gun;
+for comfort use vr.hand_* (hand) or vr.weapon_* (gun). Zero preserves runtime tracking.
 
 vr.align_right_roll [real]
 Default: 0.0
-Right controller local roll: degrees (-180..180), applied to grip and aim. Zero preserves runtime tracking.
+Right controller tracking correction, local roll: degrees (-180..180). Moves hand AND gun;
+for comfort use vr.hand_* (hand) or vr.weapon_* (gun). Zero preserves runtime tracking.
 
 vr.align_right_right [real]
 Default: 0.0
@@ -739,6 +745,56 @@ Right controller local back: metres (-0.20..0.20), in the original controller fr
 vr.align_right_grip_aim [boolean]
 Default: false
 Use right grip pose for aim too. Optional controller compatibility mode; false preserves native aim.
+
+vr.hand_tracking [string]
+Default: "ik"
+How tracked hands follow the controllers (with vr.arms "ik"): "ik" body-IK arms reach
+from the shoulders; "floating" hands go exactly where the controllers are, arms hidden;
+"floating_arms" hands go exactly to the controllers and arms hang from a floating
+shoulder that never pulls them back. Independent of vr.body visibility.
+
+vr.hand_left_pitch [real]
+Default: -70.0
+Left visible hand only: degrees (-180..180) around the controller's X axis. Default -70
+lines the empty hand up with a hand holding a Touch controller. Does not move the gun.
+
+vr.hand_left_yaw [real]
+Default: 0.0
+Left visible hand only: degrees around the controller's Y axis. Does not move the gun.
+
+vr.hand_left_roll [real]
+Default: 0.0
+Left visible hand only: degrees around the controller's Z axis. Does not move the gun.
+
+vr.hand_right_pitch [real]
+Default: -70.0
+Right visible hand only: as vr.hand_left_pitch. Does not move the gun.
+
+vr.hand_right_yaw [real]
+Default: 0.0
+Right visible hand only: as vr.hand_left_yaw. Does not move the gun.
+
+vr.hand_right_roll [real]
+Default: 0.0
+Right visible hand only: as vr.hand_left_roll. Does not move the gun.
+
+vr.weapon_pitch [real]
+Default: 0.0
+One-handed gun angle relative to the controller's aim: degrees (-180..180). Turns the
+gun, its shots and reticle together; mirrored for the left hand. Hands are unaffected.
+
+vr.weapon_yaw [real]
+Default: 0.0
+As vr.weapon_pitch, around the controller's up axis.
+
+vr.weapon_roll [real]
+Default: 0.0
+As vr.weapon_pitch, around the aim axis.
+
+vr.calibration_split_applied [boolean]
+Default: false
+Internal one-time migration (test20c): hand-comfort rotations saved in vr.align_* move to
+vr.hand_*, so the gun returns to the controller's aim. Roll flips (+-180) stay.
 
 vr.weapon_offset_right [real]
 Default: 0.10

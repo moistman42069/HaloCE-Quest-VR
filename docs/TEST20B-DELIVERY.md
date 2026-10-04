@@ -1,5 +1,7 @@
 # Test20b — 1.0.2 candidate (private): performance fix + controller calibration
 
+> **Superseded by [test20c](TEST20C-DELIVERY.md)** (code 23). Owner tested this pair on 2026-10-04: performance fixed; hand-comfort calibration tilted the gun, addressed in test20c.
+
 Not a release. v1.0.1 was withdrawn by the owner; the public release is v1.0.0.
 Supersedes the untested test20 pair (code 21). Do not publish without explicit
 owner approval after device testing.

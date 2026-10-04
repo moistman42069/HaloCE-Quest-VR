@@ -48,14 +48,17 @@ Open the stock campaign pause menu, then **VR Settings**. Screens have four rows
 | Category | Menu options |
 | --- | --- |
 | Controls | VR / Xbox layout; Hand / Head aim; Right / Left gun hand; Smooth / Snap 30 / Snap 45; Turn Speed 45–300 degrees/s; Move With Head / Left Hand / Right Hand; Two Hands Grip / Auto / Off; Weapons Locked / Physical; Holsters Off / On |
-| Body | Arms + Hands / Full / Legs + Arms / Hands Only; Arms IK / Hidden / Animated; Fingers Off / Tracked; Room-scale Off / On; Crouch Depth Off or 5–40 cm; Arm Run Off / On; Run Effort 0.2–1.2; Melee Impact / Swing; Melee Speed Off or 1.0–3.6 m/s |
+| Body | Arms + Hands / Full / Legs + Arms / Hands Only; Arms IK / Hidden / Animated; Fingers Off / Tracked; Hands Body IK / Floating / Float + Arms; Room-scale Off / On; Crouch Depth Off or 5–40 cm; Arm Run Off / On; Run Effort 0.2–1.2; Melee Impact / Swing; Melee Speed Off or 1.0–3.6 m/s |
 | VR | Haptics 0–100%; Flashlight Gesture / Button; Holster Size 10–40 cm; Scope Off / On; Cutscenes Immersive / 3D Screen / Flat; MP Physical Off / On; Close Contact Off / On |
 | Vehicles | Third Person (default) / First Person; Steering Right Hand (default) / Left Hand / Head / Stick; global and Warthog/Ghost/Banshee/Scorpion/Pelican Up/Forward/Right seat offsets ±50 cm |
 | Graphics | Preset Auto / Low / Medium / High / Max; Resolution Auto / 70 / 85 / 100 / 115 / 130%; Shadows, Lights, Specular, Reflections, Bump Maps, Grass, Fog Layers: Auto / On / Off |
 | Display | Decals, Particles, Contrails, Weather, Lens Flares, Camo: Auto / On / Off; Refresh 72 / 80 / 90 / 120 Hz |
 | Crosshair | Native / Off; Size 25–300%; Opacity 0–100% |
+| Left Hand / Right Hand | Visible hand only: Pitch / Yaw / Roll ±180° in 5° steps (default −70 / 0 / 0); Reset |
+| Gun | Gun Pitch / Yaw / Roll ±180° (default 0); Gun Right / Up / Back ±20 cm; Reset Gun |
+| Controller Left / Right | Tracking correction for hand and gun together (see below) |
 
-Important defaults: body `legs`, arms `ik`; fingers/room-scale/holsters/scope on; hand aim/right gun hand; two-hand Grip; Physical weapons; Arm Run off; MP Physical off; Close Contact on; smooth turn 120 degrees/s; refresh request 72 Hz. Saved values override defaults. Hands Only forces hand IK even if Arms was set to hidden/animated.
+Important defaults: body `legs`, arms `ik`, hands `ik` (Body IK); hand pitch −70°; gun angle 0; fingers/room-scale/holsters/scope on; hand aim/right gun hand; two-hand Grip; Physical weapons; Arm Run off; MP Physical off; Close Contact on; smooth turn 120 degrees/s; refresh request 72 Hz. Saved values override defaults. Hands Only forces hand IK even if Arms was set to hidden/animated.
 
 Close Contact reduces only the offline local VR capsule radius: up to 15%, at most 5 cm, never below 18 cm. Solid collision and height remain. MP Physical concerns weapon holding/drop behavior, not visual avatar sharing; peers may not reproduce physical drops/pickups correctly.
 
@@ -86,11 +89,29 @@ validation remain pending. [Inherited keyboard/mouse mappings](../port/linux/REA
 
 Quit before external edits. In `[vr]`, `body = "legs"` explicitly selects the default; alternatives: `arms`, `full`, `hands`. Generated comments and [port_config.c](../port/linux/src/port_config.c) document all keys. Advanced settings include HUD/screen size/distance, world scale, scope size, weapon offsets, cinematic separation/convergence and diagnostics. Diagnostic switches are for development. See [the player guide](PLAYER-GUIDE.md) for paths/backups.
 
-## Controller calibration (test15; test20b rigid correction)
+## Hand, gun and controller calibration (test20c)
 
-Pause > VR Settings > **Calibrate Left / Calibrate Right** (named Align Left / Align Right before test20b). These refer to the physical left/right controller, even in left-handed mode. Defaults are zero offsets and Native aim, preserving test14 poses. Correct only an affected controller; there is no firmware-based automatic flip.
+Three separate things can be adjusted in Pause > VR Settings. Each changes only what its name says:
 
-**What these pages adjust:** the whole tracked controller. Since test20b the correction is applied once, rigidly, so your **held weapon and your empty hand move together**; there are no separate armed and unarmed calibrations. Before test20b, Yaw/Roll could line up the weapon but tilt the empty hand (or the reverse), because a held weapon follows the controller's aim pose and an empty hand its grip pose. Saved values are kept and the held weapon looks the same as before; only the empty hand changes, to match it. **Body** (Legs + Arms, Full, Arms + Hands, Hands Only) and **Arms** only choose what body is shown; they do not change hand or weapon alignment. **Weapons** (Locked/Physical) changes weapon handling, not calibration. The advanced `vr.weapon_offset_*` config keys place the weapon model's grip in the hand and affect only a held weapon.
+| Page | Changes | Never changes |
+| --- | --- | --- |
+| **Left Hand / Right Hand** | How the visible empty (or free) hand sits on its controller: Pitch / Yaw / Roll. Default **−70 / 0 / 0**, taken from the owner's 2026-10-04 calibration video, so the glove lines up with a real hand holding a Touch controller. | The gun, its shots, the reticle, gestures |
+| **Gun** | The one-handed gun's angle on the controller (Gun Pitch / Yaw / Roll, default 0) and where its grip sits in the hand (Gun Right / Up / Back). Shots and the reticle turn with the gun, so the barrel and the bullets agree. In the left hand the angle is mirrored automatically. With both hands on the gun, the line between the hands aims it, as before. | The empty hands |
+| **Controller Left / Right** | Tracking correction for a misreported controller: rotates/moves **hand and gun together** (one rigid correction since test20b). Flip Roll 180, Aim Source, Reset. Normally leave at zero. | — |
+
+**Upgrading:** the first launch of test20c moves any rotation you saved on the old Calibrate / Align pages into the matching **Hand** page (that was what you were adjusting) and clears it from the controller correction, so the gun points with the controller again. A Roll near ±180 (the firmware flip fix) stays on the Controller page. Each game-data set has its own settings file, so this happens per set.
+
+**Hand tracking** (Body page → **Hands**), separate from what body is shown:
+
+- **Body IK** (default): unchanged. Arms reach from the body's shoulders; with Full or Legs + Arms the hands follow the body solution.
+- **Floating:** each free hand goes exactly where its controller is, with no arm solve, reach limit or shoulder pull. Arms are hidden; the glove cuff closes just behind the wrist. Torso and legs still follow the Body choice.
+- **Float + Arms:** hands go exactly to the controllers and arms are drawn, hanging from a shoulder that floats with the hand (it stays at the body's shoulder within reach and slides along beyond it), so the arm never pulls the hand back.
+
+In every mode, a held gun stays in the gun hand, the support hand stays locked to the gun while gripping, and reload/grenade/melee animations take over the hands as before. Hand tracking needs **Arms = IK** (the default); Arms Hidden/Animated keep their behaviour. **Hands Only** now gathers the hidden arm behind each wrist instead of toward the elbow, so the glove no longer looks cut off. **Body** and **Arms** never change calibration; **Weapons** (Locked/Physical) changes weapon handling only.
+
+### Controller Left / Right details (test15)
+
+These refer to the physical left/right controller, even in left-handed mode. Defaults are zero offsets and Native aim, preserving test14 poses. Correct only an affected controller; there is no firmware-based automatic flip.
 
 - Pitch / Yaw / Roll: -180 to +180 degrees, in 5-degree steps, around controller-local X / Y / Z. Positive angles use the right-hand rule. Rotation composes yaw, pitch, roll.
 - Right / Up / Back: -20 to +20 cm, in 1 cm steps, along the original controller's axes. Negative values move left / down / forward.

@@ -128,6 +128,10 @@ enum
 	_vr_setting_vehicle_centimetres,
 	_vr_setting_reset_alignment,
 	_vr_setting_flip_alignment,
+	/* test20c: restore a hand's orientation (key "left"/"right") or the gun's
+	angle and place (key "weapon") to their built-in defaults */
+	_vr_setting_reset_hand,
+	_vr_setting_reset_weapon,
 };
 
 #define VR_MENU_MAXIMUM_VALUES 12
@@ -164,6 +168,7 @@ static struct vr_menu_setting const vr_menu_body[] =
 	{ "BODY", "vr.body", _vr_setting_string, 4, { { "ARMS + HANDS", "arms" }, { "FULL", "full" }, { "LEGS + ARMS", "legs" }, { "HANDS ONLY", "hands" } } },
 	{ "ARMS", "vr.arms", _vr_setting_string, 3, { { "IK", "ik" }, { "HIDDEN", "hidden" }, { "ANIMATED", "animated" } } },
 	{ "FINGERS", "vr.fingers", _vr_setting_boolean, 2, { { "OFF", "false" }, { "TRACKED", "true" } } },
+	{ "HANDS", "vr.hand_tracking", _vr_setting_string, 3, { { "BODY IK", "ik" }, { "FLOATING", "floating" }, { "FLOAT + ARMS", "floating_arms" } } },
 	{ "ROOM-SCALE", "vr.roomscale", _vr_setting_boolean, 2, { { "OFF", "false" }, { "ON", "true" } } },
 	{ "CROUCH DEPTH", "vr.crouch_height", _vr_setting_real, 9, { { "OFF", "0" }, { "5 CM", "0.05" }, { "10 CM", "0.1" }, { "15 CM", "0.15" }, { "20 CM", "0.2" }, { "25 CM", "0.25" }, { "30 CM", "0.3" }, { "35 CM", "0.35" }, { "40 CM", "0.4" } } },
 	{ "ARM RUN", "vr.arm_run", _vr_setting_boolean, 2, { { "OFF", "false" }, { "ON", "true" } } },
@@ -239,6 +244,35 @@ static struct vr_menu_setting const vr_menu_effects[] =
 	{ "REFRESH", "vr.refresh_rate", _vr_setting_real, 4, { { "72 HZ", "72" }, { "80 HZ", "80" }, { "90 HZ", "90" }, { "120 HZ", "120" } } },
 };
 
+/* test20c: the visible hand alone (never the gun) */
+static struct vr_menu_setting const vr_menu_hand_left[] =
+{
+    { "PITCH", "vr.hand_left_pitch", _vr_setting_degrees, 0, { { NULL,NULL } } },
+    { "YAW", "vr.hand_left_yaw", _vr_setting_degrees, 0, { { NULL,NULL } } },
+    { "ROLL", "vr.hand_left_roll", _vr_setting_degrees, 0, { { NULL,NULL } } },
+    { "RESET LEFT HAND", "left", _vr_setting_reset_hand, 0, { { NULL,NULL } } },
+};
+
+static struct vr_menu_setting const vr_menu_hand_right[] =
+{
+    { "PITCH", "vr.hand_right_pitch", _vr_setting_degrees, 0, { { NULL,NULL } } },
+    { "YAW", "vr.hand_right_yaw", _vr_setting_degrees, 0, { { NULL,NULL } } },
+    { "ROLL", "vr.hand_right_roll", _vr_setting_degrees, 0, { { NULL,NULL } } },
+    { "RESET RIGHT HAND", "right", _vr_setting_reset_hand, 0, { { NULL,NULL } } },
+};
+
+/* test20c: the held gun alone, relative to the controller (shots follow it) */
+static struct vr_menu_setting const vr_menu_weapon[] =
+{
+    { "GUN PITCH", "vr.weapon_pitch", _vr_setting_degrees, 0, { { NULL,NULL } } },
+    { "GUN YAW", "vr.weapon_yaw", _vr_setting_degrees, 0, { { NULL,NULL } } },
+    { "GUN ROLL", "vr.weapon_roll", _vr_setting_degrees, 0, { { NULL,NULL } } },
+    { "RESET GUN", "weapon", _vr_setting_reset_weapon, 0, { { NULL,NULL } } },
+    { "GUN RIGHT", "vr.weapon_offset_right", _vr_setting_centimetres, 0, { { NULL,NULL } } },
+    { "GUN UP", "vr.weapon_offset_up", _vr_setting_centimetres, 0, { { NULL,NULL } } },
+    { "GUN BACK", "vr.weapon_offset_back", _vr_setting_centimetres, 0, { { NULL,NULL } } },
+};
+
 static struct vr_menu_setting const vr_menu_align_left[] =
 {
     { "PITCH", "vr.align_left_pitch", _vr_setting_degrees, 0, { { NULL,NULL } } },
@@ -281,8 +315,11 @@ static struct vr_menu_page
 	{ "GRAPHICS", vr_menu_graphics, NUMBEROF(vr_menu_graphics) },
 	{ "DISPLAY", vr_menu_effects, NUMBEROF(vr_menu_effects) },
 	{ "CROSSHAIR", vr_menu_crosshair, NUMBEROF(vr_menu_crosshair) },
-	{ "CALIBRATE LEFT", vr_menu_align_left, NUMBEROF(vr_menu_align_left) },
-	{ "CALIBRATE RIGHT", vr_menu_align_right, NUMBEROF(vr_menu_align_right) },
+	{ "LEFT HAND", vr_menu_hand_left, NUMBEROF(vr_menu_hand_left) },
+	{ "RIGHT HAND", vr_menu_hand_right, NUMBEROF(vr_menu_hand_right) },
+	{ "GUN", vr_menu_weapon, NUMBEROF(vr_menu_weapon) },
+	{ "CONTROLLER LEFT", vr_menu_align_left, NUMBEROF(vr_menu_align_left) },
+	{ "CONTROLLER RIGHT", vr_menu_align_right, NUMBEROF(vr_menu_align_right) },
 };
 
 #define VR_MENU_PAGE_COUNT ((long)NUMBEROF(vr_menu_pages))
@@ -776,7 +813,8 @@ boolean vr_menu_setting_text(
             snprintf(line,sizeof(line),"%s: < %.0f %s >",setting->label,
                 setting->type!=_vr_setting_degrees?value*100:value,
                 setting->type!=_vr_setting_degrees?"CM":"DEG");
-        } else if((setting->type == _vr_setting_reset_alignment || setting->type == _vr_setting_flip_alignment))
+        } else if(setting->type == _vr_setting_reset_alignment || setting->type == _vr_setting_flip_alignment ||
+            setting->type == _vr_setting_reset_hand || setting->type == _vr_setting_reset_weapon)
             snprintf(line,sizeof(line),"%s: APPLY",setting->label);
         else
 		snprintf(line, sizeof(line), setting->type == _vr_setting_real ? "%s: < %s >" : "%s: %s", setting->label,
@@ -817,6 +855,20 @@ boolean vr_menu_setting_change(
         roll=fmax(-180.0,fmin(180.0,roll));
         written=config_write_real(setting->key,roll); vr_reload_settings();
         platform_log("vr: %s flipped to %.1f%s",setting->key,roll,written?"":" (save failed)"); return TRUE;
+    }
+    if(setting->type == _vr_setting_reset_hand || setting->type == _vr_setting_reset_weapon) {
+        static const char *const hand_axes[]={"pitch","yaw","roll"};
+        static const char *const weapon_keys[]={"vr.weapon_pitch","vr.weapon_yaw","vr.weapon_roll",
+            "vr.weapon_offset_right","vr.weapon_offset_up","vr.weapon_offset_back"};
+        char key[64]; int a;
+        written=TRUE;
+        if(setting->type == _vr_setting_reset_hand) {
+            for(a=0;a<3;a++) { snprintf(key,sizeof(key),"vr.hand_%s_%s",setting->key,hand_axes[a]);
+                written=config_write_real(key,config_default_real(key))&&written; }
+        } else for(a=0;a<6;a++) written=config_write_real(weapon_keys[a],config_default_real(weapon_keys[a]))&&written;
+        vr_reload_settings();
+        platform_log("vr: reset %s %s%s",setting->key,setting->type == _vr_setting_reset_hand ? "hand orientation" : "gun angle and place",
+            written?"":" (save failed)"); return TRUE;
     }
     if(setting->type == _vr_setting_reset_alignment) {
         const char *axes[]={"pitch","yaw","roll","right","up","back"}; char key[64]; int a;

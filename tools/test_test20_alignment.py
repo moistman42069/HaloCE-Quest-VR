@@ -28,7 +28,7 @@ for side in ('left','right'):
 compact=menu.replace(' ','')
 assert '{"pitch","yaw","roll","right","up","back"}' in compact
 assert 'vr.align_%s_grip_aim' in menu and 'vr.align_%s_%s' in menu and 'vr.align_%s_%s' in frame
-assert '"CALIBRATE LEFT"' in menu and '"CALIBRATE RIGHT"' in menu and menu.count('"AIM SOURCE"')==2
+assert '"CONTROLLER LEFT"' in menu and '"CONTROLLER RIGHT"' in menu and menu.count('"AIM SOURCE"')==2
 
 c=r'''
 #include <assert.h>

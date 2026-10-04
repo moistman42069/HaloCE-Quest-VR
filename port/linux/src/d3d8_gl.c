@@ -298,8 +298,10 @@ is done with it, so a large buffer orphaned each frame costs its size per
 frame in flight and more. Instead each frame streams into the next of a few
 smaller buffers, reusing one only once the GPU has finished the frame that
 last used it (host_gl_wait_frame). A busy frame streams about 5 MB of
-vertices. */
-#define STREAM_BUFFER_SIZE (16 * 1024 * 1024)
+vertices. Safe geometry streams everything (no mirrors): test20b logs
+measured up to 15.6 MB a frame on the Pillar of Autumn, so Safe slots get
+32 MB to keep a frame from wrapping (orphaning) mid-frame; Normal keeps 16. */
+#define STREAM_BUFFER_SIZE (safe_geometry ? 32 * 1024 * 1024 : 16 * 1024 * 1024)
 #define INDEX_BUFFER_SIZE (2 * 1024 * 1024)
 #define STREAM_BUFFER_RING 3
 #else

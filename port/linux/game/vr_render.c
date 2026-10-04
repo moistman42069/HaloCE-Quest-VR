@@ -2411,7 +2411,7 @@ static void vr_publish_body(long unit, struct animation_graph *graph,
             if (chain[bone] < 0 || chain[bone] >= count) valid = FALSE;
         }
         if (!valid || !vr_node_under(graph, chain[1], chain[0]) || !vr_node_under(graph, chain[2], chain[1]) ||
-            !vr_hand_world(side, vr_render.game_camera_position.n, hand.n, f.n, u.n) || !vr_unit_vector(&f)) continue;
+            !vr_hand_pose(side, vr_render.game_camera_position.n, hand.n, f.n, u.n) || !vr_unit_vector(&f)) continue;
         hand.x -= f.i * 0.075f * units; hand.y -= f.j * 0.075f * units; hand.z -= f.k * 0.075f * units;
         /* Reuse last frame's displayed contact/grip target, when fresh and
          * nearby, so the remote support hand doesn't slide off the held gun. */
@@ -2461,15 +2461,53 @@ boolean vr_render_hands_only(void)
     return vr_render.stereo && !vr_render.cinematic_view && !strcmp(config_string("vr.body"), "hands");
 }
 
+/* Hands only, or floating hands: the arms' bones (not the hands, fingers or
+gun) shrink to nothing. Test19 shrank each bone onto its own origin, so the
+glove's wrist vertices (shared with the forearm) were dragged toward the elbow
+and the hand looked cut off. Test20c gathers the arm onto a point 3.5 cm back
+from the wrist along the forearm: the cuff closes just behind the hand. */
 static void vr_hide_forearms(real_matrix4x3 *m, struct animation_graph *graph, short left[3], short right[3])
 {
     short gun = vr_find_node(graph, "frame", "gun");
-    if (!vr_render_hands_only()) return;
-    for (short n = 0; n < graph->nodes.count; n++) {
-        boolean arm = vr_node_under(graph, n, left[0]) || vr_node_under(graph, n, right[0]);
-        boolean hand = vr_node_under(graph, n, left[2]) || vr_node_under(graph, n, right[2]);
-        if (arm && !hand && !vr_node_under(graph, n, gun)) m[n].scale = 0;
+    real units = vr_units_per_metre();
+    if (!vr_render_hands_only() && vr_hand_tracking_mode() != 1) return;
+    for (int side = 0; side < 2; side++) {
+        short *chain = side ? right : left;
+        real_point3d centre = m[chain[2]].position;
+        real_vector3d back;
+        vr_point_minus(&m[chain[1]].position, &m[chain[2]].position, &back);
+        if (vr_unit_vector(&back))
+            for (int axis = 0; axis < 3; axis++) centre.n[axis] += back.n[axis] * 0.035f * units;
+        for (short n = 0; n < graph->nodes.count; n++) {
+            if (!vr_node_under(graph, n, chain[0]) || vr_node_under(graph, n, chain[2]) || vr_node_under(graph, n, gun))
+                continue;
+            m[n].scale = 0;
+            m[n].position = centre;
+        }
     }
+}
+
+/* Floating hands and arms: the shoulder is where the body would put it while
+the hand is within reach; beyond (or too near) it slides along the line to the
+hand, so the arm hangs from the hand and never pulls it off the controller. */
+static void vr_float_shoulder(real_matrix4x3 const *m, short chain[3], real_point3d const *target, real_point3d *shoulder)
+{
+    real_vector3d upper, fore, reach;
+    real a, b, distance, longest, shortest;
+    vr_point_minus(&m[chain[1]].position, &m[chain[0]].position, &upper);
+    vr_point_minus(&m[chain[2]].position, &m[chain[1]].position, &fore);
+    a = vr_length(&upper); b = vr_length(&fore);
+    vr_point_minus(target, shoulder, &reach);
+    distance = vr_length(&reach);
+    if (!isfinite(a) || !isfinite(b) || !isfinite(distance) || distance < 1e-4f) return;
+    longest = (a + b) * 0.97f;
+    shortest = (real)fabs(a - b) * 1.05f + 0.01f * vr_units_per_metre();
+    if (longest <= shortest) return;
+    if (distance <= longest && distance >= shortest) return;
+    distance = PIN(distance, shortest, longest) / distance;
+    shoulder->x = target->x - reach.i * distance;
+    shoulder->y = target->y - reach.j * distance;
+    shoulder->z = target->z - reach.k * distance;
 }
 
 real_matrix4x3 *vr_render_body_matrices(long object_index)
@@ -2920,6 +2958,7 @@ void vr_render_first_person_ik(
 		mirrored, so that arm is the left one and the other reaches the right
 		controller */
 		int weapon_hand = vr_weapon_hand();
+		int tracking = vr_hand_tracking_mode();
 
 		for (side = 0; side < 2; side++)
 		{
@@ -2935,7 +2974,8 @@ void vr_render_first_person_ik(
 			shoulder.x = head.x + (right_side.i * 0.17f * outward - forward.i * 0.06f) * units;
 			shoulder.y = head.y + (right_side.j * 0.17f * outward - forward.j * 0.06f) * units;
 			shoulder.z = head.z - 0.22f * units;
-            if (vr_body_setting()) {
+            /* only body IK hangs the arms from the body's shoulders */
+            if (tracking == 0 && vr_body_setting()) {
                 short local = local_player_get_next(NONE);
                 long player = local != NONE ? local_player_get_player_index(local) : NONE;
                 long unit = player != NONE ? player_get(player)->unit_index : NONE;
@@ -2959,7 +2999,7 @@ void vr_render_first_person_ik(
 				real_matrix4x3 old_fore = matrices[chain[_vr_arm_fore]];
 				real_matrix4x3 old_hand = matrices[chain[_vr_arm_hand]];
 				if ((!gun_arm || vr_hand_empty()) &&
-					vr_hand_world(controller, vr_render.game_camera_position.n, hand.n, f.n, u.n) && vr_unit_vector(&f))
+					vr_hand_pose(controller, vr_render.game_camera_position.n, hand.n, f.n, u.n) && vr_unit_vector(&f))
 				{
 					dot = dot_product3d(&f, &u);
 					u.i -= dot * f.i; u.j -= dot * f.j; u.k -= dot * f.k;
@@ -2989,19 +3029,42 @@ void vr_render_first_person_ik(
 						}
 					}
 				}
-				vr_solve_arm(graph, matrices, chain, shoulder, &target, &pole, !free_hand, &vr_arm_history[controller]);
+				if (tracking == 1)
+				{
+					/* floating hands: the free hand goes exactly to its
+					controller; a held gun keeps its hand; no arm solve */
+					if (free_hand)
+					{
+						real_vector3d delta;
+						vr_point_minus(&target, &matrices[chain[_vr_arm_hand]].position, &delta);
+						for (short n = 0; n < graph->nodes.count; n++)
+							if (vr_node_under(graph, n, chain[_vr_arm_hand]))
+							{
+								matrices[n].position.x += delta.i;
+								matrices[n].position.y += delta.j;
+								matrices[n].position.z += delta.k;
+							}
+					}
+				}
+				else
+				{
+					if (tracking == 2)
+						vr_float_shoulder(matrices, chain, &target, &shoulder);
+					vr_solve_arm(graph, matrices, chain, shoulder, &target, &pole, !free_hand, &vr_arm_history[controller]);
+				}
 				if (free_hand)
 				{
 					int contacts = 0;
 					vr_finger_nodes(graph, chain[_vr_arm_hand], side ? "r " : "l ", joints);
 					vr_orient_hand(graph, matrices, chain[_vr_arm_hand], joints, &f, &u);
-					vr_distribute_arm_twist(matrices, chain, &old_fore, &old_hand, &vr_arm_history[controller]);
+					if (tracking != 1)
+						vr_distribute_arm_twist(matrices, chain, &old_fore, &old_hand, &vr_arm_history[controller]);
 					if (vr_finger_pose(controller, curls))
 						contacts = vr_touch_fingers(graph, matrices, controller, chain[_vr_arm_hand], joints, curls, &palm, &f, &u, pressed);
 					if (pressed && action.weight[side] == 0) vr_pressure_buzz(controller, depth);
 					else if (contacts && action.weight[side] == 0) vr_haptic(controller, 0.05f + 0.05f * contacts, 0.03f);
 				}
-				else vr_distribute_arm_twist(matrices, chain, &old_fore, &old_hand, &vr_arm_history[controller]);
+				else if (tracking != 1) vr_distribute_arm_twist(matrices, chain, &old_fore, &old_hand, &vr_arm_history[controller]);
 
 			}
 		}

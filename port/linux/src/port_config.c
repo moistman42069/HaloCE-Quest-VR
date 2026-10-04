@@ -506,11 +506,14 @@ static const struct config_setting config_settings[] =
 	{ "vr.scope_size", _config_real, "0.06", "HALO_VR_SCOPE_SIZE", _environment_value, _platform_vr,
 		"How wide the scope is, in metres." },
 	{ "vr.align_left_pitch", _config_real, "0.0", "HALO_VR_ALIGN_LEFT_PITCH", _environment_value, _platform_vr,
-		"Left controller local pitch: degrees (-180..180), applied to grip and aim. Zero preserves runtime tracking." },
+		"Left controller tracking correction, local pitch: degrees (-180..180). Moves hand AND gun;\n"
+		"for comfort use vr.hand_* (hand) or vr.weapon_* (gun). Zero preserves runtime tracking." },
 	{ "vr.align_left_yaw", _config_real, "0.0", "HALO_VR_ALIGN_LEFT_YAW", _environment_value, _platform_vr,
-		"Left controller local yaw: degrees (-180..180), applied to grip and aim. Zero preserves runtime tracking." },
+		"Left controller tracking correction, local yaw: degrees (-180..180). Moves hand AND gun;\n"
+		"for comfort use vr.hand_* (hand) or vr.weapon_* (gun). Zero preserves runtime tracking." },
 	{ "vr.align_left_roll", _config_real, "0.0", "HALO_VR_ALIGN_LEFT_ROLL", _environment_value, _platform_vr,
-		"Left controller local roll: degrees (-180..180), applied to grip and aim. Zero preserves runtime tracking." },
+		"Left controller tracking correction, local roll: degrees (-180..180). Moves hand AND gun;\n"
+		"for comfort use vr.hand_* (hand) or vr.weapon_* (gun). Zero preserves runtime tracking." },
 	{ "vr.align_left_right", _config_real, "0.0", "HALO_VR_ALIGN_LEFT_RIGHT", _environment_value, _platform_vr,
 		"Left controller local right: metres (-0.20..0.20), in the original controller frame. Zero preserves runtime tracking." },
 	{ "vr.align_left_up", _config_real, "0.0", "HALO_VR_ALIGN_LEFT_UP", _environment_value, _platform_vr,
@@ -520,11 +523,14 @@ static const struct config_setting config_settings[] =
 	{ "vr.align_left_grip_aim", _config_boolean, "false", "HALO_VR_ALIGN_LEFT_GRIP_AIM", _environment_value, _platform_vr,
 		"Use left grip pose for aim too. Optional controller compatibility mode; false preserves native aim." },
 	{ "vr.align_right_pitch", _config_real, "0.0", "HALO_VR_ALIGN_RIGHT_PITCH", _environment_value, _platform_vr,
-		"Right controller local pitch: degrees (-180..180), applied to grip and aim. Zero preserves runtime tracking." },
+		"Right controller tracking correction, local pitch: degrees (-180..180). Moves hand AND gun;\n"
+		"for comfort use vr.hand_* (hand) or vr.weapon_* (gun). Zero preserves runtime tracking." },
 	{ "vr.align_right_yaw", _config_real, "0.0", "HALO_VR_ALIGN_RIGHT_YAW", _environment_value, _platform_vr,
-		"Right controller local yaw: degrees (-180..180), applied to grip and aim. Zero preserves runtime tracking." },
+		"Right controller tracking correction, local yaw: degrees (-180..180). Moves hand AND gun;\n"
+		"for comfort use vr.hand_* (hand) or vr.weapon_* (gun). Zero preserves runtime tracking." },
 	{ "vr.align_right_roll", _config_real, "0.0", "HALO_VR_ALIGN_RIGHT_ROLL", _environment_value, _platform_vr,
-		"Right controller local roll: degrees (-180..180), applied to grip and aim. Zero preserves runtime tracking." },
+		"Right controller tracking correction, local roll: degrees (-180..180). Moves hand AND gun;\n"
+		"for comfort use vr.hand_* (hand) or vr.weapon_* (gun). Zero preserves runtime tracking." },
 	{ "vr.align_right_right", _config_real, "0.0", "HALO_VR_ALIGN_RIGHT_RIGHT", _environment_value, _platform_vr,
 		"Right controller local right: metres (-0.20..0.20), in the original controller frame. Zero preserves runtime tracking." },
 	{ "vr.align_right_up", _config_real, "0.0", "HALO_VR_ALIGN_RIGHT_UP", _environment_value, _platform_vr,
@@ -533,6 +539,34 @@ static const struct config_setting config_settings[] =
 		"Right controller local back: metres (-0.20..0.20), in the original controller frame. Zero preserves runtime tracking." },
 	{ "vr.align_right_grip_aim", _config_boolean, "false", "HALO_VR_ALIGN_RIGHT_GRIP_AIM", _environment_value, _platform_vr,
 		"Use right grip pose for aim too. Optional controller compatibility mode; false preserves native aim." },
+	{ "vr.hand_tracking", _config_string, "\"ik\"", "HALO_VR_HAND_TRACKING", _environment_value, _platform_vr,
+		"How tracked hands follow the controllers (with vr.arms \"ik\"): \"ik\" body-IK arms reach\n"
+		"from the shoulders; \"floating\" hands go exactly where the controllers are, arms hidden;\n"
+		"\"floating_arms\" hands go exactly to the controllers and arms hang from a floating\n"
+		"shoulder that never pulls them back. Independent of vr.body visibility." },
+	{ "vr.hand_left_pitch", _config_real, "-70.0", "HALO_VR_HAND_LEFT_PITCH", _environment_value, _platform_vr,
+		"Left visible hand only: degrees (-180..180) around the controller's X axis. Default -70\n"
+		"lines the empty hand up with a hand holding a Touch controller. Does not move the gun." },
+	{ "vr.hand_left_yaw", _config_real, "0.0", "HALO_VR_HAND_LEFT_YAW", _environment_value, _platform_vr,
+		"Left visible hand only: degrees around the controller's Y axis. Does not move the gun." },
+	{ "vr.hand_left_roll", _config_real, "0.0", "HALO_VR_HAND_LEFT_ROLL", _environment_value, _platform_vr,
+		"Left visible hand only: degrees around the controller's Z axis. Does not move the gun." },
+	{ "vr.hand_right_pitch", _config_real, "-70.0", "HALO_VR_HAND_RIGHT_PITCH", _environment_value, _platform_vr,
+		"Right visible hand only: as vr.hand_left_pitch. Does not move the gun." },
+	{ "vr.hand_right_yaw", _config_real, "0.0", "HALO_VR_HAND_RIGHT_YAW", _environment_value, _platform_vr,
+		"Right visible hand only: as vr.hand_left_yaw. Does not move the gun." },
+	{ "vr.hand_right_roll", _config_real, "0.0", "HALO_VR_HAND_RIGHT_ROLL", _environment_value, _platform_vr,
+		"Right visible hand only: as vr.hand_left_roll. Does not move the gun." },
+	{ "vr.weapon_pitch", _config_real, "0.0", "HALO_VR_WEAPON_PITCH", _environment_value, _platform_vr,
+		"One-handed gun angle relative to the controller's aim: degrees (-180..180). Turns the\n"
+		"gun, its shots and reticle together; mirrored for the left hand. Hands are unaffected." },
+	{ "vr.weapon_yaw", _config_real, "0.0", "HALO_VR_WEAPON_YAW", _environment_value, _platform_vr,
+		"As vr.weapon_pitch, around the controller's up axis." },
+	{ "vr.weapon_roll", _config_real, "0.0", "HALO_VR_WEAPON_ROLL", _environment_value, _platform_vr,
+		"As vr.weapon_pitch, around the aim axis." },
+	{ "vr.calibration_split_applied", _config_boolean, "false", "HALO_VR_CALIBRATION_SPLIT", _environment_value, _platform_vr,
+		"Internal one-time migration (test20c): hand-comfort rotations saved in vr.align_* move to\n"
+		"vr.hand_*, so the gun returns to the controller's aim. Roll flips (+-180) stay." },
 	{ "vr.weapon_offset_right", _config_real, "0.10", "HALO_VR_WEAPON_RIGHT", _environment_value, _platform_vr,
 		"With vr.aim \"hand\": how far right of the game's eye the weapon's model\n"
 		"holds its grip, in metres, so the grip sits in the hand." },
@@ -1397,6 +1431,14 @@ long config_integer(const char *name)
 double config_real(const char *name)
 {
 	return config_value(name, _config_real)->real;
+}
+
+/* the table's default for a real setting (reset buttons); 0 when unknown */
+double config_default_real(const char *name)
+{
+	long index = config_setting_index(name);
+
+	return index >= 0 && config_settings[index].type == _config_real ? atof(config_settings[index].default_value) : 0.0;
 }
 
 const char *config_string(const char *name)
