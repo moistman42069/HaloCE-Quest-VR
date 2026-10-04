@@ -2,7 +2,7 @@
 
 ## Active candidate: test19 (unpublished)
 
-Continue `test19-network-browser`; read [TEST19-PROGRESS.md](TEST19-PROGRESS.md) for current implementation, verification and the newly authorized Discord/DM review. Preserve public releases; final APKs pending.
+Candidate `test19-network-browser`: both APKs use **1.0.1 / code 20**. Read [TEST19-PROGRESS.md](TEST19-PROGRESS.md) and the test19 delivery/community review for verification and unresolved device cases. Preserve public 1.0/test14; wait for candidate feedback before a new release.
 
 
 Updated 2026-10-03. Canonical public repository: [moistman42069/HaloCE-Quest-VR](https://github.com/moistman42069/HaloCE-Quest-VR), branch **main**. Release 1.0 advances main to the complete current code and public documentation. The initial test13a import is historical; private identifying metadata remains excluded. Older private Git history remains a backup, not the continuation branch.

@@ -1,4 +1,4 @@
-ÃƒÆ’Ã‚Â¯Ãƒâ€šÃ‚Â»Ãƒâ€šÃ‚Â¿# Test19 checkpoint: multiplayer crash, native browser, updater
+# Test19 checkpoint: multiplayer crash, native browser, updater
 
 Private candidate branch: `test19-network-browser`. Public 1.0/test18 and test14
 remain unchanged. No new release approval. Working version: 1.0.1 / Android code
@@ -86,12 +86,10 @@ Final APK identity/hashes and follow-up cases are recorded in TEST19-DELIVERY.md
 
 ## Delivery / next action
 
-The implementation pass is complete for private candidate testing. Runtime source:
-`ff93009e2e56d1b31942822cc0bb1a339505b6e4`. See [TEST19-DELIVERY.md](TEST19-DELIVERY.md) for exact APK hashes,
-checks and prioritized device cases. Packaging uses `--label test19 --version-name
-1.0.1 --runtime-source ff93009e2e56d1b31942822cc0bb1a339505b6e4`. The final
-source archive can include documentation-only commits after that runtime commit.
-
-Do not rebuild/publish or claim the left-eye workaround accepted merely because
-the checks pass. Wait for new test results; compare their matching logs against
-the privately preserved reports. Public 1.0/test14 remain the accepted downloads.
+Both flavors and package preflight passed from `ff93009e`. A final package review
+found text encoding damage in bundled third-party notices and continuation docs.
+Those texts were corrected without changing runtime code. Rebuild the pair from
+the clean correction commit, then record its final hashes in TEST19-DELIVERY.md.
+Use `--label test19 --version-name 1.0.1`. Preserve old preflight files privately;
+do not deliver their superseded hashes. Device feedback and new publication
+approval remain required.

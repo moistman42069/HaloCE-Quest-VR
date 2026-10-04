@@ -103,7 +103,7 @@ blindly incremented, and no version outside this reviewed pair is accepted.
 
 The Android `BuildConfig` version range is generated from
 `halo_port_limits.h`, so its join buttons use the same range as the native
-client. Tests cover versions 0â€“14 with/without the distributed flag, missing
+client. Tests cover versions 0–14 with/without the distributed flag, missing
 client state, and an invalid advertised-game slot. Actual Quest-to-desktop/Mac
 play is still **unverified on hardware**; do not call these tests a multiplayer
 session result. Matching maps and compatible game rules are still required.

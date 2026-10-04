@@ -1,5 +1,8 @@
 # Halo CE Quest VR + Android
 
+> Development branch: **test19 / 1.0.1 candidate**. [Changes and test plan](docs/TEST19-DELIVERY.md), [continuation checkpoint](docs/TEST19-PROGRESS.md), [community report review](docs/TEST19-COMMUNITY-REVIEW.md). Candidate binaries are supplied privately for testing. The public release/download links below remain 1.0.
+
+
 [Release 1.0](https://github.com/moistman42069/HaloCE-Quest-VR/releases/tag/v1.0.0) | [Full controls/options](docs/CONTROLS-AND-OPTIONS.md) | [Development state](docs/CURRENT-STATE.md) | [Contributing/builds](CONTRIBUTING.md) | [Credits](CREDITS.md)
 
 ## 1. Installation
