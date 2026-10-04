@@ -1,15 +1,15 @@
-# Halo CE Quest VR + Android
+# Halo CE Quest VR + Android 1.0.2
 
-[Latest release: 1.0](https://github.com/moistman42069/HaloCE-Quest-VR/releases/tag/v1.0.0) | [Full controls/options](docs/CONTROLS-AND-OPTIONS.md) | [Development state](docs/CURRENT-STATE.md) | [Contributing/builds](CONTRIBUTING.md) | [Credits](CREDITS.md)
+[Latest release and downloads](https://github.com/moistman42069/HaloCE-Quest-VR/releases/tag/v1.0.2) | [Controls and options](docs/CONTROLS-AND-OPTIONS.md) | [Current state](docs/CURRENT-STATE.md) | [Contributing](CONTRIBUTING.md) | [Credits](CREDITS.md)
 
 ## 1. Installation
 
-**Current public release: 1.0** (tag `v1.0.0`, internal 1.0-test18 / code 19). **1.0.1 was withdrawn on 2026-10-03**: its Quest VR build had a severe performance regression (menus around 20 fps, gameplay as low as 4 fps on Quest 3). Its downloads were removed; its source remains in the repository history. A corrected 1.0.2 build is in private testing and is not yet published. Install the edition for your device. Earlier releases remain available unchanged.
+**Current release: 1.0.2 / version code 25.** This update restores the Quest Safe-geometry upload path changed in withdrawn 1.0.1, adds render-performance diagnostics, improves multiplayer join explanations and adds the in-game public PvP browser. It also includes controller-anchored weapon alignment, left-handed controls and simpler VR settings from test20d. Version 1.0.1 was withdrawn for severe Quest performance regression. This release installs over it using the established signing certificate; earlier releases remain available.
 
 | Your device | Download |
 | --- | --- |
-| Android phone/tablet — flat, touch or gamepad | **[HaloCE-Android-1.0.0.apk](https://github.com/moistman42069/HaloCE-Quest-VR/releases/download/v1.0.0/HaloCE-Android-1.0.0.apk)** |
-| Meta Quest — immersive standalone VR | **[HaloCE-Quest-1.0.0.apk](https://github.com/moistman42069/HaloCE-Quest-VR/releases/download/v1.0.0/HaloCE-Quest-1.0.0.apk)** |
+| Android phone/tablet — flat, touch or gamepad | **[HaloCE-Android-1.0.2.apk](https://github.com/moistman42069/HaloCE-Quest-VR/releases/download/v1.0.2/HaloCE-Android-1.0.2.apk)** |
+| Meta Quest — immersive standalone VR | **[HaloCE-Quest-1.0.2.apk](https://github.com/moistman42069/HaloCE-Quest-VR/releases/download/v1.0.2/HaloCE-Quest-1.0.2.apk)** |
 
 1. **Install the appropriate APK.** On Quest, enable developer mode and sideload with SideQuest or your existing installer; open it from **Unknown Sources**. On Android, open the downloaded APK and allow installation from that source when prompted. Both require ARM64, Android 9/API 28 or newer and compatible graphics. **Quest 3 is the reference headset**; other devices are not equally verified.
 2. **Updating this project? Install over it.** Both APKs retain their package IDs and signing certificate. Do not uninstall or clear app data. Optional ADB command: `adb install -r <apk-file>`. Back up your maps, saves and settings first. Another fork using the same package ID but a different key cannot update in place.
@@ -19,19 +19,18 @@
 
 The launcher includes an offline **Field guide** with controls, settings and credits. Existing Quest data under `/sdcard/Documents/HaloCE/maps` is recognized when `ui.map` is present; otherwise each app uses its own external-files storage. VR and flat can coexist and have separate app data.
 
-**Installed the withdrawn 1.0.1?** It uses version code 20, so Android will not install 1.0 (code 19) over it as a normal update, and the in-app updater correctly does not offer 1.0 as a downgrade. Do not uninstall unless your maps, saves and settings are backed up; uninstalling can remove app data. The corrected build will use a higher version code so it can install over 1.0.1. Users still on 1.0 or test18 need no action.
+**Updating:** install this APK over the existing app. Code 25 supports updating public 1.0 (code 19), withdrawn 1.0.1 (code 20) and test20 through code 24. Do not uninstall or clear data; back up maps, saves and settings first. Android may ask you to confirm installation.
 
 ## 2. New Features / Major Changes
 
-The items below were introduced by the withdrawn 1.0.1 and remain in the source for the corrected 1.0.2 candidate. **They are not in public release 1.0.** The 1.0.2 candidate additionally returns Safe geometry to test18's fenced streaming path and adds a `[render-perf]` diagnostic line to each launch log.
-
+This release carries forward the project features and adds performance recovery, diagnostics, Quest/Android network parity checks, join-stage feedback and a per-frame VR crosshair update. The v1.0.1 release was withdrawn; its inefficient Safe streaming upload path is not used here.
 
 - **In-game public server browser:** Multiplayer > System Link combines signed OpenCE public listings and native LAN games, most populated first. Seven games per page, Previous/Next and Refresh. The launcher browser remains available.
 - **Multiplayer crash guard:** safely deactivates invalid automatic object replicas outside a valid visibility cluster instead of asserting after joining a populated match.
 - **Updater correction:** same-code public promotions and an older public build no longer trigger the reported inconsistent-edition error. Integrity, signature and downgrade checks remain.
 - **Official upstream downloads:** Versions & updates > Official upstream exports verified OpenCE ZIPs separately. They do not replace this mod's VR/co-op engine.
 - **VR reticle alignment:** the world-space target follows the native pre-spread firing ray, including the offline guarded hand origin and online native camera origin. Handedness, weapon alignment and native action handoff remain unchanged.
-- **Safe geometry refinement:** restoration of the renderer's vertex-array state after compositor work. 1.0.1 also moved Safe transient uploads to `glBufferSubData`; that caused its severe Quest slowdown and is reverted in the 1.0.2 candidate. The reported intermittent left-eye corruption still needs device confirmation.
+- **Safe geometry refinement:** restoration of the renderer's vertex-array state after compositor work. The 1.0.1 ordered upload path caused the severe Quest slowdown; 1.0.2 restores the fenced streaming path. The reported intermittent left-eye corruption still needs device confirmation.
 - **ISO/XISO import:** handles deeply unbalanced valid directory trees and provides clearer damaged-image, incomplete-transfer and unsupported-container errors. Revisions still use actual cache build IDs/fingerprints, not guessed disc labels.
 - **Clearer co-op instructions** in the launcher and guide. Existing two-player campaign, body sharing, touch/gamepad, vehicle controls and per-launch logging remain.
 
@@ -39,7 +38,7 @@ The items below were introduced by the withdrawn 1.0.1 and remain in the source 
 
 ### Quest Touch — default VR layout
 
-Use **Controls = VR** and the standard native controller profile. Right is the default weapon hand. **Controls → Handedness: Left** (test20d candidate) mirrors the whole layout: gun, triggers, sticks (move on the right, turn on the left) and face buttons (jump on X, reload on Y, grenades on A, switch weapons on B); Mirror Controls Off keeps the standard buttons.
+Use **Controls = VR** and the standard native controller profile. Right is the default weapon hand. **Controls → Handedness: Left**  mirrors the whole layout: gun, triggers, sticks (move on the right, turn on the left) and face buttons (jump on X, reload on Y, grenades on A, switch weapons on B); Mirror Controls Off keeps the standard buttons.
 
 | Input | Action |
 | --- | --- |
@@ -93,7 +92,7 @@ Use **MOVE** plus swipe aiming or **FIRE-and-drag** to move, fire and aim togeth
 - **Other views:** immersive, 3D-screen or flat cinematics; native crosshair artwork with size/opacity or Off.
 - **Opening look tutorial:** look toward the lights with your headset. Script gaze and head-movement checks use the tracked head, independently of the weapon reticle. This is headset direction, not eye tracking.
 - **Graphics:** Auto/Low/Medium/High/Max presets; render resolution; shadows, lights, specular, reflections, bump maps, grass, fog, decals, particles, contrails, weather, lens flares and camouflage. Refresh choices are 72/80/90/120 Hz requests, not guaranteed frame rates.
-- **Calibration and handedness (test20d candidate):** the held gun is **anchored to the controller**: the gun hand's wrist sits where your empty hand's wrist would, for every weapon, and the gun turns about your hand (Hands + Gun → Gun Grip: Anchored; Classic restores the old placement). **Hands + Gun** sets both visible hands at once (default pitch -70, left mirrored), the gun's angle (shots and reticle follow it) and its place in the hand (Gun Forward / Up / Out). **Controls → Handedness: Left** puts the gun in the left hand and, with Mirror Controls Auto, mirrors the sticks and face buttons too; vehicle Steering and Move With follow when they used a hand. **Controller Left/Right** is an advanced tracking correction that moves hand and gun together; normally leave it at zero. **Body → Hands** chooses Body IK (default), Floating, Animated or Gun Only; Floating draws arms unless Body is Hands Only.
+- **Calibration and handedness :** the held gun is **anchored to the controller**: the gun hand's wrist sits where your empty hand's wrist would, for every weapon, and the gun turns about your hand (Hands + Gun → Gun Grip: Anchored; Classic restores the old placement). **Hands + Gun** sets both visible hands at once (default pitch -70, left mirrored), the gun's angle (shots and reticle follow it) and its place in the hand (Gun Forward / Up / Out). **Controls → Handedness: Left** puts the gun in the left hand and, with Mirror Controls Auto, mirrors the sticks and face buttons too; vehicle Steering and Move With follow when they used a hand. **Controller Left/Right** is an advanced tracking correction that moves hand and gun together; normally leave it at zero. **Body → Hands** chooses Body IK (default), Floating, Animated or Gun Only; Floating draws arms unless Body is Hands Only.
 
 In VR Settings, **A/right increases or advances; left decreases**. Next Page exposes more options; Back returns through pages/categories. Settings persist. **Safe geometry** can be changed in the launcher; restart afterward. It can trade performance for compatibility. Existing body preferences are retained when updating.
 
@@ -110,11 +109,11 @@ In VR Settings, **A/right increases or advances; left decreases**. Next Page exp
 
 ### Regular PvP
 
-In-game, open **Multiplayer → System Link** for OpenCE public games and LAN hosts. Select **Refresh** to update the population-sorted snapshot; **Next/Previous** pages through results. Select a game to resolve its real native advertisement (up to 30 seconds), then join. Move selection or press B to cancel. Browsing an empty directory stays in the list.
+Open **Multiplayer → System Link** in-game, then choose **Refresh**. The page combines OpenCE public games and native LAN hosts, removes duplicate hosts, sorts by reported population (highest first) and shows seven games. Use **Next/Previous** to page. Select a public listing to resolve its current native host advertisement, which can take up to 30 seconds, then join. Move the selection or press **B** to cancel a pending resolve. If you chose a community-directory listing in the launcher, use its **Join** action first, then return to System Link and select that host after the invite tunnel connects. Empty results remain in the list so you can refresh or page again.
 
-For community catalogs, open the launcher **Multiplayer servers → Refresh → Join**. After the invite tunnel connects, use **Multiplayer → System Link** in-game to select the host; other native ports may call it Direct Link. Saved invites and LAN discovery support unlisted hosts.
+For community catalogs, open launcher **Multiplayer servers → Refresh → Join**. After the invite tunnel connects, use **Multiplayer → System Link** in-game to select the host; other native ports may call it Direct Link. Saved invites and LAN discovery support unlisted hosts.
 
-The browser reads the ChupathingyCE native-port directory, retains valid listings and sorts by reported population before paging. Directory settings can merge up to four compatible HTTPS catalogs. Full/incompatible hosts show their status; a listing does not prove reachability or measure ping. OpenCE signed native discovery is now an additional in-game source. It is a different format from the launcher HTTPS catalogs, so do not paste its broker address into Directory settings. Private/unadvertised games cannot all be enumerated.
+The launcher browser reads the ChupathingyCE native-port directory and can merge up to four compatible HTTPS catalogs. It sorts compatible listings by reported population before paging. Full/incompatible hosts show their status; a listing does not prove reachability or measure ping. The in-game OpenCE signed native discovery is a separate source and format; do not paste its broker address into launcher Directory settings. Private/unadvertised games cannot all be enumerated.
 
 **Host multiplayer** offers installed map, game type, name, score/time, friendly fire, radar, team balance, vehicle respawn, loadout/grenade options and **2–128 PvP slots**. Public listing is opt-in; private invites are available. Start with modest limits: 128 is protocol capacity, not a verified Quest-host performance target. Network settings expose Internet/LAN, UPnP, clipboard invites and tunnel port.
 
@@ -122,13 +121,13 @@ This build hosts native **Network 11** and accepts reviewed distributed hosts **
 
 ### Campaign co-op and avatars
 
-**Campaign co-op → Host campaign / Browse or join** is separate from PvP. Use **matching project builds (the same release or candidate on both devices) and matching campaign/resource files** on both peers. Two Quests or Quest plus flat Android are the intended pairings; Quest-to-flat connectivity and remote VR body movement have prior owner confirmation.
+Campaign sessions use a separate two-player flow and do not appear in the PvP browser. Use matching 1.0.2 project builds and matching campaign/resource files on both devices. Two Quests or Quest plus flat Android are intended pairings.
 
-1. Host: choose **Campaign co-op > Host campaign**, mission and difficulty. Enable **List publicly** if you want the launcher co-op catalog to advertise the session, then enter the System Link lobby.
-2. Partner: choose **Campaign co-op > Browse / join**, refresh and select the host, or paste the host's private invite. Enter **Multiplayer > System Link**, select that host and join.
-3. Keep both apps foregrounded. The mission starts when both players enter. Public co-op listing uses the community service; the new OpenCE public PvP catalog does not advertise this project's campaign protocol.
+1. **Host:** open launcher **Campaign co-op → Host campaign**, choose a mission and difficulty, and enable **List publicly** if you want the community co-op catalog to show the session. Create the session and enter the System Link lobby. Keep the app in the foreground.
+2. **Join:** the other player opens **Campaign co-op → Browse / join**, refreshes and selects the host, or enters a private invite. After connection, launch the game and open **Multiplayer → System Link**; select the host and join their lobby.
+3. **Start:** wait until both players are in the lobby before the host starts the mission. Keep both apps in the foreground. If public co-op discovery fails, use a private invite or LAN.
 
-Both players join the lobby before starting. The host controls campaign scripts, AI, checkpoints and transitions. **Campaign supports two players**, not 128; joining mid-mission is disabled. Disconnects require a new lobby. Public campaign directory acceptance remains unverified; private invite/LAN is the fallback.
+The launcher's campaign directory is separate from the OpenCE PvP directory; the latter does not advertise this campaign protocol. The host controls campaign scripts, AI, checkpoints and transitions. **Campaign supports two players**, not 128; joining mid-mission is disabled. Disconnects require a new lobby. Public campaign directory acceptance remains unverified; private invite/LAN is the fallback.
 
 Supporting hosts/clients negotiate VR head/arms/body/leg presentation, including the flat receiver. Local torso hiding does not hide the remote body. Older peers use stock presentation; remote world skeletons do not replicate the local individual finger rig. Avatar extensions also operate in supporting PvP sessions.
 
@@ -163,9 +162,9 @@ Use **Game files & versions** to import/switch, or place images/extracted roots 
 
 ## 9. Additional Technical Details / Credits
 
-Public release 1.0 APKs are ARM64, **1.0-test18 / version code 19**, using package IDs `com.halo.decomp` and `com.halo.decomp.vr` and the established signing certificate. The withdrawn 1.0.1 used code 20; candidate 1.0.2 uses code 21 and the same certificate. GitHub provides tagged source archives; compatibility.json is the small metadata asset required by the updater. Earlier releases are preserved.
+Both release APKs are ARM64, **version 1.0.2 / code 25**, using package IDs `com.halo.decomp` and `com.halo.decomp.vr` and the established signing certificate. GitHub provides tagged source archives; compatibility.json is the small metadata asset required by the updater. Earlier releases are preserved.
 
-Validation includes both flavor builds, signatures/versions, 16 KB ZIP alignment, payload integrity, targeted regressions and synthetic cache/import checks. These checks do not substitute for real multiplayer or headset testing. See [1.0 provenance](docs/RELEASE-PROVENANCE-1.0.0.md), [withdrawn 1.0.1 record](docs/RELEASE-PROVENANCE-1.0.1.md), [test20 performance investigation](docs/TEST20-PROGRESS.md) and [community review](docs/TEST19-COMMUNITY-REVIEW.md) for evidence and follow-up cases.
+Validation includes both flavor builds, signatures/versions, 16 KB ZIP alignment, payload integrity, targeted regressions and synthetic cache/import checks. These checks do not substitute for testing the test20e join diagnostics and crosshair on a phone/headset or a full campaign playthrough. Performance recovery was confirmed on device with test20b; test20e networking still needs device checks. See [1.0.2 provenance](RELEASE-PROVENANCE-1.0.2.md), [withdrawn 1.0.1 record](RELEASE-PROVENANCE-1.0.1.md), [test20 investigation](TEST20-PROGRESS.md) and [test20e delivery](TEST20E-DELIVERY.md).
 
 Credits: **Bungie/Microsoft and the original Halo team**; **punpckhdq/halo and bnunu/halo-1 contributors** for the decompilation; **bnunu/cybersecurity halo-ce-universal contributors** for the native port/networking; **astromaddie/Madison** for the OpenXR VR foundation; **ChupathingyCE and halo.milenko.org maintainers** for the directory; **moistman42069 and project contributors/testers** for this integration and refinements. Thanks also to LivingFray/HaloCEVR and the documented IK references, Andiweli's Android rendering work, and SnowyMouse's cache-format documentation.
 

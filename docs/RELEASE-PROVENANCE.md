@@ -1,6 +1,6 @@
 # Current release provenance
 
-Current public baseline: [1.0](RELEASE-PROVENANCE-1.0.0.md), publishing the exact delivered test18 APKs under release filenames. The previous test14 release below remains unchanged.
+Current public baseline: [1.0.2](RELEASE-PROVENANCE-1.0.2.md), exact test20e APKs promoted without rebuild or re-sign. The prior [v1.0.0](RELEASE-PROVENANCE-1.0.0.md), test14 and withdrawn v1.0.1 records remain available.
 
 # Release provenance - test14
 

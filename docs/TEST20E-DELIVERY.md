@@ -1,5 +1,7 @@
 # Test20e — 1.0.2 candidate (private): Quest/Android multiplayer parity and join diagnostics
 
+> Publication update: owner authorized these exact APKs as release `v1.0.2` (code 25). Earlier private-candidate hold below is historical and superseded. APK bytes are unchanged; device follow-up limits remain. See [release provenance](RELEASE-PROVENANCE-1.0.2.md).
+
 Not a release. v1.0.1 was withdrawn; the public release is v1.0.0. Supersedes
 test20d (code 24) and keeps all of its changes (gun anchored to the controller,
 left-handed mode, simpler settings). Do not publish without explicit owner

@@ -1,4 +1,4 @@
-# Halo CE Quest VR + Android 1.0.2
+# Halo CE Quest VR + Android 1.0.2 — Release notes
 
 ## 1. Installation
 
@@ -167,18 +167,3 @@ Validation includes both flavor builds, signatures/versions, 16 KB ZIP alignment
 Credits: **Bungie/Microsoft and the original Halo team**; **punpckhdq/halo and bnunu/halo-1 contributors** for the decompilation; **bnunu/cybersecurity halo-ce-universal contributors** for the native port/networking; **astromaddie/Madison** for the OpenXR VR foundation; **ChupathingyCE and halo.milenko.org maintainers** for the directory; **moistman42069 and project contributors/testers** for this integration and refinements. Thanks also to LivingFray/HaloCEVR and the documented IK references, Andiweli's Android rendering work, and SnowyMouse's cache-format documentation.
 
 SDL3, OpenXR, Monocypher, musl, KCP, miniupnpc, Mbed TLS, tomlc17, stb, extract-xiso and other inherited dependencies retain their licenses. **This product includes software developed by in &lt;in@fishtank.com&gt;.** Full credits and notices are included inside each APK under **Field guide → Credits & licenses**, and in the tagged repository. This is an unofficial community project; supply your own game data.
-
-## Storage reference
-
-| Data | Location |
-| --- | --- |
-| Quest shared game root, when present | `/sdcard/Documents/HaloCE` |
-| Quest app external root | `/sdcard/Android/data/com.halo.decomp.vr/files` |
-| Flat app external root | `/sdcard/Android/data/com.halo.decomp/files` |
-| Maps/config | `maps/`, `config.toml` under the active root |
-| Saves | Preserve app `save/` and any shared-root save data; consult startup log/config for active save root |
-| Public launch logs | `Download/HaloCE/halo_log_<date>_<time>_<pid>.txt` |
-
-Only VR selects the shared root, and only when `maps/ui.map` exists. Editing an inactive config has no effect. Android file-manager restrictions may require the system picker or authorized ADB access.
-
-Managed sets and their saves live under `game-versions/p-<id>` beneath the selected base. Quit before editing configuration manually.

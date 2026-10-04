@@ -1,5 +1,7 @@
 # Test20e checkpoint: Quest/Android multiplayer parity and join diagnostics
 
+> Publication update: owner authorized these exact APKs as release `v1.0.2` (code 25). Earlier private-candidate hold below is historical and superseded. APK bytes are unchanged; device follow-up limits remain. See [release provenance](RELEASE-PROVENANCE-1.0.2.md).
+
 Updated 2026-10-04. Private candidate **1.0.2 / code 25**, branch
 `test20-safe-upload-performance`. Builds on [TEST20D-PROGRESS.md](TEST20D-PROGRESS.md)
 (gun anchoring, left-handed mode, simplified settings; owner: "all right,
