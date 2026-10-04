@@ -1,4 +1,4 @@
-# Test21 — 1.0.2 candidate (private): hands, body turns, Full Body, two-hand lock, horn, online melee, pistol aim
+# Test21b — 1.0.2 candidate (private): hands, body turns, Full Body, two-hand lock, horn, online melee, pistol aim
 
 Not a release. The public release stays v1.0.2 (test20e, code 25). Do not
 publish without explicit owner approval. Evidence, causes and status:
@@ -6,15 +6,15 @@ publish without explicit owner approval. Evidence, causes and status:
 
 ## Installation
 
-- Quest/VR: `HaloCE-Quest-test21.apk`
-- Android/flat: `HaloCE-Android-test21.apk`
+- Quest/VR: `HaloCE-Quest-test21b.apk`
+- Android/flat: `HaloCE-Android-test21b.apk`
 
-Both are **1.0.2 / version code 26**, ARM64, API 28+. They are signed with the
+Both are **1.0.2 / version code 27** (test21b; the first test21 pair was 26), ARM64, API 28+. They are signed with the
 same certificate as v1.0.2 (checked against the published APK before building),
-so they install over v1.0.2 without uninstalling (`adb install -r <apk>`). Do
+so they install over v1.0.2 or test21 without uninstalling (`adb install -r <apk>`). Do
 not uninstall or clear data. Back up first.
 
-## Changes (Quest; the Android build shares the guide text, the packaging checks and item 9's multiplayer log line)
+## Changes (Quest; the Android build shares the guide text, the packaging checks, item 9's multiplayer log line and the engine aim refactor, which leaves its behaviour unchanged)
 
 1. **Floating means hands only again.** Body → Hands: Body IK / **Floating**
    (hands, no arms) / **Float + Arms** / Animated / Gun Only. The wrists of hidden
@@ -30,7 +30,8 @@ not uninstall or clear data. Back up first.
    grip: it locks without squeezing. Pull it away to let go. Squeeze and Off are
    still available. Configs on the old default switch once.
 5. **Warthog horn.** While seated, click either stick to honk, even at full
-   throttle.
+   throttle or with the off-hand trigger held. If it is still silent, the log
+   now shows where the press stops ("vr: horn: ...").
 6. **Melee online.** Physical melee is off in multiplayer by default; the melee
    button still works. Body → Melee: Impact + Online / Swing + Online turns it on.
 
@@ -39,17 +40,22 @@ not uninstall or clear data. Back up first.
    upright (it flipped back before). For hands 180° off, the one-step fix is
    Controller Left/Right → Flip Roll 180 (hand and gun together).
 
-8. **Pistol reticle.** Offline, guns that started their shots at the unseen
-   body's gun (the pistol) now fire from your hand, so shots land on the
-   reticle. The reticle also includes each gun's built-in shot offset. New
-   Hands + Gun → **Aim For / Aim Up / Aim Right / Reset Aim** fine-tune the gun
-   you hold (each gun separately, half-degree steps); the gun model doesn't move.
-   All guns start at 0, which changes nothing.
+8. **Reticle on the shots, every gun.** Halo turns each shot toward the spot
+   your view's line hits, within a small per-gun cone. The reticle now uses the
+   engine's own code for that, so it marks where the shot lands. (The first
+   test21 build shifted the reticle by each gun's tag offset instead: your
+   video showed the impacts above and left of it.) Offline, the pistol also
+   fires from your hand like the other guns. Hands + Gun → **Aim For / Aim Up /
+   Aim Right / Reset Aim** stay for fine-tuning; values set while testing the
+   first build reset to 0 once.
 
 9. **Multiplayer VR avatars.** Normal multiplayer already shares VR movement
    like co-op, but only through a host running this build. Your logs show
    games hosted by others on another build (no avatar offer), so the phone
    saw stock animation. A log line now says when that happens.
+
+Known issue: holding a gun in the left hand mirrors the gun model, so its
+ammo counter reads backwards. Not changed yet.
 
 Kept: Legs + Arms default, gun anchoring, hand/gun calibration, fingers,
 reload/grenade/melee animations, left-handed mode, Safe geometry, avatar
@@ -59,10 +65,10 @@ movement for other players, Quest/Android networking parity.
 
 | File | Bytes | SHA-256 |
 | --- | ---: | --- |
-| `HaloCE-Quest-test21.apk` | 28,084,867 | `bad2bb564bb200636bc2c1202def673fcd3b3fc1b506a583c35ceff859982553` |
-| `HaloCE-Android-test21.apk` | 26,077,748 | `fa9f09aa476f4fa98bc056c67c0fbbd8f44fa94ac43fc0e186a04fe0b743fcb6` |
+| `HaloCE-Quest-test21b.apk` | 28,084,867 | `b2264664cd290411e3113cb815796cb0dd0e338f9c0b26a1ca81c33804c76550` |
+| `HaloCE-Android-test21b.apk` | 26,077,748 | `24bbdd4be22056dd8641fdfe6089f0852701efdd3d092847f1988d691eaa7905` |
 
-Runtime source `d0a8e476f9da9b3947eae4cb05b360cb1c1b296e` on branch `test21-hands-body`; later commits are
+Runtime source `3ab3b5053a9db395b0b9caa10628be9a5d14f3ed` on branch `test21-hands-body`; later commits are
 documentation only. Certificate SHA-256
 `53d416f7e123cc62b749940983209bc9a400002e033fd5f50900d4ffad8e2aa4`, the same as
 v1.0.2. Built serially from a clean tree; payload, signing and 16 KB alignment
@@ -77,7 +83,8 @@ verified.
   - the cuff closes along the hand for 2,000 random hands;
   - online melee gate, horn buttons and the two-hand migration;
   - two-handed aim keeps the gun's roll (2,000 poses, both hands);
-  - the reticle's shot offset equals the engine's own shift (5,000 aims);
+  - the reticle's direction equals the engine's `player_aim_projectile`
+    bit for bit (20,000 aims; it now shares the engine's code);
   - per-gun aim: tag names map to the right gun, the held gun turns exactly up
     and right, and at 0 the aim is bit-for-bit unchanged (4,000 poses);
   - the flat build's weapon code is unchanged, and the hand shot is offline only.
@@ -107,8 +114,9 @@ verified.
    should. Send the log.
 7. **For the v78 tester:** with Gun Roll 180 (or Flip Roll 180), grip a rifle
    with both hands: it must stay upright.
-8. **Pistol (offline campaign):** shoot a wall from about 5 m and 20 m. The
-   bullet marks should land on the reticle. If it's still off, open Hands +
+8. **Reticle (offline campaign), with the rifle, pistol and one other gun:**
+   shoot the ground close by, a wall about 5 m away and something 20 m away,
+   one-handed and two-handed. The bullet marks should land on the reticle. If it's still off, open Hands +
    Gun (second screen) while holding the pistol: Aim For should say PISTOL;
    step Aim Up / Aim Right until it lines up (Reset Aim undoes it). Check
    another gun still behaves as before. Online, say whether it still differs.
