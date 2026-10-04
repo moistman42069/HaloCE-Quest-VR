@@ -639,7 +639,7 @@ void vr_initialize(void)
 		return;
 	vr.initialized = 1;
 	config_vr_vehicle_defaults();
-	platform_log("vr: HaloCE Quest test21 candidate (floating hands restored, torso-following arms, neck-pivot full body, auto two-hand lock, horn, online melee off, two-hand gun roll, pistol shots from the hand, reticle converges as shots do, per-gun aim, horn from either stick)");
+	platform_log("vr: HaloCE Quest test21b candidate (floating hands restored, torso-following arms, neck-pivot full body, auto two-hand lock, horn, online melee off, two-hand gun roll, pistol shots from the hand, reticle converges as shots do, per-gun aim, horn from either stick)");
 	if (!config_boolean("vr.enabled"))
 	{
 		platform_log("vr: off (vr.enabled)");

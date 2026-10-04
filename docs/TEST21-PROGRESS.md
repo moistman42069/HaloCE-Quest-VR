@@ -1,6 +1,6 @@
 # Test21 checkpoint: hand modes, body turns, Full Body, two-hand lock, horn, online melee
 
-Updated 2026-10-04. Private candidate **1.0.2 / code 26**, branch
+Updated 2026-10-04. Private candidate **test21b, 1.0.2 / code 27** (test21 was code 26), branch
 `test21-hands-body` from `main` (`dae77ab1`). The accepted release is v1.0.2
 (the exact test20e pair, code 25); see
 [RELEASE-PROVENANCE-1.0.2.md](RELEASE-PROVENANCE-1.0.2.md). No release without
