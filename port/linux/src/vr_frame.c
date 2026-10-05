@@ -79,6 +79,13 @@ static struct
 	int heading_valid, aiming, aiming_last_frame;
 	/* vr.snap_turn (radians, 0 for smooth), vr.smooth_turn_speed (radians a second) */
 	float snap_turn, smooth_turn_speed;
+	/* test24b, comfort: the vignette's strength (vr.vignette, 0 off), what
+	shows it (vr.vignette_when), how much of it shows now (eased), and the
+	frame's own motion: moving (the stick, the arms' run), turning (smooth),
+	and a snap turn's brief pulse */
+	float vignette_strength, vignette_amount;
+	int vignette_when;
+	float comfort_move, comfort_turn, snap_pulse;
 	int snap_armed, recentre_held;
 	/* vr.aim = "hand": the right controller aims (else the head), and the
 	head's and the aim's yaw this frame, for the left stick */
@@ -506,6 +513,16 @@ void vr_reload_settings(void)
 	vr.cinema_enabled = config_boolean("vr.cinema_3d") && strcmp(config_string("vr.cutscenes"), "flat") != 0;
 	vr.snap_turn = (float)config_real("vr.snap_turn") * 0.017453293f;
 	vr.smooth_turn_speed = (float)config_real("vr.smooth_turn_speed") * 0.017453293f;
+	vr.vignette_strength = (float)config_real("vr.vignette");
+	if (!(vr.vignette_strength >= 0.0f))
+		vr.vignette_strength = 0.0f;
+	if (vr.vignette_strength > 1.0f)
+		vr.vignette_strength = 1.0f;
+	vr.vignette_when = !strcmp(config_string("vr.vignette_when"), "turn") ? VR_VIGNETTE_TURNING :
+		!strcmp(config_string("vr.vignette_when"), "always") ? VR_VIGNETTE_ALWAYS : VR_VIGNETTE_MOVING;
+	platform_log("vr: comfort: turning %s %.1f, vignette %.2f (%s)", vr.snap_turn > 0.0f ? "snap" : "smooth",
+		(vr.snap_turn > 0.0f ? vr.snap_turn : vr.smooth_turn_speed) * 57.29578f, vr.vignette_strength,
+		vr.vignette_when == VR_VIGNETTE_TURNING ? "turning" : vr.vignette_when == VR_VIGNETTE_ALWAYS ? "always" : "moving and turning");
 	vr.hand_aim = !strcmp(config_string("vr.aim"), "hand");
 	vr.crosshair_enabled = strcmp(config_string("vr.crosshair"), "off") != 0;
 	vr.crosshair_size = (float)config_real("vr.crosshair_size");
@@ -688,7 +705,7 @@ void vr_initialize(void)
 		return;
 	vr.initialized = 1;
 	config_vr_vehicle_defaults();
-	platform_log("vr: HaloCE Quest test24 candidate 1.0.6 (co-op cutscenes animate for the second player: the host's activating place followed; test23: remappable Quest buttons with the grenade on X; test22: co-op campaign host crash fixed, steady first-person vehicle view, left-hand ammo display, adjustable scopes, shot diagnostics; test21b: floating hands restored, torso-following arms, neck-pivot full body, auto two-hand lock, horn, online melee off, two-hand gun roll, pistol shots from the hand, reticle converges as shots do, per-gun aim, horn from either stick)");
+	platform_log("vr: HaloCE Quest test24b candidate 1.0.6 (comfort: vignette, smooth speed and snap angle; SPV1 marked not working; test24: co-op cutscenes animate for the second player; test23: remappable Quest buttons with the grenade on X; test22: co-op campaign host crash fixed, steady first-person vehicle view, left-hand ammo display, adjustable scopes, shot diagnostics; test21b: floating hands restored, torso-following arms, neck-pivot full body, auto two-hand lock, horn, online melee off, two-hand gun roll, pistol shots from the hand, reticle converges as shots do, per-gun aim, horn from either stick)");
 	if (!config_boolean("vr.enabled"))
 	{
 		platform_log("vr: off (vr.enabled)");
@@ -1699,6 +1716,33 @@ unsigned int vr_take_actions(void)
 	return actions;
 }
 
+/* test24b: the vignette's clear radius (a tangent of the angle from
+straight ahead) for a strength (0 to 1) and an amount (0 to 1): at nothing,
+the eye's farthest corner (`corner`), so that it grows in from the very
+edge; at a full amount clear to about 24, 33 or 39 degrees from straight
+ahead for high, medium and low strengths */
+float vr_vignette_aperture(float strength, float amount, float corner)
+{
+	float narrowest = 1.0f - 0.55f * strength;
+
+	if (amount < 0.0f)
+		amount = 0.0f;
+	if (amount > 1.0f)
+		amount = 1.0f;
+	if (!(corner > narrowest))
+		corner = narrowest;
+	return corner - amount * (corner - narrowest);
+}
+
+/* test24b: whether the vignette is drawn over the eyes now: set on, the
+player in control in stereo gameplay (no cutscene, no 3D screen, no menu
+pointer), and some of it showing */
+int vr_vignette_shown(void)
+{
+	return vr.vignette_strength > 0.0f && vr.stereo && !vr.cinema && (vr.aiming || vr.aiming_last_frame) &&
+		vr.pointer_age == 0 && vr.vignette_amount > 0.01f;
+}
+
 int vr_weapon_hand(void)
 {
 	return vr.weapon_hand;
@@ -1858,6 +1902,8 @@ static int dumping(void)
 		(vr.cinema && vr.dump_cinema_frame > 0 && vr.cinema_frames == vr.dump_cinema_frame);
 }
 
+static void draw_vignette(unsigned int which);
+
 /* copies framebuffer `source` (row 0 at the top) into the acquired image
 of a swapchain, filling it */
 static int copy_to_swapchain(unsigned int which, GLuint source, int width, int height)
@@ -1878,6 +1924,10 @@ static int copy_to_swapchain(unsigned int which, GLuint source, int width, int h
 	/* OpenXR images have row 0 at the bottom */
 	glBlitFramebuffer(0, 0, width, height, 0, (GLint)vr.info.height[which], (GLint)vr.info.width[which], 0,
 		GL_COLOR_BUFFER_BIT, GL_LINEAR);
+	/* test24b: the comfort vignette over a gameplay eye (the renderer takes
+	up its own GL state anew after an eye: xgpu_gl_state_invalidate) */
+	if (which < 2 && vr_vignette_shown())
+		draw_vignette(which);
 	if (vr.srgb_write_control)
 		glEnable(GL_FRAMEBUFFER_SRGB_EXT);
 	glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);
@@ -2183,6 +2233,46 @@ static float wrap_angle(float angle)
 	return angle;
 }
 
+/* test24b: how far a stick is pushed, past its dead zone, 0 to 1 */
+static float comfort_stick(float x, float y)
+{
+	float length = sqrtf(x * x + y * y);
+
+	if (!(length > 0.15f))
+		return 0.0f;
+	length = (length - 0.15f) / 0.6f;
+	return length > 1.0f ? 1.0f : length;
+}
+
+/* test24b: the vignette's amount this frame, eased toward what the
+setting shows it for: in quickly (0.12 s), out gently (0.35 s) */
+static void comfort_update(double seconds)
+{
+	float target = vr.vignette_when == VR_VIGNETTE_ALWAYS ? 1.0f : vr.comfort_turn;
+
+	if (!(seconds > 0.0) || seconds > 0.1)
+		seconds = 1.0 / 72.0;
+	if (vr.snap_pulse > target)
+		target = vr.snap_pulse;
+	if (vr.vignette_when == VR_VIGNETTE_MOVING && vr.comfort_move > target)
+		target = vr.comfort_move;
+	if (vr.vignette_amount < target)
+	{
+		vr.vignette_amount += (float)(seconds / 0.12);
+		if (vr.vignette_amount > target)
+			vr.vignette_amount = target;
+	}
+	else
+	{
+		vr.vignette_amount -= (float)(seconds / 0.35);
+		if (vr.vignette_amount < target)
+			vr.vignette_amount = target;
+	}
+	vr.snap_pulse -= (float)(seconds / 0.25);
+	if (vr.snap_pulse < 0.0f)
+		vr.snap_pulse = 0.0f;
+}
+
 /* the right stick: snap turns, or smooth ones at vr.smooth_turn_speed */
 static void turn(void)
 {
@@ -2191,6 +2281,7 @@ static void turn(void)
 
 	if (!(vr.frame.flags & HALO_XR_FRAME_FOCUSED))
 		return;
+	vr.comfort_turn = vr.snap_turn > 0.0f ? 0.0f : comfort_stick(x, 0.0f);
 	if (vr.snap_turn > 0.0f)
 	{
 		if (vr.snap_armed && (x > 0.7f || x < -0.7f))
@@ -2198,6 +2289,7 @@ static void turn(void)
 			/* pushed right turns right: yaw grows to the left */
 			vr.heading = wrap_angle(vr.heading + (x > 0.0f ? -vr.snap_turn : vr.snap_turn));
 			vr.snap_armed = 0;
+			vr.snap_pulse = 1.0f;
 		}
 		else if (x < 0.3f && x > -0.3f)
 		{
@@ -2416,6 +2508,19 @@ int vr_aim(float game_yaw, int seated, int hand_may_aim, const float *base_headi
 			vr.heading_valid = 1;
 		}
 		if (hand_may_aim >= 0) turn();
+	}
+	/* test24b: the frame's motion, for the vignette: the move stick (a
+	vehicle's throttle when seated), the arms' run on foot, and in a seat a
+	stick that steers */
+	{
+		float move = comfort_stick(vr.frame.thumb[0], vr.frame.thumb[1]);
+
+		if (!seated && vr.run_push > move)
+			move = vr.run_push > 1.0f ? 1.0f : vr.run_push;
+		vr.comfort_move = move;
+		if (seated || base_heading)
+			vr.comfort_turn = hand_may_aim < 0 ? comfort_stick(vr.frame.thumb[2], 0.0f) : 0.0f;
+		comfort_update(vr.frame.predicted_display_period * 1e-9);
 	}
 	vr.seated = seated;
 	/* Stick steering keeps the native look input. Update seat state even
@@ -2851,6 +2956,65 @@ static GLuint link_program(const char *fragment_source, const char *name)
 	if (!hud_vertex_array)
 		glGenVertexArrays(1, &hud_vertex_array);
 	return program;
+}
+
+/* test24b: the comfort vignette: black, clear within `aperture` and
+whole past `aperture` + `feather`, both as tangents of the angle from the
+eye's straight ahead (so round however the eye's view is skewed) */
+static const char vignette_fragment_source[] =
+	"#version 300 es\n"
+	"precision mediump float;\n"
+	"uniform vec4 tangents;\n"
+	"uniform float aperture;\n"
+	"uniform float feather;\n"
+	"in vec2 coordinate;\n"
+	"out vec4 colour;\n"
+	"void main() {\n"
+	" vec2 t = vec2(mix(tangents.x, tangents.y, coordinate.x), mix(tangents.z, tangents.w, coordinate.y));\n"
+	" colour = vec4(0.0, 0.0, 0.0, smoothstep(aperture, aperture + feather, length(t)));\n"
+	"}\n";
+static GLuint vignette_program;
+static int vignette_failed;
+
+static void draw_vignette(unsigned int which)
+{
+	float tangents[4], aperture;
+	int i;
+
+	/* fov: left, right, up, down; the image's coordinate runs top to bottom */
+	for (i = 0; i < 4; i++)
+		tangents[i] = tanf(vr.frame.fov[which][i]);
+	aperture = vr_vignette_aperture(vr.vignette_strength, vr.vignette_amount,
+		sqrtf(fmaxf(tangents[0] * tangents[0], tangents[1] * tangents[1]) +
+			fmaxf(tangents[2] * tangents[2], tangents[3] * tangents[3])));
+
+	if (!vignette_program && !vignette_failed)
+	{
+		vignette_program = link_program(vignette_fragment_source, "vignette");
+		vignette_failed = !vignette_program;
+	}
+	if (!vignette_program)
+		return;
+	glViewport(0, 0, (GLsizei)vr.info.width[which], (GLsizei)vr.info.height[which]);
+	glDisable(GL_SCISSOR_TEST);
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_STENCIL_TEST);
+	glDisable(GL_CULL_FACE);
+	glEnable(GL_BLEND);
+	glBlendEquation(GL_FUNC_ADD);
+	/* the eye darkened by the vignette's alpha, its own alpha kept */
+	glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_ALPHA);
+	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE);
+	glUseProgram(vignette_program);
+	glUniform4fv(glGetUniformLocation(vignette_program, "tangents"), 1, tangents);
+	glUniform1f(glGetUniformLocation(vignette_program, "aperture"), aperture);
+	glUniform1f(glGetUniformLocation(vignette_program, "feather"), VR_VIGNETTE_FEATHER);
+	glBindVertexArray(hud_vertex_array);
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+	glBindVertexArray(0);
+	glUseProgram(0);
+	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+	glDisable(GL_BLEND);
 }
 
 static int hud_program_ready(void)
@@ -3452,6 +3616,10 @@ int vr_present(unsigned int source, unsigned int texture, int width, int height)
 	vr.eyes_resolved = 0;
 	vr.scope_resolved = 0;
 	vr.aiming_last_frame = vr.aiming;
+	/* test24b: out of the player's control (a cutscene, a menu) the
+	vignette is gone, and begins anew from nothing */
+	if (!vr.aiming)
+		vr.vignette_amount = vr.snap_pulse = 0.0f;
 	vr.aiming = 0;
 	vr.hand_aiming_last_frame = vr.hand_aiming;
 	vr.hand_aiming = 0;

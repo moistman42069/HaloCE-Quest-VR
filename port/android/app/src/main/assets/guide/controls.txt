@@ -52,7 +52,7 @@ Test20d gives each decision one row. Rows that only mattered together with anoth
 
 | Category | Menu options |
 | --- | --- |
-| Controls | **Handedness** Right / Left; **Mirror Controls** Auto / Off; **Turning** Smooth 60–300 degrees/s or Snap 30 / 45 / 90; Move With Head / Left Hand / Right Hand; **Two Hands** Auto Lock (default) / Squeeze / Off; **Weapons** Locked / Physical / Physical + MP; **Holsters** Off or 10–40 cm; Aim Hand / Head; Controls VR / Xbox |
+| Controls | **Handedness** Right / Left; **Mirror Controls** Auto / Off; **Turning** Smooth 60–300 degrees/s or Snap 22.5 / 30 / 45 / 60 / 90 (finer on the Comfort page); Move With Head / Left Hand / Right Hand; **Two Hands** Auto Lock (default) / Squeeze / Off; **Weapons** Locked / Physical / Physical + MP; **Holsters** Off or 10–40 cm; Aim Hand / Head; Controls VR / Xbox |
 | Body | Body Arms + Hands / Full / Legs + Arms / Hands Only; **Hands** Body IK / Floating / Float + Arms / Animated / Gun Only; Fingers Off / Tracked; Room-scale Off / On; Crouch Depth Off or 5–40 cm; **Arm Run** Off or effort 0.3–1.2; **Melee** Impact / Swing / Impact + Online / Swing + Online; Melee Speed Off or 1.0–3.6 m/s |
 | Hands + Gun | Hand Pitch / Yaw / Roll (both hands, left mirrored; default −70 / 0 / 0); Reset Hands; Gun Pitch / Yaw / Roll (default 0); Reset Gun; Gun Forward / Up / Out ±20 cm; Gun Grip Anchored / Classic |
 | Gameplay | Haptics 0–100%; Flashlight Gesture / Button; Scope Off / On; Cutscenes Immersive / 3D Screen / Flat; Close Contact Off / On; Crosshair Native / Off; Crosshair Size 25–300%; Crosshair Opacity 0–100% |
@@ -99,6 +99,18 @@ Quit before external edits. In `[vr]`, `body = "legs"` explicitly selects the de
 - **Horn:** a driver's horn is Halo's crouch control. While seated, either stick click sounds it (even with the off-hand trigger held), whatever the throttle (the game used to pass the left stick click only below 98% throttle, and the Warthog's throttle is that stick). Clicking both sticks still recentres. A lowered head no longer counts as crouching while seated.
 
 - **Upside-down hands or guns** (reported on Quest OS v78): use **Controller Left/Right → Flip Roll 180** for the affected controller; it turns hand, gun and two-hand aim together. Hand Roll turns only the visible hand and Gun Roll only the gun; since test21 Gun Roll also holds in two-hand grip (it used to flip back).
+
+## Comfort (1.0.6)
+
+VR Settings → **COMFORT** gathers the settings that help with motion sickness:
+
+- **Turning:** Smooth (the right stick turns you continuously) or Snap (each push turns you a fixed step).
+- **Smooth Speed:** how fast smooth turning goes at full push, 30 to 300 degrees a second (120 is the default).
+- **Snap Angle:** how far each snap turn goes, 10 to 90 degrees (45 by default). It is kept while you use Smooth and used again when you pick Snap.
+- **Vignette:** darkens the edges of your view while you move or turn with the sticks, which many players find reduces motion sickness. Off (the default), Low, Medium or High. It fades in quickly when you start moving and fades out when you stop, keeps the centre of your view clear, and never shows in menus or cutscenes.
+- **Vignette When:** Move + Turn (the default), Turning Only, or Always.
+
+Moving includes walking with the stick, arm-swing running and driving (the left stick is the throttle). Turning includes smooth turns, each snap turn (a brief vignette) and steering a vehicle with the stick. Controls → **Turning** still offers the quick combined choices, now including Snap 22.5 and 60. Keys: `vr.snap_turn`, `vr.smooth_turn_speed`, `vr.snap_turn_amount`, `vr.vignette`, `vr.vignette_when`.
 
 ## Buttons and co-op cutscenes (test23, 1.0.5)
 

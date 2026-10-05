@@ -1020,6 +1020,21 @@ vr.snap_turn [real]
 Default: 0.0
 Degrees the right stick turns you at a flick; 0 turns smoothly instead.
 
+vr.snap_turn_amount [real]
+Default: 45.0
+The snap turn angle the VR menu's Comfort page keeps while turning smoothly, and
+takes up again for Turning: Snap (degrees). vr.snap_turn is what the game turns by.
+
+vr.vignette [real]
+Default: 0.0
+Comfort vignette: how much the edges of the view darken while you move or turn
+(0 off, the default; 0.35 low, 0.65 medium, 1 high).
+
+vr.vignette_when [string]
+Default: "move_turn"
+When the comfort vignette shows: "move_turn" (moving or turning by stick, the default),
+"turn" (turning only) or "always".
+
 vr.smooth_turn_speed [real]
 Default: 120.0
 With vr.snap_turn 0: degrees a second the right stick turns you at full

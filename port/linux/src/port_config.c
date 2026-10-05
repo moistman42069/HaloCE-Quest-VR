@@ -691,6 +691,15 @@ static const struct config_setting config_settings[] =
 		"Advanced; as vr.weapon_offset_right, behind the camera (negative is ahead)." },
 	{ "vr.snap_turn", _config_real, "0.0", "HALO_VR_SNAP_TURN", _environment_value, _platform_vr,
 		"Degrees the right stick turns you at a flick; 0 turns smoothly instead." },
+	{ "vr.snap_turn_amount", _config_real, "45.0", "HALO_VR_SNAP_TURN_AMOUNT", _environment_value, _platform_vr,
+		"The snap turn angle the VR menu's Comfort page keeps while turning smoothly, and\n"
+		"takes up again for Turning: Snap (degrees). vr.snap_turn is what the game turns by." },
+	{ "vr.vignette", _config_real, "0.0", "HALO_VR_VIGNETTE", _environment_value, _platform_vr,
+		"Comfort vignette: how much the edges of the view darken while you move or turn\n"
+		"(0 off, the default; 0.35 low, 0.65 medium, 1 high)." },
+	{ "vr.vignette_when", _config_string, "\"move_turn\"", "HALO_VR_VIGNETTE_WHEN", _environment_value, _platform_vr,
+		"When the comfort vignette shows: \"move_turn\" (moving or turning by stick, the default),\n"
+		"\"turn\" (turning only) or \"always\"." },
 	{ "vr.smooth_turn_speed", _config_real, "120.0", "HALO_VR_SMOOTH_TURN_SPEED", _environment_value, _platform_vr,
 		"With vr.snap_turn 0: degrees a second the right stick turns you at full\n"
 		"push." },

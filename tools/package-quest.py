@@ -148,6 +148,12 @@ def main():
             if candidate_at_least(args.label, 23):
                 if b"client dropped presentation" not in guest:
                     raise SystemExit("Test23 co-op cutscene diagnostic missing")
+            if candidate_at_least(args.label, 24, "b") and vr:
+                for marker in [b"COMFORT", b"VIGNETTE WHEN", b"SNAP ANGLE", b"SMOOTH SPEED", b"vr.vignette",
+                               b"vr.snap_turn_amount", b"vr: comfort: turning"]:
+                    if marker not in guest: raise SystemExit("Test24b comfort marker missing: " + repr(marker))
+            if candidate_at_least(args.label, 24, "b") and b"not working yet" not in dex:
+                raise SystemExit("Test24b SPV1 notice missing")
             if candidate_at_least(args.label, 24):
                 if b"client follows the host's activating place" not in guest:
                     raise SystemExit("Test24 co-op cutscene activation missing")

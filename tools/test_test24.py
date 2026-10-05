@@ -94,8 +94,9 @@ assert 'if (!function->parameter_count) network_campaign_script_capture(expressi
 assert objects_net == git_show('55e77364', 'port/linux/game/network_objects.c'), 'network_objects.c as in 1.0.4'
 
 # --- version
-assert 'versionCode Math.max(31, buildNumber)' in gradle and '"1.0.6"' in gradle
-assert 'HaloCE Quest test24 candidate 1.0.6' in frame
+code = int(re.search(r'versionCode Math\.max\((\d+), buildNumber\)', gradle).group(1))
+assert code >= 31 and '"1.0.6"' in gradle
+assert 'co-op cutscenes animate for the second player' in frame
 
 # --- the launcher: co-op and server-browser steps, the co-op listing on by default
 java = ROOT / 'port/android/app/src/main/java/com/halo/decomp'

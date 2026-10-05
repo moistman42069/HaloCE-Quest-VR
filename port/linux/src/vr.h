@@ -242,6 +242,11 @@ int vr_button_default(int action);
 const char *vr_button_source_value(int source);
 int vr_button_source_of(const char *value, int fallback);
 int vr_gun_class_of_name(const char *name);
+/* test24b: the comfort vignette (vr.vignette, vr.vignette_when) */
+enum { VR_VIGNETTE_MOVING, VR_VIGNETTE_TURNING, VR_VIGNETTE_ALWAYS };
+#define VR_VIGNETTE_FEATHER 0.35f
+float vr_vignette_aperture(float strength, float amount, float corner);
+int vr_vignette_shown(void);
 void vr_set_gun_class(int kind);
 int vr_gun_class(void);
 const char *vr_gun_class_label(int kind);

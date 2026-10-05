@@ -3,6 +3,10 @@
 Updated 2026-10-04. This is the current handoff for Claude Code/Claude Cloud.
 The canonical source is `moistman42069/HaloCE-Quest-VR`, branch `main`.
 
+## Progress (test24b, 2026-10-05)
+
+Private candidate **test24b** (version 1.0.6 / code 32) adds, on top of test24: a COMFORT page in VR Settings (Turning smooth/snap, Smooth Speed, Snap Angle, a comfort Vignette and when it shows; a player's request plus the owner's), Snap 22.5 and 60 on Controls → Turning, and an SPV1 notice in the launcher that SPV1 does not work yet. Details: [TEST24B-PROGRESS.md](TEST24B-PROGRESS.md); delivery: [TEST24B-DELIVERY.md](TEST24B-DELIVERY.md). Nothing is accepted until tested on devices.
+
 ## Progress (test24, 2026-10-04)
 
 Private candidate **test24** (version 1.0.6 / code 31) after test23: the owner's 1.0.5 test still showed co-op cutscene characters T-posing and sliding on the joining Quest, with no dropped cutscene cue in its log. Cause: a machine animates only what its players see plus the place a script activates for a cutscene, and the joining device was never told of that place, so the cutscene's area stayed asleep there. The host's activation calls (and the seat posture call) are now sent to joining devices; test23's cutscene change is withdrawn. Details: [TEST24-PROGRESS.md](TEST24-PROGRESS.md); delivery: [TEST24-DELIVERY.md](TEST24-DELIVERY.md). Nothing is accepted until tested on devices.

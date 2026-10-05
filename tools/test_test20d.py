@@ -230,7 +230,9 @@ int main(void){
 ''')
 
 # --- the menu: every combined row identifies what it wrote, and shows the defaults
-rows = re.findall(r'\{ "([A-Z +\-]+)", "[\w.]+", _vr_setting_multi, (\d+), \{ (.*?) \} \},', menu)
+# (test24b: Turning is one macro, on Controls; read as the row it is)
+menu_rows = re.sub(r'#define VR_MENU_TURNING_ROW (\{.*\})\n', r'\1,\n', menu)
+rows = re.findall(r'\{ "([A-Z +\-]+)", "[\w.]+", _vr_setting_multi, (\d+), \{ (.*?) \} \},', menu_rows)
 assert {r[0] for r in rows} == {'TURNING', 'WEAPONS', 'HOLSTERS', 'HANDS', 'ARM RUN', 'MELEE'}, rows
 domains = {'vr.arms': {'ik', 'hidden', 'animated'}, 'vr.hand_tracking': {'ik', 'floating', 'floating_arms'},
            'vr.melee': {'impact', 'swing'},
@@ -245,7 +247,8 @@ for label, count, values in rows:
             if kind == '_config_boolean': assert text in ('true', 'false'), pair
             elif kind == '_config_real': float(text)
             if key in domains: assert text in domains[key], pair
-pages = ''.join(block(menu, f'static struct vr_menu_setting const {name}[] =', '};')
+pages = menu[menu.index('#define VR_MENU_TURNING_ROW'):].split('\n')[0] + '\n' + \
+    ''.join(block(menu, f'static struct vr_menu_setting const {name}[] =', '};')
                 for name in ('vr_menu_controls', 'vr_menu_body', 'vr_menu_vr', 'vr_menu_hands'))
 cfg = ',\n'.join('{"%s",%d,"%s"}' % (k, {'_config_boolean': 0, '_config_integer': 1, '_config_real': 2}.get(v[0], 3), v[1])
                  for k, v in table.items())
@@ -255,7 +258,7 @@ button_names = block(vr_h, 'enum\n{\n\tVR_BUTTON_ACTION_JUMP,', '};') + block(vr
     ''.join(block(frame, 'static const %s' % t, '};') for t in ['char *const button_action_keys', 'char *const button_source_values',
                                                               'int button_defaults']) + \
     ''.join(fn(frame, f) for f in ['vr_button_action_key', 'vr_button_default', 'vr_button_source_value', 'vr_button_source_of'])
-buttons = button_names + fn(menu, 'vr_menu_button_action') + fn(menu, 'vr_menu_button_source')
+buttons = button_names + fn(menu, 'vr_menu_snap_angle') + fn(menu, 'vr_menu_button_action') + fn(menu, 'vr_menu_button_source')
 run('menu', common + r'''
 typedef int boolean;
 #define TRUE 1

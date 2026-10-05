@@ -151,9 +151,18 @@ enum
 	all of them back to their defaults */
 	_vr_setting_button,
 	_vr_setting_reset_buttons,
+	/* test24b: comfort turning, finer: smooth or snap (vr.snap_turn 0 or
+	the snap angle kept in vr.snap_turn_amount), and the snap angle itself
+	(vr.snap_turn_amount, and vr.snap_turn while snapping) */
+	_vr_setting_turn_mode,
+	_vr_setting_snap_angle,
 };
 
 #define VR_MENU_MAXIMUM_VALUES 12
+
+/* the right stick's turning, on CONTROLS and COMFORT (test24b: snap 22.5
+and 60 degrees added) */
+#define VR_MENU_TURNING_ROW { "TURNING", "vr.snap_turn", _vr_setting_multi, 12, { { "SMOOTH 60", "vr.snap_turn=0;vr.smooth_turn_speed=60" }, { "SMOOTH 90", "vr.snap_turn=0;vr.smooth_turn_speed=90" }, { "SMOOTH 120", "vr.snap_turn=0;vr.smooth_turn_speed=120" }, { "SMOOTH 150", "vr.snap_turn=0;vr.smooth_turn_speed=150" }, { "SMOOTH 180", "vr.snap_turn=0;vr.smooth_turn_speed=180" }, { "SMOOTH 240", "vr.snap_turn=0;vr.smooth_turn_speed=240" }, { "SMOOTH 300", "vr.snap_turn=0;vr.smooth_turn_speed=300" }, { "SNAP 22.5", "vr.snap_turn=22.5;vr.snap_turn_amount=22.5" }, { "SNAP 30", "vr.snap_turn=30;vr.snap_turn_amount=30" }, { "SNAP 45", "vr.snap_turn=45;vr.snap_turn_amount=45" }, { "SNAP 60", "vr.snap_turn=60;vr.snap_turn_amount=60" }, { "SNAP 90", "vr.snap_turn=90;vr.snap_turn_amount=90" } } }
 
 struct vr_menu_setting
 {
@@ -178,7 +187,7 @@ static struct vr_menu_setting const vr_menu_controls[] =
 {
 	{ "HANDEDNESS", "vr.left_handed", _vr_setting_handedness, 2, { { "RIGHT", "false" }, { "LEFT", "true" } } },
 	{ "MIRROR CONTROLS", "vr.mirror_controls", _vr_setting_string, 2, { { "AUTO", "auto" }, { "OFF", "off" } } },
-	{ "TURNING", "vr.snap_turn", _vr_setting_multi, 10, { { "SMOOTH 60", "vr.snap_turn=0;vr.smooth_turn_speed=60" }, { "SMOOTH 90", "vr.snap_turn=0;vr.smooth_turn_speed=90" }, { "SMOOTH 120", "vr.snap_turn=0;vr.smooth_turn_speed=120" }, { "SMOOTH 150", "vr.snap_turn=0;vr.smooth_turn_speed=150" }, { "SMOOTH 180", "vr.snap_turn=0;vr.smooth_turn_speed=180" }, { "SMOOTH 240", "vr.snap_turn=0;vr.smooth_turn_speed=240" }, { "SMOOTH 300", "vr.snap_turn=0;vr.smooth_turn_speed=300" }, { "SNAP 30", "vr.snap_turn=30" }, { "SNAP 45", "vr.snap_turn=45" }, { "SNAP 90", "vr.snap_turn=90" } } },
+	VR_MENU_TURNING_ROW,
 	{ "MOVE WITH", "vr.move_relative", _vr_setting_string, 3, { { "HEAD", "head" }, { "LEFT HAND", "left" }, { "RIGHT HAND", "right" } } },
 	/* test21: AUTO LOCK (default) locks the off hand at the support grip
 	without squeezing; SQUEEZE needs the grip held there */
@@ -292,6 +301,18 @@ static struct vr_menu_setting const vr_menu_hands[] =
     { "RESET AIM", "reset", _vr_setting_gun_aim, 0, { { NULL,NULL } } },
 };
 
+/* test24b: comfort: turning (smooth or snap, each finely set: smooth
+speed, snap angle) and the vignette, which darkens the view's edges while
+you move or turn by stick */
+static struct vr_menu_setting const vr_menu_comfort[] =
+{
+	{ "TURNING", "turn", _vr_setting_turn_mode, 2, { { "SMOOTH", "smooth" }, { "SNAP", "snap" } } },
+	{ "SMOOTH SPEED", "vr.smooth_turn_speed", _vr_setting_real, 12, { { "30 DEG/S", "30" }, { "45 DEG/S", "45" }, { "60 DEG/S", "60" }, { "75 DEG/S", "75" }, { "90 DEG/S", "90" }, { "105 DEG/S", "105" }, { "120 DEG/S", "120" }, { "150 DEG/S", "150" }, { "180 DEG/S", "180" }, { "210 DEG/S", "210" }, { "240 DEG/S", "240" }, { "300 DEG/S", "300" } } },
+	{ "SNAP ANGLE", "vr.snap_turn_amount", _vr_setting_snap_angle, 9, { { "10 DEG", "10" }, { "15 DEG", "15" }, { "20 DEG", "20" }, { "22.5 DEG", "22.5" }, { "30 DEG", "30" }, { "40 DEG", "40" }, { "45 DEG", "45" }, { "60 DEG", "60" }, { "90 DEG", "90" } } },
+	{ "VIGNETTE", "vr.vignette", _vr_setting_real, 4, { { "OFF", "0" }, { "LOW", "0.35" }, { "MEDIUM", "0.65" }, { "HIGH", "1" } } },
+	{ "VIGNETTE WHEN", "vr.vignette_when", _vr_setting_string, 3, { { "MOVE + TURN", "move_turn" }, { "TURNING ONLY", "turn" }, { "ALWAYS", "always" } } },
+};
+
 /* test22: the scopes' places and sizes, the pistol's and the sniper
 rifle's apart (vr.scope_pistol_*, vr.scope_sniper_*: 0 and 100%, the usual) */
 static struct vr_menu_setting const vr_menu_scopes[] =
@@ -359,6 +380,7 @@ static struct vr_menu_page
 {
 	{ "CONTROLS", vr_menu_controls, NUMBEROF(vr_menu_controls) },
 	{ "BUTTONS", vr_menu_buttons, NUMBEROF(vr_menu_buttons) },
+	{ "COMFORT", vr_menu_comfort, NUMBEROF(vr_menu_comfort) },
 	{ "BODY", vr_menu_body, NUMBEROF(vr_menu_body) },
 	{ "HANDS + GUN", vr_menu_hands, NUMBEROF(vr_menu_hands) },
 	{ "SCOPES", vr_menu_scopes, NUMBEROF(vr_menu_scopes) },
@@ -427,6 +449,17 @@ static double vr_menu_hand_angle(char const *axis)
 
 /* test23: a remappable button's action (VR_BUTTON_ACTION_*, NONE: not
 one), and the button it has, as the game reads it */
+/* test24b: the snap angle: the one snapping now, or the one kept for it
+while turning smoothly (vr.snap_turn_amount) */
+static double vr_menu_snap_angle(void)
+{
+	double angle = config_real("vr.snap_turn");
+
+	if (!(angle > 0.0))
+		angle = config_real("vr.snap_turn_amount");
+	return angle > 0.0 && angle <= 180.0 ? angle : 45.0;
+}
+
 static int vr_menu_button_action(char const *key)
 {
 	int action;
@@ -510,6 +543,14 @@ static long vr_menu_value_index(
 			break;
 		case _vr_setting_string:
 			if (!strcmp(config_string(setting->key), value))
+				return index;
+			break;
+		case _vr_setting_turn_mode:
+			if ((config_real("vr.snap_turn") > 0.0) == !strcmp(value, "snap"))
+				return index;
+			break;
+		case _vr_setting_snap_angle:
+			if (fabs(vr_menu_snap_angle() - atof(value)) < 0.001)
 				return index;
 			break;
 		case _vr_setting_button:
@@ -990,7 +1031,8 @@ boolean vr_menu_setting_text(
             setting->type == _vr_setting_reset_scopes || setting->type == _vr_setting_reset_buttons)
             snprintf(line,sizeof(line),"%s: APPLY",setting->label);
         else
-		snprintf(line, sizeof(line), setting->type == _vr_setting_real ? "%s: < %s >" : "%s: %s", setting->label,
+		snprintf(line, sizeof(line), setting->type == _vr_setting_real || setting->type == _vr_setting_snap_angle ?
+			"%s: < %s >" : "%s: %s", setting->label,
 			value_index != NONE ? setting->values[value_index].label : "CUSTOM");
 	}
 	for (index = 0; line[index] && index < size - 1; index++)
@@ -1030,6 +1072,28 @@ boolean vr_menu_setting_change(
             snprintf(key,sizeof(key),"vr.scope_%s_%s",kinds[kind],parts[part]);
             written=config_write_real(key,config_default_real(key))&&written; }
         vr_reload_settings(); platform_log("vr: reset scope places and sizes%s",written?"":" (save failed)");
+        return TRUE;
+    }
+    if(setting->type == _vr_setting_turn_mode) {
+        /* smooth keeps the snap angle for later; snap takes it up again */
+        boolean snapping=config_real("vr.snap_turn")>0.0;
+        double angle=vr_menu_snap_angle();
+        written=config_write_real("vr.snap_turn_amount",angle);
+        written=config_write_real("vr.snap_turn",snapping?0.0:angle)&&written;
+        vr_reload_settings(); platform_log("vr: turning %s (snap angle %.1f)%s",snapping?"smooth":"snap",angle,written?"":" (save failed)");
+        return TRUE;
+    }
+    if(setting->type == _vr_setting_snap_angle) {
+        /* a step from the angle now, as the numeric rows step */
+        double current=vr_menu_snap_angle(), angle;
+        long i;
+        value_index=step>0?setting->value_count-1:0;
+        if(step>0) { for(i=0;i<setting->value_count;i++) if(atof(setting->values[i].value)>current+0.00001) { value_index=i; break; } }
+        else { for(i=setting->value_count-1;i>=0;i--) if(atof(setting->values[i].value)<current-0.00001) { value_index=i; break; } }
+        angle=atof(setting->values[value_index].value);
+        written=config_write_real("vr.snap_turn_amount",angle);
+        if(config_real("vr.snap_turn")>0.0) written=config_write_real("vr.snap_turn",angle)&&written;
+        vr_reload_settings(); platform_log("vr: snap angle %.1f%s",angle,written?"":" (save failed)");
         return TRUE;
     }
     if(setting->type == _vr_setting_reset_buttons) {

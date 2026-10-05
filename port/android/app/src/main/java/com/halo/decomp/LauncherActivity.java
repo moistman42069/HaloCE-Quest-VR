@@ -285,7 +285,8 @@ public class LauncherActivity extends Activity {
         TextView modsTitle = label(layout, "MODS", 18, HALO_BLUE);
         modsTitle.setPadding(0, dp(24), 0, dp(4));
 
-        Button spv1 = menuButton(layout, ModInstaller.SPV1.title);
+        // SPV1 does not work yet (owner, 1.0.6): said on its button and in its panel
+        Button spv1 = menuButton(layout, ModInstaller.SPV1.title + " (not working yet)");
         spv1.setOnClickListener(v -> selectMod(ModInstaller.SPV1));
 
         // the selected mod: what it is, and what can be done with it
@@ -342,6 +343,11 @@ public class LauncherActivity extends Activity {
     }
 
     /** Shows the mod's description and buttons (again: hides them). */
+    /** SPV1 integration does not work yet; said wherever it is offered. */
+    static final String MOD_NOT_WORKING = "WARNING: SPV1 support is currently not functioning. It will be refined "
+        + "in a future release. You can still try it, but expect it not to work; Restore the original campaign "
+        + "puts everything back.";
+
     private void selectMod(ModInstaller.Mod mod) {
         if (selectedMod == mod && modDetails.getVisibility() == View.VISIBLE) {
             modDetails.setVisibility(View.GONE);
@@ -355,6 +361,13 @@ public class LauncherActivity extends Activity {
         name.setTextColor(Color.WHITE);
         name.setTextSize(TypedValue.COMPLEX_UNIT_SP, 18);
         modDetails.addView(name);
+
+        TextView warning = new TextView(this);
+        warning.setText(MOD_NOT_WORKING);
+        warning.setTextColor(Color.rgb(255, 190, 70));
+        warning.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
+        warning.setPadding(0, dp(8), 0, 0);
+        modDetails.addView(warning);
 
         TextView description = new TextView(this);
         description.setText(mod.description);

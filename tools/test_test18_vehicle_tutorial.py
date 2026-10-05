@@ -27,7 +27,8 @@ pre=r'''
 static struct {
  int active,stereo_enabled,force_render,aiming,hand_aiming,recentre_held,hand_aim,heading_valid,aiming_last_frame,seated;
  float diag_yaw,diag_walk_speed,head_yaw,aim_yaw,heading,last_aim_yaw;
- struct {unsigned flags,buttons,hand_valid[2];struct {float orientation[4];} head,aim[2];} frame;
+ float run_push,comfort_move,comfort_turn;
+ struct {unsigned flags,buttons,hand_valid[2];struct {float orientation[4];} head,aim[2];float thumb[4];long long predicted_display_period;} frame;
 } vr;
 static int frame_begin(void){return 1;}
 static void synthesize_views(void){}
@@ -35,6 +36,9 @@ static void host_xr_recenter(void){}
 static void update_aim_pose(void){}
 static int hand_forward(float f[3]){f[0]=0;f[1]=0;f[2]=1;return 1;}
 static void turn(void){}
+/* test24b: the comfort vignette's motion (test_test24b) */
+static float comfort_stick(float x,float y){(void)x;(void)y;return 0.0f;}
+static void comfort_update(double seconds){(void)seconds;}
 static struct {int valid;float yaw,pitch;} tutorial_look;
 '''
 helpers=''.join(fn(s,n) for n in ['rotate','to_halo','head_forward','wrap_angle','vr_aim','vr_script_head_valid','vr_head_look_reset','vr_head_look_actions'])
