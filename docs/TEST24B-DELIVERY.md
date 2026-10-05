@@ -38,10 +38,10 @@ change them), buttons, co-op and everything else.
 
 | File | Bytes | SHA-256 |
 | --- | ---: | --- |
-| `HaloCE-Quest-test24b.apk` | VR_BYTES | `VR_SHA` |
-| `HaloCE-Android-test24b.apk` | FLAT_BYTES | `FLAT_SHA` |
+| `HaloCE-Quest-test24b.apk` | 28,154,499 | `18441ebf48a8485d35a4f7fe63c7b2f89f9e3ea34c5f0dbe18a71a312c3db2c9` |
+| `HaloCE-Android-test24b.apk` | 26,081,844 | `13a9c827701585cbbb51f38ce41b5a6a899892eceed08c51b91093a1584f490b` |
 
-Runtime source `RUNTIME_COMMIT` on branch `test21-hands-body`; later commits
+Runtime source `d066d1e2` on branch `test21-hands-body`; later commits
 change only documentation and packaging tooling. Certificate SHA-256
 `53d416f7e123cc62b749940983209bc9a400002e033fd5f50900d4ffad8e2aa4`, the same as
 v1.0.2 to 1.0.6 (code 31). Built serially from a clean tree; payload, signing
