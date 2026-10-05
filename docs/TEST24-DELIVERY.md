@@ -42,10 +42,10 @@ Unchanged from 1.0.5: grenade on Left X, the BUTTONS page, and everything else.
 
 | File | Bytes | SHA-256 |
 | --- | ---: | --- |
-| `HaloCE-Quest-test24.apk` | VR_BYTES | `VR_SHA` |
-| `HaloCE-Android-test24.apk` | FLAT_BYTES | `FLAT_SHA` |
+| `HaloCE-Quest-test24.apk` | 28,084,867 | `48b9a7a8c13db7f975d3763d7005621da77e7b6251a2e7498211ccce86ddac8b` |
+| `HaloCE-Android-test24.apk` | 26,073,652 | `b0767f78a604f4b973224c14630832d87f9e4ed63223b43664621e79b03de3d1` |
 
-Runtime source `RUNTIME_COMMIT` on branch `test21-hands-body`; later commits
+Runtime source `47a178dc` (cutscene fix `7700fdc9`, launcher `f3532d28`) on branch `test21-hands-body`; later commits
 change only documentation and packaging tooling. Certificate SHA-256
 `53d416f7e123cc62b749940983209bc9a400002e033fd5f50900d4ffad8e2aa4`, the same as
 v1.0.2 to 1.0.5. Built serially from a clean tree; payload, signing and 16 KB
