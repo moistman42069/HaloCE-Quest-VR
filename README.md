@@ -4,6 +4,10 @@
 
 > **Campaign co-op is working again** in this release. The build includes fixes for the campaign host crash and for cutscene actors failing to animate on joining clients. Co-op remains a separate two-player mode; see the compatibility notes below.
 
+## Support & Contact
+
+For help, feedback, or bug reports, DM **@MeWhenINameMyself** on Discord or post in the [Halo CE Decomp Discord server](https://discord.gg/S9uSCKxKx). When reporting an issue, include the app version, device/OS, game revision if relevant, and a matching launch log. Review logs for private details before posting.
+
 ## 1. Installation
 
 **Latest release: v1.0.6 (test24b), version code 32.** These ARM64 APKs use the established signing certificate and install over v1.0.3/code 27 and earlier project builds. Keep a backup of your game data and previous APK before updating.
