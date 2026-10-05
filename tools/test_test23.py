@@ -46,25 +46,15 @@ objects = (ROOT / 'port/linux/game/network_objects.c').read_text(encoding='utf-8
 script = (ROOT / 'port/linux/game/network_campaign_script.c').read_text(encoding='utf-8')
 gradle = (ROOT / 'port/android/app/build.gradle').read_text(encoding='utf-8')
 
-# --- co-op cutscenes: a client puts the host's cutscene characters in place at once
-reconcile = fn(objects, 'network_objects_reconcile')
-snap = reconcile.index('network_campaign_client() && cinematic_in_progress()')
-assert snap < reconcile.index('dx = position->x - object->object.position.x;'), 'before the gameplay smoothing'
-assert reconcile.index('distributed_transform_valid(') < snap, 'after the message is validated'
-block = reconcile[snap:reconcile.index('dx = position->x', snap)]
-for part in ['TEST_FLAG(_object_mask_unit, object->object.type)', 'unit.player_index == NONE',
-             'object->object.parent_object_index == NONE', 'object_set_position(object_index, position, &valid_forward, &valid_up);',
-             'return FALSE;']:
-    assert part in block, part
-assert 'render_interpolation_correct_object' not in block, 'no drawn glide for a cutscene cut'
-assert 'boolean cinematic_in_progress(void);' in objects
+# --- co-op cutscenes: the dropped-cue log (test23's snap was withdrawn in test24, test_test24)
 receive = fn(script, 'network_campaign_script_receive')
 assert 'client dropped presentation' in receive and '++dropped <= 8 || dropped % 100 == 0' in receive
 assert 'hs_campaign_replay(function, entry.arguments);' in receive, 'valid cues replay as before'
 
-# --- version
-assert 'versionCode Math.max(30, buildNumber)' in gradle and '"1.0.5"' in gradle
-assert 'HaloCE Quest test23 candidate 1.0.5' in frame
+# --- version: 1.0.5 / 30 or later
+code = int(__import__('re').search(r'versionCode Math\.max\((\d+), buildNumber\)', gradle).group(1))
+assert code >= 30
+assert 'remappable Quest buttons with the grenade on X' in frame
 
 # --- the buttons: settings, defaults, wiring
 for key, default in [('jump', 'a'), ('action', 'b'), ('melee', 'right_stick'), ('crouch', 'left_stick'),
@@ -203,5 +193,5 @@ int main(void){
       "and 20,000 random changes never leave one button with two actions");
 }
 ''')
-print('PASS: test23 wiring (cutscene snap on campaign clients only, dropped-cue log, version 1.0.5 / 30, '
+print('PASS: test23 wiring (dropped-cue log, version 1.0.5 / 30 or later, '
       'button settings, legacy layout for other controllers, BUTTONS page)')

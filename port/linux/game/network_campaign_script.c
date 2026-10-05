@@ -6,6 +6,7 @@
 #include "networking/network_game_globals.h"
 #include "network_distributed.h"
 #include "network_campaign.h"
+#include "objects/objects.h"
 #include <string.h>
 
 void platform_log(char const *format, ...);
@@ -39,7 +40,15 @@ static char const *presentation_names[] = {
 	"cinematic_set_near_clip_distance", "effect_new", "effect_new_on_object_marker",
 	"ai_allegiance", "ai_allegiance_remove", "unit_set_emotion", "unit_set_emotion_animation",
 	"unit_suspended", "unit_set_enterable_by_player", "object_set_collideable",
-	"cinematic_suppress_bsp_object_creation"
+	"cinematic_suppress_bsp_object_creation",
+	/* test24: the special place that activates everything it sees. A
+	machine updates (animates) only objects its players' clusters see and
+	the place a script names; a client runs no scripts, so a cutscene away
+	from the players (a10's bridge) stayed inactive there: its characters
+	never animated (T-posed, frozen) while the host's positions moved them
+	(slid). And the seat a unit's idle animations are chosen for */
+	"object_pvs_set_object", "object_pvs_set_camera", "object_pvs_activate", "object_pvs_clear",
+	"unit_set_seat"
 };
 
 struct campaign_presentation
@@ -212,5 +221,14 @@ void network_campaign_script_receive(void const *entries, short count)
 			continue;
 		}
 		hs_campaign_replay(function, entry.arguments);
+		/* test24: the host's activating place followed, said a few times a
+		game (the next logs show cutscenes activate on the client) */
+		if (!strncmp(hs_function_get(function)->name, "object_pvs_", 11))
+		{
+			static unsigned long followed;
+			if (++followed <= 16 || followed % 100 == 0)
+				platform_log("campaign: client follows the host's activating place: %s (cluster %d)",
+					hs_function_get(function)->name, objects_get_activating_cluster_index());
+		}
 	}
 }
