@@ -1,4 +1,4 @@
-# Test22 — 1.0.2 candidate (private): co-op crash, vehicle view, ammo display, scopes
+# Test22 — 1.0.4 candidate (private): co-op crash, vehicle view, ammo display, scopes
 
 Not a release. The public release is v1.0.3 (test21b, code 27). Do not
 publish without explicit owner approval. Evidence, causes and status:
@@ -9,8 +9,8 @@ publish without explicit owner approval. Evidence, causes and status:
 - Quest/VR: `HaloCE-Quest-test22.apk`
 - Android/flat: `HaloCE-Android-test22.apk`
 
-Both are **1.0.2 / version code 28**, ARM64, API 28+, signed with the same
-certificate as v1.0.2 and v1.0.3, so they install over either without
+Both are **version 1.0.4 / code 29** (the launcher now shows 1.0.4; the first test22 pair was 1.0.2 / code 28), ARM64, API 28+, signed with the same
+certificate as v1.0.2 and v1.0.3, so they install over either (and over the first test22 pair) without
 uninstalling (`adb install -r <apk>`). Do not uninstall or clear data. Back up
 first. **Co-op needs the same version on every device.**
 
@@ -42,10 +42,10 @@ the fix), vehicle mechanics, third-person vehicle view, performance settings.
 
 | File | Bytes | SHA-256 |
 | --- | ---: | --- |
-| `HaloCE-Quest-test22.apk` | 28,084,867 | `ebae2760a45397fc6dac4e423bb2d37ad9abc234047c98052f7230464c6ca32a` |
-| `HaloCE-Android-test22.apk` | 26,077,748 | `1716120655c2d11d26138ccfe2000fb25e08b41974129afd09b0d35513e446b9` |
+| `HaloCE-Quest-test22.apk` | 28,084,867 | `2dbd82756ab4a69c4cd614a56d258ea89093db48c288a772275835f43c078637` |
+| `HaloCE-Android-test22.apk` | 26,077,748 | `402d3dd879c1ced7020d6f68c7dedec45bad2cedc7ff3db19a0ace13f8726254` |
 
-Runtime source `7de2939eb4e5a2bbf80147f79825f443437c487d` on branch `test21-hands-body`; later commits
+Runtime source `afeed66d3ef537cea2552570fc8747070733ac5d` on branch `test21-hands-body`; later commits
 change only documentation and packaging tooling. Certificate SHA-256
 `53d416f7e123cc62b749940983209bc9a400002e033fd5f50900d4ffad8e2aa4`, the same as
 v1.0.2 and v1.0.3. Built serially from a clean tree; payload, signing and 16 KB
