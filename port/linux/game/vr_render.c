@@ -241,6 +241,12 @@ static void vr_update_seat(
 		vr_render.seat.vehicle_index = vehicle_index;
 		vr_render.seat.seat_index = seat_index;
 		vr_render.seat.unit_index = unit_index;
+		/* test25: the seat, for the vehicle report (vr_frame.c logs the angles) */
+		platform_log("vr: seat: %s seat %d as %s, vehicle yaw %.1f, seat offset %.1f, view %s",
+			tag_get_name(vehicle->definition_index), seat_index,
+			vr_render.seat.driver ? "driver" : vr_render.seat.gunner ? "gunner" : "passenger",
+			vr_yaw(&vehicle->object.forward) * 57.29578f, vr_render.seat.offset * 57.29578f,
+			vr_first_person_vehicles() ? "first person" : "third person");
 	}
 	vr_render.seat.seated = TRUE;
 	/* the vehicle's heading only: its pitch and roll would tilt the horizon */
@@ -290,6 +296,142 @@ static boolean vr_seat_view(
 /* port/linux/game/render_interpolation.c: an object's nodes as this frame
 draws them (between the last two ticks), NULL outside a frame */
 real_matrix4x3 *render_interpolation_object_node_matrices(long object_index);
+
+/* test25: first-person seats: the see-through parts of the vehicle the
+player sits in, as the renderer draws them (rasterizer_xbox_transparent_
+geometry.c): each kind said once a vehicle; its glass not drawn from the
+seat. The owner's video (Silent Cartographer, a Warthog) showed its
+windshield as a bright white sheet from the driver's seat, a view the game
+was never made for; outside the seat it is drawn as ever */
+boolean vr_render_seat_transparent(long object_index, short shader_type, short glass_type)
+{
+	static char const *const names[] = { "screen", "effect", "decal", "environment", "model", "generic",
+		"chicago", "water", "glass", "meter", "plasma" };
+	static long logged_vehicle = NONE;
+	static unsigned long logged_types;
+
+	if (object_index == NONE || !vr_render.seat.seated || vr_render.seat.vehicle_index == NONE ||
+		!vr_first_person_vehicles() || !object_try_and_get(object_index) ||
+		(object_index != vr_render.seat.vehicle_index &&
+			object_get_ultimate_parent(object_index) != vr_render.seat.vehicle_index) ||
+		!vr_seat_view())
+	{
+		return FALSE;
+	}
+	if (logged_vehicle != vr_render.seat.vehicle_index)
+	{
+		logged_vehicle = vr_render.seat.vehicle_index;
+		logged_types = 0;
+	}
+	if (shader_type >= 0 && shader_type < 32 && !(logged_types & (1ul << shader_type)))
+	{
+		logged_types |= 1ul << shader_type;
+		platform_log("vr: first-person seat: the vehicle draws see-through %s parts%s",
+			shader_type < (short)NUMBEROF(names) ? names[shader_type] : "other",
+			shader_type == glass_type ? " (its glass is hidden from the seat)" : "");
+	}
+	return shader_type == glass_type;
+}
+
+/* test25: vr.vehicle_tilt: a first-person driver's view tilted with the
+vehicle (pitch and roll; its heading is the seat's already), eased over
+0.12 s against the jolts of rough ground and limited to 60 degrees, about
+the eyes' anchor. Level (0) is the view as it was; gunners and passengers
+keep it level, their aim being the head's */
+static struct
+{
+	real_vector3d up;
+	double time;
+	long vehicle_index;
+	boolean valid;
+} vr_tilt;
+
+static void vr_vehicle_tilt_view(
+	real_point3d const *anchor,
+	real_point3d *position,
+	real_vector3d *forward,
+	real_vector3d *up)
+{
+	real amount = vr_vehicle_tilt();
+	struct object_datum *vehicle;
+	real_matrix4x3 *nodes;
+	real_vector3d target, tilted, axis, *vectors[3], offset;
+	double now;
+	real c, s;
+	int i;
+
+	if (!(amount > 0.0f) || !vr_seat_view() || !vr_render.seat.driver ||
+		!(vehicle = object_try_and_get(vr_render.seat.vehicle_index)))
+	{
+		vr_tilt.valid = FALSE;
+		return;
+	}
+	nodes = render_interpolation_object_node_matrices(vr_render.seat.vehicle_index);
+	target = nodes ? nodes[0].up : vehicle->object.up;
+	if (!(normalize3d(&target) > 0.0f))
+		return;
+	now = vr_pose_time();
+	if (!vr_tilt.valid || vr_tilt.vehicle_index != vr_render.seat.vehicle_index)
+	{
+		vr_tilt.up = target;
+		vr_tilt.vehicle_index = vr_render.seat.vehicle_index;
+		vr_tilt.valid = TRUE;
+	}
+	else if (now != vr_tilt.time)
+	{
+		double seconds = now - vr_tilt.time;
+		real t = (real)(1.0 - exp(-(seconds > 0.0 && seconds < 0.5 ? seconds : 0.0) / 0.12));
+
+		vr_tilt.up.i += (target.i - vr_tilt.up.i) * t;
+		vr_tilt.up.j += (target.j - vr_tilt.up.j) * t;
+		vr_tilt.up.k += (target.k - vr_tilt.up.k) * t;
+		if (!(normalize3d(&vr_tilt.up) > 0.0f))
+			vr_tilt.up = target;
+	}
+	vr_tilt.time = now;
+	/* the share of the tilt: between straight up and the vehicle's up */
+	tilted.i = vr_tilt.up.i * amount;
+	tilted.j = vr_tilt.up.j * amount;
+	tilted.k = 1.0f + (vr_tilt.up.k - 1.0f) * amount;
+	if (!(normalize3d(&tilted) > 0.0f))
+		return;
+	/* about the axis up x tilted, by the angle between them (Rodrigues) */
+	axis.i = -tilted.j;
+	axis.j = tilted.i;
+	axis.k = 0.0f;
+	s = (real)sqrt(axis.i * axis.i + axis.j * axis.j);
+	c = tilted.k;
+	if (s < 0.0001f)
+		return;
+	axis.i /= s;
+	axis.j /= s;
+	if (c < 0.5f)
+	{
+		c = 0.5f;
+		s = 0.8660254f;
+	}
+	offset.i = position->x - anchor->x;
+	offset.j = position->y - anchor->y;
+	offset.k = position->z - anchor->z;
+	vectors[0] = &offset;
+	vectors[1] = forward;
+	vectors[2] = up;
+	for (i = 0; i < 3; i++)
+	{
+		real_vector3d v = *vectors[i], cross;
+		real along = axis.i * v.i + axis.j * v.j + axis.k * v.k;
+
+		cross.i = axis.j * v.k - axis.k * v.j;
+		cross.j = axis.k * v.i - axis.i * v.k;
+		cross.k = axis.i * v.j - axis.j * v.i;
+		vectors[i]->i = v.i * c + cross.i * s + axis.i * along * (1.0f - c);
+		vectors[i]->j = v.j * c + cross.j * s + axis.j * along * (1.0f - c);
+		vectors[i]->k = v.k * c + cross.k * s + axis.k * along * (1.0f - c);
+	}
+	position->x = anchor->x + offset.i;
+	position->y = anchor->y + offset.j;
+	position->z = anchor->z + offset.k;
+}
 
 /* test22: the seat's heading as this frame draws the vehicle. The seat's
 heading (vr_update_seat) is taken in the 30 Hz control tick from the
@@ -517,6 +659,7 @@ static void eye_camera(
 	view_heading(camera, &heading);
 	view_anchor(camera, &anchor);
 	vr_eye_view(eye, anchor.n, heading.n, aspect, position.n, forward.n, up.n, bounds->n);
+	vr_vehicle_tilt_view(&anchor, &position, &forward, &up);
 	camera->position = position;
 	camera->forward = forward;
 	camera->up = up;

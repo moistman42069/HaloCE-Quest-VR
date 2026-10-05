@@ -247,6 +247,8 @@ enum { VR_VIGNETTE_MOVING, VR_VIGNETTE_TURNING, VR_VIGNETTE_ALWAYS };
 #define VR_VIGNETTE_FEATHER 0.35f
 float vr_vignette_aperture(float strength, float amount, float corner);
 int vr_vignette_shown(void);
+/* test25: vr.vehicle_tilt, 0 to 1 */
+float vr_vehicle_tilt(void);
 void vr_set_gun_class(int kind);
 int vr_gun_class(void);
 const char *vr_gun_class_label(int kind);

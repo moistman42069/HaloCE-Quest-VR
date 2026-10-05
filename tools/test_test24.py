@@ -95,7 +95,7 @@ assert objects_net == git_show('55e77364', 'port/linux/game/network_objects.c'),
 
 # --- version
 code = int(re.search(r'versionCode Math\.max\((\d+), buildNumber\)', gradle).group(1))
-assert code >= 31 and '"1.0.6"' in gradle
+assert code >= 31 and re.search(r'"1\.0\.(\d+)"', gradle) and int(re.search(r'"1\.0\.(\d+)"', gradle).group(1)) >= 6
 assert 'co-op cutscenes animate for the second player' in frame
 
 # --- the launcher: co-op and server-browser steps, the co-op listing on by default

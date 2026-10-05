@@ -86,6 +86,12 @@ static struct
 	float vignette_strength, vignette_amount;
 	int vignette_when;
 	float comfort_move, comfort_turn, snap_pulse;
+	/* test25: vr.vehicle_tilt; what asked for the next recentre (0 the
+	system or the headset regaining focus, 1 both sticks, 2 View held); and
+	the seat as last logged (-1 none, 0 on foot, 1 seat seen from behind,
+	2 seat seen from itself) */
+	float vehicle_tilt;
+	int recentre_source, seat_logged;
 	int snap_armed, recentre_held;
 	/* vr.aim = "hand": the right controller aims (else the head), and the
 	head's and the aim's yaw this frame, for the left stick */
@@ -513,6 +519,11 @@ void vr_reload_settings(void)
 	vr.cinema_enabled = config_boolean("vr.cinema_3d") && strcmp(config_string("vr.cutscenes"), "flat") != 0;
 	vr.snap_turn = (float)config_real("vr.snap_turn") * 0.017453293f;
 	vr.smooth_turn_speed = (float)config_real("vr.smooth_turn_speed") * 0.017453293f;
+	vr.vehicle_tilt = (float)config_real("vr.vehicle_tilt");
+	if (!(vr.vehicle_tilt >= 0.0f))
+		vr.vehicle_tilt = 0.0f;
+	if (vr.vehicle_tilt > 1.0f)
+		vr.vehicle_tilt = 1.0f;
 	vr.vignette_strength = (float)config_real("vr.vignette");
 	if (!(vr.vignette_strength >= 0.0f))
 		vr.vignette_strength = 0.0f;
@@ -705,7 +716,7 @@ void vr_initialize(void)
 		return;
 	vr.initialized = 1;
 	config_vr_vehicle_defaults();
-	platform_log("vr: HaloCE Quest test24b candidate 1.0.6 (comfort: vignette, smooth speed and snap angle; SPV1 marked not working; test24: co-op cutscenes animate for the second player; test23: remappable Quest buttons with the grenade on X; test22: co-op campaign host crash fixed, steady first-person vehicle view, left-hand ammo display, adjustable scopes, shot diagnostics; test21b: floating hands restored, torso-following arms, neck-pivot full body, auto two-hand lock, horn, online melee off, two-hand gun roll, pistol shots from the hand, reticle converges as shots do, per-gun aim, horn from either stick)");
+	platform_log("vr: HaloCE Quest test25 candidate 1.0.7 (vehicle seat and recentre diagnostics, first-person horizon option and seat glass, settings rows that fit, vehicle offset reset; test24b: comfort vignette, smooth speed and snap angle, SPV1 marked not working; test24: co-op cutscenes animate for the second player; test23: remappable Quest buttons with the grenade on X; test22: co-op campaign host crash fixed, steady first-person vehicle view, left-hand ammo display, adjustable scopes, shot diagnostics; test21b: floating hands restored, torso-following arms, neck-pivot full body, auto two-hand lock, horn, online melee off, two-hand gun roll, pistol shots from the hand, reticle converges as shots do, per-gun aim, horn from either stick)");
 	if (!config_boolean("vr.enabled"))
 	{
 		platform_log("vr: off (vr.enabled)");
@@ -735,6 +746,7 @@ void vr_initialize(void)
 	vr.mode = -1;
 	vr.units_per_metre = (float)config_real("vr.world_scale");
 	vr.snap_armed = 1;
+	vr.seat_logged = -1;
 	vr.weapon_hand = config_boolean("vr.left_handed") ? 0 : 1;
 	migrate_calibration_split();
 	migrate_handedness();
@@ -1219,6 +1231,7 @@ static void layout_controls(void)
 		if (vr.view_held >= 1.0 && !vr.view_recentred)
 		{
 			host_xr_recenter();
+			vr.recentre_source = 2;
 			vr.heading_valid = 0;
 			vr.view_recentred = 1;
 			vr_haptic(0, 0.6f, 0.08f);
@@ -2432,11 +2445,55 @@ static int hand_forward(float out[3])
 	return 1;
 }
 
+/* test25: the vehicle report (a Warthog's view sideways after a
+recentre while driving, kept through getting out and in and through
+switching views): each recentre (and what asked for it), each seat
+entered or left and each view switched while seated, with the angles that
+decide the view: the heading the eyes turn from, the head's yaw in the
+room, the aim's (a hand's when steering by hand), the game's and the
+seat's. Once per event, never per frame */
+static void aim_diagnostics(float game_yaw, int seated, int hand_may_aim, const float *base_heading,
+	float heading_before)
+{
+	static const char *const sources[] = { "the system or the headset regaining focus", "both sticks", "View held" };
+	static const char *const steering[] = { "stick", "on foot", "head", "right hand", "left hand" };
+	int state = seated ? (base_heading ? 2 : 1) : 0;
+	const char *aim = hand_may_aim >= -1 && hand_may_aim <= 3 ? steering[hand_may_aim + 1] : "?";
+	char seat[48] = "";
+
+	if (base_heading)
+		snprintf(seat, sizeof(seat), ", seat %.1f", *base_heading * 57.29578f);
+	if (vr.frame.flags & HALO_XR_FRAME_RECENTRED)
+	{
+		platform_log("vr: recentre (%s): %s, heading %.1f -> %.1f, head %.1f, aim %.1f (%s), game %.1f%s",
+			sources[vr.recentre_source >= 0 && vr.recentre_source <= 2 ? vr.recentre_source : 0],
+			state == 2 ? "seated, first person" : state == 1 ? "seated, third person" : "on foot",
+			heading_before * 57.29578f, vr.heading * 57.29578f, vr.head_yaw * 57.29578f, vr.aim_yaw * 57.29578f,
+			aim, game_yaw * 57.29578f, seat);
+		vr.recentre_source = 0;
+	}
+	if (state != vr.seat_logged)
+	{
+		if (vr.seat_logged >= 0)
+			platform_log("vr: seat: %s -> %s, heading %.1f -> %.1f, head %.1f, aim %.1f (%s), game %.1f%s",
+				vr.seat_logged == 2 ? "first person" : vr.seat_logged == 1 ? "third person" : "on foot",
+				state == 2 ? "first person" : state == 1 ? "third person" : "on foot",
+				heading_before * 57.29578f, vr.heading * 57.29578f, vr.head_yaw * 57.29578f,
+				vr.aim_yaw * 57.29578f, aim, game_yaw * 57.29578f, seat);
+		vr.seat_logged = state;
+	}
+}
+
+float vr_vehicle_tilt(void)
+{
+	return vr.vehicle_tilt;
+}
+
 int vr_aim(float game_yaw, int seated, int hand_may_aim, const float *base_heading, float out_forward[3])
 {
 	const unsigned int needed = HALO_XR_FRAME_SHOULD_RENDER | HALO_XR_FRAME_VIEWS_VALID;
 	unsigned int both = HALO_XR_BUTTON_LEFT_THUMB | HALO_XR_BUTTON_RIGHT_THUMB;
-	float head[3], aim[3], head_yaw, cosine, sine;
+	float head[3], aim[3], head_yaw, cosine, sine, heading_before;
 	int steering_valid = 1;
 
 	vr.aiming = 0;
@@ -2455,6 +2512,7 @@ int vr_aim(float game_yaw, int seated, int hand_may_aim, const float *base_headi
 		{
 			host_xr_recenter();
 			vr.heading_valid = 0;
+			vr.recentre_source = 1;
 		}
 		vr.recentre_held = 1;
 	}
@@ -2486,6 +2544,7 @@ int vr_aim(float game_yaw, int seated, int hand_may_aim, const float *base_headi
 	head_yaw = atan2f(aim[1], aim[0]);
 	vr.head_yaw = atan2f(head[1], head[0]);
 	vr.aim_yaw = head_yaw;
+	heading_before = vr.heading;
 	if (vr.frame.flags & HALO_XR_FRAME_RECENTRED)
 		vr.heading_valid = 0;
 	/* the game turned the player itself (a script, a respawn, another pad):
@@ -2523,6 +2582,7 @@ int vr_aim(float game_yaw, int seated, int hand_may_aim, const float *base_headi
 		comfort_update(vr.frame.predicted_display_period * 1e-9);
 	}
 	vr.seated = seated;
+	aim_diagnostics(game_yaw, seated, hand_may_aim, base_heading, heading_before);
 	/* Stick steering keeps the native look input. Update seat state even
 	 * here so entering/exiting never inherits on-foot movement rotation. */
 	if (hand_may_aim < 0) return 0;

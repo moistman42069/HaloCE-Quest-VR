@@ -54,7 +54,8 @@ comfort = menu[menu.index('static struct vr_menu_setting const vr_menu_comfort[]
 comfort = comfort[:comfort.index('};')]
 for row in ['"TURNING", "turn", _vr_setting_turn_mode', '"SMOOTH SPEED", "vr.smooth_turn_speed", _vr_setting_real, 12',
             '"SNAP ANGLE", "vr.snap_turn_amount", _vr_setting_snap_angle, 9', '"VIGNETTE", "vr.vignette", _vr_setting_real, 4',
-            '"VIGNETTE WHEN", "vr.vignette_when", _vr_setting_string, 3', '{ "OFF", "0" }', '{ "120 DEG/S", "120" }',
+            '"VIGNETTE ON", "vr.vignette_when", _vr_setting_string, 3', '{ "OFF", "0" }', '{ "120", "120" }',
+            '{ "MOVING", "move_turn" }', '{ "TURNING", "turn" }',  # (test25: shorter, to fit the row)
             '{ "22.5 DEG", "22.5" }', '{ "45 DEG", "45" }']:
     assert row in comfort, row
 turning = menu[menu.index('#define VR_MENU_TURNING_ROW'):].split('\n')[0]
@@ -89,8 +90,9 @@ assert select.index('modDetails.addView(name);') < select.index('warning.setText
 assert '**SPV1 is currently not functioning.**' in guide
 
 # --- version
-assert 'versionCode Math.max(32, buildNumber)' in gradle and '"1.0.6"' in gradle
-assert 'HaloCE Quest test24b candidate 1.0.6' in frame
+# (1.0.6 / 32 or later)
+assert int(re.search(r'versionCode Math\.max\((\d+), buildNumber\)', gradle).group(1)) >= 32
+assert 'comfort vignette, smooth speed and snap angle, SPV1 marked not working' in frame
 
 # --- the vignette's shape (the shader's sum, here in Python) for a Quest-like eye
 shader = frame[frame.index('static const char vignette_fragment_source[] ='):]

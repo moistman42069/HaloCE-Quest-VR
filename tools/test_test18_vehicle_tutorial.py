@@ -28,6 +28,7 @@ static struct {
  int active,stereo_enabled,force_render,aiming,hand_aiming,recentre_held,hand_aim,heading_valid,aiming_last_frame,seated;
  float diag_yaw,diag_walk_speed,head_yaw,aim_yaw,heading,last_aim_yaw;
  float run_push,comfort_move,comfort_turn;
+ int recentre_source;
  struct {unsigned flags,buttons,hand_valid[2];struct {float orientation[4];} head,aim[2];float thumb[4];long long predicted_display_period;} frame;
 } vr;
 static int frame_begin(void){return 1;}
@@ -39,6 +40,8 @@ static void turn(void){}
 /* test24b: the comfort vignette's motion (test_test24b) */
 static float comfort_stick(float x,float y){(void)x;(void)y;return 0.0f;}
 static void comfort_update(double seconds){(void)seconds;}
+/* test25: the vehicle report's diagnostics (test_test25) */
+static void aim_diagnostics(float g,int s,int h,const float *b,float p){(void)g;(void)s;(void)h;(void)b;(void)p;}
 static struct {int valid;float yaw,pitch;} tutorial_look;
 '''
 helpers=''.join(fn(s,n) for n in ['rotate','to_halo','head_forward','wrap_angle','vr_aim','vr_script_head_valid','vr_head_look_reset','vr_head_look_actions'])

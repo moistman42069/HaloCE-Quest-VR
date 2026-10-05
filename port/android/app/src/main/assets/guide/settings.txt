@@ -476,6 +476,11 @@ Default: "chase"
 Vehicles seen from the seat, turning with the vehicle and the horizon
 kept level ("first_person"), or from the game's chase camera ("chase").
 
+vr.vehicle_tilt [real]
+Default: 0.0
+First-person vehicles, a driver's seat: how much the view tilts with the vehicle (0, the
+default: the horizon stays level and the cockpit tilts; 1: the cockpit stays put; 0.5 half).
+
 vr.vehicle_steering [string]
 Default: "right"
 Driver steering: "right" (default), "left", "head", or "stick".

@@ -148,8 +148,12 @@ def main():
             if candidate_at_least(args.label, 23):
                 if b"client dropped presentation" not in guest:
                     raise SystemExit("Test23 co-op cutscene diagnostic missing")
+            if candidate_at_least(args.label, 25) and vr:
+                for marker in [b"RESET OFFSETS", b"HORIZON", b"vr: recentre (", b"vr: seat: ", b"rows widened from",
+                               b"vr: first-person seat: the vehicle draws see-through", b"vr.vehicle_tilt"]:
+                    if marker not in guest: raise SystemExit("Test25 vehicle marker missing: " + repr(marker))
             if candidate_at_least(args.label, 24, "b") and vr:
-                for marker in [b"COMFORT", b"VIGNETTE WHEN", b"SNAP ANGLE", b"SMOOTH SPEED", b"vr.vignette",
+                for marker in [b"COMFORT", b"VIGNETTE ON", b"SNAP ANGLE", b"SMOOTH SPEED", b"vr.vignette",
                                b"vr.snap_turn_amount", b"vr: comfort: turning"]:
                     if marker not in guest: raise SystemExit("Test24b comfort marker missing: " + repr(marker))
             if candidate_at_least(args.label, 24, "b") and b"not working yet" not in dex:
@@ -158,7 +162,7 @@ def main():
                 if b"client follows the host's activating place" not in guest:
                     raise SystemExit("Test24 co-op cutscene activation missing")
             if candidate_at_least(args.label, 23) and vr:
-                for marker in [b"BUTTONS", b"RESET BUTTONS", b"GRIP (LOCKED)", b"HOLD GRENADE", b"vr.button_grenade",
+                for marker in [b"BUTTONS", b"RESET BUTTONS", b"USE / RELOAD", b"NEXT GRENADE", b"vr.button_grenade",
                                b"vr.button_switch_grenade", b"that button does both"]:
                     if marker not in guest: raise SystemExit("Test23 button remapping marker missing: " + repr(marker))
             if candidate_at_least(args.label, 21) and vr:

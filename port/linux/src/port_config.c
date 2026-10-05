@@ -376,6 +376,9 @@ static const struct config_setting config_settings[] =
 	{ "vr.vehicle_view", _config_string, "\"chase\"", "HALO_VR_VEHICLE_VIEW", _environment_value, _platform_vr,
 		"Vehicles seen from the seat, turning with the vehicle and the horizon\n"
 		"kept level (\"first_person\"), or from the game's chase camera (\"chase\")." },
+	{ "vr.vehicle_tilt", _config_real, "0.0", "HALO_VR_VEHICLE_TILT", _environment_value, _platform_vr,
+		"First-person vehicles, a driver's seat: how much the view tilts with the vehicle (0, the\n"
+		"default: the horizon stays level and the cockpit tilts; 1: the cockpit stays put; 0.5 half)." },
 	{ "vr.vehicle_steering", _config_string, "\"right\"", "HALO_VR_VEHICLE_STEERING", _environment_value, _platform_vr,
         "Driver steering: \"right\" (default), \"left\", \"head\", or \"stick\".\n"
         "Right/left use that physical controller, independent of weapon grip.\n"

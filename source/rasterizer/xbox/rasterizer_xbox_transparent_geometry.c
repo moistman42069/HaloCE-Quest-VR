@@ -163,6 +163,10 @@ symbols in this file:
 #include "interface/progress_bar_internal.h"
 #include "rasterizer/xbox/rasterizer_xbox.h"
 #include "rasterizer/xbox/rasterizer_xbox_pixel_shader.h"
+#ifdef HALO_VR
+/* port/linux/game/vr_render.c */
+boolean vr_render_seat_transparent(long object_index, short shader_type, short glass_type);
+#endif
 #include "rasterizer/xbox/rasterizer_xbox_plasma_energy.h"
 #include "rasterizer/xbox/rasterizer_xbox_water.h"
 #include "rasterizer/xbox/shader_transparent_chicago_preprocessor.h"
@@ -1405,6 +1409,13 @@ void rasterizer_transparent_geometry_group_draw(
 					{
 						break;
 					}
+#ifdef HALO_VR
+					/* test25: a first-person seat's own vehicle: its glass
+					not drawn from inside (port/linux/game/vr_render.c) */
+					if (vr_render_seat_transparent(group->source_object_index, group->shader->base.type,
+						_shader_type_transparent_glass))
+						continue;
+#endif
 
 					switch (group->shader->base.type)
 					{

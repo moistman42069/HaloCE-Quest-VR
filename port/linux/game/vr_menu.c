@@ -156,9 +156,15 @@ enum
 	(vr.snap_turn_amount, and vr.snap_turn while snapping) */
 	_vr_setting_turn_mode,
 	_vr_setting_snap_angle,
+	/* test25: every vehicle seat offset (vr.vehicle_*_up/_forward/_right)
+	back to its default; view, horizon and steering kept */
+	_vr_setting_reset_vehicle_offsets,
 };
 
 #define VR_MENU_MAXIMUM_VALUES 12
+/* test25: a settings row's width: its column's (the right column starts
+256 across), less a gap */
+#define VR_MENU_BUTTON_WIDTH 250
 
 /* the right stick's turning, on CONTROLS and COMFORT (test24b: snap 22.5
 and 60 degrees added) */
@@ -226,30 +232,35 @@ static struct vr_menu_setting const vr_menu_vr[] =
 	{ "CLOSE CONTACT", "vr.close_contact", _vr_setting_boolean, 2, { { "OFF", "false" }, { "ON", "true" } } },
 	{ "CROSSHAIR", "vr.crosshair", _vr_setting_string, 2, { { "NATIVE", "native" }, { "OFF", "off" } } },
 	{ "CROSSHAIR SIZE", "vr.crosshair_size", _vr_setting_real, 8, { { "25%", "0.25" }, { "50%", "0.5" }, { "75%", "0.75" }, { "100%", "1" }, { "125%", "1.25" }, { "150%", "1.5" }, { "200%", "2" }, { "300%", "3" } } },
-	{ "CROSSHAIR OPACITY", "vr.crosshair_opacity", _vr_setting_real, 11, { { "0%", "0" }, { "10%", "0.1" }, { "20%", "0.2" }, { "30%", "0.3" }, { "40%", "0.4" }, { "50%", "0.5" }, { "60%", "0.6" }, { "70%", "0.7" }, { "80%", "0.8" }, { "90%", "0.9" }, { "100%", "1" } } },
+	{ "OPACITY", "vr.crosshair_opacity", _vr_setting_real, 11, { { "0%", "0" }, { "10%", "0.1" }, { "20%", "0.2" }, { "30%", "0.3" }, { "40%", "0.4" }, { "50%", "0.5" }, { "60%", "0.6" }, { "70%", "0.7" }, { "80%", "0.8" }, { "90%", "0.9" }, { "100%", "1" } } },
 };
 
 static struct vr_menu_setting const vr_menu_vehicles[] =
 {
 	{ "VIEW", "vr.vehicle_view", _vr_setting_string, 2, { { "THIRD PERSON", "chase" }, { "FIRST PERSON", "first_person" } } },
+	/* test25: first person, a driver's view: the horizon level (the
+	cockpit tilts against the view), or tilting with the vehicle, half or
+	whole (the cockpit stays put) */
+	{ "HORIZON", "vr.vehicle_tilt", _vr_setting_real, 3, { { "LEVEL", "0" }, { "HALF", "0.5" }, { "VEHICLE", "1" } } },
 	{ "STEERING", "vr.vehicle_steering", _vr_setting_string, 4, { { "RIGHT HAND", "right" }, { "LEFT HAND", "left" }, { "HEAD", "head" }, { "STICK", "stick" } } },
 	{ "ALL UP", "vr.vehicle_all_up", _vr_setting_vehicle_centimetres, 0, { { NULL, NULL } } },
-	{ "ALL FORWARD", "vr.vehicle_all_forward", _vr_setting_vehicle_centimetres, 0, { { NULL, NULL } } },
+	{ "ALL FWD", "vr.vehicle_all_forward", _vr_setting_vehicle_centimetres, 0, { { NULL, NULL } } },
 	{ "ALL RIGHT", "vr.vehicle_all_right", _vr_setting_vehicle_centimetres, 0, { { NULL, NULL } } },
+	{ "RESET OFFSETS", "vehicle offsets", _vr_setting_reset_vehicle_offsets, 0, { { NULL, NULL } } },
 	{ "HOG UP", "vr.vehicle_warthog_up", _vr_setting_vehicle_centimetres, 0, { { NULL, NULL } } },
-	{ "HOG FORWARD", "vr.vehicle_warthog_forward", _vr_setting_vehicle_centimetres, 0, { { NULL, NULL } } },
+	{ "HOG FWD", "vr.vehicle_warthog_forward", _vr_setting_vehicle_centimetres, 0, { { NULL, NULL } } },
 	{ "HOG RIGHT", "vr.vehicle_warthog_right", _vr_setting_vehicle_centimetres, 0, { { NULL, NULL } } },
 	{ "GHOST UP", "vr.vehicle_ghost_up", _vr_setting_vehicle_centimetres, 0, { { NULL, NULL } } },
-	{ "GHOST FORWARD", "vr.vehicle_ghost_forward", _vr_setting_vehicle_centimetres, 0, { { NULL, NULL } } },
+	{ "GHOST FWD", "vr.vehicle_ghost_forward", _vr_setting_vehicle_centimetres, 0, { { NULL, NULL } } },
 	{ "GHOST RIGHT", "vr.vehicle_ghost_right", _vr_setting_vehicle_centimetres, 0, { { NULL, NULL } } },
 	{ "BANSHEE UP", "vr.vehicle_banshee_up", _vr_setting_vehicle_centimetres, 0, { { NULL, NULL } } },
-	{ "BANSHEE FORWARD", "vr.vehicle_banshee_forward", _vr_setting_vehicle_centimetres, 0, { { NULL, NULL } } },
+	{ "BANSHEE FWD", "vr.vehicle_banshee_forward", _vr_setting_vehicle_centimetres, 0, { { NULL, NULL } } },
 	{ "BANSHEE RIGHT", "vr.vehicle_banshee_right", _vr_setting_vehicle_centimetres, 0, { { NULL, NULL } } },
 	{ "TANK UP", "vr.vehicle_scorpion_up", _vr_setting_vehicle_centimetres, 0, { { NULL, NULL } } },
-	{ "TANK FORWARD", "vr.vehicle_scorpion_forward", _vr_setting_vehicle_centimetres, 0, { { NULL, NULL } } },
+	{ "TANK FWD", "vr.vehicle_scorpion_forward", _vr_setting_vehicle_centimetres, 0, { { NULL, NULL } } },
 	{ "TANK RIGHT", "vr.vehicle_scorpion_right", _vr_setting_vehicle_centimetres, 0, { { NULL, NULL } } },
 	{ "PELICAN UP", "vr.vehicle_pelican_up", _vr_setting_vehicle_centimetres, 0, { { NULL, NULL } } },
-	{ "PELICAN FORWARD", "vr.vehicle_pelican_forward", _vr_setting_vehicle_centimetres, 0, { { NULL, NULL } } },
+	{ "PELICAN FWD", "vr.vehicle_pelican_forward", _vr_setting_vehicle_centimetres, 0, { { NULL, NULL } } },
 	{ "PELICAN RIGHT", "vr.vehicle_pelican_right", _vr_setting_vehicle_centimetres, 0, { { NULL, NULL } } },
 };
 
@@ -307,21 +318,21 @@ you move or turn by stick */
 static struct vr_menu_setting const vr_menu_comfort[] =
 {
 	{ "TURNING", "turn", _vr_setting_turn_mode, 2, { { "SMOOTH", "smooth" }, { "SNAP", "snap" } } },
-	{ "SMOOTH SPEED", "vr.smooth_turn_speed", _vr_setting_real, 12, { { "30 DEG/S", "30" }, { "45 DEG/S", "45" }, { "60 DEG/S", "60" }, { "75 DEG/S", "75" }, { "90 DEG/S", "90" }, { "105 DEG/S", "105" }, { "120 DEG/S", "120" }, { "150 DEG/S", "150" }, { "180 DEG/S", "180" }, { "210 DEG/S", "210" }, { "240 DEG/S", "240" }, { "300 DEG/S", "300" } } },
+	{ "SMOOTH SPEED", "vr.smooth_turn_speed", _vr_setting_real, 12, { { "30", "30" }, { "45", "45" }, { "60", "60" }, { "75", "75" }, { "90", "90" }, { "105", "105" }, { "120", "120" }, { "150", "150" }, { "180", "180" }, { "210", "210" }, { "240", "240" }, { "300", "300" } } },
 	{ "SNAP ANGLE", "vr.snap_turn_amount", _vr_setting_snap_angle, 9, { { "10 DEG", "10" }, { "15 DEG", "15" }, { "20 DEG", "20" }, { "22.5 DEG", "22.5" }, { "30 DEG", "30" }, { "40 DEG", "40" }, { "45 DEG", "45" }, { "60 DEG", "60" }, { "90 DEG", "90" } } },
 	{ "VIGNETTE", "vr.vignette", _vr_setting_real, 4, { { "OFF", "0" }, { "LOW", "0.35" }, { "MEDIUM", "0.65" }, { "HIGH", "1" } } },
-	{ "VIGNETTE WHEN", "vr.vignette_when", _vr_setting_string, 3, { { "MOVE + TURN", "move_turn" }, { "TURNING ONLY", "turn" }, { "ALWAYS", "always" } } },
+	{ "VIGNETTE ON", "vr.vignette_when", _vr_setting_string, 3, { { "MOVING", "move_turn" }, { "TURNING", "turn" }, { "ALWAYS", "always" } } },
 };
 
 /* test22: the scopes' places and sizes, the pistol's and the sniper
 rifle's apart (vr.scope_pistol_*, vr.scope_sniper_*: 0 and 100%, the usual) */
 static struct vr_menu_setting const vr_menu_scopes[] =
 {
-    { "PISTOL FORWARD", "vr.scope_pistol_forward", _vr_setting_centimetres, 0, { { NULL,NULL } } },
+    { "PISTOL FWD", "vr.scope_pistol_forward", _vr_setting_centimetres, 0, { { NULL,NULL } } },
     { "PISTOL UP", "vr.scope_pistol_up", _vr_setting_centimetres, 0, { { NULL,NULL } } },
     { "PISTOL RIGHT", "vr.scope_pistol_right", _vr_setting_centimetres, 0, { { NULL,NULL } } },
     { "PISTOL SIZE", "vr.scope_pistol_scale", _vr_setting_real, 7, { { "50%", "0.5" }, { "75%", "0.75" }, { "100%", "1" }, { "125%", "1.25" }, { "150%", "1.5" }, { "175%", "1.75" }, { "200%", "2" } } },
-    { "SNIPER FORWARD", "vr.scope_sniper_forward", _vr_setting_centimetres, 0, { { NULL,NULL } } },
+    { "SNIPER FWD", "vr.scope_sniper_forward", _vr_setting_centimetres, 0, { { NULL,NULL } } },
     { "SNIPER UP", "vr.scope_sniper_up", _vr_setting_centimetres, 0, { { NULL,NULL } } },
     { "SNIPER RIGHT", "vr.scope_sniper_right", _vr_setting_centimetres, 0, { { NULL,NULL } } },
     { "SNIPER SIZE", "vr.scope_sniper_scale", _vr_setting_real, 7, { { "50%", "0.5" }, { "75%", "0.75" }, { "100%", "1" }, { "125%", "1.25" }, { "150%", "1.5" }, { "175%", "1.75" }, { "200%", "2" } } },
@@ -333,13 +344,13 @@ gun hand's lower/upper buttons and "X"/"Y" the other hand's (mirrored with
 Mirror Controls); the grip is the gun hand's, with locked weapons only */
 static struct vr_menu_setting const vr_menu_buttons[] =
 {
-    { "JUMP", "vr.button_jump", _vr_setting_button, 8, { { "A", "a" }, { "B", "b" }, { "X", "x" }, { "Y", "y" }, { "R STICK", "right_stick" }, { "L STICK", "left_stick" }, { "GRIP (LOCKED)", "grip" }, { "NONE", "none" } } },
-    { "ACTION / RELOAD", "vr.button_action", _vr_setting_button, 8, { { "A", "a" }, { "B", "b" }, { "X", "x" }, { "Y", "y" }, { "R STICK", "right_stick" }, { "L STICK", "left_stick" }, { "GRIP (LOCKED)", "grip" }, { "NONE", "none" } } },
-    { "MELEE", "vr.button_melee", _vr_setting_button, 8, { { "A", "a" }, { "B", "b" }, { "X", "x" }, { "Y", "y" }, { "R STICK", "right_stick" }, { "L STICK", "left_stick" }, { "GRIP (LOCKED)", "grip" }, { "NONE", "none" } } },
-    { "CROUCH", "vr.button_crouch", _vr_setting_button, 8, { { "A", "a" }, { "B", "b" }, { "X", "x" }, { "Y", "y" }, { "R STICK", "right_stick" }, { "L STICK", "left_stick" }, { "GRIP (LOCKED)", "grip" }, { "NONE", "none" } } },
-    { "SWITCH WEAPON", "vr.button_switch_weapon", _vr_setting_button, 8, { { "A", "a" }, { "B", "b" }, { "X", "x" }, { "Y", "y" }, { "R STICK", "right_stick" }, { "L STICK", "left_stick" }, { "GRIP (LOCKED)", "grip" }, { "NONE", "none" } } },
-    { "GRENADE", "vr.button_grenade", _vr_setting_button, 8, { { "A", "a" }, { "B", "b" }, { "X", "x" }, { "Y", "y" }, { "R STICK", "right_stick" }, { "L STICK", "left_stick" }, { "GRIP (LOCKED)", "grip" }, { "NONE", "none" } } },
-    { "SWITCH GRENADE", "vr.button_switch_grenade", _vr_setting_button, 9, { { "HOLD GRENADE", "hold" }, { "A", "a" }, { "B", "b" }, { "X", "x" }, { "Y", "y" }, { "R STICK", "right_stick" }, { "L STICK", "left_stick" }, { "GRIP (LOCKED)", "grip" }, { "NONE", "none" } } },
+    { "JUMP", "vr.button_jump", _vr_setting_button, 8, { { "A", "a" }, { "B", "b" }, { "X", "x" }, { "Y", "y" }, { "R STICK", "right_stick" }, { "L STICK", "left_stick" }, { "GRIP", "grip" }, { "NONE", "none" } } },
+    { "USE / RELOAD", "vr.button_action", _vr_setting_button, 8, { { "A", "a" }, { "B", "b" }, { "X", "x" }, { "Y", "y" }, { "R STICK", "right_stick" }, { "L STICK", "left_stick" }, { "GRIP", "grip" }, { "NONE", "none" } } },
+    { "MELEE", "vr.button_melee", _vr_setting_button, 8, { { "A", "a" }, { "B", "b" }, { "X", "x" }, { "Y", "y" }, { "R STICK", "right_stick" }, { "L STICK", "left_stick" }, { "GRIP", "grip" }, { "NONE", "none" } } },
+    { "CROUCH", "vr.button_crouch", _vr_setting_button, 8, { { "A", "a" }, { "B", "b" }, { "X", "x" }, { "Y", "y" }, { "R STICK", "right_stick" }, { "L STICK", "left_stick" }, { "GRIP", "grip" }, { "NONE", "none" } } },
+    { "NEXT WEAPON", "vr.button_switch_weapon", _vr_setting_button, 8, { { "A", "a" }, { "B", "b" }, { "X", "x" }, { "Y", "y" }, { "R STICK", "right_stick" }, { "L STICK", "left_stick" }, { "GRIP", "grip" }, { "NONE", "none" } } },
+    { "GRENADE", "vr.button_grenade", _vr_setting_button, 8, { { "A", "a" }, { "B", "b" }, { "X", "x" }, { "Y", "y" }, { "R STICK", "right_stick" }, { "L STICK", "left_stick" }, { "GRIP", "grip" }, { "NONE", "none" } } },
+    { "NEXT GRENADE", "vr.button_switch_grenade", _vr_setting_button, 9, { { "HOLD", "hold" }, { "A", "a" }, { "B", "b" }, { "X", "x" }, { "Y", "y" }, { "R STICK", "right_stick" }, { "L STICK", "left_stick" }, { "GRIP", "grip" }, { "NONE", "none" } } },
     { "RESET BUTTONS", "buttons", _vr_setting_reset_buttons, 0, { { NULL,NULL } } },
 };
 
@@ -685,6 +696,19 @@ static long vr_menu_button(
 	{
 		return NONE;
 	}
+	/* test25: as wide as a column (the text is laid out and clipped in the
+	button's own bounds: the pause menu's are narrower, and longer rows lost
+	their ends, "ALL FORWARD: < 0 C") */
+	if (widget->bounds.x1 - widget->bounds.x0 < VR_MENU_BUTTON_WIDTH)
+	{
+		static boolean logged;
+
+		if (!logged)
+			platform_log("vr: VR settings rows widened from %d to %d", widget->bounds.x1 - widget->bounds.x0,
+				VR_MENU_BUTTON_WIDTH);
+		logged = TRUE;
+		widget->bounds.x1 = (short)(widget->bounds.x0 + VR_MENU_BUTTON_WIDTH);
+	}
 	input->function = VR_MENU_GAME_DATA_FUNCTION;
 	widget->game_data_inputs.count = 1;
 	widget->game_data_inputs.address = input;
@@ -1028,7 +1052,8 @@ boolean vr_menu_setting_text(
                 setting->type!=_vr_setting_degrees?"CM":"DEG");
         } else if(setting->type == _vr_setting_reset_alignment || setting->type == _vr_setting_flip_alignment ||
             setting->type == _vr_setting_reset_hand || setting->type == _vr_setting_reset_weapon ||
-            setting->type == _vr_setting_reset_scopes || setting->type == _vr_setting_reset_buttons)
+            setting->type == _vr_setting_reset_scopes || setting->type == _vr_setting_reset_buttons ||
+            setting->type == _vr_setting_reset_vehicle_offsets)
             snprintf(line,sizeof(line),"%s: APPLY",setting->label);
         else
 		snprintf(line, sizeof(line), setting->type == _vr_setting_real || setting->type == _vr_setting_snap_angle ?
@@ -1072,6 +1097,17 @@ boolean vr_menu_setting_change(
             snprintf(key,sizeof(key),"vr.scope_%s_%s",kinds[kind],parts[part]);
             written=config_write_real(key,config_default_real(key))&&written; }
         vr_reload_settings(); platform_log("vr: reset scope places and sizes%s",written?"":" (save failed)");
+        return TRUE;
+    }
+    if(setting->type == _vr_setting_reset_vehicle_offsets) {
+        static const char *const vehicles[]={"all","warthog","ghost","banshee","scorpion","pelican"};
+        static const char *const axes[]={"up","forward","right"};
+        char key[64]; int vehicle, axis;
+        written=TRUE;
+        for(vehicle=0;vehicle<(int)NUMBEROF(vehicles);vehicle++) for(axis=0;axis<3;axis++) {
+            snprintf(key,sizeof(key),"vr.vehicle_%s_%s",vehicles[vehicle],axes[axis]);
+            written=config_write_real(key,config_default_real(key))&&written; }
+        vr_reload_settings(); platform_log("vr: reset vehicle seat offsets%s",written?"":" (save failed)");
         return TRUE;
     }
     if(setting->type == _vr_setting_turn_mode) {
