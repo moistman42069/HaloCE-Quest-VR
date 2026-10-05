@@ -46,10 +46,10 @@ co-op (still two players), comfort settings, buttons, network version 11.
 
 | File | Bytes | SHA-256 |
 | --- | ---: | --- |
-| `HaloCE-Quest-test25.apk` | VR_BYTES | `VR_SHA` |
-| `HaloCE-Android-test25.apk` | FLAT_BYTES | `FLAT_SHA` |
+| `HaloCE-Quest-test25.apk` | 28,158,595 | `0e9b524bf6a6f800a9f97433ea0382d8c15906a8af3f345b4fead3f7126212f1` |
+| `HaloCE-Android-test25.apk` | 26,081,844 | `42c9c6214fa10b45fabaf9820c2e1478fcb0cdbac2f198546e63a51e7c83148f` |
 
-Runtime source `RUNTIME_COMMIT` on branch `test25-vehicle-recenter`; later
+Runtime source `5db3e958` (runtime `6e990188`, upstream fixes `3f8ad83d`) on branch `test25-vehicle-recenter`; later
 commits change only documentation and packaging tooling. Certificate SHA-256
 `53d416f7e123cc62b749940983209bc9a400002e033fd5f50900d4ffad8e2aa4`, as every
 release since v1.0.2. Built serially from a clean tree; payload, signing and
