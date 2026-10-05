@@ -11,6 +11,11 @@ test21b, code 27). No release without explicit owner approval.
 | Quest log 22:02:26 (1.0.4, joined co-op) and phone log 21:59:28 (1.0.4, hosting) | Co-op a10 now loads and plays on both (the test22 crash fix holds): lifecycle barriers complete, VR avatars are negotiated, a checkpoint restore goes through. In the opening cutscene the characters T-posed and slid on the Quest, while the phone was right. The host also warns that `cryotube_1` already exists (a host-side script note, unchanged). |
 | Owner report | With **Locked** weapons the gun hand's grip threw grenades. The grenade should default to the left X button, the grip should be neutral, and every action should be remappable with a reset to defaults. |
 
+> **Superseded for co-op cutscenes by test24 (1.0.6).** The owner's 1.0.5 test
+> still showed T-posing and sliding, and the cutscene change below (item 1)
+> addressed the wrong cause; it was withdrawn. The real cause and fix:
+> [TEST24-PROGRESS.md](TEST24-PROGRESS.md). The button changes stand.
+
 ## Causes and changes
 
 1. **Co-op cutscenes on the joining device.** Only the host runs the

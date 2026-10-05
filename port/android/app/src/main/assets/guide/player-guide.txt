@@ -120,7 +120,9 @@ This build hosts native **Network 11** and accepts reviewed distributed hosts **
 
 Campaign sessions use a separate two-player flow and do not appear in the PvP browser. Use matching 1.0.2 project builds and matching campaign/resource files on both devices. Two Quests or Quest plus flat Android are intended pairings.
 
-1. **Host:** open launcher **Campaign co-op → Host campaign**, choose a mission and difficulty, and enable **List publicly** if you want the community co-op catalog to show the session. Create the session and enter the System Link lobby. Keep the app in the foreground.
+Step-by-step instructions are in the launcher: **How to join co-op & find servers** (also first in the Field guide).
+
+1. **Host:** open launcher **Campaign co-op → Host campaign**, choose a mission and difficulty. **List this game in the co-op server browser** is ticked by default (since 1.0.6) so your partner can find the session; untick it to keep it private and share the invite instead. Create the session and enter the System Link lobby. Keep the app in the foreground.
 2. **Join:** the other player opens **Campaign co-op → Browse / join**, refreshes and selects the host, or enters a private invite. After connection, launch the game and open **Multiplayer → System Link**; select the host and join their lobby.
 3. **Start:** wait until both players are in the lobby before the host starts the mission. Keep both apps in the foreground. If public co-op discovery fails, use a private invite or LAN.
 

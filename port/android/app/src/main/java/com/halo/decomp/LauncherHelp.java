@@ -8,9 +8,41 @@ import java.util.concurrent.*;
 
 final class LauncherHelp {
     static final String DATA_COMPATIBILITY_NOTE = "Some server incompatibilities may be caused by different map files from ISO/revision versions or modified game data. Use Game files & versions to select another supported set. A revision label alone does not prove compatibility; network versions, missing maps and connection problems can also prevent joining.";
+    /** Step-by-step joining for co-op and the in-game server browser (launcher button, field guide, co-op dialog). */
+    static final String COOP_GUIDE =
+        "CO-OP CAMPAIGN (2 players)\n\n"
+        + "Before you start: both devices need the same app version and the same campaign maps. "
+        + "Quest + Quest and Quest + phone both work. Keep both apps open on screen.\n\n"
+        + "HOST (player 1)\n"
+        + "1. Launcher: Campaign co-op > Host campaign.\n"
+        + "2. Pick the mission and difficulty. Leave \"List this game in the co-op server browser\" ticked "
+        + "so your partner can find it.\n"
+        + "3. Press Host. The game opens in the System Link lobby. Wait there until your partner has joined, "
+        + "then start the mission.\n\n"
+        + "JOIN (player 2)\n"
+        + "1. Launcher: Campaign co-op > Browse / join.\n"
+        + "2. Press Refresh directory, pick the host's game and press Join. "
+        + "(Have an invite instead? Use Add / paste server invite.)\n"
+        + "3. The game opens. Go to Multiplayer > System Link, choose the host's game and join it. "
+        + "On the same Wi-Fi the host's game appears there by itself, without the browser.\n"
+        + "4. Wait in the lobby. The host starts the mission.\n\n"
+        + "Good to know: co-op is for two players, and nobody can join a mission already in progress. "
+        + "If you are disconnected, the host makes a new lobby. If the game does not show up in the browser, "
+        + "use a private invite or the same Wi-Fi.\n\n"
+        + "IN-GAME SERVER BROWSER (multiplayer)\n"
+        + "1. Launcher: Play.\n"
+        + "2. In the game's main menu: Multiplayer > System Link.\n"
+        + "3. Press Refresh. Public games and games on your Wi-Fi appear, busiest first, seven to a page. "
+        + "Use Next and Previous to see more.\n"
+        + "4. Pick a game to join it.\n\n"
+        + "Selecting in menus: in VR, point with your gun hand and pull the trigger (B goes back). "
+        + "On a phone, tap. The launcher's Multiplayer servers list is another way in: pick a server, press Join, "
+        + "then use Multiplayer > System Link in the game as above.";
     static void show(Activity activity) {
         new GamepadNavigation.Builder(activity).setTitle("Field guide")
-            .setItems(new String[]{"Getting started & multiplayer", "VR controls & settings", "Flat touch & gamepad", "Every setting: reference", "Credits & licenses"},(d,index)->{
+            .setItems(new String[]{"How to join co-op & find servers", "Getting started & multiplayer", "VR controls & settings", "Flat touch & gamepad", "Every setting: reference", "Credits & licenses"},(d,item)->{
+                if(item==0) { page(activity,"How to join co-op & find servers",COOP_GUIDE); return; }
+                int index=item-1;
                 String[] files={"player-guide.txt","controls.txt","touch.txt","settings.txt","credits.txt"};
                 try(InputStream in=activity.getAssets().open("guide/"+files[index])) {
                     ByteArrayOutputStream out=new ByteArrayOutputStream(); byte[] buffer=new byte[4096];

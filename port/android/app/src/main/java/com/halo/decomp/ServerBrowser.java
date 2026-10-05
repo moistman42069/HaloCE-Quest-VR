@@ -103,8 +103,11 @@ final class ServerBrowser {
             + "with identical campaign maps and resources. Join before the mission starts."
             : "Cross-play: native Windows, Mac, Linux and Android ports with compatible network versions "
             + "and maps. Retail Halo PC, MCC and Xbox are incompatible.");
-        text(content, "Join connects an invite, then use Multiplayer > System Link to select the host. "
-            + "Upstream ports may call this Direct Link. Nearby LAN games also appear there. Public listings are supplied by ChupathingyCE; availability may change.");
+        text(content, "How to join: pick a game and press Join. When the game opens, go to Multiplayer > System Link "
+            + "and choose the same host. Upstream ports may call this Direct Link. Nearby LAN games also appear there. "
+            + "Public listings are supplied by ChupathingyCE; availability may change.");
+        if (!campaign) text(content, "In-game server browser: press Play, then in the game's main menu open "
+            + "Multiplayer > System Link and press Refresh. It lists public games and games on your Wi-Fi, busiest first.");
         text(content, LauncherHelp.DATA_COMPATIBILITY_NOTE);
         button(content, "Add / paste server invite", this::addInvite);
         button(content, "Directory settings", this::setDirectory);

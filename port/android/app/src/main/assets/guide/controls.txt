@@ -109,7 +109,7 @@ Quit before external edits. In `[vr]`, `body = "legs"` explicitly selects the de
 - **Grip (Locked)** is the gun hand's grip and works only with Locked weapons and away from the holsters. With Physical weapons the grip holds the gun, so an action put on it does nothing.
 - **Left-handed:** with Mirror Controls: Auto, A and B mean the gun hand's lower and upper buttons and X and Y the other hand's, so the whole layout mirrors as before. Not remappable: triggers (fire, zoom), the flashlight, the menu button, both stick clicks together (recenter), the off hand's grip (two hands, passing the gun), the Warthog horn (either stick click while driving) and the pointer menus.
 - Saved as `vr.button_jump`, `vr.button_action`, `vr.button_melee`, `vr.button_crouch`, `vr.button_switch_weapon`, `vr.button_grenade` and `vr.button_switch_grenade` (values `a`, `b`, `x`, `y`, `right_stick`, `left_stick`, `grip`, `none`; `hold` for switch grenade). A config edited by hand that puts two actions on one button does both, and the log warns. Other controllers (Index, Steam Frame) keep their own layout.
-- **Co-op cutscenes:** on a device that joined co-op, cutscene characters now stand where the host has them at every cut instead of sliding there in a falling pose.
+- **Co-op cutscenes (fixed in 1.0.6):** on a device that joined co-op, cutscene characters now animate as on the host instead of T-posing and sliding. The joining device now also wakes up the part of the map the cutscene plays in, as the host's script does (1.0.5's attempt did not fix it and was withdrawn).
 
 ## Scopes, first-person vehicles and the left hand (test22)
 

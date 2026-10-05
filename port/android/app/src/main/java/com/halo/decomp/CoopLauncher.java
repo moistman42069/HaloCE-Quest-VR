@@ -26,14 +26,15 @@ final class CoopLauncher {
 
     void show() {
         new GamepadNavigation.Builder(activity).setTitle("Campaign co-op")
-            .setMessage("1. Install the same project build and select identical campaign maps/resources on both devices.\n\n"
-                + "2. Host: choose Host campaign, mission and difficulty, then enter the game's System Link lobby. "
-                + "To appear in the launcher co-op browser, enable public listing before hosting.\n\n"
-                + "3. Partner: choose Browse / join, refresh and select the host, or paste its private invite. "
-                + "Then enter Multiplayer > System Link and join that host. The mission starts with both players present.\n\n"
-                + "Quest + Quest and Quest + flat Android are supported pairings. Keep both apps open. "
-                + "Campaign supports two players and cannot join mid-mission. If disconnected, create a new lobby. "
-                + "If a public listing does not appear, use a private invite or LAN; directory availability varies.")
+            .setMessage("Both devices need the same app version and the same campaign maps. "
+                + "Quest + Quest and Quest + phone both work.\n\n"
+                + "TO HOST: press Host campaign, pick the mission and difficulty, leave the server browser box "
+                + "ticked and press Host. Wait in the System Link lobby until your partner joins, then start.\n\n"
+                + "TO JOIN: press Browse / join, then Refresh directory, pick the host's game and press Join. "
+                + "When the game opens, go to Multiplayer > System Link, choose the host's game and join it. "
+                + "On the same Wi-Fi it appears there by itself.\n\n"
+                + "Two players; no joining a mission in progress. Keep both apps open. "
+                + "Full steps: launcher > How to join co-op & find servers.")
             .setPositiveButton("Host campaign", (dialog, which) -> host())
             .setNeutralButton("Browse / join", (dialog, which) -> new ServerBrowser(activity, join, true))
             .setNegativeButton("Back", null).show();
@@ -57,11 +58,13 @@ final class CoopLauncher {
         Spinner difficulty = select(layout, new String[]{"Easy", "Normal", "Heroic", "Legendary"});
         difficulty.setSelection(1);
         CheckBox publish = new CheckBox(activity);
-        publish.setText("List publicly in the co-op browser (shares your session invite)");
+        publish.setText("List this game in the co-op server browser (shares your session invite)");
+        // On by default so the partner finds the game under Campaign co-op > Browse / join.
+        publish.setChecked(true);
         layout.addView(publish);
         TextView status = new TextView(activity);
-        status.setText("Private hosts can share the invite copied by the game. Public listing requires the community "
-            + "directory to accept campaign sessions; failures are reported in the launch log.");
+        status.setText("Ticked: your partner finds this game under Campaign co-op > Browse / join. Untick it to keep "
+            + "the game private and share the invite the game copies instead. Listing problems are noted in the launch log.");
         layout.addView(status);
         AlertDialog dialog = new GamepadNavigation.Builder(activity).setTitle("Host campaign")
             .setView(layout).setPositiveButton("Host", null).setNegativeButton("Cancel", null).create();

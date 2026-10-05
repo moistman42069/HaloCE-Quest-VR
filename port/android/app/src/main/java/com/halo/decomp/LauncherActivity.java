@@ -279,6 +279,8 @@ public class LauncherActivity extends Activity {
                 if (!readyToPlay() || !writeInvite(invite)) return false;
                 return startGame();
             }).show());
+        menuButton(layout, "How to join co-op & find servers").setOnClickListener(v ->
+            LauncherHelp.page(this, "How to join co-op & find servers", LauncherHelp.COOP_GUIDE));
 
         TextView modsTitle = label(layout, "MODS", 18, HALO_BLUE);
         modsTitle.setPadding(0, dp(24), 0, dp(4));

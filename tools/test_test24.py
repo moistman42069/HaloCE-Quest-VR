@@ -97,6 +97,24 @@ assert objects_net == git_show('55e77364', 'port/linux/game/network_objects.c'),
 assert 'versionCode Math.max(31, buildNumber)' in gradle and '"1.0.6"' in gradle
 assert 'HaloCE Quest test24 candidate 1.0.6' in frame
 
+# --- the launcher: co-op and server-browser steps, the co-op listing on by default
+java = ROOT / 'port/android/app/src/main/java/com/halo/decomp'
+coop = (java / 'CoopLauncher.java').read_text(encoding='utf-8')
+help_java = (java / 'LauncherHelp.java').read_text(encoding='utf-8')
+launcher = (java / 'LauncherActivity.java').read_text(encoding='utf-8')
+browser = (java / 'ServerBrowser.java').read_text(encoding='utf-8')
+host = coop[coop.index('private void host()'):]
+assert 'publish.setChecked(true);' in host and host.index('publish.setChecked(true);') < host.index('layout.addView(publish);')
+assert '(publish.isChecked() ? 1 : 0)' in host, 'the box still decides the listing'
+for step in ['Campaign co-op > Host campaign', 'Campaign co-op > Browse / join', 'Refresh directory',
+             'Multiplayer > System Link', 'Add / paste server invite', 'Press Refresh', 'pull the trigger']:
+    assert step in help_java, step
+assert 'LauncherHelp.page(this, "How to join co-op & find servers", LauncherHelp.COOP_GUIDE)' in launcher
+assert '"How to join co-op & find servers", "Getting started & multiplayer"' in help_java
+assert 'if(item==0) { page(activity,"How to join co-op & find servers",COOP_GUIDE); return; }' in help_java
+assert 'Multiplayer > System Link' in coop and 'How to join co-op & find servers' in coop
+assert 'In-game server browser: press Play' in browser
+
 # --- the real capture, wire and replay
 body = script[script.index('static char const *presentation_names[] = {'):]
 body = body.replace('typedef char campaign_presentation_size_assert[sizeof(struct campaign_presentation) == 300 ? 1 : -1];', '')
@@ -189,4 +207,5 @@ int main(void){
 }
 ''')
 print('PASS: test24 wiring (engine activation = players\' clusters + the script\'s place; five calls appended, earlier wire '
-      'IDs unchanged; argument types validated; no-argument capture; reconciling as in 1.0.4; version 1.0.6 / 31)')
+      'IDs unchanged; argument types validated; no-argument capture; reconciling as in 1.0.4; version 1.0.6 / 31; '
+      'launcher join steps and co-op listing on by default)')
