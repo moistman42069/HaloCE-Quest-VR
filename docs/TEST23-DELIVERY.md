@@ -37,10 +37,10 @@ left-handed mirroring, other controllers' layouts, vehicles, aiming.
 
 | File | Bytes | SHA-256 |
 | --- | ---: | --- |
-| `HaloCE-Quest-test23.apk` | VR_BYTES | `VR_SHA` |
-| `HaloCE-Android-test23.apk` | FLAT_BYTES | `FLAT_SHA` |
+| `HaloCE-Quest-test23.apk` | 28,088,963 | `3900b31fbd422d0e15fb865fc5c4c0dec4ab8f8901ba392bd6231b4bbe0e93b6` |
+| `HaloCE-Android-test23.apk` | 26,077,748 | `87b01c2cc3c1258f6287f30017ced6688de620430b21b6a90b2d670f43788974` |
 
-Runtime source `RUNTIME_COMMIT` on branch `test21-hands-body`; later commits
+Runtime source `fb1d094b` (runtime changes in `dc0d9d88`) on branch `test21-hands-body`; later commits
 change only documentation and packaging tooling. Certificate SHA-256
 `53d416f7e123cc62b749940983209bc9a400002e033fd5f50900d4ffad8e2aa4`, the same as
 v1.0.2, v1.0.3 and 1.0.4. Built serially from a clean tree; payload, signing
