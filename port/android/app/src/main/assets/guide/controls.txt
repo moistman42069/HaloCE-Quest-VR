@@ -55,8 +55,8 @@ Test20d gives each decision one row. Rows that only mattered together with anoth
 | Controls | **Handedness** Right / Left; **Mirror Controls** Auto / Off; **Turning** Smooth 60–300 degrees/s or Snap 22.5 / 30 / 45 / 60 / 90 (finer on the Comfort page); Move With Head / Left Hand / Right Hand; **Two Hands** Auto Lock (default) / Squeeze / Off; **Weapons** Locked / Physical / Physical + MP; **Holsters** Off or 10–40 cm; Aim Hand / Head; Controls VR / Xbox |
 | Body | Body Arms + Hands / Full / Legs + Arms / Hands Only; **Hands** Body IK / Floating / Float + Arms / Animated / Gun Only; Fingers Off / Tracked; Room-scale Off / On; Crouch Depth Off or 5–40 cm; **Arm Run** Off or effort 0.3–1.2; **Melee** Impact / Swing / Impact + Online / Swing + Online; Melee Speed Off or 1.0–3.6 m/s |
 | Hands + Gun | Hand Pitch / Yaw / Roll (both hands, left mirrored; default −70 / 0 / 0); Reset Hands; Gun Pitch / Yaw / Roll (default 0); Reset Gun; Gun Forward / Up / Out ±20 cm; Gun Grip Anchored / Classic |
-| Gameplay | Haptics 0–100%; Flashlight Gesture / Button; Scope Off / On; Cutscenes Immersive / 3D Screen / Flat; Close Contact Off / On; Crosshair Native / Off; Crosshair Size 25–300%; Crosshair Opacity 0–100% |
-| Vehicles | Third Person (default) / First Person; Steering Right Hand (default) / Left Hand / Head / Stick; global and Warthog/Ghost/Banshee/Scorpion/Pelican Up/Forward/Right seat offsets ±50 cm |
+| Gameplay | Haptics 0–100%; Flashlight Gesture / Button; Scope Off / On; Cutscenes Immersive / 3D Screen / Flat; Close Contact Off / On; Crosshair Native / Off; Crosshair Size 25–300%; Opacity (crosshair) 0–100% |
+| Vehicles | Third Person (default) / First Person; Horizon Level (default) / Half / Vehicle (first person, driver); Steering Right Hand (default) / Left Hand / Head / Stick; global and Warthog/Ghost/Banshee/Scorpion/Pelican Up/Fwd/Right seat offsets ±50 cm; Reset Offsets |
 | Graphics | Preset Auto / Low / Medium / High / Max; Resolution Auto / 70 / 85 / 100 / 115 / 130%; Shadows, Lights, Specular, Reflections, Bump Maps, Grass, Fog Layers: Auto / On / Off |
 | Display | Decals, Particles, Contrails, Weather, Lens Flares, Camo: Auto / On / Off; Refresh 72 / 80 / 90 / 120 Hz |
 | Controller Left / Right | Advanced tracking correction for hand and gun together (see below) |
@@ -100,6 +100,15 @@ Quit before external edits. In `[vr]`, `body = "legs"` explicitly selects the de
 
 - **Upside-down hands or guns** (reported on Quest OS v78): use **Controller Left/Right → Flip Roll 180** for the affected controller; it turns hand, gun and two-hand aim together. Hand Roll turns only the visible hand and Gun Roll only the gun; since test21 Gun Roll also holds in two-hand grip (it used to flip back).
 
+## Vehicles and settings rows (test25, 1.0.7)
+
+- **Settings rows fit.** Longer VR Settings rows used to be cut off at the right ("ALL FORWARD: < 0 C"), which hid their **>** arrow. Rows are now wider and some names shorter. Every numeric row still steps down with its left side (**<**) and up with its right side (**>**). Renamed rows (saved settings unchanged): Vehicles **ALL / HOG / GHOST / BANSHEE / TANK / PELICAN FWD** (was FORWARD); Scopes **PISTOL FWD**, **SNIPER FWD**; Gameplay **OPACITY** (crosshair opacity); Buttons **USE / RELOAD** (was Action / Reload), **NEXT WEAPON** (Switch Weapon), **NEXT GRENADE** (Switch Grenade), values **GRIP** (Grip (Locked)) and **HOLD** (Hold Grenade); Comfort **VIGNETTE ON: MOVING / TURNING / ALWAYS** (was Vignette When) and **SMOOTH SPEED** in degrees a second without the unit.
+- **Vehicles → RESET OFFSETS** puts every Up/Fwd/Right seat offset (All and each vehicle) back to 0. View, Horizon and Steering are kept.
+- **Vehicles → HORIZON** (first-person view, driver's seat only): **Level** (the default, as before: the horizon stays level and the cockpit tilts as the vehicle rocks), **Vehicle** (the view tilts with the vehicle, so the cockpit stays put and the world tilts), or **Half**. The tilt is eased against jolts and held at 60 degrees. Gunners and passengers stay level so their aim matches the view. Key: `vr.vehicle_tilt` (0, 0.5, 1).
+- **First-person glass:** from a first-person seat, the glass of the vehicle you sit in is no longer drawn (the Warthog's windshield showed as a bright white sheet from inside). Outside the seat, and on other vehicles, it is drawn as before.
+- **Recenter diagnostics:** each recenter (both sticks, View held, or the system/headset regaining focus), each time you get in or out of a seat and each view switch while seated is written to the log with the angles that decide the view. If a vehicle view ever ends up facing sideways, send the log of that session.
+- **Defaults unchanged:** third-person vehicle view, right-hand steering, level horizon. First-person vehicles remain experimental.
+
 ## Comfort (1.0.6)
 
 VR Settings → **COMFORT** gathers the settings that help with motion sickness:
@@ -108,17 +117,17 @@ VR Settings → **COMFORT** gathers the settings that help with motion sickness:
 - **Smooth Speed:** how fast smooth turning goes at full push, 30 to 300 degrees a second (120 is the default).
 - **Snap Angle:** how far each snap turn goes, 10 to 90 degrees (45 by default). It is kept while you use Smooth and used again when you pick Snap.
 - **Vignette:** darkens the edges of your view while you move or turn with the sticks, which many players find reduces motion sickness. Off (the default), Low, Medium or High. It fades in quickly when you start moving and fades out when you stop, keeps the centre of your view clear, and never shows in menus or cutscenes.
-- **Vignette When:** Move + Turn (the default), Turning Only, or Always.
+- **Vignette On:** Moving (moving or turning, the default), Turning, or Always.
 
 Moving includes walking with the stick, arm-swing running and driving (the left stick is the throttle). Turning includes smooth turns, each snap turn (a brief vignette) and steering a vehicle with the stick. Controls → **Turning** still offers the quick combined choices, now including Snap 22.5 and 60. Keys: `vr.snap_turn`, `vr.smooth_turn_speed`, `vr.snap_turn_amount`, `vr.vignette`, `vr.vignette_when`.
 
 ## Buttons and co-op cutscenes (test23, 1.0.5)
 
 - **Grenade on Left X in both weapon modes.** Tap and release X to throw; hold it 0.4 seconds to switch grenade type. With **Locked** weapons the gun hand's grip used to throw grenades; it now does nothing except switch weapons at a holster. Physical weapons are unchanged (X already threw there, and the grip still holds and drops the gun).
-- **VR Settings → BUTTONS** (Quest Touch controllers) remaps Jump, Action / Reload, Melee, Crouch, Switch Weapon, Grenade and Switch Grenade. Each can be A, B, X, Y, R Stick, L Stick, Grip (Locked) or None; Switch Grenade can also be **Hold Grenade** (the default: holding the grenade button switches). Picking a button another action already uses swaps the two, so one button never does two things. **Reset Buttons** restores the defaults below.
-- Defaults: Jump **A**, Action / Reload **B**, Melee **R Stick**, Crouch **L Stick**, Switch Weapon **Y**, Grenade **X**, Switch Grenade **Hold Grenade**. These are the earlier layout except the grenade.
-- To get the old Locked layout back, set **Grenade: Grip (Locked)**: the grip then throws while held, and Switch Grenade moves to X by itself.
-- **Grip (Locked)** is the gun hand's grip and works only with Locked weapons and away from the holsters. With Physical weapons the grip holds the gun, so an action put on it does nothing.
+- **VR Settings → BUTTONS** (Quest Touch controllers) remaps Jump, Use / Reload, Melee, Crouch, Next Weapon, Grenade and Next Grenade (named Action / Reload, Switch Weapon and Switch Grenade before 1.0.7). Each can be A, B, X, Y, R Stick, L Stick, Grip (locked weapons only) or None; Next Grenade can also be **Hold** (the default: holding the grenade button switches). Picking a button another action already uses swaps the two, so one button never does two things. **Reset Buttons** restores the defaults below.
+- Defaults: Jump **A**, Use / Reload **B**, Melee **R Stick**, Crouch **L Stick**, Next Weapon **Y**, Grenade **X**, Next Grenade **Hold**. These are the earlier layout except the grenade.
+- To get the old Locked layout back, set **Grenade: Grip**: the grip then throws while held, and Next Grenade moves to X by itself.
+- **Grip** is the gun hand's grip and works only with Locked weapons and away from the holsters. With Physical weapons the grip holds the gun, so an action put on it does nothing.
 - **Left-handed:** with Mirror Controls: Auto, A and B mean the gun hand's lower and upper buttons and X and Y the other hand's, so the whole layout mirrors as before. Not remappable: triggers (fire, zoom), the flashlight, the menu button, both stick clicks together (recenter), the off hand's grip (two hands, passing the gun), the Warthog horn (either stick click while driving) and the pointer menus.
 - Saved as `vr.button_jump`, `vr.button_action`, `vr.button_melee`, `vr.button_crouch`, `vr.button_switch_weapon`, `vr.button_grenade` and `vr.button_switch_grenade` (values `a`, `b`, `x`, `y`, `right_stick`, `left_stick`, `grip`, `none`; `hold` for switch grenade). A config edited by hand that puts two actions on one button does both, and the log warns. Other controllers (Index, Steam Frame) keep their own layout.
 - **Co-op cutscenes (fixed in 1.0.6):** on a device that joined co-op, cutscene characters now animate as on the host instead of T-posing and sliding. The joining device now also wakes up the part of the map the cutscene plays in, as the host's script does (1.0.5's attempt did not fix it and was withdrawn).

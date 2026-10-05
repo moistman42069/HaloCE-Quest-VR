@@ -3,6 +3,10 @@
 Updated 2026-10-04. This is the current handoff for Claude Code/Claude Cloud.
 The canonical source is `moistman42069/HaloCE-Quest-VR`, branch `main`.
 
+## Progress (test25, 2026-10-05)
+
+v1.0.6 (test24b) is released and the owner accepted it on device, except first-person vehicles. Private candidate **test25** (version 1.0.7 / code 33, branch `test25-vehicle-recenter`) adds one-line diagnostics for every recentre, seat change and seated view switch (a player's "sideways after recentring in a Warthog" report is not in their log), hides the seated vehicle's own glass in first person, adds a first-person driver HORIZON option (default Level = unchanged), widens and renames VR settings rows so none are clipped, adds Vehicles → RESET OFFSETS, and adopts four reviewed OpenCE fixes. Details: [TEST25-PROGRESS.md](TEST25-PROGRESS.md); delivery: [TEST25-DELIVERY.md](TEST25-DELIVERY.md); upstream: [UPSTREAM-REVIEW-2026-10-05.md](UPSTREAM-REVIEW-2026-10-05.md). Next: owner's headset test of test25; an in-world retest of the recentre report with the new log lines; then PC/Steam Frame scoping ([PC-STEAM-FRAME-FEASIBILITY.md](PC-STEAM-FRAME-FEASIBILITY.md)).
+
 ## Progress (test24b, 2026-10-05)
 
 Private candidate **test24b** (version 1.0.6 / code 32) adds, on top of test24: a COMFORT page in VR Settings (Turning smooth/snap, Smooth Speed, Snap Angle, a comfort Vignette and when it shows; a player's request plus the owner's), Snap 22.5 and 60 on Controls → Turning, and an SPV1 notice in the launcher that SPV1 does not work yet. Details: [TEST24B-PROGRESS.md](TEST24B-PROGRESS.md); delivery: [TEST24B-DELIVERY.md](TEST24B-DELIVERY.md). Nothing is accepted until tested on devices.
