@@ -17,7 +17,7 @@ default co-op listing. First-person vehicles remain experimental and opt-in.
 | --- | --- |
 | A player's 1.0.6 logs 09:20:36 (launcher) and 09:20:39 (game), Quest 3, from the Flat2VR thread | The report: after recentring while driving a Warthog the view faced sideways; getting out and in and switching views did not fix it; restarting the save did. This player is **left-handed with standard (unmirrored) sticks**, locked weapons, smooth turn 180. The log holds three recentres, all the system's (session start and resume), **no in-game recentre**, and no seat state (1.0.6 logged none). "cleared vehicle camera cache" lines show the player was seated when leaving levels (09:24:14, 09:26:45) and got out of a vehicle at 09:20:52 in first person. **The failing moment is not in this log; no cause is claimed.** |
 | Owner's log 08:43:46 and video 08:48:14 (39 s, Silent Cartographer) | First-person Warthog (08:45–08:47, 08:48:23–08:48:43): the windshield glass is a bright white sheet from the driver's seat; the cockpit rocks hard against a level horizon; VR Settings rows are clipped at the right ("STEERING: RIGHT HAN", "ALL FORWARD: < 0 C", "HOG FORWARD: < 0 C"), which hides the right arrow of numeric rows. The "All Forward" row decrements with its left side, as the thread clarified. |
-| Trever Spade's older logs | Historical (test18 / 1.0.2-era); he confirmed aiming fixed in 1.0.3. Not evidence of a 1.0.6 defect. |
+| An earlier tester's older logs | Historical (test18 / 1.0.2-era); the tester confirmed aiming fixed in 1.0.3. Not evidence of a 1.0.6 defect. |
 
 ## Code findings
 
