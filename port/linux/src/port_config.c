@@ -197,10 +197,12 @@ static const struct config_setting config_settings[] =
     { "network.host_public", _config_boolean, "false", "HALO_NET_HOST_PUBLIC", _environment_value, _platform_all,
         "List native PvP hosts publicly. Launcher PUBLIC overrides this per session. Campaign remains separate." },
 	{ "network.signalling_brokers", _config_string,
-		"\"broker.emqx.io:1883,broker.hivemq.com:1883,test.mosquitto.org:1883\"",
+		"\"opence.milenko.org:1883,broker.emqx.io:1883,broker.hivemq.com:1883,test.mosquitto.org:1883\"",
 		"HALO_NET_BROKERS", _environment_value, _platform_all,
 		"Public MQTT brokers through which the machines of an invite find each\n"
-		"other (its messages are encrypted); comma-separated host:port." },
+		"other and the server browser's listings travel (its messages are\n"
+		"encrypted); comma-separated host:port, up to 4. The first is upstream's\n"
+		"own broker (its brokers.txt); the earlier default list moves to this one." },
 	{ "network.stun_servers", _config_string, "\"stun.l.google.com:19302,stun.cloudflare.com:3478\"",
 		"HALO_NET_STUN", _environment_value, _platform_all,
 		"Public STUN servers that tell this machine its internet address;\n"
@@ -522,6 +524,22 @@ static const struct config_setting config_settings[] =
 		"the gun (an extra view rendered while zoomed); your eyes stay unzoomed." },
 	{ "vr.scope_size", _config_real, "0.06", "HALO_VR_SCOPE_SIZE", _environment_value, _platform_vr,
 		"How wide the scope is, in metres." },
+	{ "vr.scope_pistol_forward", _config_real, "0.0", "HALO_VR_SCOPE_PISTOL_FORWARD", _environment_value, _platform_vr,
+		"The pistol (round sight) scope moved forward (toward the muzzle) from its usual place, metres (-0.20..0.20)." },
+	{ "vr.scope_pistol_up", _config_real, "0.0", "HALO_VR_SCOPE_PISTOL_UP", _environment_value, _platform_vr,
+		"The pistol (round sight) scope moved up from its usual place, metres (-0.20..0.20)." },
+	{ "vr.scope_pistol_right", _config_real, "0.0", "HALO_VR_SCOPE_PISTOL_RIGHT", _environment_value, _platform_vr,
+		"The pistol (round sight) scope moved right (in either hand) from its usual place, metres (-0.20..0.20)." },
+	{ "vr.scope_pistol_scale", _config_real, "1.0", "HALO_VR_SCOPE_PISTOL_SCALE", _environment_value, _platform_vr,
+		"The pistol (round sight) scope's size as a share of vr.scope_size (1 = as usual)." },
+	{ "vr.scope_sniper_forward", _config_real, "0.0", "HALO_VR_SCOPE_SNIPER_FORWARD", _environment_value, _platform_vr,
+		"The sniper rifle scope moved forward (toward the muzzle) from its usual place, metres (-0.20..0.20)." },
+	{ "vr.scope_sniper_up", _config_real, "0.0", "HALO_VR_SCOPE_SNIPER_UP", _environment_value, _platform_vr,
+		"The sniper rifle scope moved up from its usual place, metres (-0.20..0.20)." },
+	{ "vr.scope_sniper_right", _config_real, "0.0", "HALO_VR_SCOPE_SNIPER_RIGHT", _environment_value, _platform_vr,
+		"The sniper rifle scope moved right (in either hand) from its usual place, metres (-0.20..0.20)." },
+	{ "vr.scope_sniper_scale", _config_real, "1.0", "HALO_VR_SCOPE_SNIPER_SCALE", _environment_value, _platform_vr,
+		"The sniper rifle scope's size as a share of vr.scope_size (1 = as usual)." },
 	{ "vr.align_left_pitch", _config_real, "0.0", "HALO_VR_ALIGN_LEFT_PITCH", _environment_value, _platform_vr,
 		"Left controller tracking correction, local pitch: degrees (-180..180). Moves hand AND gun;\n"
 		"for comfort use vr.hand_* (hand) or vr.weapon_* (gun). Zero preserves runtime tracking." },

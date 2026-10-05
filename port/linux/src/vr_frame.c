@@ -206,6 +206,10 @@ static struct
 	sight's shape (VR_SCOPE_*) */
 	int scope_enabled, scope_resolved, scope_shape;
 	float scope_size;
+	/* test22: the pistol's [0] and the sniper rifle's [1] scope moved
+	(forward, up, right, metres) and sized (a share of scope_size) from
+	their usual place (vr.scope_pistol_*, vr.scope_sniper_*) */
+	float scope_adjust[2][4];
 	/* room-scale (vr.roomscale): the floor's point the player stands on, in
 	LOCAL metres (x, z), after the last tick and the one before (frames
 	blend them as the game's camera is blended); set aside while the player
@@ -574,6 +578,27 @@ void vr_reload_settings(void)
 	vr.haptics = (float)config_real("vr.haptics");
 	vr.scope_enabled = config_boolean("vr.scope");
 	vr.scope_size = (float)config_real("vr.scope_size");
+	{
+		static const char *const kinds[] = { "pistol", "sniper" };
+		static const char *const parts[] = { "forward", "up", "right", "scale" };
+		char key[64];
+		int kind, part;
+
+		for (kind = 0; kind < 2; kind++)
+		{
+			for (part = 0; part < 4; part++)
+			{
+				double value;
+
+				snprintf(key, sizeof(key), "vr.scope_%s_%s", kinds[kind], parts[part]);
+				value = config_real(key);
+				if (!isfinite(value))
+					value = part == 3 ? 1.0 : 0.0;
+				vr.scope_adjust[kind][part] = part == 3 ? (float)fmin(2.0, fmax(0.5, value)) :
+					(float)fmin(0.20, fmax(-0.20, value));
+			}
+		}
+	}
 	if (vr.roomscale != config_boolean("vr.roomscale"))
 	{
 		vr.roomscale = config_boolean("vr.roomscale");
@@ -639,7 +664,7 @@ void vr_initialize(void)
 		return;
 	vr.initialized = 1;
 	config_vr_vehicle_defaults();
-	platform_log("vr: HaloCE Quest test21b candidate (floating hands restored, torso-following arms, neck-pivot full body, auto two-hand lock, horn, online melee off, two-hand gun roll, pistol shots from the hand, reticle converges as shots do, per-gun aim, horn from either stick)");
+	platform_log("vr: HaloCE Quest test22 candidate (co-op campaign host crash fixed, steady first-person vehicle view, left-hand ammo display, adjustable scopes, shot diagnostics; test21b: floating hands restored, torso-following arms, neck-pivot full body, auto two-hand lock, horn, online melee off, two-hand gun roll, pistol shots from the hand, reticle converges as shots do, per-gun aim, horn from either stick)");
 	if (!config_boolean("vr.enabled"))
 	{
 		platform_log("vr: off (vr.enabled)");
@@ -3047,6 +3072,10 @@ static void place_scope(struct halo_xr_layers *layers)
 	};
 	const float *offset = offsets[vr.scope_shape >= VR_SCOPE_ROUND && vr.scope_shape <= VR_SCOPE_ROCKET ?
 		vr.scope_shape - VR_SCOPE_ROUND : 0];
+	/* test22: the player's own place and size for the pistol's and the
+	sniper rifle's (none set: exactly the usual) */
+	int kind = vr.scope_shape == VR_SCOPE_SNIPER ? 1 : vr.scope_shape == VR_SCOPE_ROUND ? 0 : -1;
+	const float *adjust = kind >= 0 ? vr.scope_adjust[kind] : NULL;
 	/* OpenXR's x right, y up, z back; in the left hand, left is the other way */
 	float local[3], turned[3];
 	int axis;
@@ -3054,11 +3083,18 @@ static void place_scope(struct halo_xr_layers *layers)
 	local[0] = vr.weapon_hand ? -offset[1] : offset[1];
 	local[1] = offset[2];
 	local[2] = -offset[0];
+	if (adjust)
+	{
+		/* (right is the player's right in either hand) */
+		local[0] += adjust[2];
+		local[1] += adjust[1];
+		local[2] -= adjust[0];
+	}
 	rotate(vr.aim_pose.orientation, local, turned);
 	for (axis = 0; axis < 3; axis++)
 		layers->scope_pose.position[axis] = vr.aim_pose.position[axis] + turned[axis];
 	memcpy(layers->scope_pose.orientation, vr.aim_pose.orientation, sizeof(layers->scope_pose.orientation));
-	layers->scope_size[0] = layers->scope_size[1] = vr.scope_size;
+	layers->scope_size[0] = layers->scope_size[1] = vr.scope_size * (adjust ? adjust[3] : 1.0f);
 	layers->flags |= HALO_XR_LAYER_SCOPE;
 }
 

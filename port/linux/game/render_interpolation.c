@@ -131,6 +131,17 @@ static struct interpolated_camera interpolated_cameras[MAXIMUM_LOCAL_PLAYERS];
 static struct interpolated_first_person interpolated_first_person[MAXIMUM_LOCAL_PLAYERS];
 static long interpolation_tick;
 static long interpolation_frame;
+/* test22: the game's ticks run for each frame drawn, counted over ten
+seconds and logged when some frame had to catch up three or more: a
+network game's clock keeps up with its host's by running up to a second of
+ticks in one frame, and on a slow device a heavy game (dozens of players)
+then spirals into a few frames a second (an Android phone in a 56-player
+CTF) */
+static unsigned long catch_up_ticks, catch_up_frames, catch_up_total, catch_up_most, catch_up_since;
+
+/* port/linux/src/platform.h's (a variadic call needs its prototype) */
+void platform_log(const char *format, ...);
+unsigned long system_milliseconds(void);
 static boolean interpolation_rendering;
 static real interpolation_fraction = 1.0f;
 
@@ -384,6 +395,8 @@ void render_interpolation_tick(void)
 	struct object_datum *object;
 	long previous_tick = interpolation_tick++;
 
+	catch_up_ticks++;
+
 	if (!halo_interpolation_enabled())
 		return;
 	/* the cameras' corrections a tick on, as the objects' (below) */
@@ -495,6 +508,26 @@ void render_interpolation_reset(void)
 
 void render_interpolation_frame_begin(void)
 {
+	{
+		unsigned long now = system_milliseconds();
+
+		catch_up_frames++;
+		catch_up_total += catch_up_ticks;
+		if (catch_up_ticks > catch_up_most)
+			catch_up_most = catch_up_ticks;
+		catch_up_ticks = 0;
+		if (!catch_up_since)
+			catch_up_since = now;
+		else if (now - catch_up_since >= 10000)
+		{
+			if (catch_up_most >= 3)
+				platform_log("[game-ticks] %.1f s: %lu frames ran %lu game ticks, %lu at most in one: the game's"
+					" ticks cost more than the frames allow (a heavy game for this device)",
+					(now - catch_up_since) / 1000.0, catch_up_frames, catch_up_total, catch_up_most);
+			catch_up_since = now;
+			catch_up_frames = catch_up_total = catch_up_most = 0;
+		}
+	}
 	interpolation_rendering = halo_interpolation_enabled();
 	interpolation_frame++;
 	interpolation_fraction = game_time_get_tick_fraction();

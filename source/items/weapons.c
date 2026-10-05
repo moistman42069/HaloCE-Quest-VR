@@ -2280,7 +2280,18 @@ static void trigger_create_projectiles(
 					trigger_definition->first_person_weapon_offset.z,
 					&origin);
 
+#ifdef HALO_VR
+				{
+					real_vector3d vr_aimed= forward;
+
+					target_object_index= player_aim_projectile(player_index, &origin, &forward);
+					/* test22: where the shot went against the aim and the
+					reticle, logged now and then (port/linux/game/vr_render.c) */
+					vr_render_shot_diagnostic(weapon_index, player_index, &origin, &vr_aimed, &forward, vr_hand_shot);
+				}
+#else
 				target_object_index= player_aim_projectile(player_index, &origin, &forward);
+#endif
 #ifdef HALO_VR
 				/* the headset's hands feel the shot (port/linux/game/vr_render.c) */
 				vr_render_weapon_fired(weapon_index, player_index);

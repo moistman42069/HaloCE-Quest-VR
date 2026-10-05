@@ -99,6 +99,12 @@ Quit before external edits. In `[vr]`, `body = "legs"` explicitly selects the de
 
 - **Upside-down hands or guns** (reported on Quest OS v78): use **Controller Left/Right → Flip Roll 180** for the affected controller; it turns hand, gun and two-hand aim together. Hand Roll turns only the visible hand and Gun Roll only the gun; since test21 Gun Roll also holds in two-hand grip (it used to flip back).
 
+## Scopes, first-person vehicles and the left hand (test22)
+
+- **SCOPES** (VR Settings): the pistol's and the sniper rifle's scopes each move **forward**, **up** and **right** (1 cm steps, up to 20 cm; right is your right in either hand) and change **size** (50–200%). **Reset Scopes** puts both back. Untouched, they are exactly where and as large as before; the rocket launcher's scope does not change.
+- **First-person vehicle view** (Vehicles → View: First Person): the view turns with the vehicle as it is drawn, every frame, and rides the vehicle itself rather than the driver's steering and bump animations, so the interior stays still in your view while the vehicle's own turns and bounce come through. Third-person view is unchanged.
+- **Left hand:** a gun's ammo counter (the assault rifle's) reads the right way round when held left-handed.
+
 ## Shots, reticle and per-gun aim (test21)
 
 - **Pistol shots from the hand.** Some guns (the pistol among them) tell the game to start their shots at the gun model's own muzzle. In VR that was the unseen third-person body's gun, so the shots flew beside the reticle. Offline, with the hand aiming, such shots now start at your hand like every other gun's. Network play is unchanged (the host decides shots there).

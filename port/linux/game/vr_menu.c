@@ -143,6 +143,9 @@ enum
 	key "gun" names the gun, "up" and "right" step half degrees, "reset"
 	clears both for that gun */
 	_vr_setting_gun_aim,
+	/* test22: the pistol's and sniper rifle's scope places and sizes back
+	to their defaults */
+	_vr_setting_reset_scopes,
 };
 
 #define VR_MENU_MAXIMUM_VALUES 12
@@ -284,6 +287,21 @@ static struct vr_menu_setting const vr_menu_hands[] =
     { "RESET AIM", "reset", _vr_setting_gun_aim, 0, { { NULL,NULL } } },
 };
 
+/* test22: the scopes' places and sizes, the pistol's and the sniper
+rifle's apart (vr.scope_pistol_*, vr.scope_sniper_*: 0 and 100%, the usual) */
+static struct vr_menu_setting const vr_menu_scopes[] =
+{
+    { "PISTOL FORWARD", "vr.scope_pistol_forward", _vr_setting_centimetres, 0, { { NULL,NULL } } },
+    { "PISTOL UP", "vr.scope_pistol_up", _vr_setting_centimetres, 0, { { NULL,NULL } } },
+    { "PISTOL RIGHT", "vr.scope_pistol_right", _vr_setting_centimetres, 0, { { NULL,NULL } } },
+    { "PISTOL SIZE", "vr.scope_pistol_scale", _vr_setting_real, 7, { { "50%", "0.5" }, { "75%", "0.75" }, { "100%", "1" }, { "125%", "1.25" }, { "150%", "1.5" }, { "175%", "1.75" }, { "200%", "2" } } },
+    { "SNIPER FORWARD", "vr.scope_sniper_forward", _vr_setting_centimetres, 0, { { NULL,NULL } } },
+    { "SNIPER UP", "vr.scope_sniper_up", _vr_setting_centimetres, 0, { { NULL,NULL } } },
+    { "SNIPER RIGHT", "vr.scope_sniper_right", _vr_setting_centimetres, 0, { { NULL,NULL } } },
+    { "SNIPER SIZE", "vr.scope_sniper_scale", _vr_setting_real, 7, { { "50%", "0.5" }, { "75%", "0.75" }, { "100%", "1" }, { "125%", "1.25" }, { "150%", "1.5" }, { "175%", "1.75" }, { "200%", "2" } } },
+    { "RESET SCOPES", "scopes", _vr_setting_reset_scopes, 0, { { NULL,NULL } } },
+};
+
 static struct vr_menu_setting const vr_menu_align_left[] =
 {
     { "PITCH", "vr.align_left_pitch", _vr_setting_degrees, 0, { { NULL,NULL } } },
@@ -322,6 +340,7 @@ static struct vr_menu_page
 	{ "CONTROLS", vr_menu_controls, NUMBEROF(vr_menu_controls) },
 	{ "BODY", vr_menu_body, NUMBEROF(vr_menu_body) },
 	{ "HANDS + GUN", vr_menu_hands, NUMBEROF(vr_menu_hands) },
+	{ "SCOPES", vr_menu_scopes, NUMBEROF(vr_menu_scopes) },
 	{ "GAMEPLAY", vr_menu_vr, NUMBEROF(vr_menu_vr) },
 	{ "VEHICLES", vr_menu_vehicles, NUMBEROF(vr_menu_vehicles) },
 	{ "GRAPHICS", vr_menu_graphics, NUMBEROF(vr_menu_graphics) },
@@ -885,7 +904,8 @@ boolean vr_menu_setting_text(
                 setting->type!=_vr_setting_degrees?value*100:value,
                 setting->type!=_vr_setting_degrees?"CM":"DEG");
         } else if(setting->type == _vr_setting_reset_alignment || setting->type == _vr_setting_flip_alignment ||
-            setting->type == _vr_setting_reset_hand || setting->type == _vr_setting_reset_weapon)
+            setting->type == _vr_setting_reset_hand || setting->type == _vr_setting_reset_weapon ||
+            setting->type == _vr_setting_reset_scopes)
             snprintf(line,sizeof(line),"%s: APPLY",setting->label);
         else
 		snprintf(line, sizeof(line), setting->type == _vr_setting_real ? "%s: < %s >" : "%s: %s", setting->label,
@@ -917,6 +937,17 @@ boolean vr_menu_setting_change(
         value=step>0?(floor(value/unit+0.00001)+1)*unit:(ceil(value/unit-0.00001)-1)*unit;
         value=fmax(-limit,fmin(limit,value)); written=config_write_real(setting->key,value);
         vr_reload_settings(); platform_log("vr: %s %.3f%s",setting->key,value,written?"":" (save failed)");
+        return TRUE;
+    }
+    if(setting->type == _vr_setting_reset_scopes) {
+        static const char *const kinds[]={"pistol","sniper"};
+        static const char *const parts[]={"forward","up","right","scale"};
+        char key[64]; int kind, part;
+        written=TRUE;
+        for(kind=0;kind<2;kind++) for(part=0;part<4;part++) {
+            snprintf(key,sizeof(key),"vr.scope_%s_%s",kinds[kind],parts[part]);
+            written=config_write_real(key,config_default_real(key))&&written; }
+        vr_reload_settings(); platform_log("vr: reset scope places and sizes%s",written?"":" (save failed)");
         return TRUE;
     }
     if(setting->type == _vr_setting_gun_aim) {

@@ -1530,6 +1530,14 @@ void p2p_signal_start(void)
 		p2p_lobby_slot_topic(hash, signalling.own_slot, sizeof(signalling.own_slot));
 	}
 	text = config_string("network.signalling_brokers");
+	/* a list still on the earlier default takes the current one, which
+	adds upstream's own broker first (its brokers.txt, upstream 88a7c07e):
+	current hosts list their games and answer invites through it */
+	if (!strcmp(text, "broker.emqx.io:1883,broker.hivemq.com:1883,test.mosquitto.org:1883"))
+	{
+		text = "opence.milenko.org:1883,broker.emqx.io:1883,broker.hivemq.com:1883,test.mosquitto.org:1883";
+		platform_log("Internet play: the default brokers now include upstream's own (opence.milenko.org)");
+	}
 	while (*text && signalling.broker_count < MAXIMUM_BROKERS)
 	{
 		const char *end = text + strcspn(text, ",");

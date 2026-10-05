@@ -82,8 +82,11 @@ render target the size of the screen has per unit of it */
 static long screen_width;
 static float screen_scale[2] = { 1.0f, 1.0f };
 #ifdef HALO_VR
-/* model triangles' winding turned over while set (halo_vr_mirror_winding) */
+/* model triangles' winding turned over while set (halo_vr_mirror_winding),
+for the parts whose node matrices mirror (halo_vr_skinning_mirrored: test22,
+the left hand's ammo display is drawn the right way round, not mirrored) */
 static int vr_mirror_winding;
+static int vr_skinning_mirrored = 1;
 #endif
 static long ui_offset;
 #define UI_OFFSET ((GLint)ui_offset)
@@ -2604,7 +2607,7 @@ static void apply_raster_state(BOOL has_depth)
 #ifdef HALO_VR
 		/* a mirrored model (the left hand's first-person weapon) turns its
 		triangles' winding over */
-		if (vr_mirror_winding)
+		if (vr_mirror_winding && vr_skinning_mirrored)
 			front_face = front_face == GL_CW ? GL_CCW : GL_CW;
 #endif
 		if (gl_state.front_face != front_face)
@@ -4105,6 +4108,12 @@ void halo_vr_crosshair_end(void)
 void halo_vr_mirror_winding(int mirrored)
 {
 	vr_mirror_winding = mirrored;
+	vr_skinning_mirrored = 1;
+}
+
+void halo_vr_skinning_mirrored(int mirrored)
+{
+	vr_skinning_mirrored = mirrored != 0;
 }
 
 /* ---------- the headset's stereo frames (port/linux/include/halo_vr.h) */

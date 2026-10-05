@@ -143,6 +143,8 @@ static int vr_script_head_view(const float p[3],float out[3],float f[3]){memcpy(
 static void vector_from_points3d(const real_point3d *a,const real_point3d *b,real_vector3d *out){out->i=b->x-a->x;out->j=b->y-a->y;out->k=b->z-a->z;}
 static void normalize3d(real_vector3d *v){float l=sqrtf(dot_product3d(v,v));if(l>0)scale_vector3d(v,1/l,v);}
 #define cosine cosf
+/* test22: the frame's seat heading (tested in test_test22); here the seat's own */
+static real vr_seat_frame_heading(void){return vr_render.seat.heading;}
 '''
 run('seat-gaze',pre+''.join(fn(r,n) for n in ['vr_vehicle_profile','vr_vehicle_offset','vr_vehicle_adjust_anchor','vr_script_can_see_point'])+r'''
 int main(void){

@@ -83,6 +83,14 @@ void vr_render_weapon_camera(struct render_camera *camera);
 /* trigger_create_projectiles: a player's weapon fired a projectile (the
 local player's hands feel it) */
 void vr_render_weapon_fired(long weapon_index, long player_index);
+/* test22: a local player's shot as the engine aimed it (weapons.c): from
+`origin`, the aim it was given and the direction it left in (after
+player_aim_projectile's turn), whether it left from the hand; logged on
+a new weapon and at most every ten seconds, against the reticle */
+union real_point3d;
+union real_vector3d;
+void vr_render_shot_diagnostic(long weapon_index, long player_index, union real_point3d const *origin,
+	union real_vector3d const *aimed, union real_vector3d const *shot, int from_hand);
 /* first_person_weapon_build_node_matrices: the arms of the first-person
 weapon posed for the hand that aims (vr.arms) */
 struct real_matrix4x3;
@@ -135,6 +143,10 @@ unsigned long vr_render_actions(short local_player_index);
 first_person_weapons.c brackets its drawing with halo_vr_mirror_winding */
 int vr_render_first_person_mirrored(void);
 void halo_vr_mirror_winding(int mirrored);
+/* rasterizer_xbox.c (test22): whether the model part about to be drawn
+mirrors (its first node matrix's determinant is negative): while the
+winding is turned over, only such parts turn it */
+void halo_vr_skinning_mirrored(int mirrored);
 /* 1 in a stereo frame, whose eyes see the world unmagnified (a zoom shows
 in the scope, or not at all): the first-person weapon stays in view while
 zoomed, and the HUD draws no zoom mask */

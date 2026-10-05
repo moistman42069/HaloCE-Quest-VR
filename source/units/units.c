@@ -4270,7 +4270,10 @@ boolean unit_throw_grenade_begin(
 			break;
 
 		default:
-			if (weapon_index == NONE || !weapon_prevents_grenade_throwing(weapon_index))
+			/* port: with no weapon too (a loadout of none), but not from a
+			vehicle's seat, which holds no weapon either (upstream 1a15a171) */
+			if ((weapon_index == NONE && unit->unit.parent_seat_index == NONE) ||
+				(weapon_index != NONE && !weapon_prevents_grenade_throwing(weapon_index)))
 			{
 				struct animation_graph *animation_graph;
 				struct animation *animation;
@@ -8640,6 +8643,20 @@ enum
 none): its own, else (a player's biped has none: players always had a
 weapon) the blow of the globals' first multiplayer weapon, the assault
 rifle's. network_damage.c takes it as the player's. */
+/* the globals' first multiplayer weapon, NONE where there is none: a
+campaign map's globals list no multiplayer weapons (and its player starts
+some levels unarmed, a10's), so its unarmed blow stays the game's, none
+(upstream ce77db84: a co-op campaign's host halted on its first tick in
+network_damage.c, which notes every player's unarmed blow) */
+static long unarmed_melee_weapon_definition_index(
+	void)
+{
+	struct game_globals *game_globals = scenario_get_game_globals();
+
+	return game_globals && game_globals->weapon_list.count>0 ?
+		list_index_to_weapon_definition_index(0) : NONE;
+}
+
 long unit_unarmed_melee_damage(
 	long unit_index)
 {
@@ -8648,7 +8665,7 @@ long unit_unarmed_melee_damage(
 
 	if (unit_definition->unit.melee_damage.index!=NONE)
 		return unit_definition->unit.melee_damage.index;
-	weapon_definition_index = list_index_to_weapon_definition_index(0);
+	weapon_definition_index = unarmed_melee_weapon_definition_index();
 	return weapon_definition_index!=NONE ?
 		weapon_definition_get(weapon_definition_index)->weapon.melee_attack_damage.index : NONE;
 }
@@ -8826,7 +8843,7 @@ void unit_cause_player_melee_damage(
 		response */
 		if (melee_damage_effect_index==NONE)
 		{
-			long weapon_definition_index = list_index_to_weapon_definition_index(0);
+			long weapon_definition_index = unarmed_melee_weapon_definition_index();
 
 			melee_damage_effect_index = unit_unarmed_melee_damage(unit_index);
 			if (weapon_definition_index!=NONE && melee_response_effect_index==NONE)

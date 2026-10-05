@@ -1227,6 +1227,11 @@ void rasterizer_set_model_lighting(
 	return;
 }
 
+#ifdef HALO_VR
+/* port/linux/src/d3d8_gl.c (port/linux/include/halo_vr.h) */
+void halo_vr_skinning_mirrored(int mirrored);
+#endif
+
 void rasterizer_set_model_skinning(
 	struct render_skinning const *skinning)
 {
@@ -1263,6 +1268,19 @@ void rasterizer_set_model_skinning(
 		constants[2][2] = scale * matrix->up.k;
 		constants[2][3] = matrix->position.z;
 	}
+#ifdef HALO_VR
+	/* test22: the left hand's first-person model is mirrored but for its
+	ammo display (vr_render.c), whose triangles keep their winding */
+	{
+		real_matrix4x3 const *m = &skinning->node_matrices[0];
+		real determinant =
+			m->forward.i * (m->left.j * m->up.k - m->left.k * m->up.j) -
+			m->forward.j * (m->left.i * m->up.k - m->left.k * m->up.i) +
+			m->forward.k * (m->left.i * m->up.j - m->left.j * m->up.i);
+
+		halo_vr_skinning_mirrored(determinant < 0.0f);
+	}
+#endif
 	D3DDevice_SetVertexShaderConstant(
 		-36,
 		vsh_constants__nodematrices,

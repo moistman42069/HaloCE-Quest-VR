@@ -138,6 +138,13 @@ def main():
                     raise SystemExit("Test20 fenced Safe streaming or render diagnostics missing")
                 if b"safe ordered uploads" in guest:
                     raise SystemExit("Test20 still contains the 1.0.1 ordered Safe upload path")
+            if candidate_at_least(args.label, 22):
+                for marker in [b"opence.milenko.org:1883", b"[game-ticks]"]:
+                    if marker not in guest: raise SystemExit("Test22 broker or tick marker missing: " + repr(marker))
+            if candidate_at_least(args.label, 22) and vr:
+                for marker in [b"SCOPES", b"vr.scope_pistol_forward", b"vr.scope_sniper_scale", b"RESET SCOPES",
+                               b"vr: shot (", b"test22 candidate"]:
+                    if marker not in guest: raise SystemExit("Test22 scope or diagnostic marker missing: " + repr(marker))
             if candidate_at_least(args.label, 21) and vr:
                 for marker in [b"FLOAT + ARMS", b"AUTO LOCK", b"SWING + ONLINE", b"support grip locked automatically",
                                b"vr.melee_multiplayer", b"vr.two_hand_auto_applied", b"physical melee",

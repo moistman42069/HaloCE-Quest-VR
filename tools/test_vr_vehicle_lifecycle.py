@@ -46,6 +46,8 @@ static int object_get_marker_by_name(long id,const char *name,struct object_mark
 }
 static void unit_get_camera_position(long id,real_point3d *p){assert(id==unit_id);*p=(real_point3d){7,8,9};}
 static void vr_vehicle_adjust_anchor(real_point3d *p){(void)p;}
+/* test22: the steadied seat anchor (tested in test_test22) */
+static void vr_seat_steady_anchor(real_point3d *p){(void)p;}
 ''' + fn(source,'void vr_render_reset_vehicle_view(')+fn(source,'static boolean vr_seat_view(')+fn(source,'static void view_anchor(')+r'''
 static void seat(void){
  pool.valid=1;object_header_data=&pool;unit_id=100;vehicle_id=200;unit.object.parent_object_index=200;unit.unit.parent_seat_index=2;

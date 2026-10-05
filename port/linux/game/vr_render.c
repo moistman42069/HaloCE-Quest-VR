@@ -98,6 +98,10 @@ static struct
 		real offset, heading;
 	} seat;
 	/* where the hand's shots start (vr_render_hand_origin) */
+	/* test22: the reticle's ray this frame (where the next shot goes) */
+	real_point3d reticle_origin;
+	real_vector3d reticle_direction;
+	double reticle_time;
 	boolean hand_origin_valid;
 	long hand_origin_unit;
 	real_point3d hand_origin;
@@ -283,6 +287,114 @@ static boolean vr_seat_view(
 	return TRUE;
 }
 
+/* port/linux/game/render_interpolation.c: an object's nodes as this frame
+draws them (between the last two ticks), NULL outside a frame */
+real_matrix4x3 *render_interpolation_object_node_matrices(long object_index);
+
+/* test22: the seat's heading as this frame draws the vehicle. The seat's
+heading (vr_update_seat) is taken in the 30 Hz control tick from the
+vehicle's latest orientation, while the vehicle is drawn between its last
+two ticks: turning, the eyes stepped ahead of the drawn interior each tick
+and its frame shook against the view. The latest heading is turned by how
+far the drawn root node's yaw is behind the simulated one's, so the view
+turns with the vehicle as drawn, at the headset's rate */
+static real vr_seat_frame_heading(
+	void)
+{
+	struct object_datum *vehicle;
+	real_matrix4x3 *drawn, *simulated;
+	real heading, behind;
+
+	if (vr_render.seat.vehicle_index == NONE || !(vehicle = object_try_and_get(vr_render.seat.vehicle_index)))
+		return vr_render.seat.heading;
+	heading = vr_yaw(&vehicle->object.forward) + vr_render.seat.offset;
+	drawn = render_interpolation_object_node_matrices(vr_render.seat.vehicle_index);
+	if (!drawn || vehicle->object.node_matrices.size < (long)sizeof(real_matrix4x3))
+		return heading;
+	simulated = (real_matrix4x3 *)object_header_block_get(vr_render.seat.vehicle_index, &vehicle->object.node_matrices);
+	if (!simulated)
+		return heading;
+	behind = vr_yaw(&drawn[0].forward) - vr_yaw(&simulated[0].forward);
+	while (behind > _pi)
+		behind -= 2.0f * _pi;
+	while (behind < -_pi)
+		behind += 2.0f * _pi;
+	return isfinite(behind) && fabsf(behind) < 0.5f ? heading + behind : heading;
+}
+
+/* test22: the seat's anchor held to the vehicle as drawn. The player's head
+marker moves with the driver's animations (steering, bumps) as well as
+with the vehicle; in the vehicle's own frame (its drawn root node) it is
+eased over a quarter second, then carried back with the vehicle, so the
+interior stays put against the view while the vehicle's own motion (its
+bounce, its turns) is kept whole. A new seat, a gap or a jump of half a
+metre takes the head's place at once */
+static void vr_seat_steady_anchor(
+	real_point3d *anchor)
+{
+	static struct
+	{
+		long vehicle_index, unit_index;
+		short seat_index;
+		real local[3];
+		double time;
+		boolean valid;
+	} steady;
+	struct object_datum *vehicle;
+	real_matrix4x3 *nodes, root;
+	real_vector3d relative;
+	real local[3];
+	real *axes[3];
+	double now = vr_pose_time();
+	real snap = 0.5f * vr_units_per_metre();
+	int axis;
+
+	if (vr_render.seat.vehicle_index == NONE || !(vehicle = object_try_and_get(vr_render.seat.vehicle_index)) || vehicle->object.node_matrices.size < (long)sizeof(real_matrix4x3) ||
+		!(nodes = object_get_node_matrices(vr_render.seat.vehicle_index)))
+	{
+		steady.valid = FALSE;
+		return;
+	}
+	root = nodes[0];
+	axes[0] = root.forward.n;
+	axes[1] = root.left.n;
+	axes[2] = root.up.n;
+	relative.i = anchor->x - root.position.x;
+	relative.j = anchor->y - root.position.y;
+	relative.k = anchor->z - root.position.z;
+	for (axis = 0; axis < 3; axis++)
+		local[axis] = relative.i * axes[axis][0] + relative.j * axes[axis][1] + relative.k * axes[axis][2];
+	if (!isfinite(local[0]) || !isfinite(local[1]) || !isfinite(local[2]))
+	{
+		steady.valid = FALSE;
+		return;
+	}
+	if (!steady.valid || steady.vehicle_index != vr_render.seat.vehicle_index ||
+		steady.unit_index != vr_render.seat.unit_index || steady.seat_index != vr_render.seat.seat_index ||
+		now < steady.time || now - steady.time > 0.5 ||
+		(local[0] - steady.local[0]) * (local[0] - steady.local[0]) +
+		(local[1] - steady.local[1]) * (local[1] - steady.local[1]) +
+		(local[2] - steady.local[2]) * (local[2] - steady.local[2]) > snap * snap)
+	{
+		memcpy(steady.local, local, sizeof(local));
+		steady.vehicle_index = vr_render.seat.vehicle_index;
+		steady.unit_index = vr_render.seat.unit_index;
+		steady.seat_index = vr_render.seat.seat_index;
+		steady.valid = TRUE;
+	}
+	else if (now > steady.time)
+	{
+		real ease = 1.0f - (real)exp(-(now - steady.time) / 0.25);
+
+		for (axis = 0; axis < 3; axis++)
+			steady.local[axis] += (local[axis] - steady.local[axis]) * ease;
+	}
+	steady.time = now;
+	for (axis = 0; axis < 3; axis++)
+		anchor->n[axis] = root.position.n[axis] + root.forward.n[axis] * steady.local[0] +
+			root.left.n[axis] * steady.local[1] + root.up.n[axis] * steady.local[2];
+}
+
 /* the heading the eyes turn from: the seat's in a vehicle seen from it,
 the headset's own while the head or hand aims, otherwise the game
 camera's */
@@ -298,8 +410,10 @@ static void view_heading(
 	}
 	else if (vr_seat_view())
 	{
-		heading->i = (real)cos(vr_render.seat.heading);
-		heading->j = (real)sin(vr_render.seat.heading);
+		real seat_heading = vr_seat_frame_heading();
+
+		heading->i = (real)cos(seat_heading);
+		heading->j = (real)sin(seat_heading);
 		heading->k = 0.0f;
 	}
 	else if (!vr_aiming() || !vr_heading_forward(heading->n))
@@ -344,7 +458,11 @@ static void vr_vehicle_adjust_anchor(real_point3d *anchor)
 	up = vr_vehicle_offset(profile, "up");
 	forward = vr_vehicle_offset(profile, "forward");
 	right = vr_vehicle_offset(profile, "right");
-	c = (real)cos(vr_render.seat.heading); s = (real)sin(vr_render.seat.heading);
+	{
+		real seat_heading = vr_seat_frame_heading();
+
+		c = (real)cos(seat_heading); s = (real)sin(seat_heading);
+	}
 	scale = vr_units_per_metre();
 	offset.i = (forward * c + right * s) * scale;
 	offset.j = (forward * s - right * c) * scale;
@@ -381,6 +499,7 @@ static void view_anchor(
 			*anchor = marker.matrix.position;
 		else
 			unit_get_camera_position(vr_render.seat.unit_index, anchor);
+		vr_seat_steady_anchor(anchor);
 		vr_vehicle_adjust_anchor(anchor);
 	}
 }
@@ -733,6 +852,9 @@ short vr_render_windows(
 			}
 			point_from_line3d(&origin, &direction, distance, &hit);
 			vr_set_reticle_world(vr_render.game_camera_position.n, hit.n);
+			vr_render.reticle_origin = origin;
+			vr_render.reticle_direction = direction;
+			vr_render.reticle_time = vr_pose_time();
 		}
 	}
 	vr_render.stereo = TRUE;
@@ -1083,6 +1205,44 @@ static void vr_weapon_buzz(
 			return;
 		}
 	}
+}
+
+void vr_render_shot_diagnostic(
+	long weapon_index,
+	long player_index,
+	real_point3d const *origin,
+	real_vector3d const *aimed,
+	real_vector3d const *shot,
+	int from_hand)
+{
+	static long logged_weapon = NONE;
+	static double logged_time = -1000.0;
+	double now = vr_pose_time();
+	long unit_index;
+	real turned, from_reticle = -1.0f, apart = -1.0f;
+	int kind = vr_gun_class();
+
+	if (!vr_active() || player_index == NONE || !aimed || !shot)
+		return;
+	unit_index = player_get(player_index)->unit_index;
+	if (unit_index == NONE || player_get(player_index)->local_player_index == NONE ||
+		(weapon_index == logged_weapon && now - logged_time < 10.0 && now >= logged_time))
+		return;
+	logged_weapon = weapon_index;
+	logged_time = now;
+	turned = (real)acos(PIN(dot_product3d(aimed, shot), -1.0f, 1.0f)) * 57.2957795f;
+	if (now - vr_render.reticle_time >= 0.0 && now - vr_render.reticle_time < 0.1)
+	{
+		real dx = origin->x - vr_render.reticle_origin.x, dy = origin->y - vr_render.reticle_origin.y,
+			dz = origin->z - vr_render.reticle_origin.z;
+
+		from_reticle = (real)acos(PIN(dot_product3d(&vr_render.reticle_direction, shot), -1.0f, 1.0f)) * 57.2957795f;
+		apart = (real)sqrt(dx * dx + dy * dy + dz * dz) / vr_units_per_metre();
+	}
+	platform_log("vr: shot (%s): from the %s; the engine turned it %.2f deg off the aim (its cone);"
+		" reticle %.2f deg and %.2f m from it (-1: no reticle this frame); aim adjustment %s",
+		vr_gun_class_label(kind), from_hand ? "hand" : "game's camera or gun", turned, from_reticle, apart,
+		kind >= 0 ? "per gun (see the holding line)" : "none");
 }
 
 void vr_render_weapon_fired(
@@ -3113,6 +3273,42 @@ void vr_render_first_person_ik(
 				axes[axis]->i -= normal.i * along;
 				axes[axis]->j -= normal.j * along;
 				axes[axis]->k -= normal.k * along;
+			}
+		}
+		/* test22: the ammo display ("frame display", the assault rifle's)
+		mirrored back about its own centre: it stays where the mirrored gun
+		has it but reads as the right hand's does, not backwards (its
+		triangles keep their winding: rasterizer_xbox.c) */
+		{
+			short display = vr_find_node(graph, "frame", "display");
+
+			if (display >= 0 && display < graph->nodes.count && display < MAXIMUM_NODES_PER_ANIMATION)
+			{
+				real_point3d display_centre = matrices[display].position;
+
+				for (index = 0; index < graph->nodes.count && index < MAXIMUM_NODES_PER_ANIMATION; index++)
+				{
+					real_matrix4x3 *m = &matrices[index];
+					real_vector3d *axes[3] = { &m->forward, &m->left, &m->up };
+					real_vector3d offset;
+					real along;
+					int axis;
+
+					if (index != display && !vr_node_under(graph, index, display))
+						continue;
+					vr_point_minus(&m->position, &display_centre, &offset);
+					along = 2.0f * (offset.i * normal.i + offset.j * normal.j + offset.k * normal.k);
+					m->position.x -= normal.i * along;
+					m->position.y -= normal.j * along;
+					m->position.z -= normal.k * along;
+					for (axis = 0; axis < 3; axis++)
+					{
+						along = 2.0f * (axes[axis]->i * normal.i + axes[axis]->j * normal.j + axes[axis]->k * normal.k);
+						axes[axis]->i -= normal.i * along;
+						axes[axis]->j -= normal.j * along;
+						axes[axis]->k -= normal.k * along;
+					}
+				}
 			}
 		}
 	}

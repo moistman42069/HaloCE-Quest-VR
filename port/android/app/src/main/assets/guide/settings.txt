@@ -187,9 +187,11 @@ Default: false
 List native PvP hosts publicly. Launcher PUBLIC overrides this per session. Campaign remains separate.
 
 network.signalling_brokers [string]
-Default: "broker.emqx.io:1883,broker.hivemq.com:1883,test.mosquitto.org:1883"
+Default: "opence.milenko.org:1883,broker.emqx.io:1883,broker.hivemq.com:1883,test.mosquitto.org:1883"
 Public MQTT brokers through which the machines of an invite find each
-other (its messages are encrypted); comma-separated host:port.
+other and the server browser's listings travel (its messages are
+encrypted); comma-separated host:port, up to 4. The first is upstream's
+own broker (its brokers.txt); the earlier default list moves to this one.
 
 network.stun_servers [string]
 Default: "stun.l.google.com:19302,stun.cloudflare.com:3478"
@@ -710,6 +712,38 @@ the gun (an extra view rendered while zoomed); your eyes stay unzoomed.
 vr.scope_size [real]
 Default: 0.06
 How wide the scope is, in metres.
+
+vr.scope_pistol_forward [real]
+Default: 0.0
+The pistol (round sight) scope moved forward (toward the muzzle) from its usual place, metres (-0.20..0.20).
+
+vr.scope_pistol_up [real]
+Default: 0.0
+The pistol (round sight) scope moved up from its usual place, metres (-0.20..0.20).
+
+vr.scope_pistol_right [real]
+Default: 0.0
+The pistol (round sight) scope moved right (in either hand) from its usual place, metres (-0.20..0.20).
+
+vr.scope_pistol_scale [real]
+Default: 1.0
+The pistol (round sight) scope's size as a share of vr.scope_size (1 = as usual).
+
+vr.scope_sniper_forward [real]
+Default: 0.0
+The sniper rifle scope moved forward (toward the muzzle) from its usual place, metres (-0.20..0.20).
+
+vr.scope_sniper_up [real]
+Default: 0.0
+The sniper rifle scope moved up from its usual place, metres (-0.20..0.20).
+
+vr.scope_sniper_right [real]
+Default: 0.0
+The sniper rifle scope moved right (in either hand) from its usual place, metres (-0.20..0.20).
+
+vr.scope_sniper_scale [real]
+Default: 1.0
+The sniper rifle scope's size as a share of vr.scope_size (1 = as usual).
 
 vr.align_left_pitch [real]
 Default: 0.0
