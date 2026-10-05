@@ -108,6 +108,19 @@ for key in ['vr.vehicle_all_forward', 'vr.button_action', 'vr.button_switch_gren
     assert '"%s"' % key in menu, 'saved keys unchanged: ' + key
 print('PASS: %d settings rows fit their widened buttons (vehicle offsets to +-50 cm; Banshee/Pelican right to -9 cm); saved keys unchanged' % len(rows))
 
+# --- reviewed upstream fixes adopted (OpenCE, 2026-10-04/05)
+vsh = (ROOT / 'port/linux/src/nv2a_vsh.c').read_text(encoding='utf-8')
+assert r'"\tif (!(abs(position.w) > 0.0))\n"' in vsh and r'"\t\tposition = vec4(0.0, 0.0, 0.0, -1.0);\n"' in vsh, '3d2c04d6'
+assert 'next_unit_index = NONE;' in (ROOT / 'source/camera/dead_camera.c').read_text(encoding='latin-1'), 'fb1abedd'
+d3d = (ROOT / 'port/linux/src/d3d8_gl.c').read_text(encoding='utf-8')
+bind = fn(d3d, 'bind_textures')
+final_binds = 'for (stage = 0; stage < D3DTSS_MAXSTAGES; stage++)\n\t\tstate_texture(stage, gl_targets[stage], gl_textures[stage]);\n}'
+assert bind.rstrip().endswith(final_binds), '61623e68: bound after the loop'
+assert bind.count('state_texture(') == 1, '61623e68: no bind inside the loop'
+import hashlib
+for name, digest in [('hud_unit_backgrounds__6.png', 'e5a41500712d3636'), ('hud_unit_backgrounds__7.png', '0844386b13d35c96')]:
+    assert hashlib.sha256((ROOT / 'port/assets/hud' / name).read_bytes()).hexdigest().startswith(digest), '3ae09c3d ' + name
+
 # --- version
 assert 'versionCode Math.max(33, buildNumber)' in gradle and '"1.0.7"' in gradle
 assert 'HaloCE Quest test25 candidate 1.0.7' in frame
