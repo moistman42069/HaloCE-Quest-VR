@@ -1,10 +1,10 @@
 # Test24b checkpoint: comfort settings, SPV1 notice
 
-Updated 2026-10-05. Private candidate **test24b, version 1.0.6 / code 32**,
+Updated 2026-10-05. Released build **test24b, version 1.0.6 / code 32**,
 branch `test21-hands-body`, on top of test24 (1.0.6 / code 31; its co-op
 cutscene fix, launcher join steps and default co-op listing are unchanged, see
-[TEST24-PROGRESS.md](TEST24-PROGRESS.md)). No release without explicit owner
-approval.
+[TEST24-PROGRESS.md](TEST24-PROGRESS.md)). Published as v1.0.6 with the
+owner's approval; see [release notes](RELEASE-1.0.6.md).
 
 ## Requests
 

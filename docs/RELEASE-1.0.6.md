@@ -1,27 +1,16 @@
-# Halo CE Quest VR + Android 1.0.6
-
-[Latest release and downloads](https://github.com/moistman42069/HaloCE-Quest-VR/releases/tag/v1.0.6) | [Previous release v1.0.3](https://github.com/moistman42069/HaloCE-Quest-VR/releases/tag/v1.0.3) | [Controls and options](docs/CONTROLS-AND-OPTIONS.md) | [Current state](docs/CURRENT-STATE.md) | [Contributing](CONTRIBUTING.md) | [Credits](CREDITS.md)
-
-> **Campaign co-op is working again** in this release. The build includes fixes for the campaign host crash and for cutscene actors failing to animate on joining clients. Co-op remains a separate two-player mode; see the compatibility notes below.
+# Halo CE Quest VR + Android 1.0.6 — Release notes
 
 ## 1. Installation
 
-**Latest release: v1.0.6 (test24b), version code 32.** These ARM64 APKs use the established signing certificate and install over v1.0.3/code 27 and earlier project builds. Keep a backup of your game data and previous APK before updating.
+**Download the APK for your device first.** v1.0.6 (test24b) uses Android version name **1.0.6 / code 32**, ARM64, Android 9/API 28 or newer. Quest installation requires developer mode and sideloading; open the app from Unknown Sources. Android may ask to allow APK installation from your browser/file manager.
 
-| Your device | Download |
+| Device | Download |
 | --- | --- |
 | Android phone/tablet — flat, touch or gamepad | **[HaloCE-Android-1.0.6.apk](https://github.com/moistman42069/HaloCE-Quest-VR/releases/download/v1.0.6/HaloCE-Android-1.0.6.apk)** |
 | Meta Quest — immersive standalone VR | **[HaloCE-Quest-1.0.6.apk](https://github.com/moistman42069/HaloCE-Quest-VR/releases/download/v1.0.6/HaloCE-Quest-1.0.6.apk)** |
 
-1. **Install the appropriate APK.** On Quest, enable developer mode and sideload with SideQuest or your existing installer; open it from **Unknown Sources**. On Android, open the downloaded APK and allow installation from that source when prompted. Both require ARM64, Android 9/API 28 or newer and compatible graphics. **Quest 3 is the reference headset**; other devices are not equally verified.
-2. **Updating this project? Install over it.** Both APKs retain their package IDs and signing certificate. Do not uninstall or clear app data. Optional ADB command: `adb install -r <apk-file>`. Back up your maps, saves and settings first. Another fork using the same package ID but a different key cannot update in place.
-3. **Supply your own legally obtained Xbox Halo: Combat Evolved data.** No game maps are included. Copy your `.iso`/`.xiso` or extracted game folder to the device. MCC and retail PC installation files are not substitutes for the supported Xbox base data.
-4. **Open the launcher → Game files & versions.** Import an ISO/XISO or select an extracted `maps` folder/game root. Wait for validation, then select **Use** beside the imported set. Allow roughly 1.8 GB for the usual maps, plus the source image, saves and import space. Multiple sets require additional storage.
-5. **Choose Play.** Existing installations remain available as **Existing game data**. In VR, stand normally and press both stick clicks together to recenter. Open the campaign pause menu → **VR Settings** to customize your experience.
+Install over the existing project app; the established signature and code 32 allow updating earlier project builds. **Do not uninstall or clear app data.** Back up maps, saves and settings first. Another fork signed with a different key cannot update in place. Supply your own legally obtained Xbox Halo CE data; no game maps are included. Import an ISO/XISO or extracted game data using launcher **Game files & versions**, wait for validation, then choose **Use**. Existing data under `/sdcard/Documents/HaloCE/maps` is recognized when `ui.map` is present; otherwise each edition uses its app-specific external files. VR and flat installations can coexist but have separate app data.
 
-The launcher includes an offline **Field guide** with controls, settings and credits. Existing Quest data under `/sdcard/Documents/HaloCE/maps` is recognized when `ui.map` is present; otherwise each app uses its own external-files storage. VR and flat can coexist and have separate app data.
-
-**Updating:** install this APK over the existing app. Code 32 and the established certificate support in-place updates from earlier project APKs. Do not uninstall or clear app data; back up maps, saves and settings first. Android may ask you to confirm installation. Android does not allow in-place downgrades; uninstalling can delete app data.
 
 ## 2. New Features / Major Changes
 
@@ -172,23 +161,8 @@ Use **Game files & versions** to import/switch, or place images/extracted roots 
 
 The v1.0.6 assets are ARM64 APKs, internally **version name 1.0.6 / code 32**, using package IDs `com.halo.decomp` and `com.halo.decomp.vr` and the established signing certificate. Android SHA-256: `13a9c827701585cbbb51f38ce41b5a6a899892eceed08c51b91093a1584f490b`. Quest SHA-256: `18441ebf48a8485d35a4f7fe63c7b2f89f9e3ea34c5f0dbe18a71a312c3db2c9`. GitHub provides tagged source archives; `compatibility.json` is the only additional release asset required by the updater. Previous releases remain unchanged.
 
-Candidate checks recorded for test24b include 26 runner suites and 127 cache-format checks passed with 4 unavailable-fixture skips; both APK payloads, signatures, versions and 16 KB alignment were checked. The owner reports campaign co-op working again. Comfort/vignette appearance and SPV1 notice are still worth confirming on-device; automated checks do not certify every level or server. See [v1.0.6 release notes](docs/RELEASE-1.0.6.md), [release provenance](docs/RELEASE-PROVENANCE-1.0.6.md), [test24b delivery](docs/TEST24B-DELIVERY.md), [test24b progress](docs/TEST24B-PROGRESS.md), [test24 co-op cutscene fix](docs/TEST24-PROGRESS.md), [test23 controller changes](docs/TEST23-PROGRESS.md), and [test22 co-op crash fix](docs/TEST22-PROGRESS.md).
+Candidate checks recorded for test24b include 26 runner suites and 127 cache-format checks passed with 4 unavailable-fixture skips; both APK payloads, signatures, versions and 16 KB alignment were checked. The owner reports campaign co-op working again. Comfort/vignette appearance and SPV1 notice are still worth confirming on-device; automated checks do not certify every level or server. See [v1.0.6 release notes](https://github.com/moistman42069/HaloCE-Quest-VR/blob/v1.0.6/docs/RELEASE-1.0.6.md), [release provenance](https://github.com/moistman42069/HaloCE-Quest-VR/blob/v1.0.6/docs/RELEASE-PROVENANCE-1.0.6.md), [test24b delivery](https://github.com/moistman42069/HaloCE-Quest-VR/blob/v1.0.6/docs/TEST24B-DELIVERY.md), [test24b progress](https://github.com/moistman42069/HaloCE-Quest-VR/blob/v1.0.6/docs/TEST24B-PROGRESS.md), [test24 co-op cutscene fix](https://github.com/moistman42069/HaloCE-Quest-VR/blob/v1.0.6/docs/TEST24-PROGRESS.md), [test23 controller changes](https://github.com/moistman42069/HaloCE-Quest-VR/blob/v1.0.6/docs/TEST23-PROGRESS.md), and [test22 co-op crash fix](https://github.com/moistman42069/HaloCE-Quest-VR/blob/v1.0.6/docs/TEST22-PROGRESS.md).
 
 Credits: **Bungie/Microsoft and the original Halo team**; **punpckhdq/halo and bnunu/halo-1 contributors** for the decompilation; **bnunu/cybersecurity halo-ce-universal contributors** for the native port/networking; **astromaddie/Madison** for the OpenXR VR foundation; **ChupathingyCE and halo.milenko.org maintainers** for the directory; **moistman42069 and project contributors/testers** for this integration and refinements. Thanks also to LivingFray/HaloCEVR and the documented IK references, Andiweli's Android rendering work, and SnowyMouse's cache-format documentation.
 
 SDL3, OpenXR, Monocypher, musl, KCP, miniupnpc, Mbed TLS, tomlc17, stb, extract-xiso and other inherited dependencies retain their licenses. **This product includes software developed by in &lt;in@fishtank.com&gt;.** Full credits and notices are included inside each APK under **Field guide → Credits & licenses**, and in the tagged repository. This is an unofficial community project; supply your own game data.
-
-## Storage reference
-
-| Data | Location |
-| --- | --- |
-| Quest shared game root, when present | `/sdcard/Documents/HaloCE` |
-| Quest app external root | `/sdcard/Android/data/com.halo.decomp.vr/files` |
-| Flat app external root | `/sdcard/Android/data/com.halo.decomp/files` |
-| Maps/config | `maps/`, `config.toml` under the active root |
-| Saves | Preserve app `save/` and any shared-root save data; consult startup log/config for active save root |
-| Public launch logs | `Download/HaloCE/halo_log_<date>_<time>_<pid>.txt` |
-
-Only VR selects the shared root, and only when `maps/ui.map` exists. Editing an inactive config has no effect. Android file-manager restrictions may require the system picker or authorized ADB access.
-
-Managed sets and their saves live under `game-versions/p-<id>` beneath the selected base. Quit before editing configuration manually.

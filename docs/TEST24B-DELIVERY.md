@@ -1,10 +1,12 @@
-# Test24b — 1.0.6 candidate (private): comfort settings, SPV1 notice
+# Test24b — 1.0.6 delivery: comfort settings, SPV1 notice
 
-Not a release. The public release is v1.0.3 (test21b, code 27). Do not
-publish without explicit owner approval. Details:
-[TEST24B-PROGRESS.md](TEST24B-PROGRESS.md). Everything in test24 (co-op
-cutscene fix, launcher join steps, co-op listed by default) is included:
-[TEST24-DELIVERY.md](TEST24-DELIVERY.md).
+Published as GitHub Latest release **v1.0.6** after owner approval on
+2026-10-05. Release APKs are named `HaloCE-Android-1.0.6.apk` and
+`HaloCE-Quest-1.0.6.apk`; internal version is **1.0.6 / code 32**. See
+[`RELEASE-1.0.6.md`](RELEASE-1.0.6.md) and
+[`RELEASE-PROVENANCE-1.0.6.md`](RELEASE-PROVENANCE-1.0.6.md). All changes in
+test24 (co-op cutscene fix, launcher join steps, co-op listed by default) are
+included: [TEST24-DELIVERY.md](TEST24-DELIVERY.md).
 
 ## Installation
 
