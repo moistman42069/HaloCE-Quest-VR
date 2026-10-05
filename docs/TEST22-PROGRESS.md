@@ -1,6 +1,6 @@
 # Test22 checkpoint: co-op crash, upstream review, vehicle view, ammo display, scopes
 
-Updated 2026-10-04. Private candidate **test22, 1.0.2 / code 28**, branch
+Updated 2026-10-04. Private candidate **test22, version 1.0.4 / code 29** (the first test22 pair was 1.0.2 / code 28), branch
 `test21-hands-body` (after the published v1.0.3 = test21b, code 27). No
 release without explicit owner approval.
 

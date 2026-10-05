@@ -4,7 +4,7 @@
 
 The owner authorized publishing the signed test21b APK bytes as the new GitHub Latest under semantic tag `v1.0.3`, with standard 1.0.3 asset names so GitHub sorts it correctly and the updater resolves the files. APK internals remain version name **1.0.2 / code 27**; code 27 installs over prior v1.0.2/code 25. Both earlier releases (`v1.0.2` and `halo-ce-quest-test21b`) remain intact. This is not headset acceptance: no phone/headset session was performed for test21b. See `docs/RELEASE-1.0.3.md`, `docs/RELEASE-PROVENANCE-1.0.3.md` and the preserved `docs/RELEASE-PROVENANCE-TEST21B.md`.
 
-**Active candidate: test22 (1.0.2 / code 28), see docs/TEST22-PROGRESS.md and docs/TEST22-DELIVERY.md; not released.**
+**Active candidate: test22 (version 1.0.4 / code 29), see docs/TEST22-PROGRESS.md and docs/TEST22-DELIVERY.md; not released.**
 
 **Published latest build: v1.0.3 (test21b runtime, internal 1.0.2 / code 27; test21 was code 26), branch `test21-hands-body`; see `docs/TEST21B-PROGRESS.md`, `docs/TEST21B-DELIVERY.md` and `docs/TEST21-PROGRESS.md`. It still awaits headset tests.** **Current active handoff (2026-10-04):** read `docs/ACTIVE-WORK-CHECKPOINT.md` and `docs/REPORT-2026-10-04-HANDS-IK-REGRESSION.md` before starting new work. The owner reports cut-off/floating hands returning and arm IK not following body turns. Do not presume v1.0.2 caused this: supplied logs include test20d and test20e runtime banners, while only the latter's launcher log explicitly confirms installed code 25; verify installed APK hash/version/source. Keep all raw logs/video private. The release is published; preserve the regression investigation and do not claim test21b headset acceptance until the owner reports results.
 
