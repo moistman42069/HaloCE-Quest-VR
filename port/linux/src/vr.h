@@ -210,6 +210,37 @@ enum
 	VR_GUN_CLASSES
 };
 #define VR_GUN_AIM_LIMIT 10.0f
+/* test23: the Quest's remappable buttons (vr.button_*): an action's
+button among VR_BUTTON_SOURCE_* ("hold": switch grenades by holding the
+grenade button) */
+enum
+{
+	VR_BUTTON_ACTION_JUMP,
+	VR_BUTTON_ACTION_ACTION,
+	VR_BUTTON_ACTION_MELEE,
+	VR_BUTTON_ACTION_CROUCH,
+	VR_BUTTON_ACTION_SWITCH_WEAPON,
+	VR_BUTTON_ACTION_GRENADE,
+	VR_BUTTON_ACTION_SWITCH_GRENADE,
+	VR_BUTTON_ACTIONS
+};
+enum
+{
+	VR_BUTTON_SOURCE_NONE,
+	VR_BUTTON_SOURCE_A,
+	VR_BUTTON_SOURCE_B,
+	VR_BUTTON_SOURCE_X,
+	VR_BUTTON_SOURCE_Y,
+	VR_BUTTON_SOURCE_RIGHT_STICK,
+	VR_BUTTON_SOURCE_LEFT_STICK,
+	VR_BUTTON_SOURCE_GRIP,
+	VR_BUTTON_SOURCE_HOLD,
+	VR_BUTTON_SOURCES
+};
+const char *vr_button_action_key(int action);
+int vr_button_default(int action);
+const char *vr_button_source_value(int source);
+int vr_button_source_of(const char *value, int fallback);
 int vr_gun_class_of_name(const char *name);
 void vr_set_gun_class(int kind);
 int vr_gun_class(void);

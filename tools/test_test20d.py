@@ -249,6 +249,13 @@ pages = ''.join(block(menu, f'static struct vr_menu_setting const {name}[] =', '
                 for name in ('vr_menu_controls', 'vr_menu_body', 'vr_menu_vr', 'vr_menu_hands'))
 cfg = ',\n'.join('{"%s",%d,"%s"}' % (k, {'_config_boolean': 0, '_config_integer': 1, '_config_real': 2}.get(v[0], 3), v[1])
                  for k, v in table.items())
+# test23: the remappable buttons' names, which the menu's value lookup reads
+vr_h = (ROOT / 'port/linux/src/vr.h').read_text(encoding='utf-8')
+button_names = block(vr_h, 'enum\n{\n\tVR_BUTTON_ACTION_JUMP,', '};') + block(vr_h, 'enum\n{\n\tVR_BUTTON_SOURCE_NONE,', '};') + \
+    ''.join(block(frame, 'static const %s' % t, '};') for t in ['char *const button_action_keys', 'char *const button_source_values',
+                                                              'int button_defaults']) + \
+    ''.join(fn(frame, f) for f in ['vr_button_action_key', 'vr_button_default', 'vr_button_source_value', 'vr_button_source_of'])
+buttons = button_names + fn(menu, 'vr_menu_button_action') + fn(menu, 'vr_menu_button_source')
 run('menu', common + r'''
 typedef int boolean;
 #define TRUE 1
@@ -267,7 +274,7 @@ static int config_matches(const char*n,const char*t){struct cfg*c=find(n);switch
 static int config_write_text(const char*n,const char*t){struct cfg*c=find(n);if(c->type==1)return 0;snprintf(c->text,64,"%s",t);return 1;}
 ''' + block(menu, 'enum\n{\n\t_vr_setting_boolean,', '};') + '#define VR_MENU_MAXIMUM_VALUES 12\n' +
     block(menu, 'struct vr_menu_setting\n{', '};') + pages + fn(menu, 'vr_menu_multi') + fn(menu, 'vr_menu_hand_angle') +
-    fn(menu, 'vr_menu_value_index') + r'''
+    buttons + fn(menu, 'vr_menu_value_index') + r'''
 static struct { struct vr_menu_setting const *rows; size_t count; } pages[]={
  {vr_menu_controls,NUMBEROF(vr_menu_controls)},{vr_menu_body,NUMBEROF(vr_menu_body)},{vr_menu_vr,NUMBEROF(vr_menu_vr)},{vr_menu_hands,NUMBEROF(vr_menu_hands)}};
 int main(void){
@@ -300,13 +307,17 @@ host = r'''
 enum { HAND_LOOSE, HAND_HELD, HAND_EMPTY };
 static struct { struct { uint32_t hand_buttons[2], buttons; float trigger[2]; int64_t predicted_display_period; } frame;
  int layout_vr, weapon_hand, touch_layout, zoom_down, view_recentred, back_pulse, heading_valid, x_hold_switched, controls_mirrored,
- grip_held[2], in_holster, hand_state, physical; unsigned pad_buttons; float pad_trigger[2]; double x_held, grenade_pulse, view_held; } vr;
+ grip_held[2], in_holster, hand_state, physical, button_source[VR_BUTTON_ACTIONS]; unsigned pad_buttons; float pad_trigger[2];
+ double x_held, grenade_pulse, view_held; } vr;
 static int recentres, buzzes;
 static int physical_weapons(void){return vr.physical;}
 static void host_xr_recenter(void){recentres++;}
 static void vr_haptic(int h,float a,float s){(void)h;(void)a;(void)s;buzzes++;}
 '''
-run('mirror', common + host + fn(frame, 'layout_controls') + r'''
+# test23: the Quest's buttons come from the remappable table, at its defaults here
+run('mirror', common + '#include <string.h>\n#include "port/android/include/halo_android_abi.h"\n' + button_names + host +
+    fn(frame, 'touch_source_down') + fn(frame, 'touch_buttons') + fn(frame, 'layout_controls') + r'''
+static void defaults(void){for(int a=0;a<VR_BUTTON_ACTIONS;a++)vr.button_source[a]=vr_button_default(a);}
 static unsigned seed=3;
 static unsigned rnd(void){seed=seed*1664525u+1013904223u;return seed>>8;}
 int main(void){
@@ -320,7 +331,7 @@ int main(void){
    if(rnd()%3==0){sl[n]=n?sl[n-1]:0;sr[n]=n?sr[n-1]:0;} /* holds */
    tl[n]=(rnd()%100)/99.f;tr[n]=(rnd()%100)/99.f;gl[n]=rnd()&1;gr[n]=rnd()&1;}
   for(int side=0;side<2;side++){
-   memset(&vr,0,sizeof vr);recentres=0;vr.layout_vr=1;vr.touch_layout=touch;vr.physical=phys;vr.in_holster=holster;vr.hand_state=state;
+   memset(&vr,0,sizeof vr);defaults();recentres=0;vr.layout_vr=1;vr.touch_layout=touch;vr.physical=phys;vr.in_holster=holster;vr.hand_state=state;
    vr.frame.predicted_display_period=13888889;vr.controls_mirrored=side;vr.weapon_hand=side?0:1;
    for(int n=0;n<60;n++){
     /* side 1: the same hands, but the left-handed player's are the other way round */

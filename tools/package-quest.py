@@ -143,8 +143,15 @@ def main():
                     if marker not in guest: raise SystemExit("Test22 broker or tick marker missing: " + repr(marker))
             if candidate_at_least(args.label, 22) and vr:
                 for marker in [b"SCOPES", b"vr.scope_pistol_forward", b"vr.scope_sniper_scale", b"RESET SCOPES",
-                               b"vr: shot (", b"test22 candidate"]:
+                               b"vr: shot (", b"adjustable scopes"]:
                     if marker not in guest: raise SystemExit("Test22 scope or diagnostic marker missing: " + repr(marker))
+            if candidate_at_least(args.label, 23):
+                if b"client dropped presentation" not in guest:
+                    raise SystemExit("Test23 co-op cutscene diagnostic missing")
+            if candidate_at_least(args.label, 23) and vr:
+                for marker in [b"BUTTONS", b"RESET BUTTONS", b"GRIP (LOCKED)", b"HOLD GRENADE", b"vr.button_grenade",
+                               b"vr.button_switch_grenade", b"that button does both"]:
+                    if marker not in guest: raise SystemExit("Test23 button remapping marker missing: " + repr(marker))
             if candidate_at_least(args.label, 21) and vr:
                 for marker in [b"FLOAT + ARMS", b"AUTO LOCK", b"SWING + ONLINE", b"support grip locked automatically",
                                b"vr.melee_multiplayer", b"vr.two_hand_auto_applied", b"physical melee",

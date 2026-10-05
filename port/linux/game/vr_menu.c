@@ -146,6 +146,11 @@ enum
 	/* test22: the pistol's and sniper rifle's scope places and sizes back
 	to their defaults */
 	_vr_setting_reset_scopes,
+	/* test23: a Quest button for an action (key vr.button_*, values
+	VR_BUTTON_SOURCE_*); a button another action has is swapped to it, and
+	all of them back to their defaults */
+	_vr_setting_button,
+	_vr_setting_reset_buttons,
 };
 
 #define VR_MENU_MAXIMUM_VALUES 12
@@ -302,6 +307,21 @@ static struct vr_menu_setting const vr_menu_scopes[] =
     { "RESET SCOPES", "scopes", _vr_setting_reset_scopes, 0, { { NULL,NULL } } },
 };
 
+/* test23: the Quest's buttons (vr.button_*), remappable. "A"/"B" are the
+gun hand's lower/upper buttons and "X"/"Y" the other hand's (mirrored with
+Mirror Controls); the grip is the gun hand's, with locked weapons only */
+static struct vr_menu_setting const vr_menu_buttons[] =
+{
+    { "JUMP", "vr.button_jump", _vr_setting_button, 8, { { "A", "a" }, { "B", "b" }, { "X", "x" }, { "Y", "y" }, { "R STICK", "right_stick" }, { "L STICK", "left_stick" }, { "GRIP (LOCKED)", "grip" }, { "NONE", "none" } } },
+    { "ACTION / RELOAD", "vr.button_action", _vr_setting_button, 8, { { "A", "a" }, { "B", "b" }, { "X", "x" }, { "Y", "y" }, { "R STICK", "right_stick" }, { "L STICK", "left_stick" }, { "GRIP (LOCKED)", "grip" }, { "NONE", "none" } } },
+    { "MELEE", "vr.button_melee", _vr_setting_button, 8, { { "A", "a" }, { "B", "b" }, { "X", "x" }, { "Y", "y" }, { "R STICK", "right_stick" }, { "L STICK", "left_stick" }, { "GRIP (LOCKED)", "grip" }, { "NONE", "none" } } },
+    { "CROUCH", "vr.button_crouch", _vr_setting_button, 8, { { "A", "a" }, { "B", "b" }, { "X", "x" }, { "Y", "y" }, { "R STICK", "right_stick" }, { "L STICK", "left_stick" }, { "GRIP (LOCKED)", "grip" }, { "NONE", "none" } } },
+    { "SWITCH WEAPON", "vr.button_switch_weapon", _vr_setting_button, 8, { { "A", "a" }, { "B", "b" }, { "X", "x" }, { "Y", "y" }, { "R STICK", "right_stick" }, { "L STICK", "left_stick" }, { "GRIP (LOCKED)", "grip" }, { "NONE", "none" } } },
+    { "GRENADE", "vr.button_grenade", _vr_setting_button, 8, { { "A", "a" }, { "B", "b" }, { "X", "x" }, { "Y", "y" }, { "R STICK", "right_stick" }, { "L STICK", "left_stick" }, { "GRIP (LOCKED)", "grip" }, { "NONE", "none" } } },
+    { "SWITCH GRENADE", "vr.button_switch_grenade", _vr_setting_button, 9, { { "HOLD GRENADE", "hold" }, { "A", "a" }, { "B", "b" }, { "X", "x" }, { "Y", "y" }, { "R STICK", "right_stick" }, { "L STICK", "left_stick" }, { "GRIP (LOCKED)", "grip" }, { "NONE", "none" } } },
+    { "RESET BUTTONS", "buttons", _vr_setting_reset_buttons, 0, { { NULL,NULL } } },
+};
+
 static struct vr_menu_setting const vr_menu_align_left[] =
 {
     { "PITCH", "vr.align_left_pitch", _vr_setting_degrees, 0, { { NULL,NULL } } },
@@ -338,6 +358,7 @@ static struct vr_menu_page
 } const vr_menu_pages[] =
 {
 	{ "CONTROLS", vr_menu_controls, NUMBEROF(vr_menu_controls) },
+	{ "BUTTONS", vr_menu_buttons, NUMBEROF(vr_menu_buttons) },
 	{ "BODY", vr_menu_body, NUMBEROF(vr_menu_body) },
 	{ "HANDS + GUN", vr_menu_hands, NUMBEROF(vr_menu_hands) },
 	{ "SCOPES", vr_menu_scopes, NUMBEROF(vr_menu_scopes) },
@@ -404,6 +425,63 @@ static double vr_menu_hand_angle(char const *axis)
 	return (left ? value * sign : value) + 0.0; /* never "-0" */
 }
 
+/* test23: a remappable button's action (VR_BUTTON_ACTION_*, NONE: not
+one), and the button it has, as the game reads it */
+static int vr_menu_button_action(char const *key)
+{
+	int action;
+
+	for (action = 0; action < VR_BUTTON_ACTIONS; action++)
+	{
+		if (!strcmp(key, vr_button_action_key(action)))
+			return action;
+	}
+	return NONE;
+}
+
+static int vr_menu_button_source(int action)
+{
+	return vr_button_source_of(config_string(vr_button_action_key(action)), vr_button_default(action));
+}
+
+/* test23: `action` takes `source`; another action on that button takes
+this one's old button (the switch grenade's "hold" is no button: the other
+is left with none), so no button ever does two actions. The grenade put on
+another action's button leaves "switch grenade" to holding it */
+static boolean vr_menu_button_set(int action, int source)
+{
+	int other, old = vr_menu_button_source(action), displaced = FALSE;
+	boolean written = config_write_string(vr_button_action_key(action), vr_button_source_value(source));
+
+	if (source == VR_BUTTON_SOURCE_NONE || source == VR_BUTTON_SOURCE_HOLD)
+		return written;
+	for (other = 0; other < VR_BUTTON_ACTIONS; other++)
+	{
+		int moved;
+
+		if (other == action || vr_menu_button_source(other) != source)
+			continue;
+		moved = old == VR_BUTTON_SOURCE_HOLD ? VR_BUTTON_SOURCE_NONE : old;
+		if (other == VR_BUTTON_ACTION_SWITCH_GRENADE && action == VR_BUTTON_ACTION_GRENADE)
+			moved = VR_BUTTON_SOURCE_HOLD;
+		displaced |= moved == old;
+		written = config_write_string(vr_button_action_key(other), vr_button_source_value(moved)) && written;
+		platform_log("vr: %s was on %s, moved to %s", vr_button_action_key(other),
+			vr_button_source_value(source), vr_button_source_value(moved));
+	}
+	/* the grip throws while held and cannot be held to switch grenades:
+	switching takes the grenade's old button (the layout locked weapons had
+	before 1.0.5), unless the grip's old action just took that button */
+	if (action == VR_BUTTON_ACTION_GRENADE && source == VR_BUTTON_SOURCE_GRIP && !displaced &&
+		vr_menu_button_source(VR_BUTTON_ACTION_SWITCH_GRENADE) == VR_BUTTON_SOURCE_HOLD &&
+		old != VR_BUTTON_SOURCE_GRIP)
+	{
+		written = config_write_string(vr_button_action_key(VR_BUTTON_ACTION_SWITCH_GRENADE), vr_button_source_value(old)) && written;
+		platform_log("vr: vr.button_switch_grenade moved to %s (the grip cannot be held to switch)", vr_button_source_value(old));
+	}
+	return written;
+}
+
 /* the setting's value now, as an index into its values (NONE: none of them) */
 static long vr_menu_value_index(
 	struct vr_menu_setting const *setting)
@@ -432,6 +510,10 @@ static long vr_menu_value_index(
 			break;
 		case _vr_setting_string:
 			if (!strcmp(config_string(setting->key), value))
+				return index;
+			break;
+		case _vr_setting_button:
+			if (!strcmp(vr_button_source_value(vr_menu_button_source(vr_menu_button_action(setting->key))), value))
 				return index;
 			break;
 		}
@@ -905,7 +987,7 @@ boolean vr_menu_setting_text(
                 setting->type!=_vr_setting_degrees?"CM":"DEG");
         } else if(setting->type == _vr_setting_reset_alignment || setting->type == _vr_setting_flip_alignment ||
             setting->type == _vr_setting_reset_hand || setting->type == _vr_setting_reset_weapon ||
-            setting->type == _vr_setting_reset_scopes)
+            setting->type == _vr_setting_reset_scopes || setting->type == _vr_setting_reset_buttons)
             snprintf(line,sizeof(line),"%s: APPLY",setting->label);
         else
 		snprintf(line, sizeof(line), setting->type == _vr_setting_real ? "%s: < %s >" : "%s: %s", setting->label,
@@ -948,6 +1030,23 @@ boolean vr_menu_setting_change(
             snprintf(key,sizeof(key),"vr.scope_%s_%s",kinds[kind],parts[part]);
             written=config_write_real(key,config_default_real(key))&&written; }
         vr_reload_settings(); platform_log("vr: reset scope places and sizes%s",written?"":" (save failed)");
+        return TRUE;
+    }
+    if(setting->type == _vr_setting_reset_buttons) {
+        int action;
+        written=TRUE;
+        for(action=0;action<VR_BUTTON_ACTIONS;action++)
+            written=config_write_string(vr_button_action_key(action),vr_button_source_value(vr_button_default(action)))&&written;
+        vr_reload_settings(); platform_log("vr: reset buttons to their defaults%s",written?"":" (save failed)");
+        return TRUE;
+    }
+    if(setting->type == _vr_setting_button) {
+        int action=vr_menu_button_action(setting->key);
+        if(action==NONE) return TRUE;
+        value_index=vr_menu_value_index(setting);
+        value_index=value_index==NONE?0:(value_index+step+setting->value_count)%setting->value_count;
+        written=vr_menu_button_set(action,vr_button_source_of(setting->values[value_index].value,VR_BUTTON_SOURCE_NONE));
+        vr_reload_settings(); platform_log("vr: %s set to %s%s",setting->key,setting->values[value_index].value,written?"":" (save failed)");
         return TRUE;
     }
     if(setting->type == _vr_setting_gun_aim) {

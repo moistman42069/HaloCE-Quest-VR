@@ -76,6 +76,8 @@ void unit_network_forget_weapon(long unit_index, short slot);
 void network_player_detach_unit(long player_index);
 /* render_interpolation.c's */
 void render_interpolation_correct_object(long object_index, real_vector3d const *offset);
+/* cinematics.c's */
+boolean cinematic_in_progress(void);
 /* cache_files.c's */
 boolean tag_index_is_group(long tag_index, long group_tag);
 
@@ -690,6 +692,25 @@ boolean network_objects_reconcile(
 	/* (what cannot be, from a message: not taken) */
 	if (!distributed_transform_valid(position, forward, up, velocity, angular_velocity, &valid_forward, &valid_up))
 		return FALSE;
+	/* test23: a campaign client in a cutscene puts a character no player
+	controls exactly where the host has it, at once, as the host's own
+	cutscene does: the cutscene teleports its actors between shots, which
+	the gameplay smoothing below (half of the way each tick, then drawn
+	gliding) turned into slides, the bipeds dragged into their airborne
+	pose (co-op a10, the Quest a client: T-posing and sliding, while the
+	hosting phone was right). Players, vehicles and gameplay unchanged */
+	if (network_campaign_client() && cinematic_in_progress() &&
+		TEST_FLAG(_object_mask_unit, object->object.type) &&
+		((struct unit_datum *)object)->unit.player_index == NONE &&
+		object->object.parent_object_index == NONE)
+	{
+		object_set_position(object_index, position, &valid_forward, &valid_up);
+		if (velocity)
+			object->object.translational_velocity = *velocity;
+		if (angular_velocity)
+			object->object.angular_velocity = *angular_velocity;
+		return FALSE;
+	}
 	dx = position->x - object->object.position.x;
 	dy = position->y - object->object.position.y;
 	dz = position->z - object->object.position.z;

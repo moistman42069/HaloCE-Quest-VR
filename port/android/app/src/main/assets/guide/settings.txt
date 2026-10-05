@@ -745,6 +745,41 @@ vr.scope_sniper_scale [real]
 Default: 1.0
 The sniper rifle scope's size as a share of vr.scope_size (1 = as usual).
 
+vr.button_jump [string]
+Default: "a"
+Quest: the button that jumps: a, b (the gun hand's lower and upper), x, y (the other hand's),
+right_stick, left_stick, grip or none.
+
+vr.button_action [string]
+Default: "b"
+Quest: the button for action and reload: a, b (the gun hand's lower and upper), x, y (the other hand's),
+right_stick, left_stick, grip or none.
+
+vr.button_melee [string]
+Default: "right_stick"
+Quest: the button that melees: a, b (the gun hand's lower and upper), x, y (the other hand's),
+right_stick, left_stick, grip or none.
+
+vr.button_crouch [string]
+Default: "left_stick"
+Quest: the button that crouches: a, b (the gun hand's lower and upper), x, y (the other hand's),
+right_stick, left_stick, grip or none.
+
+vr.button_switch_weapon [string]
+Default: "y"
+Quest: the button that switches weapons: a, b (the gun hand's lower and upper), x, y (the other hand's),
+right_stick, left_stick, grip or none.
+
+vr.button_grenade [string]
+Default: "x"
+Quest: the button that throws a grenade ("grip": the gun hand's grip, locked weapons only, throws while held): a, b (the gun hand's lower and upper), x, y (the other hand's),
+right_stick, left_stick, grip or none.
+
+vr.button_switch_grenade [string]
+Default: "hold"
+Quest: the button that switches grenades, or "hold" (default): holding the grenade
+button switches and tapping it throws. Also a, b, x, y, right_stick, left_stick, grip or none.
+
 vr.align_left_pitch [real]
 Default: 0.0
 Left controller tracking correction, local pitch: degrees (-180..180). Moves hand AND gun;

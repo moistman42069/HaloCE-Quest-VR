@@ -201,7 +201,16 @@ void network_campaign_script_receive(void const *entries, short count)
 				{ valid = FALSE; break; }
 				entry.arguments[argument] = (long)(entry.strings + offset);
 			}
-		if (!valid || !hs_campaign_call_valid(function, entry.arguments)) continue;
+		if (!valid || !hs_campaign_call_valid(function, entry.arguments))
+		{
+			/* test23: a dropped cue said, a few times a game: a cutscene
+			animation for an object this client does not have plays nowhere */
+			static unsigned long dropped;
+			if (++dropped <= 8 || dropped % 100 == 0)
+				platform_log("campaign: client dropped presentation %s (%lu dropped): an argument it cannot use",
+					hs_function_get(function)->name, dropped);
+			continue;
+		}
 		hs_campaign_replay(function, entry.arguments);
 	}
 }

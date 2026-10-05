@@ -151,6 +151,9 @@ static struct
 	float finger_velocity[2][4];
 	float l_pose_held[2];
 	double x_held, grenade_pulse;
+	/* test23: the Quest's buttons, remappable (vr.button_*): which button
+	(VR_BUTTON_SOURCE_*) does each action (VR_BUTTON_ACTION_*) */
+	int button_source[VR_BUTTON_ACTIONS];
 	/* the Quest's Touch controllers: two face buttons a hand, no bumpers
 	(the grip throws, Y switches weapons) */
 	int touch_layout;
@@ -539,6 +542,27 @@ void vr_reload_settings(void)
 	vr.melee_speed = (float)config_real("vr.melee_speed");
 	vr.melee_multiplayer = config_boolean("vr.melee_multiplayer");
 	{
+		int action;
+
+		for (action = 0; action < VR_BUTTON_ACTIONS; action++)
+			vr.button_source[action] = vr_button_source_of(config_string(vr_button_action_key(action)),
+				vr_button_default(action));
+		/* the menu swaps a taken button; a config edited by hand may still
+		give one button two actions: both happen, and the log says so */
+		for (action = 0; action < VR_BUTTON_ACTIONS; action++)
+		{
+			int other, source = vr.button_source[action];
+
+			for (other = action + 1; source != VR_BUTTON_SOURCE_NONE && source != VR_BUTTON_SOURCE_HOLD &&
+				other < VR_BUTTON_ACTIONS; other++)
+			{
+				if (vr.button_source[other] == source)
+					platform_log("vr: warning: %s and %s are both on %s; that button does both",
+						vr_button_action_key(action), vr_button_action_key(other), vr_button_source_value(source));
+			}
+		}
+	}
+	{
 		char key[64];
 		int kind;
 
@@ -664,7 +688,7 @@ void vr_initialize(void)
 		return;
 	vr.initialized = 1;
 	config_vr_vehicle_defaults();
-	platform_log("vr: HaloCE Quest test22 candidate (co-op campaign host crash fixed, steady first-person vehicle view, left-hand ammo display, adjustable scopes, shot diagnostics; test21b: floating hands restored, torso-following arms, neck-pivot full body, auto two-hand lock, horn, online melee off, two-hand gun roll, pistol shots from the hand, reticle converges as shots do, per-gun aim, horn from either stick)");
+	platform_log("vr: HaloCE Quest test23 candidate 1.0.5 (co-op cutscenes on clients, remappable Quest buttons with the grenade on X; test22: co-op campaign host crash fixed, steady first-person vehicle view, left-hand ammo display, adjustable scopes, shot diagnostics; test21b: floating hands restored, torso-following arms, neck-pivot full body, auto two-hand lock, horn, online melee off, two-hand gun roll, pistol shots from the hand, reticle converges as shots do, per-gun aim, horn from either stick)");
 	if (!config_boolean("vr.enabled"))
 	{
 		platform_log("vr: off (vr.enabled)");
@@ -833,6 +857,51 @@ const char *vr_gun_class_key(int kind)
 	return kind >= 0 && kind < VR_GUN_CLASSES ? gun_classes[kind].key : NULL;
 }
 
+/* test23: the remappable buttons' names: config keys, values and defaults */
+static const char *const button_action_keys[VR_BUTTON_ACTIONS] =
+{
+	"vr.button_jump", "vr.button_action", "vr.button_melee", "vr.button_crouch",
+	"vr.button_switch_weapon", "vr.button_grenade", "vr.button_switch_grenade"
+};
+static const char *const button_source_values[VR_BUTTON_SOURCES] =
+{
+	"none", "a", "b", "x", "y", "right_stick", "left_stick", "grip", "hold"
+};
+static const int button_defaults[VR_BUTTON_ACTIONS] =
+{
+	VR_BUTTON_SOURCE_A, VR_BUTTON_SOURCE_B, VR_BUTTON_SOURCE_RIGHT_STICK, VR_BUTTON_SOURCE_LEFT_STICK,
+	VR_BUTTON_SOURCE_Y, VR_BUTTON_SOURCE_X, VR_BUTTON_SOURCE_HOLD
+};
+
+const char *vr_button_action_key(int action)
+{
+	return action >= 0 && action < VR_BUTTON_ACTIONS ? button_action_keys[action] : "";
+}
+
+int vr_button_default(int action)
+{
+	return action >= 0 && action < VR_BUTTON_ACTIONS ? button_defaults[action] : VR_BUTTON_SOURCE_NONE;
+}
+
+const char *vr_button_source_value(int source)
+{
+	return source >= 0 && source < VR_BUTTON_SOURCES ? button_source_values[source] : "none";
+}
+
+/* a value's source, `fallback` for an unknown one ("hold" only switches
+grenades) */
+int vr_button_source_of(const char *value, int fallback)
+{
+	int source;
+
+	for (source = 0; value && source < VR_BUTTON_SOURCES; source++)
+	{
+		if (!strcmp(value, button_source_values[source]))
+			return source;
+	}
+	return fallback;
+}
+
 void vr_set_network_game(int network)
 {
 	network = network != 0;
@@ -986,6 +1055,74 @@ buttons do (input_abstraction.c): A jump, B melee, X action and reload,
 Y switch weapons, white flashlight, black switch grenades, left trigger
 grenade, right trigger fire, left stick crouch, right stick zoom, start,
 back */
+/* test23: whether a remappable source is down: "right" is the major
+hand's buttons, "left" the other's (as layout_controls has them); the grip
+is the weapon hand's, a button only with locked weapons (physical weapons
+hold the gun with it) and away from the holsters (where it draws) */
+static int touch_source_down(int source, unsigned int right, unsigned int left)
+{
+	switch (source)
+	{
+	case VR_BUTTON_SOURCE_A: return (right & HALO_XR_HAND_SOUTH) != 0;
+	case VR_BUTTON_SOURCE_B: return (right & HALO_XR_HAND_EAST) != 0;
+	case VR_BUTTON_SOURCE_X: return (left & HALO_XR_HAND_SOUTH) != 0;
+	case VR_BUTTON_SOURCE_Y: return (left & HALO_XR_HAND_EAST) != 0;
+	case VR_BUTTON_SOURCE_RIGHT_STICK: return (right & HALO_XR_HAND_STICK) != 0;
+	case VR_BUTTON_SOURCE_LEFT_STICK: return (left & HALO_XR_HAND_STICK) != 0;
+	case VR_BUTTON_SOURCE_GRIP: return !physical_weapons() && vr.grip_held[vr.weapon_hand] && !vr.in_holster;
+	}
+	return 0;
+}
+
+/* test23: the Quest's buttons from the remappable table (vr.button_*):
+jump A, action/reload B, melee the right stick, crouch the left stick,
+switch weapons Y, grenade X (a tap throws; held, X switches grenades,
+"hold"), as the Quest always had them but the grenade, which was the grip
+with locked weapons (a locked gun's grip now does nothing but draw at a
+holster). A grenade on the grip throws while it is held, as it used to */
+static unsigned int touch_buttons(unsigned int right, unsigned int left, double seconds, int *grenade_down)
+{
+	static const unsigned int pad[VR_BUTTON_ACTIONS] =
+	{
+		HALO_XR_BUTTON_A, HALO_XR_BUTTON_X, HALO_XR_BUTTON_B, HALO_XR_BUTTON_LEFT_THUMB,
+		HALO_XR_BUTTON_Y, 0, HALO_XR_BUTTON_BLACK
+	};
+	unsigned int buttons = 0;
+	int action, grenade = vr.button_source[VR_BUTTON_ACTION_GRENADE];
+	int hold_switches = vr.button_source[VR_BUTTON_ACTION_SWITCH_GRENADE] == VR_BUTTON_SOURCE_HOLD &&
+		grenade != VR_BUTTON_SOURCE_GRIP;
+
+	for (action = 0; action < VR_BUTTON_ACTIONS; action++)
+	{
+		if (action != VR_BUTTON_ACTION_GRENADE && pad[action] &&
+			touch_source_down(vr.button_source[action], right, left))
+			buttons |= pad[action];
+	}
+	if (!hold_switches)
+	{
+		*grenade_down = touch_source_down(grenade, right, left);
+		return buttons;
+	}
+	/* a tap throws, a hold switches grenades */
+	if (touch_source_down(grenade, right, left))
+	{
+		vr.x_held += seconds;
+		if (vr.x_held >= 0.4 && !vr.x_hold_switched)
+		{
+			buttons |= HALO_XR_BUTTON_BLACK;
+			vr.x_hold_switched = 1;
+		}
+	}
+	else
+	{
+		if (vr.x_held > 0.0 && !vr.x_hold_switched)
+			vr.grenade_pulse = 0.1;
+		vr.x_held = 0.0;
+		vr.x_hold_switched = 0;
+	}
+	return buttons;
+}
+
 static void layout_controls(void)
 {
 	static const float zoom_on = 0.6f, zoom_off = 0.45f;
@@ -995,6 +1132,7 @@ static void layout_controls(void)
 	unsigned int right = vr.frame.hand_buttons[major], left = vr.frame.hand_buttons[1 - major];
 	unsigned int buttons = 0;
 	double seconds = vr.frame.predicted_display_period * 1e-9;
+	int grenade_down = 0;
 
 	if (!vr.layout_vr)
 	{
@@ -1002,15 +1140,24 @@ static void layout_controls(void)
 		memcpy(vr.pad_trigger, vr.frame.trigger, sizeof(vr.pad_trigger));
 		return;
 	}
+	if (vr.frame.hand_buttons[1 - vr.weapon_hand] & HALO_XR_HAND_BUMPER)
+		buttons |= HALO_XR_BUTTON_WHITE;                                    /* flashlight, the off hand's */
+	if ((right | left) & HALO_XR_HAND_MENU) buttons |= HALO_XR_BUTTON_START;
+	/* test23: the Quest's Touch controllers take their buttons from the
+	remappable table (vr.button_*); other controllers keep their layout */
+	if (vr.touch_layout)
+	{
+		buttons |= touch_buttons(right, left, seconds, &grenade_down);
+		left &= ~HALO_XR_HAND_EAST;
+	}
+	else
+	{
 	if (right & HALO_XR_HAND_SOUTH) buttons |= HALO_XR_BUTTON_A;           /* jump */
 	if (right & HALO_XR_HAND_EAST) buttons |= HALO_XR_BUTTON_X;            /* action, reload */
 	if (right & HALO_XR_HAND_WEST) buttons |= HALO_XR_BUTTON_BLACK;        /* switch grenades */
 	if (right & HALO_XR_HAND_NORTH) buttons |= HALO_XR_BUTTON_Y;           /* switch weapons */
 	if (right & HALO_XR_HAND_STICK) buttons |= HALO_XR_BUTTON_B;           /* melee (and the swing) */
-	if (vr.frame.hand_buttons[1 - vr.weapon_hand] & HALO_XR_HAND_BUMPER)
-		buttons |= HALO_XR_BUTTON_WHITE;                                    /* flashlight, the off hand's */
 	if (left & HALO_XR_HAND_STICK) buttons |= HALO_XR_BUTTON_LEFT_THUMB;   /* crouch */
-	if ((right | left) & HALO_XR_HAND_MENU) buttons |= HALO_XR_BUTTON_START;
 	/* controllers with two face buttons a hand (Touch, Index): the left's
 	lower switches grenades, its upper goes back (the Quest's: switches
 	weapons; both sticks recentre). With physical weapons the grip holds the
@@ -1039,10 +1186,6 @@ static void layout_controls(void)
 	{
 		buttons |= HALO_XR_BUTTON_BLACK;
 	}
-	if (vr.touch_layout && (left & HALO_XR_HAND_EAST))
-	{
-		buttons |= HALO_XR_BUTTON_Y;
-		left &= ~HALO_XR_HAND_EAST;
 	}
 	/* the off hand's trigger zooms */
 	if (vr.frame.trigger[1 - vr.weapon_hand] > zoom_on)
@@ -1078,11 +1221,11 @@ static void layout_controls(void)
 		vr.back_pulse--;
 	}
 	vr.pad_buttons = buttons;
-	/* the grenade on the weapon hand's bumper (the Quest's: its grip, away
-	from the holsters; with physical weapons, the tap above), fire on its
+	/* the grenade on the weapon hand's bumper (the Quest's: its remapped
+	button, touch_buttons; a tap's throw is the pulse below), fire on its
 	trigger (with physical weapons, only while the gun is held) */
 	vr.pad_trigger[0] = (vr.frame.hand_buttons[vr.weapon_hand] & HALO_XR_HAND_BUMPER) ? 1.0f : 0.0f;
-	if (vr.touch_layout && !physical_weapons() && vr.grip_held[vr.weapon_hand] && !vr.in_holster)
+	if (vr.touch_layout && grenade_down)
 		vr.pad_trigger[0] = 1.0f;
 	if (vr.grenade_pulse > 0.0)
 	{

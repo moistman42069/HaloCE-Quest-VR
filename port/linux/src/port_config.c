@@ -540,6 +540,27 @@ static const struct config_setting config_settings[] =
 		"The sniper rifle scope moved right (in either hand) from its usual place, metres (-0.20..0.20)." },
 	{ "vr.scope_sniper_scale", _config_real, "1.0", "HALO_VR_SCOPE_SNIPER_SCALE", _environment_value, _platform_vr,
 		"The sniper rifle scope's size as a share of vr.scope_size (1 = as usual)." },
+	{ "vr.button_jump", _config_string, "\"a\"", "HALO_VR_BUTTON_JUMP", _environment_value, _platform_vr,
+		"Quest: the button that jumps: a, b (the gun hand's lower and upper), x, y (the other hand's),\n"
+		"right_stick, left_stick, grip or none." },
+	{ "vr.button_action", _config_string, "\"b\"", "HALO_VR_BUTTON_ACTION", _environment_value, _platform_vr,
+		"Quest: the button for action and reload: a, b (the gun hand's lower and upper), x, y (the other hand's),\n"
+		"right_stick, left_stick, grip or none." },
+	{ "vr.button_melee", _config_string, "\"right_stick\"", "HALO_VR_BUTTON_MELEE", _environment_value, _platform_vr,
+		"Quest: the button that melees: a, b (the gun hand's lower and upper), x, y (the other hand's),\n"
+		"right_stick, left_stick, grip or none." },
+	{ "vr.button_crouch", _config_string, "\"left_stick\"", "HALO_VR_BUTTON_CROUCH", _environment_value, _platform_vr,
+		"Quest: the button that crouches: a, b (the gun hand's lower and upper), x, y (the other hand's),\n"
+		"right_stick, left_stick, grip or none." },
+	{ "vr.button_switch_weapon", _config_string, "\"y\"", "HALO_VR_BUTTON_SWITCH_WEAPON", _environment_value, _platform_vr,
+		"Quest: the button that switches weapons: a, b (the gun hand's lower and upper), x, y (the other hand's),\n"
+		"right_stick, left_stick, grip or none." },
+	{ "vr.button_grenade", _config_string, "\"x\"", "HALO_VR_BUTTON_GRENADE", _environment_value, _platform_vr,
+		"Quest: the button that throws a grenade (\"grip\": the gun hand's grip, locked weapons only, throws while held): a, b (the gun hand's lower and upper), x, y (the other hand's),\n"
+		"right_stick, left_stick, grip or none." },
+	{ "vr.button_switch_grenade", _config_string, "\"hold\"", "HALO_VR_BUTTON_SWITCH_GRENADE", _environment_value, _platform_vr,
+		"Quest: the button that switches grenades, or \"hold\" (default): holding the grenade\n"
+		"button switches and tapping it throws. Also a, b, x, y, right_stick, left_stick, grip or none." },
 	{ "vr.align_left_pitch", _config_real, "0.0", "HALO_VR_ALIGN_LEFT_PITCH", _environment_value, _platform_vr,
 		"Left controller tracking correction, local pitch: degrees (-180..180). Moves hand AND gun;\n"
 		"for comfort use vr.hand_* (hand) or vr.weapon_* (gun). Zero preserves runtime tracking." },
