@@ -40,7 +40,7 @@ This release carries forward the v1.0.2 features and adds the test21b hand/body 
 
 ### Quest Touch — default VR layout
 
-Use **Controls = VR** and the standard native controller profile. Right is the default weapon hand. **Controls → Handedness: Left**  mirrors the whole layout: gun, triggers, sticks (move on the right, turn on the left) and face buttons (jump on X, reload on Y, grenades on A, switch weapons on B); Mirror Controls Off keeps the standard buttons.
+Use **Controls = VR** and the standard native controller profile. Right is the default weapon hand. **Controls → Handedness: Left**  mirrors the whole layout: gun, triggers, sticks (move on the right, turn on the left) and face buttons (jump on X, reload on Y, grenades on A, switch weapons on B); Mirror Controls Off keeps the standard buttons. **VR Settings → BUTTONS** remaps jump, action/reload, melee, crouch, switch weapon, grenade and switch grenade, with Reset Buttons.
 
 | Input | Action |
 | --- | --- |
@@ -49,10 +49,9 @@ Use **Controls = VR** and the standard native controller profile. Right is the d
 | Weapon-hand trigger / other-hand trigger | Fire / zoom |
 | Right A / Right B | Jump or confirm / reload-use; hold B for interaction prompts; B returns in pointer menus |
 | Left Y | Switch weapons |
-| Left X, Physical weapons | Tap/release to throw a grenade; hold 0.4 seconds to switch grenade type |
-| Left X, Locked weapons | Switch grenade type |
+| Left X | Tap/release to throw a grenade; hold 0.4 seconds to switch grenade type (both weapon modes) |
 | Weapon-hand grip, Physical | Hold the gun; release after the first grip to drop/holster/transfer |
-| Weapon-hand grip, Locked | Throw grenade away from holsters; switch weapon at a holster |
+| Weapon-hand grip, Locked | Switch weapon at a holster; nothing elsewhere |
 | Other-hand grip near the support region | Lock the support hand; release to detach |
 | Left / right stick click | Crouch / native melee |
 | Both stick clicks together | Recenter during gameplay |

@@ -3,6 +3,10 @@
 Updated 2026-10-04. This is the current handoff for Claude Code/Claude Cloud.
 The canonical source is `moistman42069/HaloCE-Quest-VR`, branch `main`.
 
+## Progress (test23, 2026-10-04)
+
+Private candidate **test23** (version 1.0.5 / code 30) after test22 (1.0.4): co-op cutscene characters on a joining device are placed where the host has them at each cut (they T-posed and slid on the Quest client), dropped cutscene cues are logged, and the Quest's buttons are remappable (VR Settings → BUTTONS, Reset Buttons) with the grenade on Left X in both weapon modes; the locked grip no longer throws. Details: [TEST23-PROGRESS.md](TEST23-PROGRESS.md); delivery: [TEST23-DELIVERY.md](TEST23-DELIVERY.md). Nothing is accepted until tested on devices.
+
 ## Progress (test22, 2026-10-04)
 
 Private candidate **test22** (version 1.0.4 / code 29) after the published v1.0.3 (test21b): the Android/Quest co-op campaign host crash (upstream PR #73's unarmed-melee guard), a steadier first-person vehicle view, the left-hand ammo display, adjustable pistol/sniper scopes, shot and catch-up-tick diagnostics, and reviewed upstream fixes (no protocol change). The other player's aim report came from v1.0.2 (fixed in v1.0.3). Details: [TEST22-PROGRESS.md](TEST22-PROGRESS.md); delivery: [TEST22-DELIVERY.md](TEST22-DELIVERY.md). Nothing is accepted until tested on devices.

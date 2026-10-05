@@ -13,9 +13,8 @@ These mappings follow the shipped code. Start with Controls = VR and a standard 
 | Right A | Jump / confirm |
 | Right B | Reload/use in gameplay (hold for native interaction/pickup prompts); pointer-menu Back in menus |
 | Left Y | Switch weapons |
-| Left X with Physical weapons active | Tap/release throws; hold 0.4 seconds switches grenade type |
-| Left X with Locked weapons | Switch grenade type |
-| Weapon-hand grip, Locked | Throw grenade away from holsters; grip at a holster switches weapon |
+| Left X | Grenade: tap/release throws; hold 0.4 seconds switches grenade type (Locked and Physical weapons, since 1.0.5) |
+| Weapon-hand grip, Locked | At a holster, switches weapon; elsewhere nothing (the grenade moved to Left X in 1.0.5) |
 | Weapon-hand grip, Physical | Hold; releasing after the initial protected grip can drop/holster/transfer |
 | Other-hand grip near support region | Lock support hand in Two Hands = Grip; release detaches |
 | Left stick click | Crouch |
@@ -24,6 +23,8 @@ These mappings follow the shipped code. Start with Controls = VR and a standard 
 | Left menu | Pause/menu; online co-op keeps the shared world running |
 | Weapon pointer + trigger in menus | Select; right B goes back |
 | Off hand near head | Flashlight gesture when enabled |
+
+**VR Settings → BUTTONS** remaps the face buttons, stick clicks and the locked grip (below, test23).
 
 **Left-handed (test20d):** Controls → **Handedness: Left** puts the gun in the left hand and, with **Mirror Controls: Auto** (default), mirrors the whole table above: move on the right stick, turn on the left, jump on left X, reload/use on left Y, switch weapons on right B, grenades on right A, crouch on the right stick click, melee on the left stick click, and Back in menus on left Y. Triggers, grips, zoom, flashlight, holsters and the menu pointer already follow the gun hand. Switching Handedness in the menu also moves vehicle **Steering** and **Move With** to the other hand when they were set to a hand. **Mirror Controls: Off** keeps the right-handed button layout with the gun in the left hand. A config that was already left-handed before test20d keeps its standard buttons (Mirror Controls Off) until you change it. Palms together plus the other hand's grip still pass the gun across. Controllers with bumpers/View use weapon-hand bumper for grenade, off-hand bumper for flashlight, and View tap/hold for Back/recenter. Use the Touch-specific table above on Quest.
 
@@ -98,6 +99,17 @@ Quit before external edits. In `[vr]`, `body = "legs"` explicitly selects the de
 - **Horn:** a driver's horn is Halo's crouch control. While seated, either stick click sounds it (even with the off-hand trigger held), whatever the throttle (the game used to pass the left stick click only below 98% throttle, and the Warthog's throttle is that stick). Clicking both sticks still recentres. A lowered head no longer counts as crouching while seated.
 
 - **Upside-down hands or guns** (reported on Quest OS v78): use **Controller Left/Right → Flip Roll 180** for the affected controller; it turns hand, gun and two-hand aim together. Hand Roll turns only the visible hand and Gun Roll only the gun; since test21 Gun Roll also holds in two-hand grip (it used to flip back).
+
+## Buttons and co-op cutscenes (test23, 1.0.5)
+
+- **Grenade on Left X in both weapon modes.** Tap and release X to throw; hold it 0.4 seconds to switch grenade type. With **Locked** weapons the gun hand's grip used to throw grenades; it now does nothing except switch weapons at a holster. Physical weapons are unchanged (X already threw there, and the grip still holds and drops the gun).
+- **VR Settings → BUTTONS** (Quest Touch controllers) remaps Jump, Action / Reload, Melee, Crouch, Switch Weapon, Grenade and Switch Grenade. Each can be A, B, X, Y, R Stick, L Stick, Grip (Locked) or None; Switch Grenade can also be **Hold Grenade** (the default: holding the grenade button switches). Picking a button another action already uses swaps the two, so one button never does two things. **Reset Buttons** restores the defaults below.
+- Defaults: Jump **A**, Action / Reload **B**, Melee **R Stick**, Crouch **L Stick**, Switch Weapon **Y**, Grenade **X**, Switch Grenade **Hold Grenade**. These are the earlier layout except the grenade.
+- To get the old Locked layout back, set **Grenade: Grip (Locked)**: the grip then throws while held, and Switch Grenade moves to X by itself.
+- **Grip (Locked)** is the gun hand's grip and works only with Locked weapons and away from the holsters. With Physical weapons the grip holds the gun, so an action put on it does nothing.
+- **Left-handed:** with Mirror Controls: Auto, A and B mean the gun hand's lower and upper buttons and X and Y the other hand's, so the whole layout mirrors as before. Not remappable: triggers (fire, zoom), the flashlight, the menu button, both stick clicks together (recenter), the off hand's grip (two hands, passing the gun), the Warthog horn (either stick click while driving) and the pointer menus.
+- Saved as `vr.button_jump`, `vr.button_action`, `vr.button_melee`, `vr.button_crouch`, `vr.button_switch_weapon`, `vr.button_grenade` and `vr.button_switch_grenade` (values `a`, `b`, `x`, `y`, `right_stick`, `left_stick`, `grip`, `none`; `hold` for switch grenade). A config edited by hand that puts two actions on one button does both, and the log warns. Other controllers (Index, Steam Frame) keep their own layout.
+- **Co-op cutscenes:** on a device that joined co-op, cutscene characters now stand where the host has them at every cut instead of sliding there in a falling pose.
 
 ## Scopes, first-person vehicles and the left hand (test22)
 
