@@ -27,7 +27,7 @@ for path in networking:
     text = path.read_text(encoding='utf-8', errors='replace')
     assert 'HALO_VR' not in text, f'VR-only networking branch in {path.relative_to(ROOT)}'
 java = ROOT / 'port/android/app/src/main/java/com/halo/decomp'
-for name in ['NetworkSettings', 'ServerBrowser', 'ServerListing', 'CoopLauncher', 'CoopPublisher', 'PvpLauncher']:
+for name in ['NetworkSettings', 'ServerBrowser', 'ServerListing', 'CoopLauncher', 'PvpLauncher']:  # (CoopPublisher retired: test27)
     text = (java / (name + '.java')).read_text(encoding='utf-8')
     assert '.vr"' not in text and 'endsWith(".vr")' not in text, f'VR-only branch in {name}.java'
 assert not (ROOT / 'port/android/app/src/vr/java').exists(), 'the vr source set must not carry its own Java'

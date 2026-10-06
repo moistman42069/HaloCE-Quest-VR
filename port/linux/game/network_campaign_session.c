@@ -197,3 +197,8 @@ void network_campaign_session_update(boolean menu_loaded, real seconds)
 		start_requested = FALSE;
 	}
 }
+
+/* (the retired CE campaign's clock hooks, network_campaign_lifecycle.c: no
+game is a CE campaign's now, so nothing reaches them) */
+void network_game_client_campaign_clock(long time) { (void)time; }
+void network_game_server_campaign_clock(long time) { (void)time; }

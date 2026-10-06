@@ -81,6 +81,9 @@ then flags */
 /* ... the host plays the distributed netcode (always, since the lockstep
 netcode was removed; hosts of version 4 built before then may not) */
 #define HALO_PORT_ADVERTISED_DISTRIBUTED_FLAG 0x01
+/* ... the game is under way (loading, playing or over), not in its lobby:
+the menus show it before joining it (hosts built before then never set it) */
+#define HALO_PORT_ADVERTISED_IN_PROGRESS_FLAG 0x02
 
 /* a message header's 12-bit length allows messages of up to 0xFFF bytes,
 header included; the per-tick update of 128 players is 3,857 */

@@ -445,8 +445,6 @@ symbols in this file:
 /* ---------- headers */
 
 #include "cseries.h"
-#include "network_campaign.h"
-#include "network_pvp_session.h"
 #include "bungie_net/common/message_header.h"
 #include "bungie_net/network/transport.h"
 #include "bungie_net/network/transport_address_constants.h"
@@ -474,13 +472,20 @@ symbols in this file:
 #include "text/unicode.h"
 
 #include "cache/cache_files.h"
-
-/* port: internet play's Discord presence (port/linux/src/p2p.c) */
-void p2p_set_game_player_counts(int count, int maximum);
+#include "interface/player_ui.h"
+#include "tag_files/tag_files.h"
+/* port: the launcher's hosts (this app's: network_pvp_session.c,
+network_campaign_session.c) */
+#include "network_campaign.h"
+#include "network_pvp_session.h"
 void p2p_set_hosting_public(int public);
 int config_boolean(char const *name);
-void p2p_set_game_listing(const char *name, const char *map, const char *gametype, int engine_type, int open, int in_progress, int has_teams);
-char const *tag_name_strip_path(char const *name);
+
+/* port: internet play's Discord presence (port/linux/src/p2p.c), and the
+server browser's listing of a public game (p2p_lobby.c) */
+void p2p_set_game_player_counts(int count, int maximum);
+void p2p_set_game_listing(const char *name, const char *map, const char *gametype, int engine_type, int open,
+	int in_progress, int has_teams);
 
 /* ---------- constants */
 
@@ -766,6 +771,9 @@ static void network_game_server_dump(
 	struct network_game_server *server);
 static void network_game_server_countdown_started(
 	struct network_game_server *server);
+static void network_game_server_variant_options(
+	struct game_variant const *variant,
+	struct game_variant_options *options);
 static void network_game_server_remove_players_gone_while_loading(
 	struct network_game_server *server);
 
@@ -887,8 +895,9 @@ static short *network_game_server_ingame_addition_count(
 	return NULL;
 }
 
-/* port: a player's name in ASCII (what is not ASCII, "?"), for the host's
-ban command */
+/* port: a player's name in ASCII (player_name_character_ascii: a letter
+with a mark its plain one, what is not ASCII else "?"), for the host's ban
+command */
 static void network_game_server_player_name_text(
 	struct network_player const *player,
 	char *text,
@@ -897,7 +906,7 @@ static void network_game_server_player_name_text(
 	long index;
 
 	for (index = 0; index < (long)NUMBEROF(player->name) && player->name[index] && index < size - 1; index++)
-		text[index] = player->name[index] >= 32 && player->name[index] < 127 ? (char)player->name[index] : '?';
+		text[index] = player_name_character_ascii(player->name[index]);
 	text[index] = 0;
 }
 
@@ -961,6 +970,8 @@ static boolean network_game_server_named_machine(
 	struct network_game_server *server = global_network_game_server_get();
 	long found_index = NONE;
 	long match_count = 0;
+	long exact_index = NONE;
+	long exact_count = 0;
 	long index;
 
 	names[0] = 0;
@@ -980,15 +991,25 @@ static boolean network_game_server_named_machine(
 		/* (the whole name first) */
 		if (network_game_server_name_begins_with(name, text) && csstrlen(name) == csstrlen(text))
 		{
-			found_index = index;
-			match_count = 1;
-			break;
+			exact_index = index;
+			exact_count++;
 		}
 		if (network_game_server_name_begins_with(name, text))
 		{
 			found_index = index;
 			match_count++;
 		}
+	}
+	if (exact_count > 1)
+	{
+		/* (the host numbers players of the same name: network_server_message_handler.c) */
+		console_warning("%s: %ld players are named \"%s\"", command, exact_count, text);
+		return FALSE;
+	}
+	if (exact_count == 1)
+	{
+		found_index = exact_index;
+		match_count = 1;
 	}
 	if (!text[0])
 	{
@@ -1207,7 +1228,10 @@ struct network_game_server *network_game_server_create(
 			error(
 				_error_silent,
 				"failed to create the server connection");
-			/* Upstream: connection creation failed before machines were initialized. */
+			/* port: nothing to dispose of (the Xbox game disposed of it: its
+			client machines, all zero, have machine 0 with no connection,
+			which the dispose's machine check reads; the port in use, by
+			another copy of the game, gets here) */
 			network_game_server_memory_do_not_use_directly_in_use = FALSE;
 			server = NULL;
 		}
@@ -1357,13 +1381,15 @@ static boolean network_game_server_network_lost(
 	return now - down_time > NETWORK_GAME_SERVER_CLIENT_TIMEOUT;
 }
 
-/* port: wide text as the listing has it: ASCII ('?' for the rest) */
+/* port: wide text as the listing has it: ASCII, a Latin letter with a mark
+its plain letter ('?' for the rest: player_name_character_ascii, as the
+server browser validates the name as a player's) */
 static void listing_text(char *text, int size, wchar_t const *wide, int length)
 {
 	int index;
 
 	for (index = 0; index < size - 1 && index < length && wide[index]; index++)
-		text[index] = wide[index] >= 0x20 && wide[index] < 0x7F ? (char)wide[index] : '?';
+		text[index] = player_name_character_ascii(wide[index]);
 	text[index] = 0;
 }
 
@@ -1377,7 +1403,7 @@ static void network_game_server_list(
 	short state = network_game_server_get_state(server, NULL);
 	char name[NUMBEROF(game->name) + 1];
 	char gametype[NUMBEROF(game->variant.human_readable_game_description) + 1];
-	boolean in_progress = state != _network_game_server_state_pregame || (server->state == _network_game_server_state_pregame && server->sent_start_game_message);
+	boolean in_progress = state != _network_game_server_state_pregame || network_game_server_game_is_loading(server);
 	boolean open = state == _network_game_server_state_ingame ? network_game_server_accepts_late_joins(server) :
 		network_game_server_game_is_open(server) && network_game_has_free_player_slot(game);
 
@@ -1413,7 +1439,8 @@ boolean network_game_server_idle(
 		}
 	}
 
-	/* (what Discord shows of a game hosted for internet play) */
+	/* (what Discord shows of a game hosted for internet play, and the
+	server browser's listing) */
 	p2p_set_game_player_counts(server->game.player_count, server->game.maximum_players);
 	network_game_server_list(server);
 
@@ -1890,10 +1917,20 @@ boolean network_game_server_game_is_open(
 	return game_is_open;
 }
 
-/* Upstream 133d6a5: slot reuse distinguishes a running match from its lobby. */
-boolean network_game_server_playing(struct network_game_server *server)
+/* port: whether the host's game is being played (not its lobby, before or
+after one) */
+boolean network_game_server_playing(
+	struct network_game_server *server)
 {
-    return server && server->state == _network_game_server_state_ingame;
+	return server->state == _network_game_server_state_ingame;
+}
+
+/* port: whether the machines are loading the game (its start sent, still
+in the pregame) */
+boolean network_game_server_game_is_loading(
+	struct network_game_server *server)
+{
+	return server->state == _network_game_server_state_pregame && server->sent_start_game_message;
 }
 
 boolean network_game_server_game_is_valid(
@@ -2220,9 +2257,6 @@ void network_game_server_handle_client_update_packet(
 	match_assert(NETWORK_SERVER_MANAGER_FILE, 0x51E, server);
 	match_assert(NETWORK_SERVER_MANAGER_FILE, 0x51F, machine);
 	match_assert(NETWORK_SERVER_MANAGER_FILE, 0x520, message_packet);
-	/* Campaign input already uses the generation-checked distributed stream.
-	 * This legacy packet remains a keepalive; never apply old checkpoint input. */
-	if (network_campaign_active()) return;
 
 	/* (a client's out of sync, the update number's top bit, was the
 	lockstep netcode's, and ended the game: the distributed netcode's machines
@@ -2331,16 +2365,6 @@ boolean network_game_server_add_player_to_game(
 	return success;
 }
 
-void network_game_server_campaign_clock(long time)
-{
-	struct network_game_server *server = global_network_game_server_get();
-	long machine;
-	if (!server || !network_campaign_game(&server->game)) return;
-	server->next_update_number = time;
-	for (machine = 0; machine < MAXIMUM_NETWORK_MACHINE_COUNT; machine++)
-		network_game_server_frequent_updates_until[machine] = time + TICKS_PER_SECOND;
-}
-
 void network_game_server_update_ticks(
 	struct network_game_server *server,
 	short tick_count)
@@ -2370,7 +2394,7 @@ void network_game_server_update_ticks(
 				no players, none of its actions is sent or read) */
 				game_update.update_number = update_number;
 				game_update.random_seed = 0;
-				game_update.game_time = network_campaign_encode_time(game_time_get());
+				game_update.game_time = game_time_get();
 				game_update.unknown0C = 0;
 				game_update.player_count = 0;
 
@@ -2514,7 +2538,7 @@ boolean network_game_server_accepts_late_joins(
 {
 	/* (and a player can join it: a machine none of whose players can is
 	refused, network_game_server_refuse_late_joiner) */
-	return !network_campaign_game(&server->game) && server->state == _network_game_server_state_ingame &&
+	return server->state == _network_game_server_state_ingame &&
 		network_game_server_game_is_open(server) &&
 		network_game_has_free_player_slot(&server->game);
 }
@@ -3183,7 +3207,6 @@ void network_game_server_change_map_name(
 		server && map_name && map_name[0]);
 	match_assert(NETWORK_SERVER_MANAGER_FILE, 0x79C,
 		server->state == _network_game_server_state_pregame);
-	if (network_campaign_game(&server->game)) return;
 
 	for (client_machine_index = 0;
 		client_machine_index < MAXIMUM_NETWORK_MACHINE_COUNT;
@@ -3224,10 +3247,9 @@ void network_game_server_change_game_variant(
 	match_assert(NETWORK_SERVER_MANAGER_FILE, 0x7BE, server && variant);
 	match_assert(NETWORK_SERVER_MANAGER_FILE, 0x7BF,
 		server->state == _network_game_server_state_pregame);
-	if (network_campaign_game(&server->game)) return;
 
 	csmemcpy(&server->game.variant, variant, sizeof(server->game.variant));
-	game_variant_options_default(variant, &server->game.variant_options);
+	network_game_server_variant_options(&server->game.variant, &server->game.variant_options);
 
 	if (!network_game_server_send_game_data_pregame(server))
 	{
@@ -3917,10 +3939,6 @@ void network_game_server_port_cooperative_won(
 /* port: reapply the co-op settings after a won round, since the playlist
 the next round is set up from (network_game_server_setup_game_from_playlist)
 has a multiplayer gametype and map */
-static void network_game_server_variant_options(
-	struct game_variant const *variant,
-	struct game_variant_options *options);
-
 static void network_game_server_cooperative_round(
 	struct network_game_server *server)
 {
@@ -4007,12 +4025,14 @@ void network_game_server_port_set_cooperative_player_collisions(
 		network_event("network_game_server_port_set_cooperative_player_collisions() failed to send updated game settings to clients");
 }
 
-/* port: a gametype's PC options: its defaults (upstream takes the PC menus'
-when they chose it; this app keeps the Xbox menus, which have none: test27) */
+/* port: a gametype's PC options: the menus' (player_ui_set_game_variant_options)
+when it is the menus' gametype, else its defaults */
 static void network_game_server_variant_options(
 	struct game_variant const *variant,
 	struct game_variant_options *options)
 {
+	/* (this app keeps the Xbox menus, which choose no PC options: the
+	gametype's defaults: test27) */
 	game_variant_options_default(variant, options);
 }
 
@@ -4024,8 +4044,9 @@ static boolean network_game_server_setup_game_from_playlist(
 	match_assert(NETWORK_SERVER_MANAGER_FILE, 0x961, server);
 
 	network_event("setting up a net game");
-	/* (the launcher's co-op host: public as it asked, network_campaign_session.c,
-	which sets the lobby up for co-op once it is open: test27) */
+	/* port: the launcher's hosts: co-op public as it asked (network_campaign_session.c
+	sets the lobby up for co-op once it is open), PvP as its own request
+	(network_pvp_session.c): test27 */
 	p2p_set_hosting_public(network_campaign_host_requested() ? network_coop_host_public() :
 		config_boolean("network.host_public"));
 	if (network_pvp_host_requested())
@@ -4044,7 +4065,8 @@ static boolean network_game_server_setup_game_from_playlist(
 		server->game.map.version = 0;
 		server->game.minimum_players = 2;
 		server->game.maximum_players = MAXIMUM_NETWORK_PLAYER_COUNT;
-		game_variant_options_default(&server->game.variant, &server->game.variant_options);
+		network_game_server_port_settings_apply(server);
+		network_game_server_variant_options(&server->game.variant, &server->game.variant_options);
 
 		if (server->game.variant.universal_variant.teams)
 		{

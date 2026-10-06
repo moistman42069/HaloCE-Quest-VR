@@ -523,7 +523,7 @@ boolean network_game_client_start_frame(
 		/* port: no client (the menus let it go, as a lobby's last player
 		leaving does, without changing the connection): no network game, as
 		network_game_client_end_frame has it, which only a frame in a game
-		reaches (upstream 7e00135d) */
+		reaches */
 		game_connection_set(0);
 		main_menu_ensure_player_queues_exist();
 		result = TRUE;
@@ -744,8 +744,10 @@ long network_game_get_random_seed(
 	return game->random_seed;
 }
 
+/* port: the launcher's hosts (network_campaign_session.c, network_pvp_session.c) */
 void network_campaign_session_end(void);
 void network_pvp_session_end(void);
+
 void network_game_abort(
 	void)
 {

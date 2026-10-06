@@ -52,7 +52,6 @@ machine (their datum identifiers need not be).
 */
 
 #include "cseries.h"
-#include "network_campaign.h"
 #include "cseries/errors.h"
 #include "cache/cache_files.h"
 #include "models/model_animation_definitions.h"
@@ -72,8 +71,9 @@ machine (their datum identifiers need not be).
 #include "units/biped_definitions.h"
 #include "units/bipeds.h"
 #include "network_coop.h"
-#include "network_distributed.h"
+/* port: the VR avatars (this app's) */
 #include "network_vr_pose.h"
+#include "network_distributed.h"
 
 #include <limits.h>
 #include <stdio.h>
@@ -155,8 +155,10 @@ enum
 	GAME_STATE_MINIMUM_TICKS = 2 * GAME_STATE_INTERVAL_TICKS,
 	MAXIMUM_GAME_STATE_SIZE = 0xF00,
 	MAXIMUM_STATISTICS_PER_MESSAGE = 64,
+	/* the players' pings sent, for the scoreboard */
 	PING_INTERVAL_TICKS = 2 * TICKS_PER_SECOND,
 	MAXIMUM_PINGS_PER_MESSAGE = 128,
+	/* a ping not known */
 	UNKNOWN_PING = 0xFFFF,
 	MAXIMUM_PICKUPS_PER_TICK = 64,
 	/* ticks a client's own player may ride where the host says it does not
@@ -451,7 +453,6 @@ struct distributed_packer
 
 /* ---------- globals */
 
-static word distributed_player_pings[MAXIMUM_TRACKED_PLAYERS];
 static long distributed_last_sent_time = NONE;
 
 /* how each player last died, by absolute index: the host's own, which it
@@ -622,6 +623,9 @@ static struct
 	real average;
 	real deviation;
 } distributed_round_trips[HALO_PORT_MAXIMUM_NETWORK_MACHINES];
+/* a client: each player's ping as the host last told it (UNKNOWN_PING: not
+told) */
+static word distributed_player_pings[MAXIMUM_TRACKED_PLAYERS];
 
 /* the host: its clients' machines, found once a tick */
 static struct
@@ -839,7 +843,7 @@ static void distributed_batch_flush(
 		return;
 	header->type = _distributed_message_batch;
 	header->count = 0;
-	header->game_time = network_campaign_encode_time(game_time_get());
+	header->game_time = game_time_get();
 	header->header = 0;
 	build_message_header(&header->header, batch->size, 2, 0);
 	if (sender == HOST_SENDER)
@@ -959,8 +963,7 @@ static void distributed_fill_header(
 
 	header->type = type;
 	header->count = (byte)count;
-	header->game_time = type == _distributed_message_campaign_lifecycle ? game_time_get() :
-		network_campaign_encode_time(game_time_get());
+	header->game_time = game_time_get();
 	header->header = 0;
 	build_message_header(&header->header, size, 2, 0);
 	distributed_statistics.sent++;
@@ -3204,14 +3207,14 @@ static void distributed_send_game_state(
 
 /* a new map loading (game.c), before any of the new game's messages can
 apply: nothing sent or had yet */
-static void distributed_reset(boolean new_map)
+void network_distributed_new_game(
+	void)
 {
 	short sender;
 	short type;
 	short player_index;
 
 	distributed_last_sent_time = NONE;
-	csmemset(distributed_player_pings, 0xFF, sizeof(distributed_player_pings));
 	csmemset(distributed_deaths, 0, sizeof(distributed_deaths));
 	csmemset(distributed_seat_disagreements, 0, sizeof(distributed_seat_disagreements));
 	csmemset(distributed_predictions, 0, sizeof(distributed_predictions));
@@ -3266,6 +3269,7 @@ static void distributed_reset(boolean new_map)
 		}
 	}
 	distributed_own_round_trip = 0.0f;
+	csmemset(distributed_player_pings, 0xFF, sizeof(distributed_player_pings));
 	csmemset(distributed_machine_players, 0xFF, sizeof(distributed_machine_players));
 	distributed_machines.in_tick = FALSE;
 	distributed_machines.valid = FALSE;
@@ -3274,30 +3278,25 @@ static void distributed_reset(boolean new_map)
 	distributed_pickup_count = 0;
 	/* (each player's latest input: player_queues_new.c) */
 	update_queues_distributed_reset();
-	if (new_map) network_campaign_script_reset();
-	network_campaign_devices_reset();
-	network_campaign_objects_reset();
-	network_campaign_actors_reset();
-	network_vr_pose_reset();
 	network_objects_new_game();
 	network_damage_new_game();
 	network_actors_new_game();
 	network_coop_new_game();
+	network_vr_pose_reset();
 }
 
-void network_distributed_new_game(void) { distributed_reset(TRUE); }
-void network_distributed_resynchronize(void) { distributed_reset(FALSE); }
-
-void network_distributed_campaign_snapshot(long machine)
+/* (the retired CE01/CE02 campaign's lifecycle, network_campaign_lifecycle.c,
+still links to these; nothing calls them now: test27) */
+void network_distributed_resynchronize(
+	void)
 {
-	if (!network_campaign_playing() || game_connection() != _game_connection_network_server) return;
-	distributed_machine_loaded(machine);
-	network_objects_host_tick();
-	network_objects_client_asked(machine, TRUE);
-	network_campaign_devices_tick();
-	network_campaign_objects_tick();
-	network_campaign_script_flush();
-	distributed_send_all_statistics(machine);
+	network_distributed_new_game();
+}
+
+void network_distributed_campaign_snapshot(
+	long machine)
+{
+	(void)machine;
 }
 
 /* after each tick (game_time.c) */
@@ -3306,7 +3305,6 @@ void network_distributed_tick(
 {
 	short connection = game_connection();
 
-	if (network_campaign_held()) return;
 	if (game_time_get() == distributed_last_sent_time)
 		return;
 	distributed_last_sent_time = game_time_get();
@@ -3334,10 +3332,6 @@ void network_distributed_tick(
 		distributed_apply_predictions();
 		network_objects_apply_vehicle_predictions();
 		network_objects_host_tick();
-		network_campaign_devices_tick();
-		network_campaign_objects_tick();
-		network_campaign_actors_tick();
-		network_campaign_script_flush();
 		distributed_host_plan_players();
 		network_damage_host_tick();
 		if (distributed_statistics_due || game_time_get() % STATISTICS_INTERVAL_TICKS == 0)
@@ -3368,6 +3362,7 @@ void network_distributed_tick(
 		network_damage_client_tick();
 		network_coop_client_tick();
 	}
+	/* port: the VR avatars' poses, to machines that draw them */
 	network_vr_pose_tick();
 	distributed_batches_flush();
 	distributed_machines.in_tick = FALSE;
@@ -3395,7 +3390,6 @@ static boolean distributed_message_stale(
 	case _distributed_message_relayed_actions:
 	case _distributed_message_damage_events:
 	case _distributed_message_pings:
-	case _distributed_message_campaign_actors:
 	case _distributed_message_actor_states:
 	case _distributed_message_structure_bsp:
 	case _distributed_message_coop_presentation:
@@ -3867,14 +3861,6 @@ void network_distributed_handle_message(
 	if (size < sizeof(header) || !game_in_progress())
 		return;
 	csmemcpy(&header, message, sizeof(header));
-	if (header.type == _distributed_message_campaign_lifecycle)
-	{
-		if (network_campaign_active() && header.count == 1 &&
-			size == sizeof(header) + network_campaign_lifecycle_size())
-			network_campaign_lifecycle_receive(machine_index, entries, size - sizeof(header));
-		return;
-	}
-	if (!network_campaign_accept_state() || !network_campaign_decode_time(&header.game_time)) return;
 	/* a tick's messages in one: each as if it came alone */
 	if (header.type == _distributed_message_batch)
 	{
@@ -3901,22 +3887,13 @@ void network_distributed_handle_message(
 		}
 		return;
 	}
-	/* Negotiated visual avatars work in campaign and PvP; their separate
-	 * decoder validates both sender directions and never touches simulation. */
+	/* port: the VR avatars' (this app's own kinds, 37 and 38): their decoder
+	checks both directions and never touches the simulation */
 	if (header.type == _distributed_message_vr_pose || header.type == _distributed_message_vr_capability)
 	{
 		network_vr_pose_receive(machine_index, header.type, entries, header.count, size - sizeof(header));
 		return;
 	}
-	/* Unknown upstream IDs remain ignored. Campaign traffic requires an
-	 * identified campaign session and is never decoded in competitive play. */
-	if (header.type > _distributed_message_pings &&
-		((header.type != _distributed_message_campaign_presentation && header.type != _distributed_message_campaign_devices &&
-		  header.type != _distributed_message_campaign_objects && header.type != _distributed_message_campaign_actors &&
-		  header.type != _distributed_message_campaign_actor_impulses &&
-		  header.type != _distributed_message_campaign_actor_animations &&
-		  header.type != _distributed_message_campaign_surfaces) ||
-		 !network_campaign_active())) return;
 	/* (entries of a size of their own: their least here, and each read no
 	further than the message's end) */
 	switch (header.type)
@@ -3946,13 +3923,6 @@ void network_distributed_handle_message(
 	case _distributed_message_notice:
 	case _distributed_message_client_ready: entry_size = 0; break;
 	case _distributed_message_client_identity: entry_size = sizeof(struct distributed_client_identity); break;
-	case _distributed_message_campaign_presentation: entry_size = network_campaign_script_entry_size(); break;
-	case _distributed_message_campaign_devices: entry_size = sizeof(struct campaign_device_state); break;
-	case _distributed_message_campaign_objects: entry_size = network_campaign_objects_size(); break;
-	case _distributed_message_campaign_actors: entry_size = network_campaign_actors_size(); break;
-	case _distributed_message_campaign_actor_impulses: entry_size = network_campaign_actor_impulses_size(); break;
-	case _distributed_message_campaign_actor_animations: entry_size = network_campaign_actor_animations_size(); break;
-	case _distributed_message_campaign_surfaces: entry_size = network_campaign_surfaces_size(); break;
 	case _distributed_message_damage_events:
 	case _distributed_message_hit_reports: entry_size = network_damage_entry_size(header.type); break;
 	default: entry_size = network_objects_entry_size(header.type); break;
@@ -4098,34 +4068,6 @@ void network_distributed_handle_message(
 	case _distributed_message_object_states:
 		network_objects_handle_states(entries, header.count);
 		break;
-	case _distributed_message_campaign_devices:
-		if (size == sizeof(header) + header.count * sizeof(struct campaign_device_state))
-			network_campaign_devices_receive(entries, header.count);
-		break;
-	case _distributed_message_campaign_presentation:
-		if (size == sizeof(header) + header.count * network_campaign_script_entry_size())
-			network_campaign_script_receive(entries, header.count);
-		break;
-	case _distributed_message_campaign_objects:
-		if (size == sizeof(header) + header.count * network_campaign_objects_size())
-			network_campaign_objects_receive(entries, header.count);
-		break;
-	case _distributed_message_campaign_actors:
-		if (size == sizeof(header) + header.count * network_campaign_actors_size())
-			network_campaign_actors_receive(entries, header.count);
-		break;
-	case _distributed_message_campaign_actor_impulses:
-		if (size == sizeof(header) + header.count * network_campaign_actor_impulses_size())
-			network_campaign_actor_impulses_receive(entries, header.count);
-		break;
-	case _distributed_message_campaign_actor_animations:
-		if (size == sizeof(header) + header.count * network_campaign_actor_animations_size())
-			network_campaign_actor_animations_receive(entries, header.count);
-		break;
-	case _distributed_message_campaign_surfaces:
-		if (size == sizeof(header) + header.count * network_campaign_surfaces_size())
-			network_campaign_surfaces_receive(entries, header.count);
-		break;
 	case _distributed_message_game_state:
 		game_engine_read_network_state((byte const *)entries, size - sizeof(header));
 		break;
@@ -4180,7 +4122,6 @@ void network_distributed_handle_message(
 		the objects it names) */
 		if (loaded)
 		{
-			network_campaign_devices_reset();
 			distributed_send_all_statistics(machine_index);
 			distributed_send_game_state(machine_index);
 		}

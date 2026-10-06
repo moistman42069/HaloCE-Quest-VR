@@ -43,7 +43,6 @@ same datum index (identifier and all), so that any message can name one:
 */
 
 #include "cseries.h"
-#include "network_campaign.h"
 #include "game/game.h"
 #include "game/game_engine.h"
 #include "game/players.h"
@@ -55,7 +54,6 @@ same datum index (identifier and all), so that any message can name one:
 #include "models/model_definitions.h"
 #include "units/units.h"
 #include "units/biped_definitions.h"
-#include "units/bipeds.h"
 #include "units/vehicle_definitions.h"
 #include "units/vehicle_datum.h"
 #include "items/items.h"
@@ -139,7 +137,7 @@ enum
 	MAXIMUM_CLIENT_NEW_OBJECTS = 1024,
 	MAXIMUM_ENTRIES_PER_MESSAGE = 64,
 	/* the objects the host has at the same indices everywhere */
-	COMPETITIVE_OBJECT_TYPES =
+	NETWORKED_OBJECT_TYPES =
 		_object_mask_biped | _object_mask_vehicle | _object_mask_weapon | _object_mask_equipment,
 	/* how often the host sends a client a moving object further from its
 	players than each distance below (every tick nearer), and the vehicle the
@@ -181,6 +179,9 @@ enum
 	/* ... the round trip without one measured, and the most */
 	DEFAULT_OWN_ROUND_TRIP_TICKS = 6,
 	MAXIMUM_OWN_ROUND_TRIP_TICKS = 60,
+	/* ... how long the weapon the host says it picked up may take to reach
+	its unit, to be readied (the host's messages are not in step) */
+	PICKED_UP_WEAPON_TICKS = 3 * TICKS_PER_SECOND,
 	/* the most grenades of a kind a unit carries, as the host says (a dead
 	unit drops each) */
 	MAXIMUM_INVENTORY_GRENADES = 16,
@@ -444,6 +445,14 @@ static struct distributed_own_inventory
 	long fired_times[MAXIMUM_WEAPONS_PER_UNIT];
 	long weapon_times[MAXIMUM_WEAPONS_PER_UNIT];
 } objects_client_own_inventories[MAXIMUM_LOCAL_PLAYERS];
+/* ... the weapon each of them last picked up (the host said so), its unit
+and when, until it is readied (definition NONE: none) */
+static struct distributed_picked_up_weapon
+{
+	long unit_index;
+	long definition_index;
+	long time;
+} objects_client_picked_up_weapons[MAXIMUM_LOCAL_PLAYERS];
 /* ... whether it failed to make one of the host's objects since it last
 asked for them (it says so when it asks again) */
 static boolean objects_client_ask_again;
@@ -572,18 +581,12 @@ void network_objects_placed(
 
 /* ---------- common */
 
-static unsigned long networked_object_types(void)
-{
-	return COMPETITIVE_OBJECT_TYPES | (network_campaign_active() ?
-		_object_mask_scenery | _object_mask_device | _object_mask_sound_scenery : 0);
-}
-
 static boolean distributed_object_networked(
 	long object_index)
 {
 	struct object_header_datum *header = object_header_try_and_get(object_index);
 
-	return header && header->datum && TEST_FLAG(networked_object_types(), header->type) &&
+	return header && header->datum && TEST_FLAG(NETWORKED_OBJECT_TYPES, header->type) &&
 		!TEST_FLAG(header->flags, _object_header_being_deleted_bit) &&
 		DATUM_INDEX_TO_ABSOLUTE_INDEX(object_index) < MAXIMUM_TRACKED_OBJECTS;
 }
@@ -619,6 +622,7 @@ static boolean distributed_vector_valid(
 /* whether a message's transform can be: the position finite and within the
 world, the axes a rotation (made exactly one in valid_forward, valid_up),
 the velocities finite */
+/* (exported: the VR avatars' poses, network_vr_pose.c) */
 boolean distributed_transform_valid(
 	real_point3d const *position,
 	real_vector3d const *forward,
@@ -1049,7 +1053,7 @@ static void distributed_host_update_objects(
 
 	/* (none set past those told of) */
 	csmemset(seen, 0, objects_host_told_count * sizeof(seen[0]));
-	object_iterator_new(&iterator, networked_object_types(), 0);
+	object_iterator_new(&iterator, NETWORKED_OBJECT_TYPES, 0);
 	while (object_iterator_next(&iterator))
 	{
 		if (!distributed_object_networked(iterator.index))
@@ -1335,6 +1339,21 @@ static short distributed_host_object_period(
 		nearest < FAR_OBJECT_DISTANCE * FAR_OBJECT_DISTANCE ? 3 : MAXIMUM_OBJECT_PERIOD_TICKS;
 }
 
+/* ... for other units sent by a machine's index (network_actors.c) */
+short network_objects_send_period(
+	long machine_index,
+	real_point3d const *position)
+{
+	short machine_number;
+
+	for (machine_number = 0; machine_number < objects_host_viewers.count; machine_number++)
+	{
+		if (objects_host_viewers.indices[machine_number] == machine_index)
+			return distributed_host_object_period(machine_number, position);
+	}
+	return 1;
+}
+
 static void distributed_host_note_rest_sent(
 	long absolute_index,
 	long object_index)
@@ -1381,21 +1400,6 @@ static boolean distributed_host_rest_moved(
 			forward->k * object->object.forward.k >= REMOTE_OBJECT_ANGLE_TOLERANCE) ||
 		!(up->i * object->object.up.i + up->j * object->object.up.j + up->k * object->object.up.k >=
 			REMOTE_OBJECT_ANGLE_TOLERANCE);
-}
-
-/* ... for other units sent by a machine's index (network_actors.c) */
-short network_objects_send_period(
-	long machine_index,
-	real_point3d const *position)
-{
-	short machine_number;
-
-	for (machine_number = 0; machine_number < objects_host_viewers.count; machine_number++)
-	{
-		if (objects_host_viewers.indices[machine_number] == machine_index)
-			return distributed_host_object_period(machine_number, position);
-	}
-	return 1;
 }
 
 /* the kinds of states sent this tick */
@@ -1622,10 +1626,6 @@ static void distributed_host_send_inventories(
 		unsigned long weapons_checksum;
 		byte kind;
 
-		/* The inventory record also carries vehicle seating. Unarmed campaign
-		 * passengers still need it; after exit, the normal empty refresh applies. */
-		if (network_campaign_playing() && unit->unit.parent_seat_index != NONE)
-			carries = TRUE;
 		for (weapon_slot = 0; weapon_slot < MAXIMUM_WEAPONS_PER_UNIT; weapon_slot++)
 			carries |= unit->unit.weapon_object_indices[weapon_slot] != NONE;
 		if (!distributed_object_networked(iterator.index) || TEST_FLAG(unit->object.damage_flags, _object_dead_bit))
@@ -2184,14 +2184,9 @@ static boolean distributed_client_change_valid(
 	case _object_type_vehicle: group_tag = VEHICLE_DEFINITION_TAG; break;
 	case _object_type_weapon: group_tag = WEAPON_DEFINITION_TAG; break;
 	case _object_type_equipment: group_tag = EQUIPMENT_DEFINITION_TAG; break;
-	case _object_type_scenery: group_tag = 'scen'; break;
-	case _object_type_machine: group_tag = 'mach'; break;
-	case _object_type_control: group_tag = 'ctrl'; break;
-	case _object_type_light_fixture: group_tag = 'lifi'; break;
-	case _object_type_sound_scenery: group_tag = 'ssce'; break;
 	default: return FALSE;
 	}
-	if (!TEST_FLAG(networked_object_types(), type) || !tag_index_is_group(change->definition_index, group_tag))
+	if (!TEST_FLAG(NETWORKED_OBJECT_TYPES, type) || !tag_index_is_group(change->definition_index, group_tag))
 		return FALSE;
 	/* (a flag's or ball's team names the game type's flag or ball: an index
 	of its arrays; weapon_is_flag's bit) */
@@ -2406,8 +2401,6 @@ void network_objects_handle_synchronized(
 	objects_client_synchronized = TRUE;
 }
 
-boolean network_objects_synchronized(void) { return objects_client_synchronized; }
-
 /* a vehicle this machine's own player drives where the host has it, the
 host saying at which of this machine's ticks (its prediction come back):
 moved by how far that is from where this machine had it at that tick, if
@@ -2590,27 +2583,6 @@ void network_objects_handle_states(
 		dx = state->position.x - object->object.position.x;
 		dy = state->position.y - object->object.position.y;
 		dz = state->position.z - object->object.position.z;
-		if (network_campaign_client() && object->object.type == _object_type_biped &&
-			((struct unit_datum *)object)->unit.player_index == NONE)
-		{
-			boolean at_rest = TEST_FLAG(state->flags, _distributed_object_at_rest_bit);
-			/* Position tolerance must not discard a host velocity/rest change.
-			 * In particular a resting corpse can otherwise keep its local falling
-			 * state forever, while tiny position errors are ignored. */
-			object->object.translational_velocity = velocity;
-			object->object.angular_velocity = angular_velocity;
-			SET_FLAG(object->object.flags, _object_at_rest_bit, at_rest);
-			if (at_rest)
-			{
-				struct biped_datum *biped = (struct biped_datum *)object;
-				/* biped_update_moving only sets at_rest when grounded. */
-				SET_FLAG(biped->biped.flags, _biped_airborne_bit, FALSE);
-				biped->biped.airborne_ticks = 0;
-				SET_FLAG(object->object.flags, _object_on_ground_bit, TRUE);
-				tolerance = 0.f;
-				blend_distance = 0.f;
-			}
-		}
 		/* (close enough where it is, and turned as it is: one at rest too) */
 		if (dx * dx + dy * dy + dz * dz <= tolerance * tolerance &&
 			forward.i * object->object.forward.i + forward.j * object->object.forward.j +
@@ -2836,6 +2808,68 @@ static void distributed_client_apply_inventory(
 		distributed_client_note_own_inventory(own, inventory->unit_index, FALSE);
 }
 
+/* a client's own player picked up a weapon (network_player_show_pickup) */
+void network_objects_client_picked_up_weapon(
+	short local_player_index,
+	long unit_index,
+	long definition_index)
+{
+	struct distributed_picked_up_weapon *picked_up;
+
+	if (local_player_index < 0 || local_player_index >= MAXIMUM_LOCAL_PLAYERS)
+		return;
+	picked_up = &objects_client_picked_up_weapons[local_player_index];
+	picked_up->unit_index = unit_index;
+	picked_up->definition_index = definition_index;
+	picked_up->time = game_time_get();
+}
+
+/* the weapons its own players picked up readied once they have them, as
+unit_add_weapon_to_inventory readies a pickup where it decides it (not
+while firing): the client chooses its players' weapons in hand
+(distributed_client_apply_inventory), and the host follows */
+static void distributed_client_ready_picked_up_weapons(
+	void)
+{
+	short local_player_index;
+
+	for (local_player_index = 0; local_player_index < MAXIMUM_LOCAL_PLAYERS; local_player_index++)
+	{
+		struct distributed_picked_up_weapon *picked_up = &objects_client_picked_up_weapons[local_player_index];
+		long player_index = local_player_get_player_index(local_player_index);
+		struct player_datum *player = player_index != NONE ? player_try_and_get(player_index) : NULL;
+		long unit_index = distributed_living_unit(player);
+		struct unit_datum *unit;
+		short weapon_slot;
+
+		if (picked_up->definition_index == NONE)
+			continue;
+		if (unit_index == NONE || unit_index != picked_up->unit_index ||
+			game_time_get() - picked_up->time > PICKED_UP_WEAPON_TICKS)
+		{
+			picked_up->definition_index = NONE;
+			continue;
+		}
+		unit = unit_get(unit_index);
+		for (weapon_slot = 0; weapon_slot < MAXIMUM_WEAPONS_PER_UNIT; weapon_slot++)
+		{
+			long weapon_index = unit->unit.weapon_object_indices[weapon_slot];
+			struct weapon_datum *weapon = weapon_index != NONE ? weapon_try_and_get(weapon_index) : NULL;
+
+			if (weapon && weapon->definition_index == picked_up->definition_index)
+				break;
+		}
+		if (weapon_slot == MAXIMUM_WEAPONS_PER_UNIT)
+			continue;
+		if (!TEST_FLAG(unit->unit.control_flags, _unit_control_weapon_primary_trigger_bit))
+		{
+			player_control_set_desired_weapon(unit_index, weapon_slot);
+			unit->unit.desired_weapon_index = weapon_slot;
+		}
+		picked_up->definition_index = NONE;
+	}
+}
+
 void network_objects_handle_inventories(
 	void const *entries,
 	short count)
@@ -2957,7 +2991,7 @@ static void distributed_client_remove_own_objects(
 
 		objects_client_check_all = FALSE;
 		objects_client_new_object_count = 0;
-		object_iterator_new(&iterator, networked_object_types(), 0);
+		object_iterator_new(&iterator, NETWORKED_OBJECT_TYPES, 0);
 		while (object_iterator_next(&iterator))
 		{
 			long absolute_index = DATUM_INDEX_TO_ABSOLUTE_INDEX(iterator.index);
@@ -3053,6 +3087,7 @@ void network_objects_client_tick(
 	/* (too many to look at one by one later: all of them) */
 	else if (objects_client_new_object_count >= MAXIMUM_CLIENT_NEW_OBJECTS)
 		objects_client_check_all = TRUE;
+	distributed_client_ready_picked_up_weapons();
 	distributed_client_note_own_inventories();
 	distributed_client_send_vehicles();
 	distributed_client_carry_unsteered_vehicles();
@@ -3113,6 +3148,7 @@ void network_objects_new_game(
 	for (local_player_index = 0; local_player_index < MAXIMUM_LOCAL_PLAYERS; local_player_index++)
 	{
 		objects_client_own_inventories[local_player_index].unit_index = NONE;
+		objects_client_picked_up_weapons[local_player_index].definition_index = NONE;
 		for (index = 0; index < OWN_VEHICLE_POSITION_TICKS; index++)
 		{
 			objects_client_own_vehicles[local_player_index][index].time = NONE;
@@ -3120,3 +3156,6 @@ void network_objects_new_game(
 		}
 	}
 }
+
+/* (the retired CE campaign's lifecycle, network_campaign_lifecycle.c, still links) */
+boolean network_objects_synchronized(void) { return objects_client_synchronized; }

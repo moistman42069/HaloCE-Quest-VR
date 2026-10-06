@@ -95,8 +95,6 @@ symbols in this file:
 
 #include <xtl.h>
 
-#include "network_campaign.h"
-
 /* ---------- constants */
 
 /* the machine and player slots of a network game: the Xbox's 4 and 16, or the
@@ -131,7 +129,7 @@ static boolean network_game_player_slot_held(
 	struct player_datum *player;
 
 	if (!game_in_progress() || !game_engine_running() ||
-		!player_data || !player_data->valid || slot < 0 || slot >= player_data->maximum_count ||
+		!player_data || !player_data->valid || slot >= player_data->maximum_count ||
 		(server && !network_game_server_playing(server)))
 	{
 		return FALSE;
@@ -486,7 +484,7 @@ boolean network_game_spawn_player(
 	{
 		/* port: a player who quit there gives way (network_game_player_slot_held),
 		and his units forget him */
-		if (!network_campaign_active() && player_data && player_data->valid && player->player_list_index < player_data->maximum_count)
+		if (player_data && player_data->valid && player->player_list_index < player_data->maximum_count)
 		{
 			struct player_datum *quitter = (struct player_datum *)((byte *)player_data->data +
 				player_data->size * player->player_list_index);
@@ -499,7 +497,7 @@ boolean network_game_spawn_player(
 					quitter->network_player_data.machine_index != player->machine_index ||
 					quitter->network_player_data.controller_index != player->controller_index))
 			{
-				long quitter_index = ((unsigned long)(word)((struct datum_header *)quitter)->identifier << 16) |
+				long quitter_index = ((long)(word)((struct datum_header *)quitter)->identifier << 16) |
 					player->player_list_index;
 				struct object_iterator iterator;
 
@@ -740,11 +738,6 @@ boolean network_game_create_game_objects(
 		0x170,
 		game);
 
-	if (game->map.version == HALO_CAMPAIGN_MAP_VERSION && !network_campaign_game(game))
-	{
-		error(_error_log, "campaign: rejected malformed campaign game settings");
-		return FALSE;
-	}
 	game_options_new(&options);
 	csstrncpy(options.map_name, game->map.name, sizeof(game->map.name) - 1);
 	options.difficulty = game->difficulty;
@@ -782,16 +775,10 @@ boolean network_game_create_game_objects(
 		game_unload();
 	}
 
-	if (network_campaign_game(game))
-	{
-		/* Clear a preceding competitive variant before initializing the campaign. */
-		game_set_game_variant(NULL);
-		error(_error_log, "campaign: loading %s, difficulty %d, protocol %u",
-			game->map.name, game->difficulty, HALO_CAMPAIGN_NETWORK_VERSION);
-	}
-	else if (game->variant.game_engine_index)
+	if (game->variant.game_engine_index)
 	{
 		game_set_game_variant(&game->variant);
+		/* port: and its PC options */
 		game_set_game_variant_options(&game->variant_options);
 	}
 
@@ -823,7 +810,6 @@ boolean network_game_create_game_objects(
 		error(0, "game_load() failed.");
 	}
 
-	if (game->local_data.game_objects_loaded) network_campaign_loaded();
 	return game->local_data.game_objects_loaded;
 }
 

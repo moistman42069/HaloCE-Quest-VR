@@ -392,8 +392,6 @@ symbols in this file:
 #include "networking/network_server_manager.h"
 #include "text/unicode.h"
 
-#include "network_campaign.h"
-
 /* ---------- constants */
 
 enum
@@ -1572,14 +1570,6 @@ boolean network_game_client_add_player(
 	return success;
 }
 
-void network_game_client_campaign_clock(long time)
-{
-	struct network_game_client *client = global_network_game_client_get();
-	if (!client || !network_campaign_game(&client->game)) return;
-	client->next_update_number = time + 1;
-	network_game_client_late_join_clock_pending = FALSE;
-}
-
 boolean network_game_client_handle_game_update(
 	struct network_game_client *client,
 	struct message_server_game_update *message_packet)
@@ -1593,8 +1583,6 @@ boolean network_game_client_handle_game_update(
 	network_distributed.c: the host's game update carries no actions, and
 	keeps only the count of updates, which a machine that joined the game in
 	progress takes up where it is) */
-	if (network_campaign_active() && (network_campaign_held() ||
-		!network_campaign_decode_time(&message_packet->game_time))) return TRUE;
 	client->next_update_number = message_packet->update_number + 1;
 	/* (the host's time at the start, and a game in progress's past 16 bits
 	of ticks: the host's whole time, if it is ahead; never back, which the
@@ -2023,20 +2011,6 @@ boolean network_game_client_initiate_join_game(
 		join_parameters,
 		sizeof(*join_parameters));
 
-	/* Bind the capability echo to this join's copied token. No sticky global
-	 * mode can leak from a failed campaign join into a later competitive one. */
-	{
-		boolean campaign = global_network_game_server_get() &&
-			network_campaign_game(network_game_get_game());
-		long index;
-		for (index = 0; !campaign && index < MAXIMUM_NETWORK_ADVERTISED_GAMES; index++)
-		{
-			if (game == &client->available_games[index])
-				campaign = network_campaign_advertised(network_game_client_advertised_versions[index].version,
-					network_game_client_advertised_versions[index].flags);
-		}
-		if (campaign) network_campaign_join_token(client->join_parameters.join_token);
-	}
 	success = network_connection_connect(client->connection, address, 0);
 
 	if (success == TRUE)
@@ -3011,7 +2985,7 @@ the system link list does (network_game_join_game_from_server_list) */
 void platform_show_message(char const *title, char const *message);
 
 /* whether this client can join the advertised game: its host's network
-version is in this machine's reviewed compatibility range, and it plays the
+version is this machine's (HALO_PORT_NETWORK_VERSION), and it plays the
 distributed netcode (a host of this version built before the lockstep
 netcode was removed may play that). If not the player is told why (when
 tell), and nothing is joined. */
@@ -3023,28 +2997,21 @@ boolean network_game_client_advertised_game_compatible(
 	long game_index = client ? game - client->available_games : NONE;
 	unsigned int ours = HALO_PORT_NETWORK_VERSION;
 	unsigned int theirs;
-	boolean compatible_version;
 	boolean distributed;
 	char message[400];
 
 	if (game_index < 0 || game_index >= MAXIMUM_NETWORK_ADVERTISED_GAMES)
 		return FALSE;
 	theirs = network_game_client_advertised_versions[game_index].version;
-	compatible_version = theirs >= HALO_PORT_NETWORK_VERSION_MINIMUM &&
-		theirs <= HALO_PORT_NETWORK_VERSION_MAXIMUM;
 	distributed = (network_game_client_advertised_versions[game_index].flags &
 		HALO_PORT_ADVERTISED_DISTRIBUTED_FLAG) != 0;
-	/* (test27: a CE01/CE02 campaign host, this app's before 1.0.9, is no
-	longer joined: its protocol is retired; below, it is named) */
-    /* Bit 0x02 is upstream PvP IN_PROGRESS; only CE01 gives it campaign
-     * meaning. Never reject a reviewed PvP protocol for this shared bit. */
-	if (compatible_version && distributed)
+	if (theirs == ours && distributed)
 	{
-		network_event("joining a host of network version %u flags=0x%02x", theirs, network_game_client_advertised_versions[game_index].flags);
+		network_event("joining a host of network version %u", theirs);
 		return TRUE;
 	}
-	/* port: a campaign co-op host of this app before 1.0.9 (its own co-op
-	protocol, CE01 1.0.0 to 1.0.7, CE02 1.0.8): retired (test27) */
+	/* port: a co-op host of this app before 1.0.9 (its own protocol, CE01
+	1.0.0 to 1.0.7, CE02 1.0.8: retired, test27) */
 	if ((theirs & 0xFF00) == 0xCE00)
 	{
 		csprintf(message,
@@ -3053,7 +3020,7 @@ boolean network_game_client_advertised_game_compatible(
 			"This version plays co-op as OpenCE does. Ask the host to update this app.",
 			theirs);
 	}
-	else if (compatible_version)
+	else if (theirs == ours)
 	{
 		csprintf(message,
 			"The host is using the lockstep network code, which this version no longer has.\n\n"
@@ -3080,12 +3047,23 @@ boolean network_game_client_advertised_game_compatible(
 	}
 	if (tell)
 	{
-		network_event("not joining host: version=%u flags=0x%02x supported=%u-%u distributed=%u", theirs,
-            network_game_client_advertised_versions[game_index].flags,
-            HALO_PORT_NETWORK_VERSION_MINIMUM, HALO_PORT_NETWORK_VERSION_MAXIMUM, distributed);
+		network_event("not joining a host of network version %u%s (this machine's is %u)", theirs,
+			distributed ? "" : " with the lockstep netcode", ours);
 		platform_show_message("Halo: cannot join this game", message);
 	}
 	return FALSE;
+}
+
+/* port: whether the advertised game is under way (HALO_PORT_ADVERTISED_IN_PROGRESS_FLAG),
+not in its lobby */
+boolean network_game_client_advertised_game_in_progress(
+	struct network_game_client *client,
+	struct network_advertised_game const *game)
+{
+	long game_index = client ? game - client->available_games : NONE;
+
+	return game_index >= 0 && game_index < MAXIMUM_NETWORK_ADVERTISED_GAMES &&
+		(network_game_client_advertised_versions[game_index].flags & HALO_PORT_ADVERTISED_IN_PROGRESS_FLAG) != 0;
 }
 
 boolean network_game_client_join_first_available_game(

@@ -1,4 +1,4 @@
-"""Verify actual CE01 capacity gates and campaign saved-unit slot limits."""
+"""The retired CE01/CE02 campaign gate matches nothing (test27); campaign saved-unit slot limits."""
 from pathlib import Path
 import re,subprocess
 ROOT=Path(__file__).resolve().parents[1];OUT=ROOT/'build/campaign-capacity';OUT.mkdir(parents=True,exist_ok=True)
@@ -34,13 +34,14 @@ int main(void){
  struct network_game game={0};struct player_datum player={.local_player_index=NONE};
  for(int mission=0;mission<10;mission++)for(int difficulty=0;difficulty<4;difficulty++){
   char map[128];snprintf(map,sizeof(map),"levels\\%s\\%s",campaign_maps[mission],campaign_maps[mission]);
-  assert(network_campaign_prepare(&game,map,difficulty));assert(network_campaign_game(&game));
-  for(int capacity=1;capacity<=128;capacity++){game.minimum_players=game.maximum_players=capacity;assert(network_campaign_game(&game)==(capacity==2));}
+  /* test27: the CE01/CE02 protocol is retired (OpenCE's co-op replaced it): no game is one of its */
+  assert(network_campaign_prepare(&game,map,difficulty));assert(!network_campaign_game(&game));
+  for(int capacity=1;capacity<=128;capacity++){game.minimum_players=game.maximum_players=capacity;assert(!network_campaign_game(&game));}
  }
  assert(!network_campaign_prepare(&game,"levels\\a10\\a10",4));assert(!network_campaign_prepare(&game,"bad",1));
  for(int slot=0;slot<128;slot++)assert(player_saved_unit_slot(slot|0x120000,&player)==(slot<4?slot:NONE));
  campaign=0;player.local_player_index=1;assert(player_saved_unit_slot(127,&player)==1);
- puts("PASS: production CE01 gate across 128 capacities / 40 mission difficulties; 128 recovery slots audited; solo slot unchanged");
+ puts("PASS: the retired CE01/CE02 gate matches no game (128 capacities / 40 mission difficulties); 128 recovery slots audited; solo slot unchanged");
 }
 '''
 path=OUT/'capacity.c';path.write_text(code)

@@ -65,10 +65,6 @@ enum
 	/* every player's ping as the host measures it, every two seconds, for
 	the scoreboard (unreliable) */
 	_distributed_message_pings,
-	/* the host's actors' units: their control and state (network_actors.c).
-	A number of its own, clear of the kinds upstream adds: a build without
-	it drops the message as a kind it does not know, so the network version
-	stays upstream's and its players join as before */
 	/* this app's (32 to 63 are free upstream, whose builds drop a kind they
 	do not know): the VR avatars (vr_pose, vr_capability, sent only to a
 	machine that said it draws them) and the retired CE01/CE02 campaign
@@ -88,7 +84,10 @@ enum
 	_distributed_message_campaign_actor_animations,
 	/* Breakable surfaces the host broke (test26, campaign CE02, reliable). */
 	_distributed_message_campaign_surfaces,
-
+	/* the host's actors' units: their control and state (network_actors.c).
+	A number of its own, clear of the kinds upstream adds: a build without
+	it drops the message as a kind it does not know, so the network version
+	stays upstream's and its players join as before */
 	_distributed_message_actor_states = 64,
 	/* co-op (a campaign map, no game engine): the host's structure BSP,
 	twice a second, for a client to switch to; numbered as actor_states */
@@ -232,6 +231,9 @@ long distributed_latest_host_time(void);
 /* (a client) how long the host takes to have this machine's players and
 tell it back, in ticks (0 before it is measured) */
 real distributed_own_round_trip_ticks(void);
+/* a player's ping (the round trip of its machine's messages to the host and
+back, as the host measures it) in milliseconds: 0 for the host's own
+players, NONE before it is known */
 long distributed_player_ping(short player_index);
 /* (the host, in its tick) the client machine a player is on, NONE for none
 (the host's own players') */
@@ -252,9 +254,6 @@ struct animation *distributed_graph_animation(long animation_graph_index, short 
 /* ... an orientation's two axes (unpacked): TRUE when they are one long
 and about square, then made exactly so */
 boolean distributed_axes_make_valid(real_vector3d *forward, real_vector3d *up);
-boolean distributed_transform_valid(real_point3d const *position, real_vector3d const *forward,
-	real_vector3d const *up, real_vector3d const *velocity, real_vector3d const *angular_velocity,
-	real_vector3d *valid_forward, real_vector3d *valid_up);
 /* the vectors in 16 bits a part (struct distributed_vector) */
 void distributed_vector_pack(real_vector3d const *vector, real scale, struct distributed_vector *result);
 void distributed_vector_unpack(struct distributed_vector const *vector, real scale, real_vector3d *result);
@@ -334,6 +333,12 @@ void network_objects_handle_changes(void const *entries, short count);
 void network_objects_handle_synchronized(void);
 void network_objects_handle_states(void const *entries, short count);
 void network_objects_handle_inventories(void const *entries, short count);
+/* (a client) its own player picked up the weapon, to ready once its unit has it */
+/* (exported: the VR avatars' poses, network_vr_pose.c) */
+boolean distributed_transform_valid(real_point3d const *position, real_vector3d const *forward,
+	real_vector3d const *up, real_vector3d const *velocity, real_vector3d const *angular_velocity,
+	real_vector3d *valid_forward, real_vector3d *valid_up);
+void network_objects_client_picked_up_weapon(short local_player_index, long unit_index, long definition_index);
 void network_objects_handle_vehicle_prediction(long machine_index, void const *entries, short count);
 /* (the host) the vehicle predictions come in since the last tick, taken */
 void network_objects_apply_vehicle_predictions(void);

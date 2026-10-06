@@ -450,4 +450,14 @@ extern real player_look_pitch_rate[MAXIMUM_NUMBER_OF_LOCAL_PLAYERS];
 
 /* ---------- public code */
 
+/* port: player names the host's ban command can always name (OpenCE's: test27) */
+char player_name_character_ascii(
+	wchar_t character);
+boolean player_name_clean(
+	wchar_t *name,
+	long count);
+boolean player_name_valid(
+	wchar_t const *name,
+	long count);
+
 #endif // __PLAYERS_H
