@@ -94,6 +94,12 @@ assert 'if (!function->parameter_count) network_campaign_script_capture(expressi
 # (test26 sends a resting object's teleport at once, distributed_host_send_states:
 # the client's reconciling stays 1.0.4's)
 old_net = git_show('55e77364', 'port/linux/game/network_objects.c')
+# (test27: network_objects.c is OpenCE build 138's now, with test26's resend
+# re-applied: its reconciling is OpenCE's now, not 1.0.4's, and
+# the resend stays: test_test26 runs it)
+if 'network_objects_client_picked_up_weapon' in objects_net:
+    assert 'if (at_rest && !was_moving && !distributed_host_rest_moved(absolute_index, object_index))' in objects_net
+    old_net = None
 net_1_0_4 = objects_net
 net_1_0_4 = re.sub(r'/\* \.\.\. where each was when its state last went out.*?\} objects_host_rest_sent\[MAXIMUM_TRACKED_OBJECTS\];\n',
                    '', net_1_0_4, count=1, flags=re.S)
@@ -104,7 +110,7 @@ net_1_0_4 = net_1_0_4.replace(
     '\t\tif (at_rest && !was_moving && !distributed_host_rest_moved(absolute_index, object_index))\n',
     '\t\tif (at_rest && !was_moving)\n')
 net_1_0_4 = net_1_0_4.replace('\t\tdistributed_host_note_rest_sent(absolute_index, object_index);\n', '')
-assert net_1_0_4 == old_net, 'network_objects.c as in 1.0.4 but for test26\'s resting teleports'
+assert old_net is None or net_1_0_4 == old_net, 'network_objects.c as in 1.0.4 but for test26\'s resting teleports'
 
 # --- version
 code = int(re.search(r'versionCode Math\.max\((\d+), buildNumber\)', gradle).group(1))

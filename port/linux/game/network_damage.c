@@ -56,7 +56,6 @@ being hit looks and feels like on the clients).
 #include "scenario/scenario.h"
 #include "units/units.h"
 #include "network_distributed.h"
-#include "network_campaign.h"
 
 #include <math.h>
 
@@ -2057,8 +2056,6 @@ static boolean distributed_event_goes_to(
 {
 	short count = damage_event_destinations[event_index].player_count;
 	short index;
-	/* The two-player campaign also shows encounters with no player involved. */
-	if (network_campaign_playing() && damage_events[event_index].kind != _damage_event_player_effect) return TRUE;
 
 	if (count == NONE || damage_event_destinations[event_index].owner_machine_index == machine_index)
 		return TRUE;

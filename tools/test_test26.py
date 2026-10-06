@@ -148,121 +148,20 @@ int main(void){
 }
 ''')
 
-# --- 3. the host's user animations and movement flags (test_campaign_actors runs the messages)
+# --- 3-5. (test27) the CE02 co-op these replicated through is retired: OpenCE's co-op
+# (network_coop.c, network_actors.c, network 20) replicates the host's custom animations and
+# AI user animations, and glass, itself. What remains of test26 here is checked against it.
 start = fn(units, 'unit_start_user_animation')
-assert 'network_campaign_actor_animation_capture(unit_index, interpolate);' in start
-assert obey.count('network_campaign_actor_movement_capture(unit_index);') == 2, 'command list starts and ends'
-assert '"custom_animation"' in script_c and '"unit_custom_animation_at_frame"' in script_c
-capture = fn(script_c, 'network_campaign_script_capture')
-assert '"custom_animation"' in capture and '"unit_custom_animation_at_frame"' in capture, 'named starts not sent twice'
-assert 'network_campaign_script_capture_named("custom_animation"' not in scripting
-network_start = fn(units, 'unit_network_start_user_animation')
-for step in ['unit_set_animation(', 'frame_index', '_unit_state_user_animation']:
-    assert step in network_start, step
-assert 'impulses_clear();' in fn(actors, 'flush_impulses') and 'network_campaign_actor_impulses_reset();' not in fn(actors, 'flush_impulses'), \
-    'sending the impulses does not forget the animations marked this tick (they go after)'
-tick = fn(actors, 'network_campaign_actors_tick')
-assert tick.index('flush_impulses();') < tick.index('flush_animations();')
-order = re.search(r'_distributed_message_campaign_actor_impulses,\s*_distributed_message_campaign_actor_animations,\s*'
-                  r'_distributed_message_campaign_surfaces,\s*NUMBER_OF_DISTRIBUTED_MESSAGES',
-                  re.sub(r'/\*.*?\*/', '', distributed_h, flags=re.S))
-assert order, 'appended: earlier messages keep their numbers'
-for name in ['_distributed_message_campaign_actor_animations', '_distributed_message_campaign_surfaces']:
-    assert distributed_c.count(name) >= 3, name + ': filtered, sized and dispatched'
-print('PASS: user animations (AI command lists\' "animate" included) and their absolute-movement/no-collision flags'
-      ' go to the client as the host played them; script starts not sent twice; messages appended')
-
-# --- 4. one co-op protocol, CE02, everywhere it is named; another version's host said plainly
-assert re.search(r'#define HALO_CAMPAIGN_NETWORK_VERSION 0xCE02\b', campaign_h)
-assert 'static final int CAMPAIGN_VERSION = 0xCE02;' in listing and '(version & 0xFF00) == 0xCE00' in listing
-assert ('ServerListing.isCampaign(entry.version) == campaign' in browser or
-        'ServerListing.listedIn(campaign, entry.kind)' in browser)  # (test27: one classification, OpenCE co-op apart)
-assert 'CE02' in updater and package.count('"campaign_protocol": 0xCE02') == 2
-assert '0xCE01' not in package and 'CAMPAIGN_VERSION = 0xCE01' not in listing
-assert 'co-op protocol %X here, %X on the host' in client_manager
-print('PASS: co-op protocol CE02 in the game, launcher, updater and package; a 1.0.7 host is listed and refused by name')
-
-# --- 5. glass broken on the host breaks on the client (OpenCE 7a1ffca2, adapted)
+assert 'network_coop_note_unit_animation(unit_index, animation_graph_index, animation_index,' in start
+assert 'network_actors_note_user_animation(unit_index, animation_graph_index, animation_index,' in start
+assert 'network_campaign_actor_animation_capture(' not in start, "the retired CE02 capture is gone"
+assert breakable.count('network_coop_note_surface_broken(') == 2, 'both break sites, as OpenCE'
 port_break = fn(breakable, 'breakable_surface_port_break')
 assert 'breakable_surface_index < 0 || breakable_surface_index >= structure_bsp->breakable_surfaces.count' in port_break
 assert '!breakable_surface_extant(breakable_surface_index)' in port_break
-assert breakable.count('network_campaign_surface_broken(') == 2, 'both break sites'
-assert 'surfaces_flush(refresh);' in fn(campaign_objects, 'network_campaign_objects_tick')
-surface_code = between(campaign_objects, 'struct campaign_surface_break\n{', '#define SURFACES_PER_REFRESH 8\n') + \
-    fn(campaign_objects, 'network_campaign_surface_broken') + fn(campaign_objects, 'surfaces_flush') + \
-    fn(campaign_objects, 'network_campaign_surfaces_receive')
-surface_code = re.sub(r'\blong\b', 'int', surface_code)
-run('glass', r'''
-#include <assert.h>
-#include <math.h>
-#include <stdio.h>
-#include <string.h>
-typedef int boolean; typedef float real; typedef unsigned char byte; typedef unsigned short word;
-#define TRUE 1
-#define FALSE 0
-#define NONE (-1)
-#define NUMBEROF(a) (sizeof(a)/sizeof((a)[0]))
-#define RELIABLE_ENTRIES(t) 4
-#define _game_connection_network_server 1
-#define _distributed_message_campaign_surfaces 41
-#define _distributed_to_clients_reliably 1
-#define TAG_BLOCK_GET_ELEMENT(block,index,type) (&((type *)(block)->address)[index])
-typedef union { struct { real x,y,z; }; real n[3]; } real_point3d;
-typedef union { struct { real i,j,k; }; real n[3]; } real_vector3d;
-struct distributed_message_header { word h; byte type,count; int time; };
-struct structure_breakable_surface { real_point3d centroid; };
-struct structure_bsp { struct { int count; struct structure_breakable_surface *address; } breakable_surfaces; };
-static struct structure_breakable_surface definitions[20];
-static struct structure_bsp bsp = {{20, definitions}};
-static boolean broken[20];
-static short global_structure_bsp_index = 1;
-static int connection=1, playing=1, round_id=2, seed=9;
-static boolean network_campaign_playing(void){return playing;}
-static boolean network_campaign_client(void){return playing && connection==2;}
-static int game_connection(void){return connection;}
-static int network_game_get_number_of_games_played(void){return round_id;}
-static int network_game_get_random_seed(void){return seed;}
-static struct structure_bsp *global_structure_bsp_get(void){return &bsp;}
-static boolean breakable_surface_extant(short i){ return !broken[i]; }
-static boolean distributed_transform_valid(real_point3d const *p, real_vector3d const *f, real_vector3d const *u, void *a, void *b,
- real_vector3d *fo, real_vector3d *uo){ for(int i=0;i<3;i++) if(!isfinite(p->n[i])||fabsf(p->n[i])>5000) return FALSE; return TRUE; }
-static unsigned char wire[256][24]; static int wire_count, sends;
-static void distributed_send(void *m, byte t, short n, word size, short dest){
- assert(t==41&&dest==1&&n>0&&n<=4); assert(size==sizeof(struct distributed_message_header)+n*24);
- assert(wire_count+n<=256); memcpy(wire[wire_count],(byte*)m+sizeof(struct distributed_message_header),n*24); wire_count+=n; sends++; }
-static int breaks; static short broke[256]; static real_point3d broke_at[256];
-static void breakable_surface_port_break(short i, real_point3d const *at){ broke[breaks]=i; broke_at[breaks++]=*at; }
-''' + surface_code + r'''
-static void receive_all(void){ for(int i=0;i<wire_count;i++) network_campaign_surfaces_receive(wire[i],1); }
-int main(void){
- for(int i=0;i<20;i++) definitions[i].centroid=(real_point3d){{(real)i,2,3}};
- /* host: three breaks this tick go out together, reliably, with where each was struck */
- real_point3d at[3]={{{1,2,3}},{{4,5,6}},{{-7,8,9}}};
- for(int i=0;i<3;i++) network_campaign_surface_broken((short)(5+i),&at[i]);
- surfaces_flush(FALSE); assert(wire_count==3&&sends==1);
- surfaces_flush(FALSE); assert(wire_count==3); /* (once) */
- /* client: each breaks here, struck where it was */
- connection=2; receive_all(); assert(breaks==3);
- for(int i=0;i<3;i++) assert(broke[i]==5+i&&broke_at[i].x==at[i].x&&broke_at[i].z==at[i].z);
- /* refused: another game or round, another BSP, a bad place; nothing captured on a client */
- int before=breaks; round_id++; receive_all(); round_id--; seed++; receive_all(); seed--;
- global_structure_bsp_index=0; receive_all(); global_structure_bsp_index=1; assert(breaks==before);
- { unsigned char bad[24]; memcpy(bad,wire[0],24); real nan=NAN; memcpy(bad+12,&nan,4); network_campaign_surfaces_receive(bad,1); assert(breaks==before); }
- network_campaign_surface_broken(1,&at[0]); connection=1; wire_count=0; surfaces_flush(FALSE); assert(wire_count==0);
- /* host: more than fit in a tick: 64 go, the rest with the refresh (8 broken surfaces again each, round them all) */
- for(int i=0;i<70;i++){ network_campaign_surface_broken((short)(i%20),&at[0]); }
- surfaces_flush(FALSE); assert(wire_count==64);
- for(int i=0;i<20;i++) broken[i]=TRUE;
- boolean seen[20]={0}; int refreshes=0;
- while(refreshes<4){ wire_count=0; surfaces_flush(TRUE); refreshes++; assert(wire_count<=8);
-  for(int i=0;i<wire_count;i++){ short s; memcpy(&s,wire[i]+10,2); seen[s]=TRUE; } }
- for(int i=0;i<20;i++) assert(seen[i]);
- /* not playing co-op: nothing */
- playing=0; wire_count=0; network_campaign_surface_broken(3,&at[0]); surfaces_flush(FALSE); assert(wire_count==0);
- puts("PASS: glass the host breaks breaks on the client, struck where it was; another round, game, BSP or a bad place refused;"
-      " more than a tick holds goes with the refresh, which resends every broken pane in turn (8 a refresh)");
-}
-''')
+assert '(theirs & 0xFF00) == 0xCE00' in client_manager and 'This version plays co-op as OpenCE does' in client_manager
+assert 'isCampaign(version)' in listing and 'Co-op of this app 1.0.8 or older' in listing
+print("PASS: (test27) co-op animations and glass replicate through OpenCE's co-op; a 1.0.8 (CE02) host is listed and refused by name")
 
 # --- 6. a Quest 2 client's red text: the enforcer and the medium preset fought every frame
 options = between(console_vars, 'struct rasterizer_debug_options\n{', '\n};')
@@ -659,8 +558,9 @@ print('PASS: melee sweeps the grip, middle and (long guns) far end, carried on u
 
 # --- 13. adopted upstream (OpenCE build 128): the engine's speed-ups, glass, a client never reverting
 assert 'cluster_partitions_port_forget' in game_state and 'cluster_partitions_port_forget' in read('source/structures/cluster_partitions.c', 'latin-1')
-assert 'if (game_connection() != _game_connection_network_client)\n\t{\n\t\tgame_state_revert();' in fn(main_c, 'main_revert_map_private')
-assert 'cinematic_can_be_skipped() && game_connection() != _game_connection_network_client' in fn(main_c, 'main_skip_cinematic_private')
+# (test27: upstream's own form since build 129: the co-op host reverts for everyone, a local game alone)
+assert 'else if (game_connection() != _game_connection_network_client)\n\t{\n\t\tgame_state_revert();' in fn(main_c, 'main_revert_map_private')
+assert 'else if (skippable && game_connection() == _game_connection_local)' in fn(main_c, 'main_skip_cinematic_private')
 may_discard = fn(bipeds, 'biped_port_may_discard')
 assert 'network_objects_may_delete(biped_index)' in may_discard and 'noted_biped_index != biped_index' in may_discard
 assert bipeds.count('biped_port_may_discard(biped_index)') == 2, 'fallen out of the world, and discarded far below'

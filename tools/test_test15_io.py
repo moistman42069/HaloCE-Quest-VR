@@ -91,20 +91,18 @@ int main(void){
  struct network_game g={0};game_variant_options_default(&g.variant,&g.variant_options);
  g.variant_options.time_limit=30;g.variant_options.loadout=1;g.local_data[0]=1;
  deliver((byte*)&g,sizeof(g));assert(result.variant_options.time_limit==30&&result.local_data[0]==1);
- campaign=1;assert(network_game_server_send_game_settings_to_client_machine(0,0,&g,sizeof(g)));assert(result.variant_options.time_limit==0&&result.local_data[0]==1);
- campaign=0;assert(network_game_server_send_game_settings_to_client_machine(0,0,&g,sizeof(g)));assert(result.variant_options.time_limit==30);applied=1;
- byte legacy[HALO_PORT_NETWORK_GAME_LEGACY_SIZE];memcpy(legacy,&g,HALO_PORT_NETWORK_GAME_VARIANT_OPTIONS_OFFSET);
- memcpy(legacy+HALO_PORT_NETWORK_GAME_VARIANT_OPTIONS_OFFSET,g.local_data,4);
- deliver(legacy,sizeof(legacy));assert(result.variant_options.time_limit==0&&result.local_data[0]==1);
- struct message_server_game_settings_update p={0};p.total_size=sizeof(g);p.length=1;p.offset=0;assert(network_game_client_receive_game_settings_piece(0,&p));
- p.total_size=sizeof(legacy);p.offset=1;assert(network_game_client_receive_game_settings_piece(0,&p));assert(applied==2);
- p.total_size=65535;assert(!network_game_client_receive_game_settings_piece(0,&p));p.total_size=sizeof(g);p.length=0;assert(!network_game_client_receive_game_settings_piece(0,&p));
+ campaign=0;assert(network_game_server_send_game_settings_to_client_machine(0,0,&g,sizeof(g)));assert(result.variant_options.time_limit==30);
+ /* test27: the settings record is OpenCE's alone: the v9-v10 hosts' shorter one (and the retired CE campaign's)
+ is refused, as by OpenCE's clients */
+ struct message_server_game_settings_update p={0};p.total_size=HALO_PORT_NETWORK_GAME_LEGACY_SIZE;p.length=1;p.offset=0;
+ assert(!network_game_client_receive_game_settings_piece(0,&p));
+ p.total_size=65535;assert(!network_game_client_receive_game_settings_piece(0,&p));
  for(int i=0;i<10;i++){g.variant_options.primary_weapon=i;assert(game_variant_options_valid(&g.variant_options));}
  g.variant_options.primary_weapon=255;assert(!game_variant_options_valid(&g.variant_options));g.variant_options.primary_weapon=2;
  assert(sizeof(g.variant_options)==28);g.variant_options.no_map_weapons=1;assert(game_variant_options_valid(&g.variant_options));
  g.variant_options.no_map_weapons=255;assert(!game_variant_options_valid(&g.variant_options));g.variant_options.no_map_weapons=0;
  g.variant_options.vehicle_counts[1][5]=255;assert(!game_variant_options_valid(&g.variant_options));
- puts("PASS: v11/legacy fragment assembly, local-data tail, defaults, malformed fragments, bounded match options");
+ puts("PASS: settings fragment assembly (OpenCE's record; the v9-v10 record refused), local-data tail, defaults, bounded match options");
 }
 ''')
 s=(ROOT/'port/linux/src/d3d8_gl.c').read_text()
