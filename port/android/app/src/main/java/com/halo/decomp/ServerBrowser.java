@@ -257,6 +257,8 @@ final class ServerBrowser {
             else connect.run();
         });
         String blocked = unsupportedCapacity ? "Unsupported campaign capacity: this build supports two-player co-op. Larger PvP limits do not apply to campaign."
+            : !compatible && campaign ? "Version mismatch: this co-op game is from a different HaloCE Quest/Android version. "
+            + "Both players need the same app version (this one is " + BuildConfig.VERSION_NAME + ")."
             : !compatible ? "Protocol mismatch: this host uses network v" + entry.version +
             ". Disc revision cannot change the network protocol. Ask the host to update or choose a compatible server."
             : !favorite && entry.players >= entry.maximum ? "Server full. Refresh after a player leaves."
@@ -408,7 +410,7 @@ final class ServerBrowser {
                 } else {
                     directory.clear();
                     for (Entry entry : completed)
-                        if ((entry.version == CAMPAIGN_VERSION) == campaign) directory.add(entry);
+                        if (ServerListing.isCampaign(entry.version) == campaign) directory.add(entry);
                     visibleListings = 50;
                     int players = 0;
                     for (Entry entry : directory) players += entry.players;

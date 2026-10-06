@@ -821,6 +821,13 @@ boolean unit_start_user_animation(
 	long animation_graph_index,
 	char const *animation_name,
 	boolean interpolate);
+/* port: a network co-op client's copy of the host's (units.c) */
+void unit_network_start_user_animation(
+	long unit_index,
+	long animation_graph_index,
+	short animation_index,
+	short frame_index,
+	boolean interpolate);
 short unit_get_custom_animation_time(
 	long unit_index);
 boolean unit_approve_weapon_pickup(

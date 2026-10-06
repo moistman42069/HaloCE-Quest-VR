@@ -9,6 +9,9 @@
 #include "models/models.h"
 #include "models/model_definitions.h"
 #include "networking/network_game_globals.h"
+#include "physics/breakable_surfaces.h"
+#include "structures/structure_bsp_definitions.h"
+#include "scenario/scenario.h"
 #include "network_campaign.h"
 #include "network_distributed.h"
 #include <string.h>
@@ -37,6 +40,98 @@ static boolean valid[MAXIMUM_TRACKED_OBJECTS], force_refresh;
 word network_campaign_objects_size(void) { return sizeof(struct campaign_object_pose); }
 void network_campaign_objects_reset(void) { memset(valid, 0, sizeof(valid)); force_refresh = TRUE; }
 
+/* test26 (OpenCE 7a1ffca2, adapted to this protocol): a breakable surface
+the host broke, in the BSP it was in, from damage at the epicenter */
+struct campaign_surface_break
+{
+	long round;
+	unsigned long seed;
+	short bsp, surface;
+	real_point3d epicenter;
+};
+typedef char campaign_surface_break_size_assert[sizeof(struct campaign_surface_break) == 24 ? 1 : -1];
+static struct campaign_surface_break surface_breaks[64];
+static short surface_break_count;
+static short surface_resend_cursor;
+#define SURFACES_PER_REFRESH 8
+
+word network_campaign_surfaces_size(void) { return sizeof(struct campaign_surface_break); }
+
+void network_campaign_surface_broken(short breakable_surface_index, real_point3d const *epicenter)
+{
+	struct campaign_surface_break *entry;
+	if (!network_campaign_playing() || game_connection() != _game_connection_network_server) return;
+	/* (more this tick than fit: the refresh sends the rest) */
+	if (surface_break_count == NUMBEROF(surface_breaks)) return;
+	entry = &surface_breaks[surface_break_count++];
+	memset(entry, 0, sizeof(*entry));
+	entry->round = network_game_get_number_of_games_played();
+	entry->seed = network_game_get_random_seed();
+	entry->bsp = global_structure_bsp_index;
+	entry->surface = breakable_surface_index;
+	entry->epicenter = *epicenter;
+}
+
+/* host, as the poses go: the breaks since, and a few broken surfaces again
+each refresh, round them all (one whose message was lost, or broken before
+a BSP's snapshot) */
+static void surfaces_flush(boolean refresh)
+{
+	struct { struct distributed_message_header header;
+		struct campaign_surface_break entries[RELIABLE_ENTRIES(struct campaign_surface_break)]; } message;
+	short count = 0, index;
+	if (refresh)
+	{
+		struct structure_bsp *structure_bsp = global_structure_bsp_get();
+		short surfaces = structure_bsp ? (short)structure_bsp->breakable_surfaces.count : 0;
+		short step, sent = 0;
+		for (step = 0; step < surfaces && sent < SURFACES_PER_REFRESH &&
+			surface_break_count < NUMBEROF(surface_breaks); step++)
+		{
+			short surface = (short)((surface_resend_cursor + step) % surfaces);
+			if (!breakable_surface_extant(surface))
+			{
+				struct structure_breakable_surface *definition = TAG_BLOCK_GET_ELEMENT(
+					&structure_bsp->breakable_surfaces, surface, struct structure_breakable_surface);
+				network_campaign_surface_broken(surface, &definition->centroid);
+				sent++;
+			}
+		}
+		if (surfaces) surface_resend_cursor = (short)((surface_resend_cursor + step) % surfaces);
+	}
+	for (index = 0; index < surface_break_count; index++)
+	{
+		message.entries[count++] = surface_breaks[index];
+		if (count == NUMBEROF(message.entries))
+		{
+			distributed_send(&message, _distributed_message_campaign_surfaces, count,
+				sizeof(message.header) + count * sizeof(message.entries[0]), _distributed_to_clients_reliably);
+			count = 0;
+		}
+	}
+	if (count) distributed_send(&message, _distributed_message_campaign_surfaces, count,
+		sizeof(message.header) + count * sizeof(message.entries[0]), _distributed_to_clients_reliably);
+	surface_break_count = 0;
+}
+
+void network_campaign_surfaces_receive(void const *entries, short count)
+{
+	short index;
+	if (!network_campaign_client()) return;
+	for (index = 0; index < count; index++)
+	{
+		struct campaign_surface_break entry;
+		real_vector3d forward = { 1.0f, 0.0f, 0.0f }, up = { 0.0f, 0.0f, 1.0f };
+		memcpy(&entry, (byte const *)entries + index * sizeof(entry), sizeof(entry));
+		if (entry.round != network_game_get_number_of_games_played() ||
+			entry.seed != (unsigned long)network_game_get_random_seed() ||
+			entry.bsp != global_structure_bsp_index ||
+			!distributed_transform_valid(&entry.epicenter, &forward, &up, NULL, NULL, &forward, &up)) continue;
+		/* (an index out of the BSP's, or already broken: nothing) */
+		breakable_surface_port_break(entry.surface, &entry.epicenter);
+	}
+}
+
 static boolean managed_attachment(struct object_datum const *object)
 {
 	if (TEST_FLAG(_object_mask_unit, object->object.type) &&
@@ -55,6 +150,7 @@ void network_campaign_objects_tick(void)
 	if (!network_campaign_playing() || game_connection() != _game_connection_network_server ||
 		(!force_refresh && game_time_get() % 3)) return;
 	refresh = force_refresh || game_time_get() % (3 * TICKS_PER_SECOND) == 0;
+	surfaces_flush(refresh);
 	force_refresh = FALSE;
 	object_iterator_new(&iterator, _object_mask_unit | _object_mask_item | _object_mask_scenery |
 		_object_mask_device | FLAG(_object_type_sound_scenery), 0);

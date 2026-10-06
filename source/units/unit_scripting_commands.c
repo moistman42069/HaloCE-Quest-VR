@@ -237,8 +237,8 @@ boolean unit_scripting_start_user_animation_list(
 	{
 		if (result && unit_try_and_get(unit_index))
 		{
-			long arguments[4] = {unit_index, animation_graph_index, (long)animation_name, interpolate};
-			network_campaign_script_capture_named("custom_animation", arguments);
+			/* port: a co-op host's start goes to its client from
+			unit_start_user_animation (test26) */
 			result = unit_start_user_animation(unit_index, animation_graph_index, animation_name, interpolate);
 		}
 		unit_index = object_list_get_next(object_list_index, &reference_index);

@@ -3,8 +3,12 @@
 #ifndef NETWORK_CAMPAIGN_H
 #define NETWORK_CAMPAIGN_H
 
-#define HALO_CAMPAIGN_NETWORK_VERSION 0xCE01
-/* CE01 only: upstream PvP uses this bit for an in-progress match. */
+/* CE02 (test26, 1.0.8): the host's user animations as chosen and its
+ * bipeds' movement flags (message 40), no custom animation presentation
+ * calls, breakable surfaces. A CE01 peer (1.0.0-1.0.7) and a CE02 peer
+ * refuse each other at the join: both players need the same version. */
+#define HALO_CAMPAIGN_NETWORK_VERSION 0xCE02
+/* Campaign only: upstream PvP uses this bit for an in-progress match. */
 #define HALO_CAMPAIGN_ADVERTISED_FLAG 0x02
 #define HALO_CAMPAIGN_MAP_VERSION 0x434F0001L
 
@@ -72,6 +76,13 @@ void network_campaign_objects_tick(void);
 void network_campaign_objects_reset(void);
 word network_campaign_objects_size(void);
 void network_campaign_objects_receive(void const *entries, short count);
+/* test26 (OpenCE 7a1ffca2, adapted): breakable surfaces (glass) break with
+each machine's own random damage; the host's breaks are the ones everyone
+keeps, sent as they break and a few again each refresh */
+union real_point3d;
+void network_campaign_surface_broken(short breakable_surface_index, union real_point3d const *epicenter);
+word network_campaign_surfaces_size(void);
+void network_campaign_surfaces_receive(void const *entries, short count);
 struct unit_control_data;
 void network_campaign_actor_capture(long object_index, struct unit_control_data const *control);
 void network_campaign_actor_update(long object_index);
@@ -80,6 +91,13 @@ void network_campaign_actor_impulse_capture(long object_index, short impulse, un
 word network_campaign_actor_impulses_size(void);
 void network_campaign_actor_impulses_reset(void);
 void network_campaign_actor_impulses_receive(void const *entries, short count);
+/* test26: the host's user animations (every start: a script's, an AI
+command list's, an alert), exactly as chosen, with the biped's movement
+flags; and the flags as an AI command list changes them */
+void network_campaign_actor_animation_capture(long object_index, boolean interpolate);
+void network_campaign_actor_movement_capture(long object_index);
+word network_campaign_actor_animations_size(void);
+void network_campaign_actor_animations_receive(void const *entries, short count);
 void network_campaign_actors_tick(void);
 void network_campaign_actors_reset(void);
 word network_campaign_actors_size(void);

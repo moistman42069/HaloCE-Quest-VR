@@ -4040,6 +4040,10 @@ boolean unit_start_user_animation(
 							TRUE);
 						object_compute_node_matrices_recursive(unit_index);
 						animation_started = TRUE;
+						/* port: a co-op host's, as it started (the
+						animation chosen, its frame and movement), to its
+						client: test26 */
+						network_campaign_actor_animation_capture(unit_index, interpolate);
 					}
 				}
 			}
@@ -4054,6 +4058,35 @@ boolean unit_start_user_animation(
 	}
 
 	return animation_started;
+}
+
+/* port: a network co-op client's copy of the host's user animation (the
+host's choice of permutation, at the host's frame), as
+unit_start_user_animation starts one (network_campaign_actors.c checked the
+indices); test26 */
+void unit_network_start_user_animation(
+	long unit_index,
+	long animation_graph_index,
+	short animation_index,
+	short frame_index,
+	boolean interpolate)
+{
+	struct unit_datum *unit = unit_get(unit_index);
+
+	if (interpolate)
+	{
+		object_start_interpolation(unit_index, 6);
+	}
+	unit->unit.animation.state = _unit_state_user_animation;
+	unit_set_animation(unit_index, animation_graph_index, animation_index);
+	unit->object.animation.state.frame_index = frame_index;
+	SET_FLAG(
+		unit->unit.animation.flags,
+		_unit_animation_postpone_weapon_ik_until_interpolation_ends_bit,
+		TRUE);
+	object_compute_node_matrices_recursive(unit_index);
+
+	return;
 }
 
 boolean unit_set_seat(

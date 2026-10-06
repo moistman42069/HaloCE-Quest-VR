@@ -4,12 +4,15 @@
 #include "game/game.h"
 #include "units/units.h"
 #include "units/unit_control_data.h"
+#include "units/bipeds.h"
+#include "models/model_animation_definitions.h"
 #include "networking/network_game_globals.h"
 #include "network_campaign.h"
 #include "network_distributed.h"
 #include <string.h>
 
 void platform_log(char const *format, ...);
+boolean tag_index_is_group(long tag_index, long group_tag);
 
 struct campaign_actor_control
 {
@@ -42,8 +45,176 @@ static struct campaign_actor_impulse impulses[256];
 static short impulse_count;
 static boolean impulse_overflowed;
 
+/* test26: the host's user animations and biped movement flags. Scripts'
+custom animations went as the script call (the presentation stream), each
+client choosing its own permutation from the name; an AI command list's
+(cutscenes' "animate", with absolute movement and no collision: through a
+console, not onto it) and an alert's went not at all, so a client showed
+the host's characters standing while the host's positions slid them, and
+collided where the host's passed through. Every start is now sent as the
+host made it (the animation chosen, its frame at the end of the tick),
+with the biped's flags, and the flags again as a command list changes them;
+reliable, once a tick. A unit's slot is marked as it changes and read at
+the tick's end. */
+enum
+{
+	_campaign_animation_started_bit,
+	_campaign_animation_interpolate_bit,
+	_campaign_animation_absolute_movement_bit,
+	_campaign_animation_no_collision_bit,
+	NUMBER_OF_CAMPAIGN_ANIMATION_FLAGS,
+
+	/* (a slot's marks: these, and the movement changed) */
+	_campaign_animation_movement_bit = NUMBER_OF_CAMPAIGN_ANIMATION_FLAGS,
+};
+struct campaign_actor_animation
+{
+	long round;
+	unsigned long seed;
+	long object_index;
+	long animation_graph_index;
+	short animation_index;
+	short frame_index;
+	word flags;
+	word reserved;
+};
+typedef char campaign_actor_animation_size_assert[sizeof(struct campaign_actor_animation) == 24 ? 1 : -1];
+static byte animation_marks[MAXIMUM_TRACKED_OBJECTS];
+static long animation_objects[MAXIMUM_TRACKED_OBJECTS];
+
+word network_campaign_actor_animations_size(void) { return sizeof(struct campaign_actor_animation); }
+
+static boolean animation_slot_capture(long object_index, long *slot)
+{
+	*slot = DATUM_INDEX_TO_ABSOLUTE_INDEX(object_index);
+	if (!network_campaign_playing() || game_connection() != _game_connection_network_server ||
+		*slot < 0 || *slot >= MAXIMUM_TRACKED_OBJECTS || !unit_try_and_get(object_index)) return FALSE;
+	if (animation_objects[*slot] != object_index) animation_marks[*slot] = 0;
+	animation_objects[*slot] = object_index;
+	return TRUE;
+}
+
+void network_campaign_actor_animation_capture(long object_index, boolean interpolate)
+{
+	long slot;
+	if (!animation_slot_capture(object_index, &slot)) return;
+	/* (started again this tick: as the last start was) */
+	animation_marks[slot] = (byte)((animation_marks[slot] & ~FLAG(_campaign_animation_interpolate_bit)) |
+		FLAG(_campaign_animation_started_bit) | (interpolate ? FLAG(_campaign_animation_interpolate_bit) : 0));
+}
+
+void network_campaign_actor_movement_capture(long object_index)
+{
+	long slot;
+	if (!animation_slot_capture(object_index, &slot)) return;
+	animation_marks[slot] |= FLAG(_campaign_animation_movement_bit);
+}
+
+static void flush_animations(void)
+{
+	struct { struct distributed_message_header header;
+		struct campaign_actor_animation entries[RELIABLE_ENTRIES(struct campaign_actor_animation)]; } message;
+	long slot;
+	short count = 0;
+	for (slot = 0; slot < MAXIMUM_TRACKED_OBJECTS; slot++)
+	{
+		struct campaign_actor_animation *entry;
+		struct unit_datum *unit;
+		struct biped_datum *biped;
+		byte marks = animation_marks[slot];
+		if (!marks) continue;
+		animation_marks[slot] = 0;
+		if (!(unit = unit_try_and_get(animation_objects[slot]))) continue;
+		entry = &message.entries[count];
+		memset(entry, 0, sizeof(*entry));
+		entry->round = network_game_get_number_of_games_played();
+		entry->seed = network_game_get_random_seed();
+		entry->object_index = animation_objects[slot];
+		entry->animation_graph_index = NONE;
+		entry->animation_index = NONE;
+		/* (still playing at the tick's end: a start the same tick ended,
+		or a unit since dead, is not one) */
+		if (TEST_FLAG(marks, _campaign_animation_started_bit) &&
+			unit->unit.animation.state == _unit_state_user_animation && unit->object.animation.state.index != NONE &&
+			!TEST_FLAG(unit->object.damage_flags, _object_dead_bit))
+		{
+			entry->animation_graph_index = unit->object.animation.animation_graph_index;
+			entry->animation_index = unit->object.animation.state.index;
+			entry->frame_index = unit->object.animation.state.frame_index;
+			entry->flags |= FLAG(_campaign_animation_started_bit) |
+				(marks & FLAG(_campaign_animation_interpolate_bit));
+		}
+		else if (!TEST_FLAG(marks, _campaign_animation_movement_bit))
+			continue;
+		if ((biped = biped_try_and_get(animation_objects[slot])) != NULL)
+		{
+			if (TEST_FLAG(biped->biped.flags, _biped_absolute_movement_bit))
+				entry->flags |= FLAG(_campaign_animation_absolute_movement_bit);
+			if (TEST_FLAG(biped->biped.flags, _biped_no_collision_bit))
+				entry->flags |= FLAG(_campaign_animation_no_collision_bit);
+		}
+		if (++count == NUMBEROF(message.entries))
+		{
+			distributed_send(&message, _distributed_message_campaign_actor_animations, count,
+				sizeof(message.header) + count * sizeof(message.entries[0]), _distributed_to_clients_reliably);
+			count = 0;
+		}
+	}
+	if (count) distributed_send(&message, _distributed_message_campaign_actor_animations, count,
+		sizeof(message.header) + count * sizeof(message.entries[0]), _distributed_to_clients_reliably);
+}
+
+void network_campaign_actor_animations_receive(void const *entries, short count)
+{
+	short index;
+	if (!network_campaign_client()) return;
+	for (index = 0; index < count; index++)
+	{
+		struct campaign_actor_animation entry;
+		struct unit_datum *unit;
+		struct biped_datum *biped;
+		memcpy(&entry, (byte const *)entries + index * sizeof(entry), sizeof(entry));
+		if (entry.round != network_game_get_number_of_games_played() ||
+			entry.seed != (unsigned long)network_game_get_random_seed() ||
+			!distributed_object_index_valid(entry.object_index) || !network_objects_client_has(entry.object_index) ||
+			!(unit = unit_try_and_get(entry.object_index)) || TEST_FLAG(unit->object.damage_flags, _object_dead_bit) ||
+			(entry.flags & ~((1 << NUMBER_OF_CAMPAIGN_ANIMATION_FLAGS) - 1))) continue;
+		if (TEST_FLAG(entry.flags, _campaign_animation_started_bit))
+		{
+			struct animation_graph *graph;
+			struct animation *animation;
+			if (!tag_index_is_group(entry.animation_graph_index, ANIMATION_GRAPH_TAG)) continue;
+			graph = animation_graph_definition_get(entry.animation_graph_index);
+			if (!VALID_INDEX(entry.animation_index, graph->animations.count)) continue;
+			animation = TAG_BLOCK_GET_ELEMENT(&graph->animations, entry.animation_index, struct animation);
+			if (animation->type != _animation_base || !VALID_INDEX(entry.frame_index, animation->frame_count)) continue;
+			unit_network_start_user_animation(entry.object_index, entry.animation_graph_index, entry.animation_index,
+				entry.frame_index, TEST_FLAG(entry.flags, _campaign_animation_interpolate_bit));
+		}
+		if ((biped = biped_try_and_get(entry.object_index)) != NULL)
+		{
+			SET_FLAG(biped->biped.flags, _biped_absolute_movement_bit,
+				TEST_FLAG(entry.flags, _campaign_animation_absolute_movement_bit));
+			SET_FLAG(biped->biped.flags, _biped_no_collision_bit,
+				TEST_FLAG(entry.flags, _campaign_animation_no_collision_bit));
+		}
+	}
+}
+
 word network_campaign_actor_impulses_size(void) { return sizeof(struct campaign_actor_impulse); }
-void network_campaign_actor_impulses_reset(void) { impulse_count = 0; impulse_overflowed = FALSE; }
+static void impulses_clear(void)
+{
+	impulse_count = 0;
+	impulse_overflowed = FALSE;
+}
+
+void network_campaign_actor_impulses_reset(void)
+{
+	impulses_clear();
+	/* (and the animations marked: an abandoned timeline's; not as the
+	impulses are sent each tick, which is before the animations are) */
+	memset(animation_marks, 0, sizeof(animation_marks));
+}
 
 void network_campaign_actor_impulse_capture(long object_index, short impulse, real_vector2d const *alignment)
 {
@@ -82,7 +253,7 @@ static void flush_impulses(void)
 			sizeof(message.header) + count * sizeof(impulses[0]), _distributed_to_clients_reliably);
 		offset += count;
 	}
-	network_campaign_actor_impulses_reset();
+	impulses_clear();
 }
 
 void network_campaign_actor_impulses_receive(void const *entries, short count)
@@ -202,6 +373,7 @@ void network_campaign_actors_tick(void)
 	if (count) distributed_send(&message, _distributed_message_campaign_actors, count,
 		sizeof(message.header) + count * sizeof(message.entries[0]), _distributed_to_clients);
 	flush_impulses();
+	flush_animations();
 }
 
 static boolean normal_valid(real_vector3d const *v)

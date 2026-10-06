@@ -315,6 +315,15 @@ static long objects_host_told_count;
 /* ... whether each was moving at the last tick (one come to rest is sent
 once more, to every client) */
 static boolean objects_host_state_moving[MAXIMUM_TRACKED_OBJECTS];
+/* ... where each was when its state last went out (the object it was:
+NONE, or another, for none; distributed_host_rest_moved) */
+static struct
+{
+	long object_index;
+	real_point3d position;
+	real_vector3d forward;
+	real_vector3d up;
+} objects_host_rest_sent[MAXIMUM_TRACKED_OBJECTS];
 /* ... what each unit's inventory was last sent as (in all, and its weapons
 and grenades), when to every client, and when its ammunition alone last
 changed (NONE: not since); when it last carried anything (NONE: never) */
@@ -1024,6 +1033,54 @@ static short distributed_host_object_period(
 		nearest < FAR_OBJECT_DISTANCE * FAR_OBJECT_DISTANCE ? 3 : MAXIMUM_OBJECT_PERIOD_TICKS;
 }
 
+static void distributed_host_note_rest_sent(
+	long absolute_index,
+	long object_index)
+{
+	struct object_datum *object = object_get(object_index);
+
+	objects_host_rest_sent[absolute_index].object_index = object_index;
+	objects_host_rest_sent[absolute_index].position = object->object.position;
+	objects_host_rest_sent[absolute_index].forward = object->object.forward;
+	objects_host_rest_sent[absolute_index].up = object->object.up;
+}
+
+/* test26: an object at rest goes out only as it comes to rest and when its
+turn comes round (RESTING_STATES_PER_TICK of all of them a tick: many
+seconds on a campaign map). A script's teleport (object_teleport, which
+object_reset wakes) of one standing still is at rest again the same tick
+(biped_update_moving runs after hs_update), so a cutscene's characters
+stood where they were on the clients, played their animations there and
+glided over when their turn came. Where each one at rest was when its state
+last went out is kept, and one at rest moved or turned since goes out at
+once, to every client. */
+static boolean distributed_host_rest_moved(
+	long absolute_index,
+	long object_index)
+{
+	struct object_datum *object = object_get(object_index);
+	real_vector3d const *forward, *up;
+	real dx, dy, dz;
+
+	/* (first seen: its creation carried where it is) */
+	if (objects_host_rest_sent[absolute_index].object_index != object_index)
+	{
+		distributed_host_note_rest_sent(absolute_index, object_index);
+		return FALSE;
+	}
+	dx = object->object.position.x - objects_host_rest_sent[absolute_index].position.x;
+	dy = object->object.position.y - objects_host_rest_sent[absolute_index].position.y;
+	dz = object->object.position.z - objects_host_rest_sent[absolute_index].position.z;
+	/* (so written that a position gone wrong, not a number, goes too) */
+	forward = &objects_host_rest_sent[absolute_index].forward;
+	up = &objects_host_rest_sent[absolute_index].up;
+	return !(dx * dx + dy * dy + dz * dz <= REMOTE_OBJECT_TOLERANCE * REMOTE_OBJECT_TOLERANCE) ||
+		!(forward->i * object->object.forward.i + forward->j * object->object.forward.j +
+			forward->k * object->object.forward.k >= REMOTE_OBJECT_ANGLE_TOLERANCE) ||
+		!(up->i * object->object.up.i + up->j * object->object.up.j + up->k * object->object.up.k >=
+			REMOTE_OBJECT_ANGLE_TOLERANCE);
+}
+
 /* the kinds of states sent this tick */
 enum
 {
@@ -1066,9 +1123,11 @@ static void distributed_host_send_states(
 			continue;
 		at_rest = TEST_FLAG(object_get(object_index)->object.flags, _object_at_rest_bit);
 		objects_host_state_moving[absolute_index] = !at_rest;
-		if (at_rest && !was_moving)
+		/* (one at rest that was, moved all the same: test26) */
+		if (at_rest && !was_moving && !distributed_host_rest_moved(absolute_index, object_index))
 			continue;
 		distributed_state_from_object(object_index, &states[state_count]);
+		distributed_host_note_rest_sent(absolute_index, object_index);
 		kinds[state_count++] = at_rest ? _host_state_to_all : _host_state_moving;
 	}
 	/* those at rest from the cursor on, round to it */
@@ -1083,6 +1142,7 @@ static void distributed_host_send_states(
 		resting++;
 		objects_host_resting_cursor = (absolute_index + 1) % told_count;
 		distributed_state_from_object(object_index, &states[state_count]);
+		distributed_host_note_rest_sent(absolute_index, object_index);
 		kinds[state_count++] = _host_state_to_all;
 	}
 	for (machine_number = 0; machine_number < objects_host_viewers.count; machine_number++)

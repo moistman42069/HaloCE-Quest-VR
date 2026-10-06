@@ -7,9 +7,14 @@ import java.util.Set;
 
 /** ChupathingyCE /v1/games.txt, documented by its browser.c parse_game(). */
 final class ServerListing {
-    static final int CAMPAIGN_VERSION = 0xCE01;
-    // CE01 identity/lifecycle is two-player; independent of native PvP's 128 slots.
+    // CE02 since 1.0.8 (CE01 1.0.0-1.0.7): both co-op players need the same app version.
+    static final int CAMPAIGN_VERSION = 0xCE02;
+    // Campaign identity/lifecycle is two-player; independent of native PvP's 128 slots.
     static final int CAMPAIGN_MAXIMUM = 2;
+    /** Any campaign co-op protocol (0xCE00-0xCEFF), this app's or another version's. */
+    static boolean isCampaign(int version) {
+        return (version & 0xFF00) == 0xCE00;
+    }
     static boolean campaignCapacityCompatible(int version,int maximum,boolean known) {
         return version != CAMPAIGN_VERSION || !known || maximum == CAMPAIGN_MAXIMUM;
     }
@@ -33,6 +38,7 @@ final class ServerListing {
     String description() {
         String[] modes = {"Unknown", "CTF", "Slayer", "Oddball", "King", "Race"};
         String mode = version == CAMPAIGN_VERSION ? "Campaign co-op"
+            : isCampaign(version) ? "Campaign co-op (another app version)"
             : engine >= 1 && engine < modes.length ? modes[engine] : "Custom";
         return map + " · " + mode + " · " + players + "/" + maximum + " players"
             + (open ? "" : " · closed") + (age >= 0 ? " · updated " + age + "s ago" : "");

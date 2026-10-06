@@ -271,6 +271,7 @@ symbols in this file:
 #include "units/biped_definitions.h"
 #include "memory/data.h"
 #include "units/units.h"
+#include "network_campaign.h" /* port: port/linux/game/network_campaign_actors.c */
 
 /* ---------- constants */
 
@@ -1427,6 +1428,8 @@ static void action_obey_command_end(
 				{
 					SET_FLAG(biped->biped.flags, _biped_absolute_movement_bit, FALSE);
 					SET_FLAG(biped->biped.flags, _biped_no_collision_bit, FALSE);
+					/* port: and a co-op client's copy (test26) */
+					network_campaign_actor_movement_capture(unit_index);
 				}
 			}
 			break;
@@ -2293,6 +2296,9 @@ static boolean action_obey_command_begin(
 					{
 						SET_FLAG(biped->biped.flags, _biped_absolute_movement_bit, absolute_movement);
 						SET_FLAG(biped->biped.flags, _biped_no_collision_bit, no_collision);
+						/* port: and a co-op client's copy, with the
+						animation (test26) */
+						network_campaign_actor_movement_capture(unit_index);
 					}
 					result = TRUE;
 				}

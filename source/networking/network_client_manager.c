@@ -3017,7 +3017,17 @@ boolean network_game_client_advertised_game_compatible(
 		network_event("joining a host of network version %u flags=0x%02x", theirs, network_game_client_advertised_versions[game_index].flags);
 		return TRUE;
 	}
-	if (compatible_version)
+	/* port: a campaign co-op host of another version of this app (CE01 is
+	1.0.0 to 1.0.7): not a newer or older PvP host (test26) */
+	if ((theirs & 0xFF00) == 0xCE00)
+	{
+		csprintf(message,
+			"This co-op game is from a different version of this app.\n\n"
+			"Both players need the same version to play campaign co-op together "
+			"(co-op protocol %X here, %X on the host).",
+			HALO_CAMPAIGN_NETWORK_VERSION, theirs);
+	}
+	else if (compatible_version)
 	{
 		csprintf(message,
 			"The host is using the lockstep network code, which this version no longer has.\n\n"

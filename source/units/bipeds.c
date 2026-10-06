@@ -787,6 +787,28 @@ static void biped_bumped_object(
 	return;
 }
 
+/* port: whether this machine may erase the biped. A network client never
+deletes the host's objects (network_objects_may_delete, objects.c): its
+copy of the host's fallen biped stayed, and was "erased" (logged) every tick
+for minutes, until the host put it right (test26: a co-op client's log of a
+cutscene crewman). Said once for each biped; the host's word decides. */
+boolean network_objects_may_delete(long object_index);
+static boolean biped_port_may_discard(
+	long biped_index)
+{
+	static long noted_biped_index = NONE;
+
+	if (network_objects_may_delete(biped_index))
+		return TRUE;
+	if (noted_biped_index != biped_index)
+	{
+		noted_biped_index = biped_index;
+		error(_error_silent, "WARNING: the host's biped %s left the world here; it is the host's to erase",
+			tag_name_strip_path(tag_get_name(biped_get(biped_index)->definition_index)));
+	}
+	return FALSE;
+}
+
 static void biped_falling_damage(
 	long biped_index,
 	real collision_velocity)
@@ -836,7 +858,8 @@ static void biped_falling_damage(
 
 			if (!game_engine_running() &&
 				TEST_FLAG(biped->object.flags, _object_outside_of_map_bit) &&
-				player_index_from_unit_index(biped_index) == NONE)
+				player_index_from_unit_index(biped_index) == NONE &&
+				biped_port_may_discard(biped_index))
 			{
 				long actor_index = biped->unit.swarm_actor_index;
 
@@ -4148,7 +4171,8 @@ static boolean biped_check_discard(
 	if (!game_engine_running() &&
 		(TEST_FLAG(biped->object.flags, _object_outside_of_map_bit) ||
 		biped->object.location.cluster_index==NONE) &&
-		biped->object.position.z<-2000.f)
+		biped->object.position.z<-2000.f &&
+		biped_port_may_discard(biped_index))
 	{
 		long actor_index = biped->unit.swarm_actor_index;
 

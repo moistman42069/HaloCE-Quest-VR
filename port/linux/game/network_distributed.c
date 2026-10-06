@@ -3688,7 +3688,9 @@ void network_distributed_handle_message(
 	if (header.type > _distributed_message_pings &&
 		((header.type != _distributed_message_campaign_presentation && header.type != _distributed_message_campaign_devices &&
 		  header.type != _distributed_message_campaign_objects && header.type != _distributed_message_campaign_actors &&
-		  header.type != _distributed_message_campaign_actor_impulses) ||
+		  header.type != _distributed_message_campaign_actor_impulses &&
+		  header.type != _distributed_message_campaign_actor_animations &&
+		  header.type != _distributed_message_campaign_surfaces) ||
 		 !network_campaign_active())) return;
 	/* (entries of a size of their own: their least here, and each read no
 	further than the message's end) */
@@ -3711,6 +3713,8 @@ void network_distributed_handle_message(
 	case _distributed_message_campaign_objects: entry_size = network_campaign_objects_size(); break;
 	case _distributed_message_campaign_actors: entry_size = network_campaign_actors_size(); break;
 	case _distributed_message_campaign_actor_impulses: entry_size = network_campaign_actor_impulses_size(); break;
+	case _distributed_message_campaign_actor_animations: entry_size = network_campaign_actor_animations_size(); break;
+	case _distributed_message_campaign_surfaces: entry_size = network_campaign_surfaces_size(); break;
 	case _distributed_message_damage_events:
 	case _distributed_message_hit_reports: entry_size = network_damage_entry_size(header.type); break;
 	default: entry_size = network_objects_entry_size(header.type); break;
@@ -3822,6 +3826,14 @@ void network_distributed_handle_message(
 	case _distributed_message_campaign_actor_impulses:
 		if (size == sizeof(header) + header.count * network_campaign_actor_impulses_size())
 			network_campaign_actor_impulses_receive(entries, header.count);
+		break;
+	case _distributed_message_campaign_actor_animations:
+		if (size == sizeof(header) + header.count * network_campaign_actor_animations_size())
+			network_campaign_actor_animations_receive(entries, header.count);
+		break;
+	case _distributed_message_campaign_surfaces:
+		if (size == sizeof(header) + header.count * network_campaign_surfaces_size())
+			network_campaign_surfaces_receive(entries, header.count);
 		break;
 	case _distributed_message_game_state:
 		game_engine_read_network_state((byte const *)entries, size - sizeof(header));

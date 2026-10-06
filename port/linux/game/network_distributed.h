@@ -76,6 +76,11 @@ enum
 	_distributed_message_vr_capability,
 	/* Optional campaign NPC one-shot animation events (test14, reliable). */
 	_distributed_message_campaign_actor_impulses,
+	/* The host's user animations as chosen and its bipeds' movement flags
+	(test26, campaign CE02, reliable). */
+	_distributed_message_campaign_actor_animations,
+	/* Breakable surfaces the host broke (test26, campaign CE02, reliable). */
+	_distributed_message_campaign_surfaces,
 	NUMBER_OF_DISTRIBUTED_MESSAGES
 };
 

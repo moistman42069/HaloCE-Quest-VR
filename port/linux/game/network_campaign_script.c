@@ -150,6 +150,13 @@ void network_campaign_script_capture(short function_index, long const *arguments
 	/* This function is also called directly by AI conversations. Capture at its
 	 * native entry so a script call is not sent twice. */
 	if (!strcmp(hs_function_get(function_index)->name, "sound_impulse_start")) return;
+	/* test26: a custom animation goes as the host started it, the
+	 * permutation chosen and the frame (unit_start_user_animation,
+	 * network_campaign_actors.c), never as the call: a client chose its own
+	 * permutation, and the frame a later call set was refused there. The
+	 * names keep their wire positions. */
+	if (!strcmp(hs_function_get(function_index)->name, "custom_animation") ||
+		!strcmp(hs_function_get(function_index)->name, "unit_custom_animation_at_frame")) return;
 	presentation_capture(function_index, arguments);
 }
 

@@ -208,7 +208,7 @@ def main():
                 "certificate_sha256": CERTIFICATE, "apks": records,
                 "source_zip": {"file": source.name, "sha256": sha(source)},
                 "native_host_version": network_value("HALO_PORT_NETWORK_VERSION"), "accepted_host_versions": list(range(network_value("HALO_PORT_NETWORK_VERSION_MINIMUM"), network_value("HALO_PORT_NETWORK_VERSION_MAXIMUM")+1)),
-                "campaign_protocol": 0xCE01, "campaign_runtime_verified": False,
+                "campaign_protocol": 0xCE02, "campaign_runtime_verified": False,
                 "avatar_protocol": 1, "avatar_message_ids": [37, 38], "avatar_prior_owner_report": "VR body movement visible on flat Android in accepted test14; current action handoff regression pending",
                 "directory": "https://halo.milenko.org/v1/games.txt"}
     (output / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
@@ -216,7 +216,7 @@ def main():
         "tag": release_tag, "source_commit": commit, "minimum_app_code": 15,
         "save_policy": "preserve", "config_policy": "preserve", "vr_and_coop_integrated": True,
         "native_minimum": network_value("HALO_PORT_NETWORK_VERSION_MINIMUM"),
-        "native_maximum": network_value("HALO_PORT_NETWORK_VERSION_MAXIMUM"), "campaign_protocol": 0xCE01,
+        "native_maximum": network_value("HALO_PORT_NETWORK_VERSION_MAXIMUM"), "campaign_protocol": 0xCE02,
         "editions": {record["package"]: {"apk": record["file"], "sha256": record["sha256"],
             "bytes": record["bytes"], "version_code": record["version_code"], "min_sdk": record["min_sdk"]} for record in records}}
     (output / "compatibility.json").write_text(json.dumps(compatibility, indent=2)+"\n")
