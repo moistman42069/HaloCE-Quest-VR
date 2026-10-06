@@ -43,6 +43,7 @@ final class TouchControls extends View {
         layout.sensitivityX=p.getFloat("sensitivityX",1);layout.sensitivityY=p.getFloat("sensitivityY",1);
         layout.deadZone=p.getFloat("deadZone",.08f);layout.swipe=p.getBoolean("swipe",true);
         layout.floating=p.getBoolean("floating",false);layout.invert=p.getBoolean("invert",false);layout.color=p.getInt("color",0xff69c9ff);
+        layout.gyroMode=p.getInt("gyroMode",GyroPolicy.OFF);layout.gyroX=p.getFloat("gyroX",1);layout.gyroY=p.getFloat("gyroY",1);layout.gyroInvert=p.getBoolean("gyroInvert",false);
         for(int i=0;i<TouchLayout.COUNT;i++) { layout.x[i]=p.getFloat("x"+i,layout.x[i]);layout.y[i]=p.getFloat("y"+i,layout.y[i]);
             layout.size[i]=p.getFloat("size"+i,1);layout.alpha[i]=p.getFloat("alpha"+i,1); }
         layout.sanitize();
@@ -51,10 +52,30 @@ final class TouchControls extends View {
         layout.sanitize();SharedPreferences.Editor e=preferences().edit();
         e.putInt("layout_version",1).putFloat("scale",layout.scale).putFloat("opacity",layout.opacity)
             .putFloat("sensitivityX",layout.sensitivityX).putFloat("sensitivityY",layout.sensitivityY).putFloat("deadZone",layout.deadZone)
-            .putBoolean("swipe",layout.swipe).putBoolean("floating",layout.floating).putBoolean("invert",layout.invert).putInt("color",layout.color);
+            .putBoolean("swipe",layout.swipe).putBoolean("floating",layout.floating).putBoolean("invert",layout.invert).putInt("color",layout.color)
+            .putInt("gyroMode",layout.gyroMode).putFloat("gyroX",layout.gyroX).putFloat("gyroY",layout.gyroY).putBoolean("gyroInvert",layout.gyroInvert);
         for(int i=0;i<TouchLayout.COUNT;i++) e.putFloat("x"+i,layout.x[i]).putFloat("y"+i,layout.y[i]).putFloat("size"+i,layout.size[i]).putFloat("alpha"+i,layout.alpha[i]);
-        e.apply();RunLog.line("Touch layout saved: swipe="+layout.swipe+" floating="+layout.floating+" sensitivity="+layout.sensitivityX+"/"+layout.sensitivityY);
+        e.apply();RunLog.line("Touch layout saved: swipe="+layout.swipe+" floating="+layout.floating+" sensitivity="+layout.sensitivityX+"/"+layout.sensitivityY
+            +" gyro="+GyroPolicy.MODES[layout.gyroMode]+" "+layout.gyroX+"/"+layout.gyroY+(layout.gyroInvert?" inverted":""));
     }
+
+    // Gyro aim (GyroAim): its option, and whether it may turn the view now.
+    private GyroAim gyro;
+    void setGyro(GyroAim g) { gyro=g; }
+    private void gyroUpdate() { if(gyro!=null) gyro.update(); }
+    int gyroMode() { return layout.gyroMode; }
+    float gyroX() { return layout.gyroX; }
+    float gyroY() { return layout.gyroY; }
+    boolean gyroInvert() { return layout.gyroInvert; }
+    boolean gyroAiming() {
+        if(editing||layout.gyroMode==GyroPolicy.OFF) return false;
+        if(layout.gyroMode==GyroPolicy.ALWAYS) return true;
+        if(getVisibility()!=VISIBLE) return false;
+        for(int i=0;i<contacts.size();i++) { int kind=contacts.valueAt(i).control.kind; if(kind==LOOK||kind==FIRE_LOOK) return true; }
+        return false;
+    }
+    /** the gyro's turn, sent as a swipe's */
+    static void look(float yaw,float pitch) { nativeLook(yaw,pitch); }
 
     private static final class Control {
         final String label;
@@ -282,7 +303,7 @@ final class TouchControls extends View {
             float x=event.getX(),y=event.getY();
             for(int i=0;i<4;i++) if(toolbar[i].contains(x,y)) {
                 releaseAll();
-                if(i==0){saveLayout();editing=false;} else if(i==1){readLayout();editing=false;layoutControls();}
+                if(i==0){saveLayout();editing=false;gyroUpdate();} else if(i==1){readLayout();editing=false;layoutControls();gyroUpdate();}
                 else if(i==2) showOptions();
                 else new GamepadNavigation.Builder(getContext()).setTitle("Reset touch layout?").setMessage("Restore default positions and touch preferences. Save to keep, or Cancel in the editor to restore your old layout.")
                     .setPositiveButton("Reset",(d,w)->{layout=new TouchLayout();selected=-1;layoutControls();}).setNegativeButton("Back",null).show();
@@ -335,7 +356,14 @@ final class TouchControls extends View {
         check(box,"Swipe aim (off = hold stick to turn)",layout.swipe,v->layout.swipe=v);
         check(box,"Floating movement origin",layout.floating,v->layout.floating=v);
         check(box,"Invert vertical aim",layout.invert,v->layout.invert=v);
-        TextView help=new TextView(getContext());help.setText("Swipe on LOOK or drag FIRE while shooting. Lift to stop turning. Movement starts within MOVE; floating places its center under your finger. Dead zone applies to stick mode and movement. A screen-width swipe turns 180 degrees at sensitivity 1. Layout uses safe screen fractions and adapts around notches. Options stay temporary until SAVE.");box.addView(help);
+        boolean hasGyro=GyroAim.available(getContext());
+        Button gyroChoice=new Button(getContext());gyroChoice.setText("Gyro aim: "+(hasGyro?GyroPolicy.MODES[layout.gyroMode]:"no gyroscope on this device"));gyroChoice.setEnabled(hasGyro);box.addView(gyroChoice);
+        gyroChoice.setOnClickListener(v->new GamepadNavigation.Builder(getContext()).setTitle("Gyro aim")
+            .setSingleChoiceItems(GyroPolicy.MODES,layout.gyroMode,(d,which)->{layout.gyroMode=which;gyroChoice.setText("Gyro aim: "+GyroPolicy.MODES[which]);d.dismiss();}).show());
+        slider(box,"Gyro horizontal sensitivity",layout.gyroX,.25f,4,v->layout.gyroX=v);
+        slider(box,"Gyro vertical sensitivity",layout.gyroY,.25f,4,v->layout.gyroY=v);
+        check(box,"Invert gyro vertical aim",layout.gyroInvert,v->layout.gyroInvert=v);
+        TextView help=new TextView(getContext());help.setText("Swipe on LOOK or drag FIRE while shooting. Lift to stop turning. Movement starts within MOVE; floating places its center under your finger. Dead zone applies to stick mode and movement. A screen-width swipe turns 180 degrees at sensitivity 1. Gyro aim turns the view as you turn the phone (sensitivity 1 = the phone's own turn) and works alongside swipes and a controller; 'only while a finger is on LOOK or FIRE' lets you lift to re-center, like lifting a mouse. Layout uses safe screen fractions and adapts around notches. Options stay temporary until SAVE.");box.addView(help);
         String[] colors={"CE blue","Cyan","White","Amber","Green"};int[] values={0xff69c9ff,0xff65eeee,0xffeeeeee,0xffffbd65,0xff8be298};
         Button color=new Button(getContext());color.setText("HUD color");box.addView(color);color.setOnClickListener(v->new GamepadNavigation.Builder(getContext()).setTitle("HUD color").setItems(colors,(d,i)->{layout.color=values[i];invalidate();}).show());
         ScrollView scroll=new ScrollView(getContext());scroll.addView(box);optionsDialog[0]=new GamepadNavigation.Builder(getContext()).setTitle("Touch options").setView(scroll).setPositiveButton("Back to editor",null).create();optionsDialog[0].show();

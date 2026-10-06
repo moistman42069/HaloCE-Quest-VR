@@ -177,7 +177,7 @@ public class MobileCheck {
  }
 }
 ''');j=ROOT/'port/android/app/src/main/java/com/halo/decomp'
-subprocess.run(['javac','-d',str(OUT),str(j/'TouchLayout.java'),str(j/'UpdatePolicy.java'),str(java)],check=True)
+subprocess.run(['javac','-d',str(OUT),str(j/'TouchLayout.java'),str(j/'GyroPolicy.java'),str(j/'UpdatePolicy.java'),str(java)],check=True)
 subprocess.run(['java','-cp',str(OUT),'com.halo.decomp.MobileCheck'],check=True)
 
 # Execute the upstream slot-reuse predicate, including bounds and lobby behavior.

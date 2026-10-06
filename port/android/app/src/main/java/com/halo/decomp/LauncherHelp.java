@@ -10,7 +10,7 @@ final class LauncherHelp {
     static final String DATA_COMPATIBILITY_NOTE = "Some server incompatibilities may be caused by different map files from ISO/revision versions or modified game data. Use Game files & versions to select another supported set. A revision label alone does not prove compatibility; network versions, missing maps and connection problems can also prevent joining.";
     /** Step-by-step joining for co-op and the in-game server browser (launcher button, field guide, co-op dialog). */
     static final String COOP_GUIDE =
-        "CO-OP CAMPAIGN (up to 16 players, with OpenCE players too)\n\n"
+        "CO-OP CAMPAIGN (up to 128 players, with OpenCE players too)\n\n"
         + "Co-op is played as OpenCE plays it (network version " + BuildConfig.HALO_NETWORK_VERSION + "): Quest, "
         + "Android, Windows, Mac and Linux players in the same game. Everyone needs a game on the same network "
         + "version and the same campaign maps.\n\n"

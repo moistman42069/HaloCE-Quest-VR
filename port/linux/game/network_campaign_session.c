@@ -1,7 +1,7 @@
 /* The launcher's co-op hosting (test27: OpenCE's co-op, network_coop.c).
 
 The launcher (CoopLauncher) writes a one-shot coop_host.txt in the game data
-root: "2 <mission 0..9> <difficulty 0..3> <public 0/1> <most players 2..16>"
+root: "2 <mission 0..9> <difficulty 0..3> <public 0/1> <most players 2..128>"
 (format 1, the four before the most players, still reads: 16 players). With
 the main menu up, this opens a native network lobby (as the Xbox's Create
 Game does), adds the local player, and sets it up as upstream's Create Game
@@ -38,8 +38,11 @@ static char const *missions[] = {"a10", "a30", "a50", "b30", "b40", "c10", "c20"
 enum
 {
 	COOP_MINIMUM_PLAYERS = 2,
-	/* (upstream's Server Setup offers co-op up to 16) */
-	COOP_MAXIMUM_PLAYERS = 16,
+	/* (OpenCE's Server Setup offers co-op games of 2 to 128 players,
+	MAXIMUM_NETWORK_PLAYER_COUNT; test28: this was 16) */
+	COOP_MAXIMUM_PLAYERS = 128,
+	/* (the 1.0.8 launcher's format, without the most players: Server Setup's default) */
+	COOP_FORMAT_1_PLAYERS = 16,
 };
 static boolean requested, booted, configured, player_added, start_requested, list_publicly;
 static short mission, difficulty, most_players;
@@ -80,7 +83,7 @@ static boolean coop_request_read(char const *text)
 	}
 	else if (version == 1 && read == 4)
 	{
-		players = COOP_MAXIMUM_PLAYERS;
+		players = COOP_FORMAT_1_PLAYERS;
 	}
 	else
 		return FALSE;

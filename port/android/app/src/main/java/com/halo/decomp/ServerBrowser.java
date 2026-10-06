@@ -103,7 +103,7 @@ final class ServerBrowser {
         preferences = activity.getSharedPreferences(campaign ? "coop_browser" : "server_browser", Activity.MODE_PRIVATE);
         LinearLayout content = column();
         text(content, campaign ? "Campaign co-op, as OpenCE plays it: Quest, Android, Windows, Mac and Linux players "
-            + "together, up to 16, joining any time, with the same campaign maps. Games on network version "
+            + "together, up to 128, joining any time, with the same campaign maps. Games on network version "
             + BuildConfig.HALO_NETWORK_MAXIMUM + " can be joined; others need the matching version. "
             + "Games marked as co-op of this app 1.0.8 or older need their host to update."
             : "Cross-play: native Windows, Mac, Linux and Android ports with compatible network versions "

@@ -319,7 +319,7 @@ public class LauncherActivity extends Activity {
         resetSettings.setOnClickListener(v -> resetSettings());
         label(layout, BuildConfig.APPLICATION_ID.endsWith(".vr")
             ? "Settings are changed in the game: pause, then VR SETTINGS."
-            : "Controller & touch settings controls automatic HUD hiding and gamepad response. In-game Options retains layout, sensitivity and invert.",
+            : "Controller & touch settings controls automatic HUD hiding, gamepad response and gyro aim (off by default). In-game Options retains layout, sensitivity, invert and gyro aim.",
             13, Color.rgb(150, 160, 170));
         label(layout, "Something wrong? Each run's log is in this headset's Download folder, Download/HaloCE, "
             + "named by when the game started (halo_log_<date>_<time>.txt; the newest is the last run; the "

@@ -152,6 +152,9 @@ def main():
                 # a release build (HALO_RELEASE, as OpenCE's): checks logged, play goes on
                 if b"(release build)" not in guest:
                     raise SystemExit("Test28 release build marker missing")
+                # gyro aim (flat option; the classes ship in both APKs)
+                if b"GyroAim;" not in dex or b"GyroPolicy;" not in dex:
+                    raise SystemExit("Test28 gyro aim missing from APK")
             if candidate_at_least(args.label, 27):
                 for marker in [b"co-op: lobby open: ", b"(a newer OpenCE build)", b"This version plays co-op as OpenCE does"]:
                     if marker not in guest: raise SystemExit("Test27 OpenCE co-op hosting marker missing: " + repr(marker))

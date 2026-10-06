@@ -20,8 +20,9 @@ import java.util.function.BooleanSupplier;
  */
 final class CoopLauncher {
     static final String[] MAPS = {"a10", "a30", "a50", "b30", "b40", "c10", "c20", "c40", "d20", "d40"};
-    // (OpenCE's Server Setup offers co-op up to 16, 16 by default; a smaller lobby starts sooner)
-    static final int MOST_PLAYERS = 16, DEFAULT_PLAYERS = 4;
+    // (OpenCE's Server Setup's co-op sizes, 16 by default there; here a smaller lobby, as it starts when full)
+    static final int[] PLAYER_CHOICES = {2, 4, 8, 12, 16, 24, 32, 48, 64, 96, 128};
+    static final int DEFAULT_PLAYERS = 4;
     private final Activity activity;
     private final File root;
     private final BooleanSupplier ready, start;
@@ -33,7 +34,7 @@ final class CoopLauncher {
 
     void show() {
         new GamepadNavigation.Builder(activity).setTitle("Campaign co-op")
-            .setMessage("Co-op as OpenCE plays it: up to 16 players on Quest, Android, Windows, Mac and Linux "
+            .setMessage("Co-op as OpenCE plays it: up to 128 players on Quest, Android, Windows, Mac and Linux "
                 + "(OpenCE network version " + BuildConfig.HALO_NETWORK_MAXIMUM + "), with the same campaign maps. "
                 + "Players can join a mission already under way.\n\n"
                 + "TO HOST: press Host campaign, pick the mission, difficulty and most players, leave the public "
@@ -65,10 +66,15 @@ final class CoopLauncher {
             "Two Betrayals", "Keyes", "The Maw"});
         Spinner difficulty = select(layout, new String[]{"Easy", "Normal", "Heroic", "Legendary"});
         difficulty.setSelection(1);
-        String[] counts = new String[MOST_PLAYERS - 1];
-        for (int i = 0; i < counts.length; i++) counts[i] = "Up to " + (i + 2) + " players";
+        String[] counts = new String[PLAYER_CHOICES.length];
+        int chosen = 0;
+        for (int i = 0; i < counts.length; i++) {
+            counts[i] = "Up to " + PLAYER_CHOICES[i] + " players"
+                + (PLAYER_CHOICES[i] > 16 ? " (a big game: the host's device and Wi-Fi carry it)" : "");
+            if (PLAYER_CHOICES[i] == DEFAULT_PLAYERS) chosen = i;
+        }
         Spinner players = select(layout, counts);
-        players.setSelection(DEFAULT_PLAYERS - 2);
+        players.setSelection(chosen);
         CheckBox publish = new CheckBox(activity);
         publish.setText("Public: list this game in the server browsers (in-game System Link, OpenCE's and the community list)");
         // On by default so others find the game in the browsers.
@@ -95,13 +101,13 @@ final class CoopLauncher {
                 if (invite.exists() && !invite.delete()) throw new java.io.IOException("Pending invite could not be cleared");
                 try (FileOutputStream out = new FileOutputStream(partial)) {
                     out.write(("2 " + selected + " " + difficulty.getSelectedItemPosition() + " "
-                        + (publish.isChecked() ? 1 : 0) + " " + (players.getSelectedItemPosition() + 2) + "\n")
+                        + (publish.isChecked() ? 1 : 0) + " " + PLAYER_CHOICES[players.getSelectedItemPosition()] + "\n")
                         .getBytes(StandardCharsets.UTF_8));
                     out.getFD().sync();
                 }
                 if (!partial.renameTo(request)) throw new java.io.IOException("Could not save host request");
                 RunLog.line("Campaign host requested: mission=" + MAPS[selected] + " difficulty="
-                    + difficulty.getSelectedItemPosition() + " players=" + (players.getSelectedItemPosition() + 2)
+                    + difficulty.getSelectedItemPosition() + " players=" + PLAYER_CHOICES[players.getSelectedItemPosition()]
                     + " public=" + publish.isChecked() + " network=" + BuildConfig.HALO_NETWORK_MAXIMUM);
                 if (start.getAsBoolean()) dialog.dismiss();
                 else request.delete();

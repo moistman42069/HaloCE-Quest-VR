@@ -53,12 +53,22 @@ final class GamepadSupport implements InputManager.InputDeviceListener {
         CheckBox swap=new CheckBox(a);swap.setText("Swap gameplay A/B and X/Y (Nintendo labels)");swap.setChecked(p.getBoolean("pad_swap",false));body.addView(swap);
         TextView help=new TextView(a);help.setText("Auto restores touch after the last supported pad disconnects. Always hide is an explicit override; change it here if needed. Xbox positions are the default on PlayStation / Nintendo pads. Vibration depends on the controller, connection and Android driver.");body.addView(help);
         Button test=new Button(a);test.setText("Controller input check");test.setOnClickListener(v->diagnostic(a));body.addView(test);
+        // gyro aim: the same option as the in-game touch Options (shared settings)
+        boolean hasGyro=GyroAim.available(a);
+        TextView gyroTitle=new TextView(a);gyroTitle.setText(hasGyro?"Gyro aim (turn the phone to aim)":"Gyro aim: this device has no gyroscope");body.addView(gyroTitle);
+        Spinner gyro=new Spinner(a);gyro.setAdapter(new ArrayAdapter<>(a,android.R.layout.simple_spinner_dropdown_item,GyroPolicy.MODES));gyro.setSelection(GyroPolicy.mode(p.getInt("gyroMode",GyroPolicy.OFF)));gyro.setEnabled(hasGyro);body.addView(gyro);
+        SeekBar gyroX=slider(a,body,"Gyro horizontal sensitivity (%)",25,400,Math.round(TouchLayout.bound(p.getFloat("gyroX",1),.25f,4,1)*100));
+        SeekBar gyroY=slider(a,body,"Gyro vertical sensitivity (%)",25,400,Math.round(TouchLayout.bound(p.getFloat("gyroY",1),.25f,4,1)*100));
+        CheckBox gyroInvert=new CheckBox(a);gyroInvert.setText("Invert gyro vertical aim");gyroInvert.setChecked(p.getBoolean("gyroInvert",false));body.addView(gyroInvert);
+        TextView gyroHelp=new TextView(a);gyroHelp.setText("Off by default. 100% turns the view as far as you turn the phone. Gyro works alongside swipes and a controller. 'Only while a finger is on LOOK or FIRE' lets you lift your thumb to re-center the phone, like lifting a mouse.");body.addView(gyroHelp);
         ScrollView scroll=new ScrollView(a);scroll.addView(body);
         new GamepadNavigation.Builder(a).setTitle("Controller & touch settings").setView(scroll)
             .setPositiveButton("Save",(d,w)->p.edit().putInt("controller_touch_mode",visibility.getSelectedItemPosition())
                 .putFloat("pad_move_dead",move.getProgress()/100f).putFloat("pad_look_dead",look.getProgress()/100f)
                 .putFloat("pad_gain_x",x.getProgress()/100f).putFloat("pad_gain_y",y.getProgress()/100f)
-                .putFloat("pad_trigger_dead",trigger.getProgress()/100f).putBoolean("pad_rumble",rumble.isChecked()).putBoolean("pad_swap",swap.isChecked()).apply())
+                .putFloat("pad_trigger_dead",trigger.getProgress()/100f).putBoolean("pad_rumble",rumble.isChecked()).putBoolean("pad_swap",swap.isChecked())
+                .putInt("gyroMode",GyroPolicy.mode(gyro.getSelectedItemPosition())).putFloat("gyroX",gyroX.getProgress()/100f).putFloat("gyroY",gyroY.getProgress()/100f)
+                .putBoolean("gyroInvert",gyroInvert.isChecked()).apply())
             .setNegativeButton("Cancel",null).show();
     }
     private static SeekBar slider(Activity a,LinearLayout body,String title,int min,int max,int value){

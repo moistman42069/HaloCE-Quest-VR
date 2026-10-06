@@ -18,6 +18,7 @@ public class HaloActivity extends SDLActivity {
     private WifiManager.MulticastLock multicastLock;
     private TouchControls touchControls;
     private GamepadSupport gamepads;
+    private GyroAim gyro;
     private PvpPublisher pvpPublisher;
 
     @Override
@@ -43,6 +44,8 @@ public class HaloActivity extends SDLActivity {
                     ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
             touchControls.requestApplyInsets();
             gamepads = new GamepadSupport(this,touchControls);
+            gyro = new GyroAim(this,touchControls);
+            touchControls.setGyro(gyro);
             RunLog.line("Phone touch controls initialized: player-one merge; multi-touch; hold fire and drag to aim");
         }
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -55,6 +58,7 @@ public class HaloActivity extends SDLActivity {
     @Override
     protected void onDestroy() {
         if (gamepads != null) gamepads.pause();
+        if (gyro != null) gyro.pause();
         if (touchControls != null) touchControls.releaseAll();
         if (pvpPublisher != null) pvpPublisher.close();
         RunLog.line("Game activity destroying");
@@ -77,12 +81,14 @@ public class HaloActivity extends SDLActivity {
     protected void onResume() {
         super.onResume();
         if (gamepads != null) gamepads.resume();
+        if (gyro != null) gyro.resume();
         RunLog.line("Game activity resumed");
     }
 
     @Override
     protected void onPause() {
         if (gamepads != null) gamepads.pause();
+        if (gyro != null) gyro.pause();
         if (touchControls != null) touchControls.releaseAll();
         RunLog.line("Game activity paused / headset focus changed");
         super.onPause();
@@ -91,6 +97,7 @@ public class HaloActivity extends SDLActivity {
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
         if (gamepads != null) gamepads.focus(hasFocus);
+        if (gyro != null) gyro.focus(hasFocus);
         if (!hasFocus && touchControls != null) touchControls.releaseAll();
         super.onWindowFocusChanged(hasFocus);
     }

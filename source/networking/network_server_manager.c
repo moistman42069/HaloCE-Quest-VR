@@ -3996,7 +3996,8 @@ void network_game_server_port_set_cooperative_players(
 
 	if (!server || server->state != _network_game_server_state_pregame)
 		return;
-	server->game.maximum_players = (byte)PIN(maximum_players, 2, MIN(16, MAXIMUM_NETWORK_PLAYER_COUNT));
+	/* (as OpenCE's Server Setup: 2 to MAXIMUM_NETWORK_PLAYER_COUNT; test28: was 16 at most) */
+	server->game.maximum_players = (byte)PIN(maximum_players, 2, MAXIMUM_NETWORK_PLAYER_COUNT);
 	if (!network_game_server_send_game_data_pregame(server))
 		network_event("network_game_server_port_set_cooperative_players() failed to send updated game settings to clients");
 }

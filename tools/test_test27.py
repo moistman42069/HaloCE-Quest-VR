@@ -151,6 +151,7 @@ assert 'configured = map_name && ui_widget_port_cooperative_level_choose(map_nam
 assert 'network_game_server_port_set_cooperative_players(most_players);' in session
 assert 'return FALSE && game && game->map.version == HALO_CAMPAIGN_MAP_VERSION' in campaign_c, 'CE retired'
 reader = fn(session, 'coop_request_read')
+limits = re.search(r'^enum\n\{\n\tCOOP_MINIMUM_PLAYERS.*?^\};\n', session, re.M | re.S).group(0)
 run('coop_request', r'''
 #include <assert.h>
 #include <stdio.h>
@@ -161,22 +162,22 @@ typedef int boolean;
 #define NUMBEROF(a) (sizeof(a)/sizeof((a)[0]))
 #define VALID_INDEX(i,n) ((i)>=0&&(i)<(long)(n))
 static char const *missions[] = {"a10", "a30", "a50", "b30", "b40", "c10", "c20", "c40", "d20", "d40"};
-enum { COOP_MINIMUM_PLAYERS = 2, COOP_MAXIMUM_PLAYERS = 16 };
+''' + limits + r'''
 static boolean list_publicly; static short mission, difficulty, most_players;
 ''' + reader + r'''
 int main(void){
  assert(coop_request_read("2 4 2 1 8\n") && mission==4 && difficulty==2 && list_publicly==1 && most_players==8);
- assert(coop_request_read("1 0 1 0\n") && mission==0 && most_players==16);   /* the 1.0.8 launcher's format */
+ assert(coop_request_read("1 0 1 0\n") && mission==0 && most_players==COOP_FORMAT_1_PLAYERS);   /* the 1.0.8 launcher's format */
  assert(!coop_request_read("2 10 1 1 4")); assert(!coop_request_read("2 1 4 1 4")); assert(!coop_request_read("2 1 1 2 4"));
- assert(!coop_request_read("2 1 1 1 1")); assert(!coop_request_read("2 1 1 1 17")); assert(!coop_request_read("2 1 1 1 4 x"));
+ assert(!coop_request_read("2 1 1 1 1")); assert(!coop_request_read("2 1 1 1 129")); assert(!coop_request_read("2 1 1 1 4 x"));
  assert(!coop_request_read("3 1 1 1 4")); assert(!coop_request_read("")); assert(!coop_request_read("2 1 1 1"));
- for(int p=2;p<=16;p++){ char t[32]; snprintf(t,sizeof t,"2 9 3 0 %d",p); assert(coop_request_read(t) && most_players==p); }
- puts("PASS: the launcher's co-op host request: mission, difficulty, public, 2-16 players; 1.0.8's format read; malformed refused");
+ for(int p=2;p<=COOP_MAXIMUM_PLAYERS;p++){ char t[32]; snprintf(t,sizeof t,"2 9 3 0 %d",p); assert(coop_request_read(t) && most_players==p); }
+ puts("PASS: the launcher's co-op host request: mission, difficulty, public, 2-128 players (16 until test28); 1.0.8's format read; malformed refused");
 }
 ''')
-assert '"2 " + selected + " " + difficulty.getSelectedItemPosition()' in coop and 'MOST_PLAYERS = 16' in coop
+assert '"2 " + selected + " " + difficulty.getSelectedItemPosition()' in coop and 'PLAYER_CHOICES = {2, 4, 8, 12, 16, 24, 32, 48, 64, 96, 128}' in coop
 assert 'CoopPublisher' not in activity and not (ROOT / (java + 'CoopPublisher.java')).exists(), 'no HTTP announcer'
-print('PASS: launcher co-op hosting opens an OpenCE co-op lobby (2-16, public through the signed lobby); '
+print('PASS: launcher co-op hosting opens an OpenCE co-op lobby (2-128 since test28, public through the signed lobby); '
       'the CE02 announcer and settings retired')
 
 # --- 8. browsers: the launcher's (tested in test_quest_browser) and the game's; locked lobbies
