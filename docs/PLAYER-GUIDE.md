@@ -117,19 +117,19 @@ The launcher browser reads the ChupathingyCE native-port directory and can merge
 
 **Host multiplayer** offers installed map, game type, name, score/time, friendly fire, radar, team balance, vehicle respawn, loadout/grenade options and **2–128 PvP slots**. Public listing is opt-in; private invites are available. Start with modest limits: 128 is protocol capacity, not a verified Quest-host performance target. Network settings expose Internet/LAN, UPnP, clipboard invites and tunnel port.
 
-This build hosts native **Network 11** and accepts reviewed distributed hosts **9–11**, subject to content/rules and connectivity. Supported native Windows/macOS/Linux/Android ports can cross-play when compatible. **Retail Halo PC/Custom Edition, original Xbox and MCC use different network protocols.** Older clients that insist on an older version need an update.
+Since 1.0.9 this build plays **OpenCE's netcode, network 20** (OpenCE build 138), and joins hosts of exactly that version, as every OpenCE build does, subject to content and connectivity. OpenCE's Windows/macOS/Linux/Android builds of the same version cross-play. **Retail Halo PC/Custom Edition, original Xbox and MCC use different network protocols.** Hosts on another network version (this app 1.0.8 and older on 11, older or newer OpenCE builds) are refused by name.
 
 ### Campaign co-op and avatars
 
-Campaign sessions use a separate two-player flow and do not appear in the PvP browser. Use matching 1.0.2 project builds and matching campaign/resource files on both devices. Two Quests or Quest plus flat Android are intended pairings.
+Since 1.0.9 co-op is **OpenCE's co-op**: a network game on a campaign level, up to 16 players, Quest, Android and OpenCE's Windows/macOS/Linux players together, on network 20. Players can join a mission already under way; the host runs the scripts, AI, checkpoints and level changes, and a dead player watches a teammate until it is safe to come back. Everyone needs the same campaign maps. Co-op games of this app 1.0.8 or older (its own two-player protocol) can no longer be joined: their hosts must update.
 
 Step-by-step instructions are in the launcher: **How to join co-op & find servers** (also first in the Field guide).
 
-1. **Host:** open launcher **Campaign co-op → Host campaign**, choose a mission and difficulty. **List this game in the co-op server browser** is ticked by default (since 1.0.6) so your partner can find the session; untick it to keep it private and share the invite instead. Create the session and enter the System Link lobby. Keep the app in the foreground.
-2. **Join:** the other player opens **Campaign co-op → Browse / join**, refreshes and selects the host, or enters a private invite. After connection, launch the game and open **Multiplayer → System Link**; select the host and join their lobby.
-3. **Start:** wait until both players are in the lobby before the host starts the mission. Keep both apps in the foreground. If public co-op discovery fails, use a private invite or LAN.
+1. **Host:** launcher **Campaign co-op → Host campaign**: mission, difficulty, most players (2–16) and **Public** (listed in the server browsers: this app's, OpenCE's and the community list; untick it to share the invite instead). The game opens the lobby; start when everyone is in (a full lobby starts by itself).
+2. **Join:** in the game, **Multiplayer → System Link → Refresh**: public co-op games show their campaign level. Or look first in the launcher's **Campaign co-op → Browse / join**, press **Join**, then pick the game in System Link. A game marked **LOCK** has a password: use its host's invite instead.
+3. **If it fails:** send both players' logs of that session (see [OpenCE co-op compatibility](OPENCE-COOP-COMPATIBILITY.md)). Strict NAT on both sides (common on mobile data) can block joining; try Wi-Fi.
 
-The launcher's campaign directory is separate from the OpenCE PvP directory; the latter does not advertise this campaign protocol. The host controls campaign scripts, AI, checkpoints and transitions. **Campaign supports two players**, not 128; joining mid-mission is disabled. Disconnects require a new lobby. Public campaign directory acceptance remains unverified; private invite/LAN is the fallback.
+VR avatars (the hands and body of VR players) are shown between 1.0.9 devices; OpenCE players see a Quest player's ordinary model.
 
 Supporting hosts/clients negotiate VR head/arms/body/leg presentation, including the flat receiver. Local torso hiding does not hide the remote body. Older peers use stock presentation; remote world skeletons do not replicate the local individual finger rig. Avatar extensions also operate in supporting PvP sessions.
 

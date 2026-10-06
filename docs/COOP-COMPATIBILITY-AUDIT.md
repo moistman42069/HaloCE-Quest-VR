@@ -1,3 +1,5 @@
+> **1.0.9 candidate (test27, 2026-10-06):** this app now runs OpenCE build 138's netcode (network 20, exact match), co-op included: up to 16 players, hosting and joining with OpenCE players, listed through the signed lobby and the community directory. This app's own CE01/CE02 co-op and the v9-11 window are retired. See [OPENCE-COOP-COMPATIBILITY.md](OPENCE-COOP-COMPATIBILITY.md). Not yet verified in a real cross-build session.
+
 > **Subsequent acceptance, 2026-10-03:** the owner accepted the delivered test14 pair and explicitly authorized publication as the latest release. This supersedes the earlier release hold below. Original investigation/check results remain historical; no complete campaign playthrough or all-device certification is inferred. See [current state](CURRENT-STATE.md) and [release provenance](RELEASE-PROVENANCE.md).
 
 # Co-op compatibility audit ? test14, 2026-10-03

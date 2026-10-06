@@ -87,3 +87,21 @@ targets the PC Direct3D 9 VR mod: it keeps a remote player's shots from
 using the local VR hand's aim. Here that separation already holds: shots
 from the hand (`vr_render_hand_origin`) apply only to the local player's
 unit in a local game, and haptics only to the local player.
+
+## Builds 129-138 (network 18-20), adopted for test27 (1.0.9)
+
+OpenCE moved from network 17 (build 128) to 18 (build 129: networked glass
+fix, hardening) to 19 (`62fa7e13`, co-op player collisions option) to 20
+(`6112dcfc`, password-protected public lobbies) by build 138 (`76addf66`,
+second hardening round, its own zlib). With the owner's decision to run
+OpenCE's netcode (2026-10-06), 1.0.9 takes build 129 by a classified 3-way
+merge from `7e00135d`, then those three commits, then makes the networking
+files build 138's with only this app's additions (see
+[OPENCE-COOP-COMPATIBILITY.md](OPENCE-COOP-COMPATIBILITY.md)). Not taken:
+`94882796` anti-aliasing, `3dba558e` per-pixel lighting, `1dc533fe` shadow
+maps, `8a8e7059`/`b115a412`/audio PRs (reverb, resampling, limiter, ADPCM,
+distance), `9a128287` MP maps alone, `7ea61077`/`7e82e712` PC menu settings,
+`22249cf1` Windows crash reports, `e4461981` render interpolation snaps,
+`f5bb75c2`/`b449c43e` D3D constant serials (renderer, this tree's differs),
+`d635d837` Windows linker. None changes the wire; the renderer and audio ones
+risk VR regressions and want their own review.

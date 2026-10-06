@@ -3,7 +3,11 @@
 Updated 2026-10-04. This is the current handoff for Claude Code/Claude Cloud.
 The canonical source is `moistman42069/HaloCE-Quest-VR`, branch `main`.
 
-## Progress (test26, 2026-10-05)
+## Progress (test27, 2026-10-06)
+
+Private candidate **test27** (1.0.9 / code 35, branch `test27-opence-netcode`, from test26 `a537c4b6`) runs OpenCE build 138's netcode (network 20) and its co-op, so Quest and Android players host and join co-op lobbies of up to 16 with OpenCE players, through the same browsers. This app's CE01/CE02 co-op and the v9-11 window are retired. Details: [TEST27-PROGRESS.md](TEST27-PROGRESS.md), [OPENCE-COOP-COMPATIBILITY.md](OPENCE-COOP-COMPATIBILITY.md). Next: real sessions (1.0.9 Quest/Android host and join; join an OpenCE build 138 co-op host; an OpenCE player joins a 1.0.9 host).
+
+## Earlier progress (test26, 2026-10-05)
 
 Private candidate **test26** (version 1.0.8 / code 34, branch `test26-coop`, from test25 `9bca3958`) fixes the co-op client's halt on a replayed death scream, places and animates cutscene characters on the joining device as on the host (resting teleports sent at once; every user animation and its movement flags sent), syncs broken glass, moves co-op to protocol CE02, ends the Quest 2 client's red text, makes the first Quest's memory reservation work on its older kernel, and adds the reticle toggle (left stick click; crouch on the right stick held down, or kept on the click: Controls → L Stick Click), the HUD head tap, adjustable flashlight tap, an optional wrist HUD, melee along the gun and continuous finger contact. Details: [TEST26-PROGRESS.md](TEST26-PROGRESS.md); delivery: [TEST26-DELIVERY.md](TEST26-DELIVERY.md); upstream Build 128: [UPSTREAM-REVIEW-2026-10-05.md](UPSTREAM-REVIEW-2026-10-05.md). Next: the owner's co-op test with 1.0.8 on both devices (Quest joining), then single-player checks of the new controls.
 
