@@ -1,12 +1,12 @@
 # Current development state
 
-## Latest release candidate: v1.0.10 (test28 APKs)
+## Current GitHub latest release: v1.0.10 (test28 APKs)
 
-**Status: ready to publish, not yet published.** The user supplied `D:\HaloQuest\builds\test28-20261006-v1.0.10` and confirmed campaign co-op works well in their test. The candidate is version **1.0.10 / code 36**, OpenCE Build 138/network 20, with standard APK filenames and updater metadata prepared. The release checklist, hashes and candidate validation are in [`RELEASE-1.0.10.md`](RELEASE-1.0.10.md), [`RELEASE-PROVENANCE-1.0.10.md`](RELEASE-PROVENANCE-1.0.10.md), and [`TEST28-DELIVERY.md`](TEST28-DELIVERY.md). Prior public releases remain intact; the About description is to remain unchanged.
+**Status: published as Latest on 2026-10-06.** The release uses the APKs from `D:\HaloQuest\builds\test28-20261006-v1.0.10`. It is version **1.0.10 / code 36**, OpenCE Build 138/network 20, with standard APK filenames and updater metadata. The release checklist, hashes and validation are in [`RELEASE-1.0.10.md`](RELEASE-1.0.10.md), [`RELEASE-PROVENANCE-1.0.10.md`](RELEASE-PROVENANCE-1.0.10.md), and [`TEST28-DELIVERY.md`](TEST28-DELIVERY.md). Prior public releases remain intact; the About description was not changed.
 
 The owner reports campaign co-op works well. Exact device pairing, mission and lobby size were not specified. Test28 adds co-op host limits up to 128, but stable performance at that maximum is not established. Android gyro aim is optional and off by default; no gyro test report was provided.
 
-The last public release before publishing this candidate is v1.0.6. Historical progress and older release notes below are retained as records, not current compatibility guidance.
+The prior public release is v1.0.6. Historical progress and older release notes below are retained as records, not current compatibility guidance.
 
 ## Historical progress
 

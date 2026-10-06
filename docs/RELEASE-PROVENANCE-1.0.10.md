@@ -1,7 +1,7 @@
 # Release v1.0.10 provenance
 
-Prepared 2026-10-06 for the new GitHub Latest release. Before publication, the
-previous public releases remain intact. The two APKs are the exact test28 candidate artifacts,
+Published 2026-10-06 as the new GitHub Latest release. The previous public
+releases remain intact. The two APKs are the exact test28 candidate artifacts,
 copied and renamed for stable release filenames; they were not rebuilt or
 re-signed for publication.
 

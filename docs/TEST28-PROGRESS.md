@@ -1,8 +1,8 @@
 # Test28 checkpoint: co-op joined in progress, OpenCE-sized co-op hosting, gyro aim
 
 Updated 2026-10-06. **Test28, version 1.0.10 / code 36**, branch
-`test27-opence-netcode`, on top of test27 (1.0.9 / code 35), is the v1.0.10
-release candidate awaiting publication. The owner reports that co-op works well in testing.
+`test27-opence-netcode`, on top of test27 (1.0.9 / code 35), was published as
+the new Latest release v1.0.10. The owner reports that co-op works well in testing.
 The exact device pairing, lobby size and mission coverage were not supplied.
 
 ## Reports and requests

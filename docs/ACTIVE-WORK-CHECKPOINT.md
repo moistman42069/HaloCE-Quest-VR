@@ -1,6 +1,6 @@
-# Active work checkpoint — v1.0.10 release preparation (2026-10-06)
+# Active work checkpoint — after v1.0.10 release (2026-10-06)
 
-The latest public release is v1.0.6. v1.0.10, built from test28, is prepared for publication. Preserve v1.0.6 and all earlier releases. Release APK hashes and validation are in [RELEASE-PROVENANCE-1.0.10.md](RELEASE-PROVENANCE-1.0.10.md). The repository About description was not changed.
+The latest public release is [v1.0.10](https://github.com/moistman42069/HaloCE-Quest-VR/releases/tag/v1.0.10), built from test28. Preserve v1.0.6 and all earlier releases. Release APK hashes and validation are in [RELEASE-PROVENANCE-1.0.10.md](RELEASE-PROVENANCE-1.0.10.md). The repository About description was not changed.
 
 ## Owner confirmation and follow-up
 
@@ -8,7 +8,7 @@ The owner reports that co-op works well after test28's OpenCE network integratio
 
 ## Release details
 
-Candidate test28 (**1.0.10 / code 36**, branch `test27-opence-netcode`) builds on test27:
+Published test28 (**1.0.10 / code 36**, branch `test27-opence-netcode`) builds on test27:
 - **Owner's first cross-play session:** a Quest on 1.0.9 joined an 18-player OpenCE co-op game in progress, which proved join and load. It then halted on an upstream camera check. That check is fixed and squared, and the APKs now build in release mode as OpenCE's do.
 - **Co-op hosting:** sizes now match OpenCE's, 2 to 128.
 - **Gyro aim:** added to the flat Android port as an option, off by default.

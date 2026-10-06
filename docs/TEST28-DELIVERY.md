@@ -1,7 +1,7 @@
 # Test28 — v1.0.10 release delivery: co-op joined in progress, larger lobbies, gyro aim
 
-Prepared for publication as the new Latest release on 2026-10-06. The previous public v1.0.6
-release and its assets remain intact. Test27 (1.0.9) and test28 are candidates until publication. Details: [TEST28-PROGRESS.md](TEST28-PROGRESS.md),
+Published as the new Latest release on 2026-10-06. The previous public v1.0.6
+release and its assets remain intact. Test27 (1.0.9) was a candidate only. Details: [TEST28-PROGRESS.md](TEST28-PROGRESS.md),
 [OpenCE co-op compatibility](OPENCE-COOP-COMPATIBILITY.md).
 
 ## Installation
