@@ -308,18 +308,21 @@ host = r'''
 #include <stdint.h>
 #include "port/android/include/halo_android_abi.h"
 enum { HAND_LOOSE, HAND_HELD, HAND_EMPTY };
-static struct { struct { uint32_t hand_buttons[2], buttons; float trigger[2]; int64_t predicted_display_period; } frame;
+static struct { struct { uint32_t hand_buttons[2], buttons; float trigger[2], thumb[4]; int64_t predicted_display_period; } frame;
  int layout_vr, weapon_hand, touch_layout, zoom_down, view_recentred, back_pulse, heading_valid, x_hold_switched, controls_mirrored,
  grip_held[2], in_holster, hand_state, physical, button_source[VR_BUTTON_ACTIONS], recentre_source; unsigned pad_buttons; float pad_trigger[2];
- double x_held, grenade_pulse, view_held; } vr;
+ double x_held, grenade_pulse, view_held;
+ /* test26: crouch on the turning stick held down, the reticle's toggle */
+ int seated, turn_stick_down, reticle_hidden, reticle_press, reticle_cancelled; } vr;
 static int recentres, buzzes;
+static void platform_log(const char *f, ...){(void)f;}
 static int physical_weapons(void){return vr.physical;}
 static void host_xr_recenter(void){recentres++;}
 static void vr_haptic(int h,float a,float s){(void)h;(void)a;(void)s;buzzes++;}
 '''
 # test23: the Quest's buttons come from the remappable table, at its defaults here
 run('mirror', common + '#include <string.h>\n#include "port/android/include/halo_android_abi.h"\n' + button_names + host +
-    fn(frame, 'touch_source_down') + fn(frame, 'touch_buttons') + fn(frame, 'layout_controls') + r'''
+    fn(frame, 'touch_source_hand') + fn(frame, 'touch_source_down') + fn(frame, 'touch_buttons') + fn(frame, 'layout_controls') + r'''
 static void defaults(void){for(int a=0;a<VR_BUTTON_ACTIONS;a++)vr.button_source[a]=vr_button_default(a);}
 static unsigned seed=3;
 static unsigned rnd(void){seed=seed*1664525u+1013904223u;return seed>>8;}
@@ -328,11 +331,13 @@ int main(void){
  int frames=0;
  for(int run=0;run<400;run++){
   int touch=run&1,phys=(run>>1)&1,holster=(run>>2)&1,state=run%3;
-  struct { unsigned out; float t0,t1; int rec; } a[60],b[60];
-  unsigned sl[60],sr[60];float tl[60],tr[60];int gl[60],gr[60];
+  struct { unsigned out; float t0,t1; int rec,reticle; } a[60],b[60];
+  unsigned sl[60],sr[60];float tl[60],tr[60],tx[60],ty[60];int gl[60],gr[60];
   for(int n=0;n<60;n++){sl[n]=sr[n]=0;for(int k=0;k<8;k++){if(rnd()%5==0)sl[n]|=bits[k];if(rnd()%5==0)sr[n]|=bits[k];}
    if(rnd()%3==0){sl[n]=n?sl[n-1]:0;sr[n]=n?sr[n-1]:0;} /* holds */
-   tl[n]=(rnd()%100)/99.f;tr[n]=(rnd()%100)/99.f;gl[n]=rnd()&1;gr[n]=rnd()&1;}
+   tl[n]=(rnd()%100)/99.f;tr[n]=(rnd()%100)/99.f;gl[n]=rnd()&1;gr[n]=rnd()&1;
+   /* the turning stick (thumb 2-3 after the swap, on either side) */
+   tx[n]=((int)(rnd()%201)-100)/100.f;ty[n]=((int)(rnd()%201)-100)/100.f;}
   for(int side=0;side<2;side++){
    memset(&vr,0,sizeof vr);defaults();recentres=0;vr.layout_vr=1;vr.touch_layout=touch;vr.physical=phys;vr.in_holster=holster;vr.hand_state=state;
    vr.frame.predicted_display_period=13888889;vr.controls_mirrored=side;vr.weapon_hand=side?0:1;
@@ -341,16 +346,36 @@ int main(void){
     vr.frame.hand_buttons[0]=side?sr[n]:sl[n];vr.frame.hand_buttons[1]=side?sl[n]:sr[n];
     vr.frame.trigger[0]=side?tr[n]:tl[n];vr.frame.trigger[1]=side?tl[n]:tr[n];
     vr.grip_held[0]=side?gr[n]:gl[n];vr.grip_held[1]=side?gl[n]:gr[n];
+    vr.frame.thumb[2]=tx[n];vr.frame.thumb[3]=ty[n];
     layout_controls();
-    if(side){b[n].out=vr.pad_buttons;b[n].t0=vr.pad_trigger[0];b[n].t1=vr.pad_trigger[1];b[n].rec=recentres;}
-    else{a[n].out=vr.pad_buttons;a[n].t0=vr.pad_trigger[0];a[n].t1=vr.pad_trigger[1];a[n].rec=recentres;}}}
-  for(int n=0;n<60;n++,frames++)assert(a[n].out==b[n].out&&a[n].t0==b[n].t0&&a[n].t1==b[n].t1&&a[n].rec==b[n].rec);
+    if(side){b[n].out=vr.pad_buttons;b[n].t0=vr.pad_trigger[0];b[n].t1=vr.pad_trigger[1];b[n].rec=recentres;b[n].reticle=vr.reticle_hidden;}
+    else{a[n].out=vr.pad_buttons;a[n].t0=vr.pad_trigger[0];a[n].t1=vr.pad_trigger[1];a[n].rec=recentres;a[n].reticle=vr.reticle_hidden;}}}
+  for(int n=0;n<60;n++,frames++)assert(a[n].out==b[n].out&&a[n].t0==b[n].t0&&a[n].t1==b[n].t1&&a[n].rec==b[n].rec&&a[n].reticle==b[n].reticle);
  }
  /* right-handed is unchanged: A jumps, B (stick) melee; left-handed: X jumps */
  memset(&vr,0,sizeof vr);vr.layout_vr=1;vr.weapon_hand=1;vr.frame.hand_buttons[1]=HALO_XR_HAND_SOUTH;layout_controls();assert(vr.pad_buttons==HALO_XR_BUTTON_A);
  memset(&vr,0,sizeof vr);vr.layout_vr=1;vr.weapon_hand=0;vr.controls_mirrored=1;vr.frame.hand_buttons[0]=HALO_XR_HAND_SOUTH;layout_controls();assert(vr.pad_buttons==HALO_XR_BUTTON_A);
  memset(&vr,0,sizeof vr);vr.layout_vr=1;vr.weapon_hand=0;vr.controls_mirrored=0;vr.frame.hand_buttons[1]=HALO_XR_HAND_SOUTH;layout_controls();assert(vr.pad_buttons==HALO_XR_BUTTON_A);
- printf("PASS: %d frames of random buttons, triggers and grips (touch/physical/holster/hand states): left-handed output equals the right-handed mirror image;\n",frames);
+ /* test26: the turning stick held down crouches (Touch defaults), let go a little sooner than taken; never seated */
+ memset(&vr,0,sizeof vr);defaults();vr.layout_vr=1;vr.touch_layout=1;vr.weapon_hand=1;
+ vr.frame.thumb[3]=-0.7f;layout_controls();assert(!(vr.pad_buttons&HALO_XR_BUTTON_LEFT_THUMB));
+ vr.frame.thumb[3]=-0.8f;layout_controls();assert(vr.pad_buttons&HALO_XR_BUTTON_LEFT_THUMB);
+ vr.frame.thumb[3]=-0.6f;layout_controls();assert(vr.pad_buttons&HALO_XR_BUTTON_LEFT_THUMB);
+ vr.frame.thumb[3]=-0.5f;layout_controls();assert(!(vr.pad_buttons&HALO_XR_BUTTON_LEFT_THUMB));
+ vr.frame.thumb[2]=0.7f;vr.frame.thumb[3]=-0.8f;layout_controls();assert(!(vr.pad_buttons&HALO_XR_BUTTON_LEFT_THUMB));
+ vr.frame.thumb[2]=0;vr.seated=1;layout_controls();assert(!(vr.pad_buttons&HALO_XR_BUTTON_LEFT_THUMB));
+ /* the left stick's click: shows or hides the reticle as it is let go, crouches no more; with the other stick
+ (a recentre) or seated, nothing */
+ memset(&vr,0,sizeof vr);defaults();vr.layout_vr=1;vr.touch_layout=1;vr.weapon_hand=1;
+ vr.frame.hand_buttons[0]=HALO_XR_HAND_STICK;layout_controls();assert(!vr.reticle_hidden&&!(vr.pad_buttons&HALO_XR_BUTTON_LEFT_THUMB));
+ vr.frame.hand_buttons[0]=0;layout_controls();assert(vr.reticle_hidden);
+ vr.frame.hand_buttons[0]=HALO_XR_HAND_STICK;layout_controls();vr.frame.hand_buttons[0]=0;layout_controls();assert(!vr.reticle_hidden);
+ vr.frame.hand_buttons[0]=HALO_XR_HAND_STICK;layout_controls();vr.frame.hand_buttons[1]=HALO_XR_HAND_STICK;layout_controls();
+ vr.frame.hand_buttons[1]=0;layout_controls();vr.frame.hand_buttons[0]=0;layout_controls();assert(!vr.reticle_hidden);
+ vr.seated=1;vr.frame.hand_buttons[0]=HALO_XR_HAND_STICK;layout_controls();vr.frame.hand_buttons[0]=0;layout_controls();assert(!vr.reticle_hidden);
+ printf("PASS: %d frames of random buttons, triggers, grips and turning stick (touch/physical/holster/hand states): left-handed output\n"
+        "      (and the reticle's toggle) equals the right-handed mirror image; the turning stick held down crouches, the left stick's click\n"
+        "      toggles the reticle (not with a recentre, not seated);\n",frames);
  puts("      right-handed and left-handed-with-standard-controls layouts are unchanged");
 }
 ''')

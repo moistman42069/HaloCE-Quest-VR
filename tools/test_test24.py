@@ -91,7 +91,20 @@ assert 'if (!function->parameter_count) network_campaign_script_capture(expressi
     'a call with no arguments is captured too'
 
 # --- test23's cutscene snap withdrawn: reconciling is 1.0.4's, byte for byte
-assert objects_net == git_show('55e77364', 'port/linux/game/network_objects.c'), 'network_objects.c as in 1.0.4'
+# (test26 sends a resting object's teleport at once, distributed_host_send_states:
+# the client's reconciling stays 1.0.4's)
+old_net = git_show('55e77364', 'port/linux/game/network_objects.c')
+net_1_0_4 = objects_net
+net_1_0_4 = re.sub(r'/\* \.\.\. where each was when its state last went out.*?\} objects_host_rest_sent\[MAXIMUM_TRACKED_OBJECTS\];\n',
+                   '', net_1_0_4, count=1, flags=re.S)
+net_1_0_4 = re.sub(r'static void distributed_host_note_rest_sent\(.*?\n}\n\n/\* test26: an object at rest.*?\n}\n\n',
+                   '', net_1_0_4, count=1, flags=re.S)
+net_1_0_4 = net_1_0_4.replace(
+    '\t\t/* (one at rest that was, moved all the same: test26) */\n'
+    '\t\tif (at_rest && !was_moving && !distributed_host_rest_moved(absolute_index, object_index))\n',
+    '\t\tif (at_rest && !was_moving)\n')
+net_1_0_4 = net_1_0_4.replace('\t\tdistributed_host_note_rest_sent(absolute_index, object_index);\n', '')
+assert net_1_0_4 == old_net, 'network_objects.c as in 1.0.4 but for test26\'s resting teleports'
 
 # --- version
 code = int(re.search(r'versionCode Math\.max\((\d+), buildNumber\)', gradle).group(1))

@@ -148,6 +148,16 @@ def main():
             if candidate_at_least(args.label, 23):
                 if b"client dropped presentation" not in guest:
                     raise SystemExit("Test23 co-op cutscene diagnostic missing")
+            if candidate_at_least(args.label, 26):
+                for marker in [b"it is the host's to erase", b"co-op protocol %X here, %X on the host"]:
+                    if marker not in guest: raise SystemExit("Test26 co-op marker missing: " + repr(marker))
+                if b"could not start on this device" not in host:
+                    raise SystemExit("Test26 start failure message missing")
+            if candidate_at_least(args.label, 26) and vr:
+                for marker in [b"HUD + RETICLE", b"HEAD GESTURES", b"WRIST HUD", b"HUD TAP", b"vr.button_reticle",
+                               b"vr.hud_tap_distance", b"vr.wrist_hud", b"vr: HUD %s (head tap)", b"the gun's end", b"L STICK CLICK",
+                               b"right_stick_down"]:
+                    if marker not in guest: raise SystemExit("Test26 HUD, gesture or button marker missing: " + repr(marker))
             if candidate_at_least(args.label, 25) and vr:
                 for marker in [b"RESET OFFSETS", b"HORIZON", b"vr: recentre (", b"vr: seat: ", b"rows widened from",
                                b"vr: first-person seat: the vehicle draws see-through", b"vr.vehicle_tilt"]:

@@ -518,7 +518,7 @@ int main(void){
 
 reset = fn(frame, 'migrate_gun_aim_reset')
 assert 'if (config_boolean("vr.aim_reset_applied"))' in reset and 'config_write_real(key, 0.0)' in reset
-assert re.search(r'migrate_two_hand_auto\(\);\n\tmigrate_gun_aim_reset\(\);\n\tvr_reload_settings\(\);', frame)
+assert re.search(r'migrate_two_hand_auto\(\);\n\tmigrate_gun_aim_reset\(\);\n\t(migrate_reticle_button\(\);\n\t)?vr_reload_settings\(\);', frame)
 assert re.search(r'\{ "vr\.aim_reset_applied", _config_boolean, "false"', config)
 assert 'unsigned int sticks = vr.frame.buttons & both;' in fn(frame, 'vr_horn_held')
 assert 'horn: the vehicle %s the crouch control from its driver' in fn(render, 'vr_render_actions')

@@ -57,8 +57,10 @@ assert code >= 30
 assert 'remappable Quest buttons with the grenade on X' in frame
 
 # --- the buttons: settings, defaults, wiring
-for key, default in [('jump', 'a'), ('action', 'b'), ('melee', 'right_stick'), ('crouch', 'left_stick'),
-                     ('switch_weapon', 'y'), ('grenade', 'x'), ('switch_grenade', 'hold')]:
+# (test26: crouch moved to the turning stick held down, the left stick's
+# click toggles the reticle; migrate_reticle_button moves an old default)
+for key, default in [('jump', 'a'), ('action', 'b'), ('melee', 'right_stick'), ('crouch', 'right_stick_down'),
+                     ('switch_weapon', 'y'), ('grenade', 'x'), ('switch_grenade', 'hold'), ('reticle', 'left_stick')]:
     assert re.search(r'"vr\.button_%s", _config_string, "\\"%s\\""' % (key, default), config), key
 layout = fn(frame, 'layout_controls')
 assert 'vr.grip_held' not in layout, 'the locked gun\'s grip no longer throws grenades in the layout'
@@ -85,28 +87,45 @@ run('buttons', r'''
 #include "port/android/include/halo_android_abi.h"
 ''' + enums + r'''
 static struct { int grip_held[2], weapon_hand, in_holster, button_source[VR_BUTTON_ACTIONS], x_hold_switched;
-	double x_held, grenade_pulse; } vr;
-static int physical;
+	double x_held, grenade_pulse;
+	/* test26: crouch on the turning stick held down, the reticle's toggle */
+	int controls_mirrored, seated, turn_stick_down, reticle_hidden, reticle_press, reticle_cancelled; } vr;
+static int physical, buzzes;
 static int physical_weapons(void){return physical;}
-''' + names + fn(frame, 'touch_source_down') + fn(frame, 'touch_buttons') + r'''
+static void vr_haptic(int h,float a,float s){(void)h;(void)a;(void)s;buzzes++;}
+static void platform_log(const char *f, ...){(void)f;}
+''' + names + fn(frame, 'touch_source_hand') + fn(frame, 'touch_source_down') + fn(frame, 'touch_buttons') + r'''
 #define S HALO_XR_HAND_SOUTH
 #define E HALO_XR_HAND_EAST
 #define K HALO_XR_HAND_STICK
 static void defaults(void){for(int a=0;a<VR_BUTTON_ACTIONS;a++) vr.button_source[a]=vr_button_default(a);
-	vr.x_held=vr.grenade_pulse=0; vr.x_hold_switched=0; vr.grip_held[0]=vr.grip_held[1]=0; vr.in_holster=0;}
+	vr.x_held=vr.grenade_pulse=0; vr.x_hold_switched=0; vr.grip_held[0]=vr.grip_held[1]=0; vr.in_holster=0;
+	vr.turn_stick_down=vr.reticle_press=vr.reticle_cancelled=vr.reticle_hidden=vr.seated=0;}
 /* the Quest's layout before 1.0.5, all but the grenade (the left X switched
-grenades on a press with locked weapons; the grip threw) */
-static unsigned legacy(unsigned right, unsigned left){unsigned b=0;
+grenades on a press with locked weapons; the grip threw); test26: crouch is
+the turning stick held down (`down`), the left stick's click the reticle's */
+static unsigned legacy(unsigned right, unsigned left, int down){unsigned b=0;
 	if(right&S)b|=HALO_XR_BUTTON_A; if(right&E)b|=HALO_XR_BUTTON_X; if(right&K)b|=HALO_XR_BUTTON_B;
-	if(left&K)b|=HALO_XR_BUTTON_LEFT_THUMB; if(left&E)b|=HALO_XR_BUTTON_Y; return b;}
+	if(down)b|=HALO_XR_BUTTON_LEFT_THUMB; if(left&E)b|=HALO_XR_BUTTON_Y; (void)left; return b;}
 static unsigned frame_(unsigned right, unsigned left, int *g){*g=0; return touch_buttons(right,left,1.0/72,g);}
 int main(void){
  int g; unsigned b;
  vr.weapon_hand=1;
- /* defaults: every combination of A, B, Y and the sticks does what it did */
- for(physical=0;physical<2;physical++) for(unsigned m=0;m<32;m++){
+ /* defaults: every combination of A, B, Y, the sticks and the turning stick held down does what it did */
+ for(physical=0;physical<2;physical++) for(unsigned m=0;m<64;m++){
 	unsigned right=(m&1?S:0)|(m&2?E:0)|(m&4?K:0), left=(m&8?E:0)|(m&16?K:0);
-	defaults(); b=frame_(right,left,&g); assert(b==legacy(right,left) && !g && vr.grenade_pulse==0);}
+	defaults(); vr.turn_stick_down=(m&32)!=0; b=frame_(right,left,&g); assert(b==legacy(right,left,vr.turn_stick_down) && !g && vr.grenade_pulse==0);}
+ /* test26: the left stick's click, let go, shows or hides the reticle (it starts shown), once a press;
+ with the right stick's (both: a recentre) or seated (the horn), it does not */
+ defaults(); assert(vr.reticle_hidden==0);
+ buzzes=0; for(int i=0;i<10;i++){b=frame_(0,K,&g); assert(!b);} assert(!vr.reticle_hidden); frame_(0,0,&g); assert(vr.reticle_hidden && buzzes==1);
+ frame_(0,0,&g); assert(vr.reticle_hidden); frame_(0,K,&g); frame_(0,0,&g); assert(!vr.reticle_hidden);
+ frame_(0,K,&g); frame_(K,K,&g); frame_(0,K,&g); frame_(0,0,&g); assert(!vr.reticle_hidden);
+ vr.seated=1; frame_(0,K,&g); frame_(0,0,&g); assert(!vr.reticle_hidden); vr.seated=0;
+ /* remapped to Y: Y toggles it and no longer switches weapons; none: nothing */
+ defaults(); vr.button_source[VR_BUTTON_ACTION_RETICLE]=VR_BUTTON_SOURCE_Y; vr.button_source[VR_BUTTON_ACTION_SWITCH_WEAPON]=VR_BUTTON_SOURCE_LEFT_STICK;
+ b=frame_(0,E,&g); assert(!b); frame_(0,0,&g); assert(vr.reticle_hidden); b=frame_(0,K,&g); assert(b==HALO_XR_BUTTON_Y);
+ defaults(); vr.button_source[VR_BUTTON_ACTION_RETICLE]=VR_BUTTON_SOURCE_NONE; frame_(0,K,&g); frame_(0,0,&g); assert(!vr.reticle_hidden);
  /* locked weapons: the grip does nothing (it threw a grenade); at a holster it draws, elsewhere */
  physical=0; defaults(); vr.grip_held[1]=1; for(int i=0;i<200;i++){b=frame_(0,0,&g); assert(!b && !g);}
  assert(vr.grenade_pulse==0);
@@ -137,10 +156,16 @@ int main(void){
 	assert(vr_button_source_of(vr_button_source_value(d),-1)==d); assert(vr_button_source_of("typo",d)==d);
 	assert(vr_button_source_of(NULL,d)==d);}
  assert(vr_button_default(VR_BUTTON_ACTION_GRENADE)==VR_BUTTON_SOURCE_X);
+ assert(vr_button_default(VR_BUTTON_ACTION_CROUCH)==VR_BUTTON_SOURCE_RIGHT_STICK_DOWN);
+ assert(vr_button_default(VR_BUTTON_ACTION_RETICLE)==VR_BUTTON_SOURCE_LEFT_STICK);
+ assert(!strcmp(vr_button_action_key(VR_BUTTON_ACTION_RETICLE),"vr.button_reticle"));
+ assert(!strcmp(vr_button_source_value(VR_BUTTON_SOURCE_RIGHT_STICK_DOWN),"right_stick_down"));
  assert(!strcmp(vr_button_action_key(VR_BUTTON_ACTION_GRENADE),"vr.button_grenade"));
  puts("PASS: Quest buttons as before (A jump, B action/reload, Y switch weapon, sticks melee/crouch) in either weapon mode; "
       "the locked gun's grip throws nothing; X taps throw and holds switch grenades; the grip, if chosen, throws only "
-      "with locked weapons away from the holsters; remapped buttons follow the table; unknown values keep defaults");
+      "with locked weapons away from the holsters; remapped buttons follow the table; unknown values keep defaults; "
+      "test26: crouch on the turning stick held down, the left stick's click toggles the reticle on release "
+      "(not with a recentre or seated), remappable");
 }
 ''')
 

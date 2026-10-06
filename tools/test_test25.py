@@ -122,8 +122,12 @@ for name, digest in [('hud_unit_backgrounds__6.png', 'e5a41500712d3636'), ('hud_
     assert hashlib.sha256((ROOT / 'port/assets/hud' / name).read_bytes()).hexdigest().startswith(digest), '3ae09c3d ' + name
 
 # --- version
-assert 'versionCode Math.max(33, buildNumber)' in gradle and '"1.0.7"' in gradle
-assert 'HaloCE Quest test25 candidate 1.0.7' in frame
+# (test26 and later raise these)
+import re as _re
+assert int(_re.search(r'versionCode Math\.max\((\d+), buildNumber\)', gradle).group(1)) >= 33
+assert int(_re.search(r': "1\.0\.(\d+)"', gradle).group(1)) >= 7
+assert 'HaloCE Quest test25 candidate 1.0.7' in frame or (
+    _re.search(r'HaloCE Quest test(\d+) candidate 1\.0\.(\d+)', frame) and 'test25:' in frame)
 
 # --- the vehicle seat offsets' reset
 reset = menu[menu.index('    if(setting->type == _vr_setting_reset_vehicle_offsets) {'):

@@ -46,12 +46,18 @@ public class BrowserCheck {
         StringBuilder many = new StringBuilder();
         for (int i = 0; i < 150; i++) many.append(row.replace(code, String.format("%064x", i))).append('\n');
         check(ServerListing.parse(many.toString()).size() == 150);
-        String campaign = row.replace("\t2\t12\t128\t1\t10", "\t0\t1\t2\t1\t52737");
+        // test26: co-op protocol CE02 (52738); a host on another app version's (CE01) is still listed as co-op, marked
+        String campaign = row.replace("\t2\t12\t128\t1\t10", "\t0\t1\t2\t1\t52738");
+        check(ServerListing.CAMPAIGN_VERSION == 0xCE02);
         check(ServerListing.parse(campaign).get(0).description().contains("Campaign co-op"));
+        check(!ServerListing.parse(campaign).get(0).description().contains("another app version"));
+        String older = row.replace("\t2\t12\t128\t1\t10", "\t0\t1\t2\t1\t52737");
+        check(ServerListing.parse(older).get(0).description().contains("Campaign co-op (another app version)"));
+        check(ServerListing.isCampaign(0xCE01) && ServerListing.isCampaign(0xCE02) && !ServerListing.isCampaign(11) && !ServerListing.isCampaign(0));
         for(int cap=1;cap<=128;cap++) {
-            check(ServerListing.campaignCapacityCompatible(0xCE01,cap,true)==(cap==2));
+            check(ServerListing.campaignCapacityCompatible(0xCE02,cap,true)==(cap==2));
             check(ServerListing.campaignCapacityCompatible(11,cap,true));
-            check(ServerListing.campaignCapacityCompatible(0xCE01,cap,false));
+            check(ServerListing.campaignCapacityCompatible(0xCE02,cap,false));
         }
         if (args.length > 0) {
             var live = ServerListing.parse(Files.readString(Path.of(args[0])).replace("\ufeff", ""));
