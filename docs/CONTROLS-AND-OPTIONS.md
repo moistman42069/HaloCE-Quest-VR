@@ -17,8 +17,8 @@ These mappings follow the shipped code. Start with Controls = VR and a standard 
 | Weapon-hand grip, Locked | At a holster, switches weapon; elsewhere nothing (the grenade moved to Left X in 1.0.5) |
 | Weapon-hand grip, Physical | Hold; releasing after the initial protected grip can drop/holster/transfer |
 | Other-hand grip near support region | Lock support hand in Two Hands = Grip; release detaches |
-| Left stick click | Show or hide the reticle (it starts shown; since 1.0.8) |
-| Right stick held down | Crouch (since 1.0.8, on foot; ducking also crouches) |
+| Left stick click | Hide/show the reticle; it starts visible each game start (since 1.0.8) |
+| Right stick held down | Crouch by default (since 1.0.8, on foot; ducking also crouches) |
 | Right stick click | Native melee |
 | Both stick clicks | Recenter during gameplay; stand normally first |
 | Left menu | Pause/menu; online co-op keeps the shared world running |
@@ -112,9 +112,9 @@ Quit before external edits. In `[vr]`, `body = "legs"` explicitly selects the de
 
 ## HUD, reticle, head gestures, melee and fingers (test26, 1.0.8)
 
-- **Reticle toggle:** click the **left stick** to hide the reticle and again to show it. It starts shown every time the game starts. Clicking both sticks together still recenters and does not toggle it, and while seated the stick clicks still sound the horn. The toggle can be moved to another button (BUTTONS → **Reticle**).
+- **Reticle toggle:** the reticle starts visible every time the game starts. Click the **left stick** to hide it and again to show it. Clicking both sticks together still recenters and does not toggle it, and while seated the stick clicks still sound the horn. The toggle can be moved to another button (BUTTONS → **Reticle**).
 - **Crouch moved:** push the **right (turning) stick straight down and hold** to crouch on foot. Turning only uses the stick's sideways movement, so this does not turn you. Ducking with your real head still crouches as before. A config that still had crouch on the left stick click is moved once when 1.0.8 first starts. A layout you set yourself is kept.
-- **Keep the old crouch:** Controls → **L Stick Click: Crouch** puts crouch back on the left stick click, exactly as before 1.0.8. The turning stick held down then does nothing, and the reticle toggle has no button (give it one on BUTTONS if you want it). **Reticle** switches back.
+- **Keep the old crouch:** in the VR menu, open **Controls → Page 2** and set **L Stick Click: Crouch**. This restores crouch to the left stick click. The turning stick held down then does nothing, and the reticle toggle has no button (assign one on BUTTONS if you want it).
 - **HUD tap:** bring your **gun hand to the side of your head** (its own temple: the right one for right-handed players) to hide the HUD: shields and health, ammunition, grenades, the motion tracker, waypoints and damage arrows. Tap again to bring it back. Menus, prompts, messages and the reticle stay. The HUD comes back each time the game starts. **Head Gestures → HUD Tap** sets how close the hand must come (6–15 cm, 10 by default) or turns it Off. Your gun at your cheek or held up to aim, and the shoulder holster, are too far away to trigger it.
 - **Flashlight tap:** unchanged (off hand to your head, 20 cm). **Head Gestures → Flashlight** now sets the distance (10–30 cm) or Off.
 - **Wrist HUD (optional, off by default):** HUD + Reticle → **Wrist HUD: On** moves shields and health, ammunition and grenades, and the motion tracker onto a small panel on the back of your **off-hand wrist**. Turn that wrist toward your face as if checking a watch to read it. Those parts are then left out of the HUD in front of you. The panel hides while both hands hold the gun and while menus are open. In a vehicle seat, or if the off-hand controller loses tracking, the whole HUD shows ahead as normal. Waypoints and prompts always stay ahead.

@@ -49,8 +49,8 @@ Use **Controls = VR** and the standard native controller profile. Right is the d
 | Weapon-hand grip, Physical | Hold the gun; release after the first grip to drop/holster/transfer |
 | Weapon-hand grip, Locked | Switch weapon at a holster; nothing elsewhere |
 | Other-hand grip near the support region | Lock the support hand; release to detach |
-| Left stick click | Show or hide the reticle (Controls → L Stick Click: Crouch keeps crouch here, as before 1.0.8) |
-| Right stick held down | Crouch (since 1.0.8; ducking also crouches) |
+| Left stick click | Hide/show the reticle; it starts visible each game start (Controls → Page 2 → L Stick Click: Crouch restores the older crouch binding) |
+| Right stick held down | Crouch by default (since 1.0.8; ducking also crouches) |
 | Right stick click | Native melee |
 | Both stick clicks together | Recenter during gameplay |
 | Gun hand to its own temple | Show or hide the HUD (Head Gestures → HUD Tap) |
@@ -78,6 +78,8 @@ During co-op spectating, press A to cycle the teammate being watched. During a s
 In co-op, A also cycles the teammate being watched after death and votes during a skippable cutscene; the host applies a majority vote. Keyboard players may press Space to vote.
 
 PlayStation/Nintendo-style pads use equivalent button positions; an optional face-button swap is available. Native Halo Options retains alternate layouts, sensitivity and inverted aim. System file pickers/keyboards follow Android's own input support.
+
+**Android adjustments:** in launcher **Controller & touch settings**, change stick dead zones/response, trigger dead zone, vibration, face-button swap, touch visibility and gyro aim. During gameplay tap **HUD** to reposition/resize touch controls or change opacity, color and response. Use MOVE plus swipe, or drag FIRE to move, aim and shoot together. See [Android gamepad guide](ANDROID-GAMEPAD.md) and [touch/HUD guide](ANDROID-TOUCH-CONTROLS.md).
 
 ### Flat touch
 

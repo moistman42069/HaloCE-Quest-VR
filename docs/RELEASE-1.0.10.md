@@ -1,5 +1,7 @@
 # Halo CE Quest VR + Android 1.0.10 — Release Notes
 
+> **Input note (Quest VR):** The reticle starts visible each time the game starts. Click the **left stick** to hide it, then click again to show it. Crouch defaults to holding the **right stick down**; this moved from the old left-stick-click binding. To put crouch back on the old binding, open **VR menu → Controls → Page 2** and set **L Stick Click** to **Crouch**. The left stick click then crouches instead of toggling the reticle; assign Reticle to another button on the Buttons page if you want a reticle toggle.
+
 ## 1. Installation
 
 Download the APK for your device. Both packages are **version 1.0.10 / code 36**, ARM64, and require Android 9/API 28 or newer.
@@ -74,6 +76,14 @@ The Android gamepad profile uses common Xbox-style positions. Controls can also 
 Open touch **HUD → Options → Gyro Aim**, or launcher **Controller & touch settings**. Gyro aim is **Off by default**. Select **Always** or **Only while a finger is on LOOK or FIRE**, then set horizontal/vertical sensitivity and inversion. A phone without a gyroscope remains fully usable with touch or a gamepad.
 
 For touch gameplay, use MOVE and swipe aiming, or drag from FIRE to move, aim and shoot together. The HUD editor changes control position, size, opacity, color and response. Touch visibility can be Auto, Always show or Always hide.
+
+### Android control setup and adjustments
+
+1. Connect a USB or Bluetooth gamepad before play. The default Xbox-style layout is **left stick move, right stick aim, RT fire, LT grenade, A jump, B melee, X reload/use, Y switch weapon, LB flashlight, RB grenade type**, with stick clicks for crouch/zoom and Start for pause.
+2. Open launcher **Controller & touch settings** to adjust stick dead zones and response, trigger dead zone, vibration, face-button swap, touch visibility and gyro aim. Touch visibility can be **Auto**, **Always show** or **Always hide**; Auto hides the HUD for a supported connected controller and restores it after disconnect.
+3. To reposition touch controls, enter a game, tap **HUD** to open the editor, move or resize controls, adjust opacity/color/response, then save. Use **MOVE + swipe** to move and aim, or drag from **FIRE** to combine movement, aiming and firing.
+
+See the detailed [Android gamepad guide](https://github.com/moistman42069/HaloCE-Quest-VR/blob/v1.0.10/docs/ANDROID-GAMEPAD.md) and [touch/HUD guide](https://github.com/moistman42069/HaloCE-Quest-VR/blob/v1.0.10/docs/ANDROID-TOUCH-CONTROLS.md) for complete mappings and options.
 
 ## 4. VR Features and Settings
 

@@ -1,7 +1,7 @@
-# Android controllers (1.0)
+# Android controller guide (v1.0.10)
 
-The flat ARM64 Android APK uses Android's input system and bundled SDL3 to
-translate common USB/Bluetooth gamepads into Halo's Xbox controller state.
+For the flat ARM64 Android APK in v1.0.10, Android's input system and bundled
+SDL3 translate common USB/Bluetooth gamepads into Halo's Xbox controller state.
 Xbox-style controllers are the primary target. There is no Windows XInput DLL
 to install. Pair in Android settings or connect USB, then launch the game.
 The launcher has **Controller & touch settings** and **Controller input check**.

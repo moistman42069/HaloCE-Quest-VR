@@ -1,6 +1,7 @@
-# Flat Android controls and HUD editor
+# Flat Android controls and HUD editor (v1.0.10)
 
-Test15 candidate, `com.halo.decomp`, Android 9+ / ARM64. Quest has no touch overlay.
+Applies to the flat Android package `com.halo.decomp` (Android 9+ / ARM64). Quest
+uses tracked controllers and has no flat touch overlay.
 
 ## Play with the defaults
 
@@ -56,7 +57,7 @@ Usability references: Activision's [Warzone Mobile control customization guide](
 
 Gyro aim math and wiring: `tools/test_test28.py` (display rotations, tilt, sensitivity, invert, still phone, bad samples).
 
-Device checks: simultaneous move/fire/aim/jump, menus and controller profiles, cancel/focus/rotation, save/reopen/cancel/reset, controls under toolbar, notches, gamepad coexistence and Quest overlay absence. Test15 is awaiting owner results.
+Device checks to collect: simultaneous move/fire/aim/jump, menus and controller profiles, cancel/focus/rotation, save/reopen/cancel/reset, controls under toolbar and notches, gamepad coexistence, and confirmation that Quest has no touch overlay. Automated checks do not establish physical-device acceptance.
 
 Additional native-port reference: id Software's public [DOOM iOS HUD editor](https://github.com/id-Software/DOOM-iOS/blob/master/code/iphone/hud.c), reviewed for drag ownership, screen-edge clamping and saved-control lifecycle. This was design comparison only; none of its GPL code/art was copied into this implementation.
 

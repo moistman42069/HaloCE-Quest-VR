@@ -23,11 +23,17 @@ Both APKs are ARM64 and require Android 9/API 28 or newer. Quest requires Develo
 
 ## Quick inputs
 
-**Quest VR:** left stick moves; right stick turns; triggers fire/zoom; right A jumps/confirms; right B reloads/uses; left Y switches weapons; left X throws or changes grenade type; left stick click toggles the reticle; hold the right stick down to crouch; right stick click melees; click both sticks to recenter. In co-op, **A** cycles the watched teammate and votes during a skippable cutscene.
+**Quest VR:** left stick moves; right stick turns; triggers fire/zoom; right A jumps/confirms; right B reloads/uses; left Y switches weapons; left X throws or changes grenade type; left stick click hides/shows the reticle (starts visible); hold the right stick down to crouch; right stick click melees; click both sticks to recenter. Crouch moved from the old left-stick-click binding: restore it in **VR menu → Controls → Page 2 → L Stick Click → Crouch**. In co-op, **A** cycles the watched teammate and votes during a skippable cutscene.
 
 **Flat Android gamepad:** left stick moves, right stick aims; RT fires, LT throws grenades; A jumps/confirms; B melees/cancels; X reloads/uses; Y switches weapons; LB flashlight; RB grenade type; stick clicks crouch/zoom; Start pauses. In co-op, A cycles the watched teammate or votes to skip a cutscene. Keyboard players press Space to vote.
 
 **Android gyro aim:** HUD → Options → Gyro Aim, or launcher **Controller & touch settings**. It is off by default; choose Always or only while touching LOOK/FIRE, then adjust horizontal/vertical sensitivity and inversion. It works alongside touch and gamepad aiming.
+
+### Android control setup
+
+- **Gamepad:** connect by USB or Bluetooth. Defaults use Xbox-style positions: left stick move, right stick aim, RT fire, LT grenade, A jump, B melee, X reload/use, Y switch weapon, LB flashlight, RB grenade type. Adjust stick/trigger dead zones, response, vibration, face-button swap and touch visibility in launcher **Controller & touch settings**.
+- **Touch:** tap **HUD** in game to move or resize buttons and adjust opacity, color and response. Use **MOVE + swipe** for movement and aiming, or drag **FIRE** to combine move/aim/fire. Touch visibility can be Auto, Always show or Always hide.
+- Detailed guides: [Android gamepad](docs/ANDROID-GAMEPAD.md) · [touch controls and HUD editor](docs/ANDROID-TOUCH-CONTROLS.md).
 
 ## Multiplayer and campaign co-op
 
