@@ -180,6 +180,16 @@ static real const stick_direction_angles[] =
 	-STICK_SECOND_QUADRANT_DIAGONAL_ANGLE,
 };
 
+/* port (test27): coop_spectate.c's keyboard accept (upstream: the jump
+key's held ticks). This app has no keyboard controls: its gamepads, which
+coop_spectate.c reads itself, are every controller it has */
+byte input_abstraction_port_accept(
+	short controller_index)
+{
+	(void)controller_index;
+	return 0;
+}
+
 /* ---------- public code */
 
 void input_abstraction_initialize(

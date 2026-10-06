@@ -305,8 +305,14 @@ def generate_windows_build(n: Writer, sln: Any) -> None:
         # 32-bit address space
         "-Wl,/LARGEADDRESSAWARE",
         "-Wl,/STACK:0x800000",
-        "-Wl,/SUBSYSTEM:CONSOLE",
     ]
+    if getattr(sln, "port_release", False):
+        # no console window (the port's log goes to halo.log instead,
+        # win32_posix.c): under Wine (Proton, gamescope) the console window
+        # can hide the game's window
+        base_ldflags += ["-Wl,/SUBSYSTEM:WINDOWS", "-Wl,/ENTRY:mainCRTStartup"]
+    else:
+        base_ldflags += ["-Wl,/SUBSYSTEM:CONSOLE"]
 
     def emit(obj_dir: Path, output: Path, extra_cflags: List[str], extra_ldflags: List[str],
              extra_objects: List[Path], implicit_inputs: List[Path]) -> None:
@@ -333,6 +339,10 @@ def generate_windows_build(n: Writer, sln: Any) -> None:
             f"-include {tags_header}",
             f"-I{crt_include}",
             f"-I{PORT_DIR / 'include'}",
+            # the port's headers the game's units include (halo_keyboard.h,
+            # halo_menus.h), but not the Linux build's C runtime wrappers
+            # next to them, which no game unit includes in quotes
+            f"-iquote {LINUX_DIR / 'include'}",
             # the headers of the port's own game units (port/linux/game), for
             # the game sources that call them
             f"-iquote {Path(linux_config['game_sources'])}",

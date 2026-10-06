@@ -100,7 +100,8 @@ static const struct config_setting config_settings[] =
 		"Start fullscreen, drawing at the display's resolution and shape; false\n"
 		"starts in a window, which draws the Xbox's 640x480. F11 switches." },
 	{ "display.window_scale", _config_integer, "2", "HALO_WINDOW_SCALE", _environment_value, _platform_desktop,
-		"The window's size as a multiple of 640x480 (it can be resized)." },
+		"Where display.window_size is empty: the window's size as a multiple of\n"
+		"640x480." },
 	{ "display.screen_width", _config_integer, "0", "HALO_SCREEN_WIDTH", _environment_value, _platform_android,
 		"Columns of the 480-line picture: 0 for the display's shape, 640 for the\n"
 		"Xbox's 4:3." },
@@ -119,8 +120,29 @@ static const struct config_setting config_settings[] =
 		"false draws the maps' own bitmaps." },
 	{ "display.high_res_text", _config_boolean, "true", "HALO_HIGH_RES_TEXT", _environment_value, _platform_all,
 		"Draw the menus' and HUD's text with the fonts in port/assets/fonts\n"
-		"(Overpass) at the display's resolution, and the menus' titles from\n"
-		"port/assets/titles; false draws the maps' bitmap fonts and titles." },
+		"(Overpass) at the resolution the game draws at, and the menus' titles\n"
+		"from port/assets/titles; false draws the maps' bitmap fonts and titles." },
+	{ "display.player_names", _config_string, "\"all\"", "HALO_PLAYER_NAMES", _environment_value, _platform_all,
+		"In multiplayer, whose names are drawn above their heads: \"all\",\n"
+		"\"allies\", \"enemies\" or \"none\". An enemy's shows only within the\n"
+		"motion sensor's reach, in sight and not camouflaged; none show if the\n"
+		"gametype's motion tracker shows no players, only allies' if it shows\n"
+		"only friends." },
+	{ "display.player_name_scale", _config_real, "1.0", "HALO_PLAYER_NAME_SCALE", _environment_value, _platform_all,
+		"How large the players' names are drawn: 1.0 three quarters of the size of\n"
+		"the HUD's text, 0.25 to 4." },
+	{ "display.scoreboard_team_layout", _config_string, "\"teams\"", "HALO_SCOREBOARD_TEAM_LAYOUT", _environment_value,
+		_platform_all,
+		"How the scoreboard lists a team game's players: \"teams\" in a column for\n"
+		"each team (red on the left, blue on the right), \"score\" all in order of\n"
+		"score." },
+	{ "display.scoreboard_background", _config_boolean, "true", "HALO_SCOREBOARD_BACKGROUND", _environment_value,
+		_platform_all,
+		"Draw a panel behind the multiplayer scoreboard, for clearer text." },
+	{ "display.scoreboard_background_color", _config_string, "\"16, 16, 16, 150\"", "HALO_SCOREBOARD_BACKGROUND_COLOR",
+		_environment_value, _platform_all,
+		"The scoreboard panel's colour: \"red, green, blue, alpha\", each 0 to 255\n"
+		"(alpha 0 is see-through, 255 solid)." },
 
 	{ "audio.enabled", _config_boolean, "true", "HALO_NO_AUDIO", _environment_set_is_false, _platform_all,
 		"Play sound." },
@@ -203,6 +225,33 @@ static const struct config_setting config_settings[] =
 		"other and the server browser's listings travel (its messages are\n"
 		"encrypted); comma-separated host:port, up to 4. The first is upstream's\n"
 		"own broker (its brokers.txt); the earlier default list moves to this one." },
+	{ "network.coop_public", _config_boolean, "false", "HALO_NET_COOP_PUBLIC", _environment_value, _platform_all,
+		"Whether an online co-op game (Create Game > Internet, a SINGLEPLAYER\n"
+		"map) starts as PUBLIC or, false, PRIVATE: Server Setup's LISTING in\n"
+		"co-op, which writes its choice here." },
+	{ "network.coop_friendly_fire", _config_string, "\"on\"", "HALO_NET_COOP_FRIENDLY_FIRE", _environment_value,
+		_platform_all,
+		"Whether the players of an online co-op game hurt each other: \"off\",\n"
+		"\"on\", \"shields_only\" or \"explosives_only\" (Server Setup's FRIENDLY\n"
+		"FIRE in co-op, which writes its choice here). Their AI allies they\n"
+		"always can, as in the campaign." },
+	{ "network.coop_enemies_mode", _config_string, "\"per_player\"", "HALO_NET_COOP_ENEMIES_MODE", _environment_value,
+		_platform_all,
+		"Online co-op's extra enemies: \"none\", \"per_player\" (each squad of\n"
+		"enemies grows by coop_enemies for each player past the first) or\n"
+		"\"multiplier\" (each is coop_enemies_multiplier times as large, for any\n"
+		"number of players). Server Setup's EXTRA ENEMIES in co-op writes its\n"
+		"choice here." },
+	{ "network.coop_enemies", _config_integer, "50", "HALO_NET_COOP_ENEMIES", _environment_value, _platform_all,
+		"Online co-op's extra enemies per player, a percentage: for each player\n"
+		"past the first, each squad of enemies a level places gets this much of\n"
+		"itself more (100: as many again; 25 to 200). Server Setup's PER PLAYER\n"
+		"in co-op writes its choice here." },
+	{ "network.coop_enemies_multiplier", _config_integer, "2", "HALO_NET_COOP_ENEMIES_MULTIPLIER", _environment_value,
+		_platform_all,
+		"Online co-op's static multiplier of its enemies: each squad of enemies\n"
+		"a level places is this many times as large (2 to 32). Server Setup's\n"
+		"MULTIPLIER in co-op writes its choice here." },
 	{ "network.stun_servers", _config_string, "\"stun.l.google.com:19302,stun.cloudflare.com:3478\"",
 		"HALO_NET_STUN", _environment_value, _platform_all,
 		"Public STUN servers that tell this machine its internet address;\n"
@@ -1455,6 +1504,9 @@ static int config_line_section(const char *line, const char *end, char *section,
 /* sets a setting of the type given, for now and in config.toml: its line
 there is changed (or added), the rest of the file kept as it is. `value`
 is the setting as text, `written` as the file holds it (a string quoted) */
+/* test27: settings written since the start (config_changes; upstream's) */
+static volatile unsigned long config_change_count;
+
 static int config_write(const char *name, enum config_type type, const char *value, const char *written_value)
 {
 	const char *dot = strchr(name, '.');
@@ -1525,6 +1577,8 @@ static int config_write(const char *name, enum config_type type, const char *val
 		config_append(&out, line_text);
 	}
 	succeeded = out.buffer && config_write_file(path, out.buffer);
+	if (succeeded)
+		config_change_count++;
 	pthread_mutex_unlock(&config_lock);
 	free(out.buffer);
 	free(text);
@@ -1558,6 +1612,11 @@ int config_write_string(const char *name, const char *value)
 }
 
 /* ---------- public code */
+
+unsigned long config_changes(void)
+{
+	return config_change_count;
+}
 
 int config_boolean(const char *name)
 {

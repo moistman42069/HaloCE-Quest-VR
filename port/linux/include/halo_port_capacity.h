@@ -24,12 +24,13 @@ state above the tag cache (which ends at 0x819A6000), inside the Xbox memory
 window (0x80000000-0x88000000, port/linux/src/platform.h) and below everything
 the window hands out top-down (texture and sound caches, Direct3D resources).
 
-The CPU part holds about 13.6 MB of pools at the sizes below (the Xbox pools
+The CPU part holds about 17.2 MB of pools at the sizes below (the Xbox pools
 fill 3,165,260 of its 0x305000 bytes); the GPU part holds only the decal
-vertices, as on the Xbox. */
+vertices, as on the Xbox. A change to a pool's size changes the game state's
+layout: saved games of builds before it no longer load. */
 
 #define HALO_PORT_GAME_STATE_BASE_ADDRESS 0x81A00000 /* (0x80061000) */
-#define HALO_PORT_GAME_STATE_CPU_SIZE 0xFC0000 /* (0x305000) */
+#define HALO_PORT_GAME_STATE_CPU_SIZE 0x13C0000 /* (0x305000) */
 #define HALO_PORT_GAME_STATE_GPU_SIZE 0x40000 /* (0x40000) */
 #define HALO_PORT_GAME_STATE_SIZE (HALO_PORT_GAME_STATE_CPU_SIZE+HALO_PORT_GAME_STATE_GPU_SIZE)
 
@@ -44,6 +45,17 @@ the Xbox's; with that map loaded 52 MB of the memory window were free. */
 
 #define HALO_PORT_TEXTURE_CACHE_PAGE_COUNT 0xB00 /* (0x580) */
 #define HALO_PORT_TEXTURE_CACHE_SIZE (HALO_PORT_TEXTURE_CACHE_PAGE_COUNT*0x4000) /* (0x1600000) */
+
+/* ---------- AI
+
+Network co-op adds enemies for its players (port/linux/game/coop_enemies.c):
+the actors, and their knowledge of the units about them (props: with many
+players, more each), have room for several times a level's own. */
+
+#define HALO_PORT_MAXIMUM_ACTORS 1024 /* (256) */
+#define HALO_PORT_MAXIMUM_PROPS 8192 /* (768) */
+#define HALO_PORT_MAXIMUM_SWARMS 128 /* (32) */
+#define HALO_PORT_MAXIMUM_SWARM_COMPONENTS 1024 /* (256) */
 
 /* ---------- objects */
 

@@ -75,8 +75,8 @@ struct breakable_surface_particle_effect
 struct breakable_surface_datum *breakable_surface_get(
 	short breakable_surface_index);
 /* port: breaks a surface as damage at `epicenter` would, shards and all,
-for a network co-op client the host told (OpenCE 7a1ffca2;
-port/linux/game/network_campaign_objects.c); nothing if already broken */
+for a network co-op client the host told (port/linux/game/network_coop.c);
+nothing if it is already broken */
 void breakable_surface_port_break(
 	short breakable_surface_index,
 	real_point3d const *epicenter);

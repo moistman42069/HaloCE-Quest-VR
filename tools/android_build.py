@@ -258,10 +258,23 @@ def generate_android_build(n: Writer, sln: Any) -> None:
     import json
     config: Dict[str, Any] = json.loads(config_path.read_text(encoding="utf-8"))
 
-    # The NDK's host prebuilts are named for the build machine (macOS ships
-    # universal binaries under darwin-x86_64).
-    host_tag = "darwin-x86_64" if sys.platform == "darwin" else "linux-x86_64"
-    toolchain = ndk / "toolchains" / "llvm" / "prebuilt" / host_tag
+    prebuilt = ndk / "toolchains" / "llvm" / "prebuilt"
+    _host_tag = os.environ.get("ANDROID_NDK_HOST_TAG", "")
+    if not _host_tag:
+        if sys.platform == "darwin":
+            _host_tag = "darwin-x86_64"
+        elif os.name == "nt":
+            _host_tag = "windows-x86_64"
+        else:
+            _host_tag = "linux-x86_64"
+    if not (prebuilt / _host_tag).is_dir():
+        # an NDK that names its host folder differently: take the one there is
+        _tags = sorted(entry.name for entry in prebuilt.iterdir() if entry.is_dir()) if prebuilt.is_dir() else []
+        if not _tags:
+            n.comment("Android build: the NDK has no LLVM toolchain")
+            return
+        _host_tag = _tags[0]
+    toolchain = prebuilt / _host_tag
     sysroot_include = toolchain / "sysroot" / "usr" / "include"
     host_cc = toolchain / "bin" / f"aarch64-linux-android{ANDROID_API}-clang"
     ndk_bin = toolchain / "bin"
@@ -437,9 +450,9 @@ def generate_android_build(n: Writer, sln: Any) -> None:
         guest_abi, guest_code, " ".join(game_flags), profile_flags,
         f"-include {prefix_header}", f"-include {semantics_header}",
         f"-I{LINUX_DIR}/include",
-        # the headers of the port's own game units, for the game sources
-        # that call them
-        f"-iquote {config['game_sources']}",
+        # the headers of the port's own game units (port/linux/game), for the
+        # game sources that call them
+        f"-iquote {Path(config['game_sources'])}",
         game_defines_and_includes(config), *libc_includes, f"-idirafter {XDK_INCLUDE}",
     ])
     for source in game_sources(config):
