@@ -45,8 +45,13 @@ clear data. The network is unchanged from 1.0.9: OpenCE network version
 
 | File | Bytes | SHA-256 |
 | --- | ---: | --- |
-| `HaloCE-Quest-test28.apk` | (filled in after the build) | |
-| `HaloCE-Android-test28.apk` | (filled in after the build) | |
+| `HaloCE-Quest-test28.apk` | 28,265,091 | `5e7beecb4ea9216b3f3d8268899fd210db1f4b8adfbe47bea3f714caa1f207ba` |
+| `HaloCE-Android-test28.apk` | 26,253,876 | `70c712edb5a7b525a0f806ff6643e0ed6be61067022223dd45532ae60c0f28d8` |
+
+Runtime source `235c2f5b` on branch `test27-opence-netcode`; later commits
+change only documentation. Certificate SHA-256
+`53d416f7e123cc62b749940983209bc9a400002e033fd5f50900d4ffad8e2aa4`. Built
+serially from a clean tree; payload, signing and 16 KB alignment verified.
 
 ## Checks performed
 
