@@ -31,6 +31,7 @@ typedef char browser_identifier_offset[offsetof(struct network_advertised_game,x
 struct browser_game {
     struct network_advertised_game display;
     char invite[P2P_LISTING_INVITE_SIZE];
+    unsigned char locked;
     char name[33]; byte identifier[6];
 };
 static struct {
@@ -70,6 +71,9 @@ static void snapshot(void) {
         struct browser_game *g=&browser.games[browser.count++];
         memset(g,0,sizeof(*g)); memcpy(g->identifier,p->identifier,6);
         memcpy(g->invite,p->invite,sizeof(g->invite));snprintf(g->name,sizeof(g->name),"%s",p->name);
+        /* test27: a password-protected game (OpenCE build 138): its invite is sealed;
+        this app has no password entry, so it is marked and not joined */
+        g->locked=p->locked;if(g->locked){char locked[sizeof(g->name)];snprintf(locked,sizeof(locked),"LOCK %s",g->name);snprintf(g->name,sizeof(g->name),"%s",locked);}
         wide(g->display.game_name,16,g->name);snprintf(g->display.map_name,sizeof(g->display.map_name),"%s",p->map);
         g->display.engine_type=p->engine_type;g->display.player_count=p->player_count;
         g->display.maximum_player_count=p->maximum_player_count;g->display.open=p->open;
@@ -166,6 +170,9 @@ struct network_advertised_game *network_browser_select(struct network_advertised
     if(live){browser.pending=NONE;browser.ready=FALSE;return live;}
     if(!g->display.open || g->display.player_count>=g->display.maximum_player_count) {
         snprintf(browser.status,sizeof(browser.status),"This game is closed or full. Refresh to check again.");return NULL;
+    }
+    if(g->locked) {
+        snprintf(browser.status,sizeof(browser.status),"This game has a password. Ask its host for an invite link instead.");return NULL;
     }
     if(browser.pending==index)return NULL;
     if(!g->invite[0] || !config_boolean("network.online") || !p2p_join_invite(g->invite)) {

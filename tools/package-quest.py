@@ -119,7 +119,7 @@ def main():
             host = archive.read("lib/arm64-v8a/libmain.so")
             dex = b"".join(archive.read(name) for name in names if re.fullmatch(r"classes\d*\.dex", name))
             for marker in [b"ServerBrowser;", b"ServerListing;", b"RunLog;", b"openGameLog", b"CoopLauncher;",
-                           b"CoopPublisher;", b"prepareGameExit", b"PvpLauncher;", b"TouchLayout;", b"UpdatePolicy;",
+                           b"CoopLauncher;", b"prepareGameExit", b"PvpLauncher;", b"TouchLayout;", b"UpdatePolicy;",
                            b"upstreamVersion", b"compatibility.json", b"GamepadSupport;", b"GamepadNavigation;", b"GameDataLibrary;", b"GameDataManager;", b"ISO/revision versions", b"https://halo.milenko.org/v1/games.txt"]:
                 if marker not in dex: raise SystemExit("Browser missing from APK: " + repr(marker))
             if not guest.startswith(b"\x7fELF") or not host.startswith(b"\x7fELF"):
@@ -149,9 +149,9 @@ def main():
                 if b"client dropped presentation" not in guest:
                     raise SystemExit("Test23 co-op cutscene diagnostic missing")
             if candidate_at_least(args.label, 27):
-                if b"(OpenCE and other ports, their co-op included)" not in guest:
-                    raise SystemExit("Test27 newer-host message missing")
-                for marker in [b"OpenCE co-op", b"Directory classified for the "]:
+                for marker in [b"co-op: lobby open: ", b"(a newer OpenCE build)", b"This version plays co-op as OpenCE does"]:
+                    if marker not in guest: raise SystemExit("Test27 OpenCE co-op hosting marker missing: " + repr(marker))
+                for marker in [b"Co-op (network v", b"Directory classified for the ", b"Up to "]:
                     if marker not in dex: raise SystemExit("Test27 launcher co-op classification missing: " + repr(marker))
             if candidate_at_least(args.label, 26):
                 for marker in [b"it is the host's to erase", b"co-op protocol %X here, %X on the host"]:
@@ -223,7 +223,7 @@ def main():
                 "certificate_sha256": CERTIFICATE, "apks": records,
                 "source_zip": {"file": source.name, "sha256": sha(source)},
                 "native_host_version": network_value("HALO_PORT_NETWORK_VERSION"), "accepted_host_versions": list(range(network_value("HALO_PORT_NETWORK_VERSION_MINIMUM"), network_value("HALO_PORT_NETWORK_VERSION_MAXIMUM")+1)),
-                "campaign_protocol": 0xCE02, "campaign_runtime_verified": False,
+                "coop": "opence-native", "campaign_runtime_verified": False,
                 "avatar_protocol": 1, "avatar_message_ids": [37, 38], "avatar_prior_owner_report": "VR body movement visible on flat Android in accepted test14; current action handoff regression pending",
                 "directory": "https://halo.milenko.org/v1/games.txt"}
     (output / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
@@ -231,7 +231,7 @@ def main():
         "tag": release_tag, "source_commit": commit, "minimum_app_code": 15,
         "save_policy": "preserve", "config_policy": "preserve", "vr_and_coop_integrated": True,
         "native_minimum": network_value("HALO_PORT_NETWORK_VERSION_MINIMUM"),
-        "native_maximum": network_value("HALO_PORT_NETWORK_VERSION_MAXIMUM"), "campaign_protocol": 0xCE02,
+        "native_maximum": network_value("HALO_PORT_NETWORK_VERSION_MAXIMUM"), "coop": "opence-native",
         "editions": {record["package"]: {"apk": record["file"], "sha256": record["sha256"],
             "bytes": record["bytes"], "version_code": record["version_code"], "min_sdk": record["min_sdk"]} for record in records}}
     (output / "compatibility.json").write_text(json.dumps(compatibility, indent=2)+"\n")

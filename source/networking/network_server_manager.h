@@ -72,8 +72,18 @@ void network_game_server_port_set_cooperative(
 	short difficulty);
 /* port: co-op's friendly fire between its players (a _friendly_fire_ mode:
 Server Setup's FRIENDLY FIRE), kept for the levels after */
+/* port (test27): whether this machine hosts a game still in its lobby */
+boolean network_game_server_port_in_pregame(
+	void);
+/* port (test27): the most players a co-op game takes, 2 to 16 (the launcher's host) */
+void network_game_server_port_set_cooperative_players(
+	long maximum_players);
 void network_game_server_port_set_cooperative_friendly_fire(
 	short friendly_fire);
+/* port: whether co-op's players collide with each other (Server Setup's
+PLAYER COLLISIONS), kept for the levels after */
+void network_game_server_port_set_cooperative_player_collisions(
+	boolean player_collisions);
 boolean network_game_server_ban_player(
 	char const *text);
 /* port: the host's kick command: as the ban command, but nothing kept (no

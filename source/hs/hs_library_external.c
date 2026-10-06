@@ -174,12 +174,11 @@ void hs_print(
 	if (!vr_render_script_message(message))
 		terminal_printf(global_real_argb_green, "%s", message ? message : "");
 #else
-	/* BUG (preserved for exact matching): the printed string is passed as the format
-	 * (January 0x4b8970 +0x0c pushes it as terminal_printf's format), so a '%' in the
-	 * text, from a scenario script or typed at this build's console, reads arguments
-	 * that were never passed. A corrected build should print it through "%s".
-	 * Source-policy approval pending (2026-09-27 audit). */
-	terminal_printf(global_real_argb_green, message);
+	/* port: printed through "%s". January passes the text as the format
+	(0x4b8970 +0x0c pushes it as terminal_printf's format), so a '%' in it,
+	from a scenario script or typed at the console, read arguments that
+	were never passed */
+	terminal_printf(global_real_argb_green, "%s", message);
 #endif
 
 	return;

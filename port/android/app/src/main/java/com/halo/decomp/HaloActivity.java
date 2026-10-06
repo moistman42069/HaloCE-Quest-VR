@@ -18,7 +18,6 @@ public class HaloActivity extends SDLActivity {
     private WifiManager.MulticastLock multicastLock;
     private TouchControls touchControls;
     private GamepadSupport gamepads;
-    private CoopPublisher coopPublisher;
     private PvpPublisher pvpPublisher;
 
     @Override
@@ -37,7 +36,7 @@ public class HaloActivity extends SDLActivity {
         gameRoot=GameDataLibrary.activeRoot(gameRoot);
         if (gameRoot != null) { new java.io.File(gameRoot, "coop_status.txt").delete(); new java.io.File(gameRoot, "pvp_status.txt").delete(); }
         super.onCreate(savedInstanceState);
-        if (gameRoot != null) { coopPublisher = new CoopPublisher(this, gameRoot); pvpPublisher = new PvpPublisher(this, gameRoot); }
+        if (gameRoot != null) { pvpPublisher = new PvpPublisher(this, gameRoot); }
         if (!BuildConfig.APPLICATION_ID.endsWith(".vr") && mLayout != null) {
             touchControls = new TouchControls(this);
             mLayout.addView(touchControls, new ViewGroup.LayoutParams(
@@ -57,7 +56,6 @@ public class HaloActivity extends SDLActivity {
     protected void onDestroy() {
         if (gamepads != null) gamepads.pause();
         if (touchControls != null) touchControls.releaseAll();
-        if (coopPublisher != null) coopPublisher.close();
         if (pvpPublisher != null) pvpPublisher.close();
         RunLog.line("Game activity destroying");
         if (multicastLock != null && multicastLock.isHeld())
@@ -71,7 +69,6 @@ public class HaloActivity extends SDLActivity {
 
     /** Native normal exit runs on the game thread; give withdrawal a bounded chance before _exit. */
     public void prepareGameExit() {
-        if (coopPublisher != null) coopPublisher.closeBeforeNativeExit();
         if (pvpPublisher != null) pvpPublisher.closeBeforeNativeExit();
         RunLog.line("Native exit cleanup finished");
     }

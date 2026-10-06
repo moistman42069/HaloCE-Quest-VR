@@ -12,9 +12,16 @@ import java.io.FileOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.function.BooleanSupplier;
 
-/** Starts the native two-machine lobby; it does not emulate a campaign with PvP settings. */
+/**
+ * Campaign co-op as OpenCE plays it (since 1.0.9): a network game on a campaign level. Hosting
+ * writes coop_host.txt ("2 mission difficulty public most-players"), which the game reads with
+ * its main menu up (network_campaign_session.c) and opens as an OpenCE co-op lobby; joining is
+ * any co-op game of the same network version, this app's or OpenCE's.
+ */
 final class CoopLauncher {
     static final String[] MAPS = {"a10", "a30", "a50", "b30", "b40", "c10", "c20", "c40", "d20", "d40"};
+    // (OpenCE's Server Setup offers co-op up to 16, 16 by default; a smaller lobby starts sooner)
+    static final int MOST_PLAYERS = 16, DEFAULT_PLAYERS = 4;
     private final Activity activity;
     private final File root;
     private final BooleanSupplier ready, start;
@@ -26,14 +33,15 @@ final class CoopLauncher {
 
     void show() {
         new GamepadNavigation.Builder(activity).setTitle("Campaign co-op")
-            .setMessage("Both devices need the same app version and the same campaign maps. "
-                + "Quest + Quest and Quest + phone both work.\n\n"
-                + "TO HOST: press Host campaign, pick the mission and difficulty, leave the server browser box "
-                + "ticked and press Host. Wait in the System Link lobby until your partner joins, then start.\n\n"
-                + "TO JOIN: press Browse / join, then Refresh directory, pick the host's game and press Join. "
-                + "When the game opens, go to Multiplayer > System Link, choose the host's game and join it. "
-                + "On the same Wi-Fi it appears there by itself.\n\n"
-                + "Two players; no joining a mission in progress. Keep both apps open. "
+            .setMessage("Co-op as OpenCE plays it: up to 16 players on Quest, Android, Windows, Mac and Linux "
+                + "(OpenCE network version " + BuildConfig.HALO_NETWORK_MAXIMUM + "), with the same campaign maps. "
+                + "Players can join a mission already under way.\n\n"
+                + "TO HOST: press Host campaign, pick the mission, difficulty and most players, leave the public "
+                + "box ticked to be listed, and press Host. Start from the lobby when everyone is in (a full "
+                + "lobby starts by itself).\n\n"
+                + "TO JOIN: in the game, open Multiplayer > System Link: public co-op games (this app's and "
+                + "OpenCE's) and games on your Wi-Fi are listed there. Or press Browse / join here to see the "
+                + "community list first and pick one.\n\n"
                 + "Full steps: launcher > How to join co-op & find servers.")
             .setPositiveButton("Host campaign", (dialog, which) -> host())
             .setNeutralButton("Browse / join", (dialog, which) -> new ServerBrowser(activity, join, true))
@@ -57,14 +65,18 @@ final class CoopLauncher {
             "Two Betrayals", "Keyes", "The Maw"});
         Spinner difficulty = select(layout, new String[]{"Easy", "Normal", "Heroic", "Legendary"});
         difficulty.setSelection(1);
+        String[] counts = new String[MOST_PLAYERS - 1];
+        for (int i = 0; i < counts.length; i++) counts[i] = "Up to " + (i + 2) + " players";
+        Spinner players = select(layout, counts);
+        players.setSelection(DEFAULT_PLAYERS - 2);
         CheckBox publish = new CheckBox(activity);
-        publish.setText("List this game in the co-op server browser (shares your session invite)");
-        // On by default so the partner finds the game under Campaign co-op > Browse / join.
+        publish.setText("Public: list this game in the server browsers (in-game System Link, OpenCE's and the community list)");
+        // On by default so others find the game in the browsers.
         publish.setChecked(true);
         layout.addView(publish);
         TextView status = new TextView(activity);
-        status.setText("Ticked: your partner finds this game under Campaign co-op > Browse / join. Untick it to keep "
-            + "the game private and share the invite the game copies instead. Listing problems are noted in the launch log.");
+        status.setText("Public: anyone can find and join this game. Untick it to keep it private and share the invite "
+            + "the game copies instead.");
         layout.addView(status);
         AlertDialog dialog = new GamepadNavigation.Builder(activity).setTitle("Host campaign")
             .setView(layout).setPositiveButton("Host", null).setNegativeButton("Cancel", null).create();
@@ -82,13 +94,15 @@ final class CoopLauncher {
                 File invite = new File(root, "join_link.txt");
                 if (invite.exists() && !invite.delete()) throw new java.io.IOException("Pending invite could not be cleared");
                 try (FileOutputStream out = new FileOutputStream(partial)) {
-                    out.write(("1 " + selected + " " + difficulty.getSelectedItemPosition() + " "
-                        + (publish.isChecked() ? 1 : 0) + "\n").getBytes(StandardCharsets.UTF_8));
+                    out.write(("2 " + selected + " " + difficulty.getSelectedItemPosition() + " "
+                        + (publish.isChecked() ? 1 : 0) + " " + (players.getSelectedItemPosition() + 2) + "\n")
+                        .getBytes(StandardCharsets.UTF_8));
                     out.getFD().sync();
                 }
                 if (!partial.renameTo(request)) throw new java.io.IOException("Could not save host request");
                 RunLog.line("Campaign host requested: mission=" + MAPS[selected] + " difficulty="
-                    + difficulty.getSelectedItemPosition() + " public=" + publish.isChecked());
+                    + difficulty.getSelectedItemPosition() + " players=" + (players.getSelectedItemPosition() + 2)
+                    + " public=" + publish.isChecked() + " network=" + BuildConfig.HALO_NETWORK_MAXIMUM);
                 if (start.getAsBoolean()) dialog.dismiss();
                 else request.delete();
             } catch (java.io.IOException e) {

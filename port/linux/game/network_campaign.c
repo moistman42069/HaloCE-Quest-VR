@@ -24,9 +24,13 @@ static boolean campaign_map_valid(char const *map)
 	return FALSE;
 }
 
+/* test27: the CE01/CE02 campaign protocol is retired (OpenCE's co-op,
+network_coop.c, replaced it): no game is one of its, so every hook gated on it
+(network_campaign_active, _playing, _client, its messages) stays out. Its
+identity, kept for reference: */
 boolean network_campaign_game(struct network_game const *game)
 {
-	return game && game->map.version == HALO_CAMPAIGN_MAP_VERSION &&
+	return FALSE && game && game->map.version == HALO_CAMPAIGN_MAP_VERSION &&
 		game->variant.game_engine_index == game_engine_none &&
 		game->minimum_players == 2 && game->maximum_players == 2 &&
 		game->difficulty >= 0 && game->difficulty < 4 &&

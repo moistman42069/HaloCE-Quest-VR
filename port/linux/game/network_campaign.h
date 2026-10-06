@@ -23,6 +23,8 @@ boolean network_campaign_prepare(struct network_game *game, char const *map, sho
 void network_campaign_session_update(boolean menu_loaded, real seconds);
 boolean network_campaign_host_settings(struct network_game *game);
 boolean network_campaign_host_requested(void);
+/* test27: whether the launcher's co-op host asked to be listed publicly */
+boolean network_coop_host_public(void);
 boolean network_campaign_change_level(boolean next);
 void network_campaign_session_end(void);
 void network_campaign_level_wait(void);

@@ -14,27 +14,23 @@ import java.util.Set;
  * those known are ignored, so a directory that adds more keeps working.
  *
  * Three kinds of game share the directory (checked against the live directory 2026-10-05):
- * this app's campaign co-op (a version in the CE00 family: CE02 since 1.0.8), OpenCE's own
  * co-op (its native network version, game engine 0 and a campaign map: a network game on a
- * campaign level is co-op upstream, OpenCE build 128 / network 17 on), and multiplayer.
+ * campaign level is co-op, as OpenCE plays it from build 128 / network 17, and as this app
+ * hosts and joins it since 1.0.9), multiplayer, and this app's own co-op before 1.0.9 (a
+ * version in the CE00 family: CE01, CE02), retired, listed so its players know to update.
  */
 final class ServerListing {
-    // CE02 since 1.0.8 (CE01 1.0.0-1.0.7): both co-op players need the same app version.
+    // This app's co-op protocol before 1.0.9 (CE01 1.0.0-1.0.7, CE02 1.0.8), retired.
     static final int CAMPAIGN_VERSION = 0xCE02;
-    // Campaign identity/lifecycle is two-player; independent of native PvP's 128 slots.
-    static final int CAMPAIGN_MAXIMUM = 2;
     /** The retail campaign's levels (CoopLauncher.MAPS). */
     static final Set<String> CAMPAIGN_MAPS = new HashSet<>(Arrays.asList(
         "a10", "a30", "a50", "b30", "b40", "c10", "c20", "c40", "d20", "d40"));
 
     enum Kind { CAMPAIGN, OPENCE_COOP, MULTIPLAYER }
 
-    /** Any campaign co-op protocol (0xCE00-0xCEFF), this app's or another version's. */
+    /** This app's co-op protocol before 1.0.9 (0xCE00-0xCEFF: CE01, CE02), retired. */
     static boolean isCampaign(int version) {
         return (version & 0xFF00) == 0xCE00;
-    }
-    static boolean campaignCapacityCompatible(int version,int maximum,boolean known) {
-        return version != CAMPAIGN_VERSION || !known || maximum == CAMPAIGN_MAXIMUM;
     }
     /** A map name (any path, any case) that is a campaign level. */
     static boolean campaignMap(String map) {
@@ -54,20 +50,20 @@ final class ServerListing {
     }
     /**
      * Whether this build can join it (before fullness and the open flag): a version not known
-     * (0: a pasted invite; the game checks the host as it joins); this app's co-op at exactly
-     * its version and two players; multiplayer within the native network range; OpenCE co-op
-     * never (its co-op is its own netcode version).
+     * (0: a pasted invite; the game checks the host as it joins); co-op and multiplayer within
+     * this build's network range, each from its own browser; this app's co-op before 1.0.9
+     * never (its protocol is retired).
      */
-    static boolean joinable(boolean campaignBrowser, Kind kind, int version, int maximum, boolean capacityKnown,
-                            int nativeMinimum, int nativeMaximum) {
+    static boolean joinable(boolean campaignBrowser, Kind kind, int version, int nativeMinimum, int nativeMaximum) {
         if (version == 0) return true;
+        boolean range = version >= nativeMinimum && version <= nativeMaximum;
         switch (kind) {
             case CAMPAIGN:
-                return campaignBrowser && version == CAMPAIGN_VERSION && campaignCapacityCompatible(version, maximum, capacityKnown);
-            case OPENCE_COOP:
                 return false;
+            case OPENCE_COOP:
+                return campaignBrowser && range;
             default:
-                return !campaignBrowser && (version == 0 || (version >= nativeMinimum && version <= nativeMaximum));
+                return !campaignBrowser && range;
         }
     }
 
@@ -96,9 +92,8 @@ final class ServerListing {
 
     String description() {
         String[] modes = {"Unknown", "CTF", "Slayer", "Oddball", "King", "Race"};
-        String mode = version == CAMPAIGN_VERSION ? "Campaign co-op"
-            : isCampaign(version) ? "Campaign co-op (another app version)"
-            : kind == Kind.OPENCE_COOP ? "OpenCE co-op (network v" + version + ")"
+        String mode = isCampaign(version) ? "Co-op of this app 1.0.8 or older"
+            : kind == Kind.OPENCE_COOP ? "Co-op (network v" + version + ")"
             : engine >= 1 && engine < modes.length ? modes[engine] : "Custom";
         return map + " · " + mode + " · " + players + "/" + maximum + " players"
             + (open ? "" : " · closed") + (age >= 0 ? " · updated " + age + "s ago" : "");

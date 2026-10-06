@@ -1266,6 +1266,10 @@ boolean network_game_client_game_settings_updated(
 		message_packet->machine_count <= MAXIMUM_NETWORK_MACHINE_COUNT &&
 		message_packet->player_count >= 0 &&
 		message_packet->player_count <= MAXIMUM_NUMBER_OF_PLAYERS &&
+		/* port: and the most players, which caps player_count as players are
+		added (network_game_add_player) */
+		message_packet->maximum_players > 0 &&
+		message_packet->maximum_players <= MAXIMUM_NUMBER_OF_PLAYERS &&
 		network_game_client_map_name_is_valid(message_packet->map.name, sizeof(message_packet->map.name)) &&
 		VALID_INDEX(message_packet->difficulty, NUMBER_OF_GAME_DIFFICULTY_LEVELS))
 	{
@@ -1938,7 +1942,10 @@ boolean network_game_client_add_player_to_game(
 					struct network_player const *added = player;
 					long slot;
 
-					player = &client->game.players[client->game.player_count - 1];
+					/* (the slot network_game_add_player gave it, not one
+					worked out from player_count) */
+					player = VALID_INDEX(added->player_list_index, MAXIMUM_NUMBER_OF_PLAYERS) ?
+						&client->game.players[added->player_list_index] : NULL;
 					for (slot = 0; slot < MAXIMUM_NUMBER_OF_PLAYERS; slot++)
 					{
 						if (network_player_is_valid(&client->game.players[slot]) &&
@@ -1951,7 +1958,7 @@ boolean network_game_client_add_player_to_game(
 					}
 				}
 
-				success = network_game_spawn_player(player);
+				success = player && network_game_spawn_player(player);
 
 				if (success)
 				{
@@ -3027,11 +3034,8 @@ boolean network_game_client_advertised_game_compatible(
 		theirs <= HALO_PORT_NETWORK_VERSION_MAXIMUM;
 	distributed = (network_game_client_advertised_versions[game_index].flags &
 		HALO_PORT_ADVERTISED_DISTRIBUTED_FLAG) != 0;
-	if (network_campaign_advertised((word)theirs, network_game_client_advertised_versions[game_index].flags))
-	{
-		network_event("joining campaign protocol %u", theirs);
-		return TRUE;
-	}
+	/* (test27: a CE01/CE02 campaign host, this app's before 1.0.9, is no
+	longer joined: its protocol is retired; below, it is named) */
     /* Bit 0x02 is upstream PvP IN_PROGRESS; only CE01 gives it campaign
      * meaning. Never reject a reviewed PvP protocol for this shared bit. */
 	if (compatible_version && distributed)
@@ -3039,15 +3043,15 @@ boolean network_game_client_advertised_game_compatible(
 		network_event("joining a host of network version %u flags=0x%02x", theirs, network_game_client_advertised_versions[game_index].flags);
 		return TRUE;
 	}
-	/* port: a campaign co-op host of another version of this app (CE01 is
-	1.0.0 to 1.0.7): not a newer or older PvP host (test26) */
+	/* port: a campaign co-op host of this app before 1.0.9 (its own co-op
+	protocol, CE01 1.0.0 to 1.0.7, CE02 1.0.8): retired (test27) */
 	if ((theirs & 0xFF00) == 0xCE00)
 	{
 		csprintf(message,
-			"This co-op game is from a different version of this app.\n\n"
-			"Both players need the same version to play campaign co-op together "
-			"(co-op protocol %X here, %X on the host).",
-			HALO_CAMPAIGN_NETWORK_VERSION, theirs);
+			"This co-op game is from an older version of this app (1.0.8 or earlier, "
+			"co-op protocol %X).\n\n"
+			"This version plays co-op as OpenCE does. Ask the host to update this app.",
+			theirs);
 	}
 	else if (compatible_version)
 	{
@@ -3057,15 +3061,14 @@ boolean network_game_client_advertised_game_compatible(
 	}
 	else if (theirs > ours)
 	{
-		/* port: newer hosts are other ports' (OpenCE's network 12 on, its
-		co-op among them): this app has no update that joins them (test27) */
+		/* port: this app plays OpenCE's network version (test27); a newer
+		host is a newer OpenCE build, which an update of this app follows */
 		csprintf(message,
 			"The host is using a newer version of the network code than this app.\n\n"
-			"This app plays network versions %u to %u. The host is on version %u "
-			"(OpenCE and other ports, their co-op included).\n\n"
-			"Choose a host on version %u to %u, or for campaign co-op a host using this app.",
-			HALO_PORT_NETWORK_VERSION_MINIMUM, HALO_PORT_NETWORK_VERSION_MAXIMUM, theirs,
-			HALO_PORT_NETWORK_VERSION_MINIMUM, HALO_PORT_NETWORK_VERSION_MAXIMUM);
+			"This app is on version %u. The host is on version %u "
+			"(a newer OpenCE build).\n\n"
+			"Update this app when a version for it is out, or choose a host on version %u.",
+			ours, theirs, ours);
 	}
 	else
 	{

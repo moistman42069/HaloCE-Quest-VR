@@ -251,6 +251,7 @@ the setting for one start of the game. It has priority over the file.
 | `network.public_lobby` | `true` | `HALO_NET_PUBLIC_LOBBY` | `true`: the server browser. Public games are listed, and Join Game > Server Browser shows them. `false`: no games are listed or shown. Refer to "Server browser". |
 | `network.host_public` | `true` | `HALO_NET_HOST_PUBLIC` | `true`: a new game of Create Game > Internet starts as PUBLIC. `false`: it starts as PRIVATE. LISTING in Server Setup changes it for each game. Refer to "Server browser". |
 | `network.coop_friendly_fire` | `"on"` | `HALO_NET_COOP_FRIENDLY_FIRE` | Whether the players of an online co-op game hurt each other: `"off"`, `"on"`, `"shields_only"` or `"explosives_only"`. FRIENDLY FIRE in co-op's Server Setup writes its choice here. Their AI allies they always can, as in the campaign. |
+| `network.coop_player_collisions` | `true` | `HALO_NET_COOP_PLAYER_COLLISIONS` | Whether the players of an online co-op game bump into each other. `false`: they walk through each other, so that one cannot block a doorway or stand on another; they still bump into the AI's characters. PLAYER COLLISIONS in co-op's Server Setup writes its choice here. |
 | `network.coop_enemies_mode` | `"per_player"` | `HALO_NET_COOP_ENEMIES_MODE` | Online co-op's extra enemies: `"none"`; `"per_player"`, each squad of enemies that a level places grows by `network.coop_enemies` for each player past the first; or `"multiplier"`, each squad is `network.coop_enemies_multiplier` times as large, for any number of players. The extra enemies stand around the squad's places, and those that a dropship has no seats for drop out of it after its passengers. EXTRA ENEMIES in co-op's Server Setup writes its choice here. |
 | `network.coop_enemies` | `50` | `HALO_NET_COOP_ENEMIES` | The extra enemies per player, a percentage from `25` to `200`: for each player past the first, each squad of enemies gets this much of itself more (`100`: as many again, so four players meet four times the squad). PER PLAYER in co-op's Server Setup writes its choice here. |
 | `network.coop_enemies_multiplier` | `2` | `HALO_NET_COOP_ENEMIES_MULTIPLIER` | The static multiplier of the enemies, `2` to `32`: each squad of enemies is this many times as large. MULTIPLIER in co-op's Server Setup writes its choice here. |
@@ -449,10 +450,18 @@ Each new game starts as PUBLIC (`network.host_public = false` makes new
 games start as PRIVATE). An online co-op game starts as PRIVATE, and keeps
 the last choice of its LISTING (`network.coop_public`). A LAN game is never listed. `network.public_lobby = false` turns the server browser off.
 
+A PUBLIC game can also have a PASSWORD (a row of Server Setup, below
+LISTING). The Server Browser shows a lock at the left of a game with a
+password. A player who selects that game must type the password, and JOIN
+GAME joins only with the correct password. The invite link of the game joins
+it without the password. The host keeps the password only while the game
+runs.
+
 In the Server Browser, select a game to join it. The game joins the invite
 of the game, as for a link. When it reaches the host, it opens the lobby.
-If it cannot reach the host in 30 seconds, it marks the game FAILED. REFRESH
-asks the hosts for their listings again.
+If it cannot reach the host in 30 seconds, it marks the game FAILED. A game
+that is full or starting shows CLOSED. REFRESH asks the hosts for their
+listings again.
 
 How it operates (`src/p2p_lobby.c`):
 
@@ -474,6 +483,14 @@ How it operates (`src/p2p_lobby.c`):
   seconds.
 - When a public game becomes private, the host makes a new invite. Thus a
   player who saw the listing cannot join with the old invite.
+- The listing of a game with a password does not hold the invite in clear
+  text. The secret part of the invite (its token) is encrypted with a key
+  from the password (Argon2id, salted with the key of the host, then
+  XChaCha20-Poly1305). The browser makes the key from the password that the
+  player types, and opens the invite only if the password is correct. When
+  the host sets or changes the password, it makes a new invite. A player who
+  has the listing can try passwords on their own machine without the host,
+  so use a long password.
 
 A public game does not publish the address of the host. But any machine
 with the invite can ask the host to connect, and the host then sends its
@@ -532,16 +549,17 @@ Only machines with the invite can find the game:
   last 256 keys. Thus the proof of a player does not need more key work. A
   flood of requests can make players join more slowly. A player asks again
   for 90 seconds.
-- The host drops a player whose game runs faster than time (a speed hack)
-  for ten seconds. Each player sees who in red on the console. The host
-  adds a line to `cheaters.txt` (beside `debug.txt`) with the address and
-  hardware id of the player, and the Discord name and id that the game of
-  the player told it (a player can change these). If the messages on the
-  player's connection were also ahead, the host keeps that address out of
-  its games and bans the player: it adds the line to `bans.txt`, and refuses
-  a machine whose address or hardware id is in it. If only the player's
-  datagrams were ahead, the player can join again: another machine can send
-  datagrams with the player's address.
+- The host refuses the predicted movement of a player whose game runs
+  faster than time (a speed hack). If the messages on the player's
+  connection were also ahead for ten seconds, the host drops and bans the
+  player: each player sees who in red on the console, and the host adds a
+  line to `cheaters.txt` and `bans.txt` (beside `debug.txt`) with the
+  address and hardware id of the player, and the Discord name and id that
+  the game of the player told it, marked `(self-reported)` (a player can
+  change these). The host refuses a machine whose address or hardware id is
+  in `bans.txt`. If only the player's datagrams were ahead, the host does
+  not drop the player, because another machine can send datagrams with the
+  player's address: it adds an `unverified` line to `cheaters.txt`.
 - The host can ban a player with `ban <player name>` in the developer
   console (Tab completes the name). Remove a line from `bans.txt` to unban.
   Refer to `NETCODE.md`. `kick <player name>` drops the player the same
