@@ -175,7 +175,8 @@ print('PASS: user animations (AI command lists\' "animate" included) and their a
 # --- 4. one co-op protocol, CE02, everywhere it is named; another version's host said plainly
 assert re.search(r'#define HALO_CAMPAIGN_NETWORK_VERSION 0xCE02\b', campaign_h)
 assert 'static final int CAMPAIGN_VERSION = 0xCE02;' in listing and '(version & 0xFF00) == 0xCE00' in listing
-assert 'ServerListing.isCampaign(entry.version) == campaign' in browser
+assert ('ServerListing.isCampaign(entry.version) == campaign' in browser or
+        'ServerListing.listedIn(campaign, entry.kind)' in browser)  # (test27: one classification, OpenCE co-op apart)
 assert 'CE02' in updater and package.count('"campaign_protocol": 0xCE02') == 2
 assert '0xCE01' not in package and 'CAMPAIGN_VERSION = 0xCE01' not in listing
 assert 'co-op protocol %X here, %X on the host' in client_manager

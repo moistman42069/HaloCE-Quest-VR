@@ -3035,11 +3035,15 @@ boolean network_game_client_advertised_game_compatible(
 	}
 	else if (theirs > ours)
 	{
+		/* port: newer hosts are other ports' (OpenCE's network 12 on, its
+		co-op among them): this app has no update that joins them (test27) */
 		csprintf(message,
-			"The host is using a newer version of the network code than you.\n\n"
-			"You are on version %u. The host is on version %u.\n\n"
-			"Update the game to join this host.",
-			ours, theirs);
+			"The host is using a newer version of the network code than this app.\n\n"
+			"This app plays network versions %u to %u. The host is on version %u "
+			"(OpenCE and other ports, their co-op included).\n\n"
+			"Choose a host on version %u to %u, or for campaign co-op a host using this app.",
+			HALO_PORT_NETWORK_VERSION_MINIMUM, HALO_PORT_NETWORK_VERSION_MAXIMUM, theirs,
+			HALO_PORT_NETWORK_VERSION_MINIMUM, HALO_PORT_NETWORK_VERSION_MAXIMUM);
 	}
 	else
 	{

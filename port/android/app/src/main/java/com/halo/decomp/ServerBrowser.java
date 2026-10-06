@@ -54,6 +54,7 @@ final class ServerBrowser {
         final String map;
         final boolean open;
         final boolean capacityKnown;
+        final ServerListing.Kind kind;
         Entry(JSONObject object) {
             name = ServerInvite.displayName(object.optString("name", "Unnamed server"));
             invite = ServerInvite.normalize(object.optString("invite", ""));
@@ -64,6 +65,7 @@ final class ServerBrowser {
             capacityKnown = object.has("maximum_players");
             map = ServerInvite.displayName(object.optString("map", ""));
             open = object.optBoolean("open", true);
+            kind = ServerListing.kind(version, object.optInt("engine", -1), map);
         }
         Entry(ServerListing listing) {
             name = listing.name;
@@ -73,6 +75,7 @@ final class ServerBrowser {
             players = listing.players; maximum = listing.maximum; map = listing.map;
             open = listing.open;
             capacityKnown = true;
+            kind = listing.kind;
         }
         boolean compatible() {
             return version == 0 || (version >= BuildConfig.HALO_NETWORK_MINIMUM
@@ -100,7 +103,9 @@ final class ServerBrowser {
         preferences = activity.getSharedPreferences(campaign ? "coop_browser" : "server_browser", Activity.MODE_PRIVATE);
         LinearLayout content = column();
         text(content, campaign ? "Campaign co-op: two players using this campaign build, VR or flat Android, "
-            + "with identical campaign maps and resources. Join before the mission starts."
+            + "with identical campaign maps and resources. Join before the mission starts. "
+            + "OpenCE's own co-op games are listed too, marked OpenCE co-op: they use OpenCE's network version and "
+            + "cannot be joined from this app."
             : "Cross-play: native Windows, Mac, Linux and Android ports with compatible network versions "
             + "and maps. Retail Halo PC, MCC and Xbox are incompatible.");
         text(content, "How to join: pick a game and press Join. When the game opens, go to Multiplayer > System Link "
@@ -242,10 +247,13 @@ final class ServerBrowser {
     private void row(Entry entry, boolean favorite) {
         text(rows, entry.name + " — " + entry.description);
         boolean unsupportedCapacity = campaign && !ServerListing.campaignCapacityCompatible(entry.version,entry.maximum,entry.capacityKnown);
-        boolean compatible = !unsupportedCapacity && (entry.version == 0 || (campaign ? entry.version == CAMPAIGN_VERSION : entry.compatible()));
+        boolean opence = entry.kind == ServerListing.Kind.OPENCE_COOP;
+        boolean compatible = !unsupportedCapacity && ServerListing.joinable(campaign, entry.kind, entry.version, entry.maximum,
+            entry.capacityKnown, BuildConfig.HALO_NETWORK_MINIMUM, BuildConfig.HALO_NETWORK_MAXIMUM);
         String version = entry.version == 0 ? "version checked by game" : "network v" + entry.version;
         text(rows, version + (compatible ? "" : " — incompatible; supported: "
-            + (campaign ? "matching campaign build" : BuildConfig.HALO_NETWORK_MINIMUM + "–" + BuildConfig.HALO_NETWORK_MAXIMUM)));
+            + (opence ? "this app's co-op (CE02, both players on this app version)"
+            : campaign ? "matching campaign build" : BuildConfig.HALO_NETWORK_MINIMUM + "–" + BuildConfig.HALO_NETWORK_MAXIMUM)));
         Button open = button(rows, "Join " + entry.name, () -> {
             Runnable connect=()->{
                 RunLog.line("Multiplayer join requested: " + entry.name + " network=" + entry.version + " map=" + entry.map
@@ -256,7 +264,10 @@ final class ServerBrowser {
             if(!campaign&&activity instanceof LauncherActivity)((LauncherActivity)activity).withServerMap(entry.map,connect);
             else connect.run();
         });
-        String blocked = unsupportedCapacity ? "Unsupported campaign capacity: this build supports two-player co-op. Larger PvP limits do not apply to campaign."
+        String blocked = opence ? "OpenCE co-op: this host runs OpenCE's own co-op (network v" + entry.version
+            + "), which this app cannot join yet. This app's co-op needs this app on both devices; host one with "
+            + "Campaign co-op > Host campaign, or join a game marked Campaign co-op."
+            : unsupportedCapacity ? "Unsupported campaign capacity: this build supports two-player co-op. Larger PvP limits do not apply to campaign."
             : !compatible && campaign ? "Version mismatch: this co-op game is from a different HaloCE Quest/Android version. "
             + "Both players need the same app version (this one is " + BuildConfig.VERSION_NAME + ")."
             : !compatible ? "Protocol mismatch: this host uses network v" + entry.version +
@@ -265,10 +276,12 @@ final class ServerBrowser {
             : !favorite && !entry.open ? "Host is closed to joining (loading, postgame, or locked lobby). Refresh later."
             : "";
         if(!blocked.isEmpty()) text(rows,blocked);
-        if(!campaign && entry.version > BuildConfig.HALO_NETWORK_MAXIMUM)
+        if(!campaign && !opence && entry.version > BuildConfig.HALO_NETWORK_MAXIMUM)
             button(rows,"Check for compatible update",()->Updater.show(activity,activity instanceof LauncherActivity ? ((LauncherActivity)activity).gameRoot() : activity.getExternalFilesDir(null)));
         else text(rows,"Reachability is checked by the game, not the directory. If the host does not appear: refresh its invite, check Internet settings, and check both networks for NAT/firewall restrictions.");
         open.setEnabled(compatible && (favorite || (entry.open && entry.players < entry.maximum)));
+        // (an OpenCE co-op host's invite is not one this app can use: not offered for saving)
+        if (opence && !favorite) return;
         button(rows, favorite ? "Remove saved server" : "Save server", () -> {
             if (favorite) saved.remove(entry);
             else {
@@ -409,13 +422,20 @@ final class ServerBrowser {
                     status.setText("Directory unavailable: " + failure + ". Saved invites remain available.");
                 } else {
                     directory.clear();
+                    int opence = 0;
                     for (Entry entry : completed)
-                        if (ServerListing.isCampaign(entry.version) == campaign) directory.add(entry);
+                        if (ServerListing.listedIn(campaign, entry.kind)) {
+                            directory.add(entry);
+                            if (entry.kind == ServerListing.Kind.OPENCE_COOP) opence++;
+                        }
                     visibleListings = 50;
                     int players = 0;
                     for (Entry entry : directory) players += entry.players;
+                    RunLog.line("Directory classified for the " + (campaign ? "co-op" : "multiplayer") + " browser: "
+                        + directory.size() + " listed" + (campaign ? ", " + opence + " OpenCE co-op (not joinable)" : ""));
                     status.setText(directory.size() + " servers · " + players
                         + " reported players. Most populated first; full/incompatible games cannot be joined."
+                        + (opence > 0 ? " " + opence + " are OpenCE co-op games this app cannot join." : "")
                         + (failure == null ? "" : " Some directories failed; showing available results."));
                 }
                 render();

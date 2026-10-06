@@ -148,6 +148,11 @@ def main():
             if candidate_at_least(args.label, 23):
                 if b"client dropped presentation" not in guest:
                     raise SystemExit("Test23 co-op cutscene diagnostic missing")
+            if candidate_at_least(args.label, 27):
+                if b"(OpenCE and other ports, their co-op included)" not in guest:
+                    raise SystemExit("Test27 newer-host message missing")
+                for marker in [b"OpenCE co-op", b"Directory classified for the "]:
+                    if marker not in dex: raise SystemExit("Test27 launcher co-op classification missing: " + repr(marker))
             if candidate_at_least(args.label, 26):
                 for marker in [b"it is the host's to erase", b"co-op protocol %X here, %X on the host"]:
                     if marker not in guest: raise SystemExit("Test26 co-op marker missing: " + repr(marker))
