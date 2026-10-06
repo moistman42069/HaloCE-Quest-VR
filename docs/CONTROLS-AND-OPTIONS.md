@@ -67,7 +67,7 @@ Close Contact reduces only the offline local VR capsule radius: up to 15%, at mo
 
 Auto graphics effects follow the preset. Resolution is relative to the runtime's recommended eye size (1680×1760 on the Quest 3), and the eye images handed to the compositor follow it, so steps above 100% reach the display: **125% Q3 Native** is about the Quest 3's panels (2064×2208 per eye), higher steps supersample. Refresh requests a supported rate; it does not guarantee frame timing. The simulation remains 30 Hz with interpolated rendering.
 
-**FOV Glasses 70×66** draws only a 70° × 66° window ahead of each eye (black around it), simulating the field of view of upcoming VR glasses so players can get an idea of it. Because only that window is drawn, at the same sharpness, it costs about a fifth of the pixels on a Quest 3 and fewer objects, which leaves room for a higher frame rate or a higher Resolution step. HUD and menus are unaffected; the window size is `vr.glasses_fov_h` / `vr.glasses_fov_v` in `config.toml`.
+**FOV Glasses 70×66** draws only a 70° × 66° window ahead of each eye (black around it), simulating the field of view of upcoming VR glasses so players can get an idea of it. Because only that window is drawn, at the same sharpness, it renders about 40% of the pixels on a Quest 3 (60% fewer, at every Resolution step; the Quest 3's own view is about 94° × 99° per eye) and fewer objects, which leaves room for a higher frame rate or a higher Resolution step. HUD and menus are unaffected; the window size is `vr.glasses_fov_h` / `vr.glasses_fov_v` in `config.toml`.
 
 ## Flat Android touch and controller
 

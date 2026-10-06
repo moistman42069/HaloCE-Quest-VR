@@ -318,8 +318,8 @@ static const struct config_setting config_settings[] =
 		"or \"glasses\" (a window of vr.glasses_fov_h by vr.glasses_fov_v\n"
 		"degrees ahead of each eye, black round it), which previews the field\n"
 		"of view of upcoming VR glasses. The window draws far fewer pixels\n"
-		"(about a fifth on the Quest 3) and fewer objects, which leaves room\n"
-		"for a higher frame rate or vr.resolution_scale." },
+		"(about 40% as many on the Quest 3) and fewer objects, which leaves\n"
+		"room for a higher frame rate or vr.resolution_scale." },
 	{ "vr.glasses_fov_h", _config_real, "70.0", "HALO_VR_GLASSES_FOV_H", _environment_value, _platform_vr,
 		"The glasses window's width, in degrees (vr.fov_mode), 20 to 160." },
 	{ "vr.glasses_fov_v", _config_real, "66.0", "HALO_VR_GLASSES_FOV_V", _environment_value, _platform_vr,
