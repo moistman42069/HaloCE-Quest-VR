@@ -706,6 +706,19 @@ void unit_notify_impulse_sound(
 	ai_communication_packet_new(&speech_item.ai);
 	unit_speak(unit_index, play_type, &speech_item);
 
+	/* port: unit_speak gives a dead unit only its death speech. A network
+	co-op client replays the host's speech (unit_dialogue_update) as this
+	scripted sound, a death scream too, on a unit the host's killing blow
+	has already killed here (a script's line for a unit just killed is the
+	same). The sound plays (scripted_sound_new); the dead unit keeps no
+	speech, as in the retail game, which had no assertions: the assertion
+	halted the game (test26: a co-op client's crash as a crewman was shot) */
+	if (unit->unit.speech.current.sound_definition_index != sound_definition_index &&
+		TEST_FLAG(unit->object.damage_flags, _object_dead_bit))
+	{
+		return;
+	}
+
 	match_assert(
 		"c:\\halo\\SOURCE\\units\\unit_dialogue.c",
 		406,
