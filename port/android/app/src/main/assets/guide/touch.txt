@@ -33,6 +33,17 @@ Global options include scale (65-150%), opacity, independent horizontal/vertical
 
 One full safe-area screen-width swipe turns 180 degrees at sensitivity 1. Start inside LOOK or FIRE, then drag beyond its circle if needed. Floating movement starts within MOVE and places the stick origin under that initial touch. Dead zone affects MOVE and held-stick look, not swipe look. Positions are normalized to the usable display and clamped to keep circles clear of edges and display cutouts. Resizing does not permanently rewrite saved positions.
 
+## Gyro aim (1.0.10, an option)
+
+Turn the phone to aim. It is **off by default**. Turn it on in the game (tap **HUD**, then **Options**, then **Gyro aim**, then **Save**) or in the launcher (**Controller & touch settings**). Both places change the same setting.
+
+- **Always on:** the phone's turn always aims.
+- **Only while a finger is on LOOK or FIRE:** the phone aims only while you touch LOOK or hold FIRE. Lift your thumb to turn the phone back without moving the view, like lifting a mouse off the desk.
+- **Gyro horizontal / vertical sensitivity** (0.25-4 in the game, 25-400% in the launcher): at 1 (100%) the view turns as far as the phone does.
+- **Invert gyro vertical aim.**
+
+Gyro aim works together with swipes, sticks and a controller. It uses the gravity sensor where the phone has one, so turning your body turns the view whether you hold the phone upright or tilted back. A phone held still does not drift. Like swipe aim, it turns off the controller's aim magnetism while you use it, unless `input.mouse_aim_assist` is on. It pauses while you edit the HUD, in menus, and when the game is in the background. Phones without a gyroscope show "no gyroscope on this device".
+
 ## Input safeguards
 
 Contacts own their initial control by pointer ID until release; sliding across another control does not press it. Quick button taps survive between native polls. Cancel, pause, focus loss, hide, resize, editor entry and detachment clear held input and pending edges. Relative aim is accumulated in radians and consumed once, independent of the game's stick turn rate; motion older than 250 ms is discarded. Cancellation generations clear already-polled motion. The host/guest record is 32 bytes, with four axes, a button mask, relative yaw/pitch and generation. VR compiles out the writer/merge.
@@ -42,6 +53,8 @@ Contacts own their initial control by pointer ID until release; sliding across a
 `tools/test_test15_io.py` executes the production JNI snapshot functions with mocked time, and checks pure touch layout math over 16:9, 20:9, 4:3 and portrait dimensions. Tests cover taps, cancellation, stale motion, NaN, clamps and diagonal analog movement. Android Java and both native flavors must compile. These checks do not constitute phone gameplay acceptance.
 
 Usability references: Activision's [Warzone Mobile control customization guide](https://www.callofduty.com/uk/en/blog/2024/03/call-of-duty-warzone-mobile-complete-control-plus-customization-controller-options) (position, scale, transparency and sensitivity), and Android's [multi-touch guidance](https://developer.android.com/develop/ui/views/touch-and-input/gestures/multi). No game control code or artwork from those references was copied.
+
+Gyro aim math and wiring: `tools/test_test28.py` (display rotations, tilt, sensitivity, invert, still phone, bad samples).
 
 Device checks: simultaneous move/fire/aim/jump, menus and controller profiles, cancel/focus/rotation, save/reopen/cancel/reset, controls under toolbar, notches, gamepad coexistence and Quest overlay absence. Test15 is awaiting owner results.
 

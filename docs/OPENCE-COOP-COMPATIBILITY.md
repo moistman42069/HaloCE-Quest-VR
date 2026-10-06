@@ -1,12 +1,17 @@
-# OpenCE co-op and browser compatibility (test27, 1.0.9 candidate)
+# OpenCE co-op and browser compatibility (test27/test28, 1.0.9/1.0.10 candidates)
 
 Updated 2026-10-06. Candidate **test27, version 1.0.9 / code 35**, branch
 `test27-opence-netcode`. Not released.
 
-**Status: implemented and checked by automated tests; not yet verified in a real
-cross-build session.** Do not call OpenCE cross-play working until a Quest or
-Android device running 1.0.9 has joined an OpenCE build 138 co-op game (and an
-OpenCE player has joined a 1.0.9 host) and the logs confirm it.
+**Status (1.0.10, test28): partly verified on a device.** On 2026-10-06 a
+Quest 3 on 1.0.9 found a public OpenCE co-op game (18 players on d40) through
+the signed lobby, connected (join stages 1/3 to 3/3, network 20), joined in
+progress and loaded the map. It then halted on an upstream camera check that
+OpenCE's release builds only log; 1.0.10 fixes that
+([TEST28-PROGRESS.md](TEST28-PROGRESS.md)). Still to confirm: play after
+joining, an OpenCE player joining a Quest or Android host, and games of three
+or more mixed players. Do not call cross-play fully working until those logs
+are in.
 
 ## What OpenCE's "co-op server browser update" is
 
@@ -32,7 +37,7 @@ Network versions 12–20 changed the wire format for every game, multiplayer inc
 
 | Peer | Listing / discovery | Join / handshake | Gameplay sync | Game data |
 | --- | --- | --- | --- | --- |
-| OpenCE build 138 (network 20), co-op | Listed: in-game System Link list and launcher co-op browser | Expected: exact version match, OpenCE's join path | Expected: OpenCE's co-op modules byte for byte | Same campaign maps; Xbox caches, PAL as NTSC |
+| OpenCE build 138 (network 20), co-op | Listed: in-game System Link list and launcher co-op browser (seen on a Quest, 2026-10-06) | **Seen working** (Quest 3, 1.0.9: connected, joined in progress, map loaded) | Expected: OpenCE's co-op modules byte for byte | Same campaign maps; Xbox caches, PAL as NTSC |
 | OpenCE build 138, multiplayer | Listed | Expected | Expected: OpenCE's netcode | Same map files |
 | OpenCE builds 128–136 (network 17–19) | Listed, marked as another version | Refused by name ("the host is on version N") | n/a | n/a |
 | Newer OpenCE (network 21+) | Listed, marked | Refused: "update this app when a version for it is out" | n/a | n/a |
@@ -52,10 +57,16 @@ Network versions 12–20 changed the wire format for every game, multiplayer inc
 - **Bugs found and fixed while merging:**
   - The 3-way merge had kept gaps where this tree predated OpenCE's v11 baseline: the picked-up weapon, the in-progress flag, name cleaning, weapon swap, unarmed melee and team assignment.
   - This app's receive filter dropped every message after `pings` except its own CE02 ones, which would have discarded all of OpenCE's co-op traffic.
-- **Hosting.** Campaign co-op > Host campaign writes `coop_host.txt` with mission, difficulty, public/private and up to 16 players. The game opens an OpenCE co-op lobby, set up exactly as OpenCE's Create Game does: a campaign map with no game engine. A public game is listed through the signed lobby. The host starts it from the lobby, or it starts when the lobby fills; players may join while it's under way.
+- **Hosting.** Campaign co-op > Host campaign writes `coop_host.txt` with mission, difficulty, public/private and the most players: OpenCE's Server Setup sizes, 2 to 128 (1.0.9: 16 at most). The game opens an OpenCE co-op lobby, set up exactly as OpenCE's Create Game does: a campaign map with no game engine. A public game is listed through the signed lobby. The host starts it from the lobby, or it starts when the lobby fills; players may join while it's under way.
 - **Joining.** In the game, Multiplayer > System Link lists public co-op and multiplayer games (and Wi-Fi ones). The launcher's browsers list the same directory, co-op apart from multiplayer, joinable only at network 20. Locked (password) games are marked and not joined; their invite still works.
 - **Retired:** the CE01/CE02 co-op protocol, its HTTP announcer (`CoopPublisher`), its join path, and the v9–11 multiplayer window. The old code is still compiled but never activates (`network_campaign_game` is always false).
 - **Not taken from builds 130–138:** renderer features (anti-aliasing, per-pixel lighting, shadow maps), the audio overhaul, the PC menus, PC scoreboard and volumes, Windows crash reports. None changes the wire, and the renderer and audio changes risk VR regressions.
+
+## What changed in 1.0.10 (test28)
+
+- **Joining a game in progress no longer halts.** A player who joins without a unit watches the host from behind. OpenCE's camera for that kept "up" pointing at the sky even when the host looked up or down, which left the camera skewed. 1.0.10 squares it.
+- **Release builds, as OpenCE ships.** A failed upstream check is written to the game log as `EXCEPTION … (release build)` and play goes on, as on OpenCE. Before, it halted with the blue screen.
+- **Co-op hosts of 2 to 128 players**, the sizes OpenCE's Server Setup offers.
 
 ## Automated evidence
 
@@ -76,7 +87,7 @@ Network versions 12–20 changed the wire format for every game, multiplayer inc
 - **Versions:** network 20 exactly. OpenCE moves fast (17 → 20 in a day); when it moves on, this app needs a new release.
 - **Game data:** the same campaign maps (Xbox caches; PAL is played as NTSC). Modified maps or other revisions can fail to load.
 - **Network:** direct UDP connections; strict NAT on both sides (common on mobile data) can block joining; there is no relay.
-- **Devices:** OpenCE's co-op defaults to 16 players; how many a Quest or phone host can keep smooth is not measured. Hosting on Wi-Fi is recommended.
+- **Devices:** OpenCE's co-op defaults to 16 players and offers up to 128; how many a Quest or phone host can keep smooth is not measured. Hosting on Wi-Fi is recommended; for big games a PC host is the safer choice.
 - **Not in this app:** setting a lobby password (no PC menus); joining a locked game from the list (use its invite); OpenCE's in-game co-op server settings (extra enemies and friendly fire use `config.toml` defaults: `network.coop_*`).
 
 ## How to report a failure

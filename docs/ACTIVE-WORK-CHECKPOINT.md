@@ -3,7 +3,21 @@
 Updated 2026-10-04. This is the current handoff for Claude Code/Claude Cloud.
 The canonical source is `moistman42069/HaloCE-Quest-VR`, branch `main`.
 
-## Progress (test27, 2026-10-06)
+## Progress (test28, 2026-10-06)
+
+Private candidate **test28** (1.0.10 / code 36, branch `test27-opence-netcode`) builds on test27:
+- **Owner's first cross-play session:** a Quest on 1.0.9 joined an 18-player OpenCE co-op game in progress, which proved join and load. It then halted on an upstream camera check. That check is fixed and squared, and the APKs now build in release mode as OpenCE's do.
+- **Co-op hosting:** sizes now match OpenCE's, 2 to 128.
+- **Gyro aim:** added to the flat Android port as an option, off by default.
+
+Details: [TEST28-PROGRESS.md](TEST28-PROGRESS.md); delivery: [TEST28-DELIVERY.md](TEST28-DELIVERY.md).
+
+Next: the owner's tests, in this order:
+1. play on after joining an OpenCE co-op game in VR;
+2. host a big co-op lobby;
+3. gyro on a phone.
+
+## Earlier progress (test27, 2026-10-06)
 
 Private candidate **test27** (1.0.9 / code 35, branch `test27-opence-netcode`, from test26 `a537c4b6`) runs OpenCE build 138's netcode (network 20) and its co-op, so Quest and Android players host and join co-op lobbies of up to 16 with OpenCE players, through the same browsers. This app's CE01/CE02 co-op and the v9-11 window are retired. Details: [TEST27-PROGRESS.md](TEST27-PROGRESS.md), [OPENCE-COOP-COMPATIBILITY.md](OPENCE-COOP-COMPATIBILITY.md). Next: real sessions (1.0.9 Quest/Android host and join; join an OpenCE build 138 co-op host; an OpenCE player joins a 1.0.9 host).
 

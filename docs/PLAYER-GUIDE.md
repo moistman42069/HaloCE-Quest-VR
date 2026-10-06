@@ -77,7 +77,7 @@ PlayStation/Nintendo-style pads use equivalent button positions; an optional fac
 
 ### Flat touch
 
-Use **MOVE** plus swipe aiming or **FIRE-and-drag** to move, fire and aim together. Labeled buttons provide jump, crouch, melee, reload/use, weapon/grenade switching, grenade, zoom, flashlight and menu navigation. Tap **HUD** during play to edit the layout. Editing does not pause an online match.
+Use **MOVE** plus swipe aiming or **FIRE-and-drag** to move, fire and aim together. Labeled buttons provide jump, crouch, melee, reload/use, weapon/grenade switching, grenade, zoom, flashlight and menu navigation. Tap **HUD** during play to edit the layout. Editing does not pause an online match. **Gyro aim** (turn the phone to aim) is an option, off by default: HUD → Options → Gyro aim, or the launcher's Controller & touch settings.
 
 ## 4. VR Features and Settings
 
@@ -99,7 +99,7 @@ In VR Settings, **A/right increases or advances; left decreases**. Next Page exp
 ## 5. Android / Mobile Features and Settings
 
 - Separate flat APK with multi-touch movement, relative swipe aim, fire-drag aiming and controller coexistence.
-- **HUD editor:** drag individual controls; choose covered controls from a selector; adjust individual/global size and opacity, spacing through placement, overall scale, color, horizontal/vertical sensitivity, dead zone, floating movement and swipe/stick aim. Save, Cancel and Reset are provided; placement accounts for screen edges/cutouts.
+- **HUD editor:** drag individual controls; choose covered controls from a selector; adjust individual/global size and opacity, spacing through placement, overall scale, color, horizontal/vertical sensitivity, dead zone, floating movement, swipe/stick aim and gyro aim (off, always on, or only while touching LOOK/FIRE; sensitivity and invert). Save, Cancel and Reset are provided; placement accounts for screen edges/cutouts.
 - **USB/Bluetooth gamepads:** Android input through SDL3, targeting Xbox/XInput-style controllers without requiring a Windows XInput layer. Includes analog and supported digital trigger mappings, hot-plug/reconnect cleanup, independent dead zones/response, optional face-button swap and vibration where the device/driver supports it.
 - **Touch visibility:** Auto hides the HUD when a fully mapped controller is ready and restores it after disconnection. Always show and Always hide are manual choices. In Always hide, touch stays hidden after disconnect until you change the setting.
 - **Controller input check** and controller navigation across launcher/browser dialogs; gameplay uses Halo's native controller mapping.
@@ -121,11 +121,11 @@ Since 1.0.9 this build plays **OpenCE's netcode, network 20** (OpenCE build 138)
 
 ### Campaign co-op and avatars
 
-Since 1.0.9 co-op is **OpenCE's co-op**: a network game on a campaign level, up to 16 players, Quest, Android and OpenCE's Windows/macOS/Linux players together, on network 20. Players can join a mission already under way; the host runs the scripts, AI, checkpoints and level changes, and a dead player watches a teammate until it is safe to come back. Everyone needs the same campaign maps. Co-op games of this app 1.0.8 or older (its own two-player protocol) can no longer be joined: their hosts must update.
+Since 1.0.9 co-op is **OpenCE's co-op**: a network game on a campaign level, up to 128 players (as OpenCE's Server Setup offers), Quest, Android and OpenCE's Windows/macOS/Linux players together, on network 20. Players can join a mission already under way; the host runs the scripts, AI, checkpoints and level changes, and a dead player watches a teammate until it is safe to come back. Everyone needs the same campaign maps. Co-op games of this app 1.0.8 or older (its own two-player protocol) can no longer be joined: their hosts must update.
 
 Step-by-step instructions are in the launcher: **How to join co-op & find servers** (also first in the Field guide).
 
-1. **Host:** launcher **Campaign co-op → Host campaign**: mission, difficulty, most players (2–16) and **Public** (listed in the server browsers: this app's, OpenCE's and the community list; untick it to share the invite instead). The game opens the lobby; start when everyone is in (a full lobby starts by itself).
+1. **Host:** launcher **Campaign co-op → Host campaign**: mission, difficulty, most players (2 to 128, as OpenCE offers; 4 by default) and **Public** (listed in the server browsers: this app's, OpenCE's and the community list; untick it to share the invite instead). The game opens the lobby; start when everyone is in (a full lobby starts by itself).
 2. **Join:** in the game, **Multiplayer → System Link → Refresh**: public co-op games show their campaign level. Or look first in the launcher's **Campaign co-op → Browse / join**, press **Join**, then pick the game in System Link. A game marked **LOCK** has a password: use its host's invite instead.
 3. **If it fails:** send both players' logs of that session (see [OpenCE co-op compatibility](OPENCE-COOP-COMPATIBILITY.md)). Strict NAT on both sides (common on mobile data) can block joining; try Wi-Fi.
 
