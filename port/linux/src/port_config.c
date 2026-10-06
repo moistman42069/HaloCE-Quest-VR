@@ -307,9 +307,23 @@ static const struct config_setting config_settings[] =
 	{ "vr.resolution_scale", _config_real, "0.0", "HALO_VR_RESOLUTION_SCALE", _environment_value, _platform_vr,
 		"The game's picture in the headset as a fraction of the runtime's\n"
 		"recommended eye resolution (about 1680x1760 on the Quest 3, 1728x1728 on\n"
-		"the Steam Frame), 0.5 to 1.5; 0 chooses for the headset: 1.0 on the\n"
+		"the Steam Frame), 0.5 to 2.0; 0 chooses for the headset: 1.0 on the\n"
 		"Quest 3, 3S and Pro, 0.85 on the Quest 2, 0.7 on the first Quest. 1.5\n"
-		"holds 72 frames a second on the Steam Frame." },
+		"holds 72 frames a second on the Steam Frame. The eye images the\n"
+		"compositor gets are this size too, so above 1.0 the extra detail\n"
+		"reaches the display; 1.25 is about the Quest 3's own panels\n"
+		"(2064x2208), above that supersampling." },
+	{ "vr.fov_mode", _config_string, "\"full\"", "HALO_VR_FOV_MODE", _environment_value, _platform_vr,
+		"How much of the view the game draws: \"full\" (all the headset shows)\n"
+		"or \"glasses\" (a window of vr.glasses_fov_h by vr.glasses_fov_v\n"
+		"degrees ahead of each eye, black round it), which previews the field\n"
+		"of view of upcoming VR glasses. The window draws far fewer pixels\n"
+		"(about a fifth on the Quest 3) and fewer objects, which leaves room\n"
+		"for a higher frame rate or vr.resolution_scale." },
+	{ "vr.glasses_fov_h", _config_real, "70.0", "HALO_VR_GLASSES_FOV_H", _environment_value, _platform_vr,
+		"The glasses window's width, in degrees (vr.fov_mode), 20 to 160." },
+	{ "vr.glasses_fov_v", _config_real, "66.0", "HALO_VR_GLASSES_FOV_V", _environment_value, _platform_vr,
+		"The glasses window's height, in degrees (vr.fov_mode), 20 to 160." },
 	{ "vr.screen_distance", _config_real, "2.5", "HALO_VR_SCREEN_DISTANCE", _environment_value, _platform_vr,
 		"How far ahead the flat screen (menus, cutscenes) floats, in metres." },
 	{ "vr.screen_width", _config_real, "2.4", "HALO_VR_SCREEN_WIDTH", _environment_value, _platform_vr,

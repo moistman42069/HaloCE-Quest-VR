@@ -173,6 +173,8 @@ left Y), west and north the Frame's right X and Y. */
 #define HALO_XR_LAYER_SCOPE 0x80u           /* the scope swapchain at scope_pose (LOCAL), blended */
 #define HALO_XR_LAYER_RETICLE_ON_TOP 0x100u /* the reticle over the quad (the menus' pointer on their
                                                screen), else under it (the hand's aim, under the HUD) */
+#define HALO_XR_LAYER_EYE_FOV 0x200u        /* the projection's eyes span eye_fov, not the runtime's
+                                               own field of view (vr.fov_mode "glasses") */
 
 struct halo_xr_layers
 {
@@ -183,6 +185,7 @@ struct halo_xr_layers
 	float reticle_size[2];
 	struct halo_xr_pose scope_pose;
 	float scope_size[2];
+	float eye_fov[2][4];         /* radians: left, right, up, down (HALO_XR_LAYER_EYE_FOV) */
 };
 
 #ifdef __cplusplus
@@ -195,6 +198,6 @@ HALO_XR_ASSERT(sizeof(struct halo_xr_info) == 312, "halo_xr_info layout");
 HALO_XR_ASSERT(sizeof(struct halo_xr_frame) == 304, "halo_xr_frame layout");
 HALO_XR_ASSERT(__builtin_offsetof(struct halo_xr_frame, head) == 24, "halo_xr_frame.head");
 HALO_XR_ASSERT(__builtin_offsetof(struct halo_xr_frame, buttons) == 260, "halo_xr_frame.buttons");
-HALO_XR_ASSERT(sizeof(struct halo_xr_layers) == 112, "halo_xr_layers layout");
+HALO_XR_ASSERT(sizeof(struct halo_xr_layers) == 144, "halo_xr_layers layout");
 
 #endif

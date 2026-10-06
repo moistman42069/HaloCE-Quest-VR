@@ -51,6 +51,19 @@ static struct
 	struct halo_xr_frame frame;
 	/* the eye render size (vr.resolution_scale) */
 	int eye_size;
+	/* the runtime's recommended eye image (the eye swapchains'
+	first size, which host_xr_resize_eyes changes since); vr.fov_mode
+	"glasses" (this frame's views cut to it: frame_glasses) and its
+	window's half-angles, radians across and down; the runtime's own view
+	of each eye last seen, for sizing (fov_known once it has been) */
+	unsigned int recommended_width, recommended_height;
+	int glasses, frame_glasses;
+	float glasses_half[2];
+	float runtime_fov[2][4];
+	int fov_known;
+	/* the eye images' size wanted (choose_eye_size), made at the start of
+	the next frame (apply_eye_images), when none is in use */
+	unsigned int eye_image_width, eye_image_height;
 	int srgb_write_control;
 	/* the flat screen (vr.screen_distance, vr.screen_width), metres */
 	float screen_distance, screen_width;
@@ -291,22 +304,133 @@ static const float holster_places[HOLSTER_COUNT][3] =
 };
 static const char *const holster_names[HOLSTER_COUNT] = { "left shoulder", "right shoulder", "left hip", "right hip" };
 
-/* the eyes' render size, from vr.resolution_scale (or the headset's when 0) */
+/* an eye's view cut to the glasses window (vr.fov_mode
+"glasses"): vr.glasses_fov_h by vr.glasses_fov_v degrees about the eye's
+own forward, never wider than the runtime's (fov: left, right, up, down) */
+static void glasses_fov(const float in[4], float out[4])
+{
+	out[0] = fmaxf(in[0], -vr.glasses_half[0]);
+	out[1] = fminf(in[1], vr.glasses_half[0]);
+	out[2] = fminf(in[2], vr.glasses_half[1]);
+	out[3] = fmaxf(in[3], -vr.glasses_half[1]);
+}
+
+/* how much of an eye's image the glasses window keeps, across and down
+(the image spans the view's tangents evenly) */
+static void glasses_ratio(const float fov[4], float ratio[2])
+{
+	float cut[4];
+
+	glasses_fov(fov, cut);
+	ratio[0] = (tanf(cut[1]) - tanf(cut[0])) / fmaxf(1e-3f, tanf(fov[1]) - tanf(fov[0]));
+	ratio[1] = (tanf(cut[2]) - tanf(cut[3])) / fmaxf(1e-3f, tanf(fov[2]) - tanf(fov[3]));
+}
+
+/* the eyes' render size, from vr.resolution_scale (or the headset's when 0).
+The scale reaches past the runtime's recommendation (the Quest
+3's panels are about 1.25 times it) and the eye images the compositor gets
+follow it, so a sharper picture reaches the display rather than being
+squeezed into the recommended size; with vr.fov_mode "glasses" both the
+game's eye and the images cover only the window, at the same sharpness. */
 static void choose_eye_size(void)
 {
+	/* the Quest 3's views (synthesize_views'), until the runtime's are seen */
+	static const float typical_fov[2][4] = { { -1.028f, 0.885f, 0.864f, -1.048f }, { -0.885f, 1.028f, 0.864f, -1.048f } };
 	double scale = config_real("vr.resolution_scale");
-	int size;
+	float ratio[2] = { 1.0f, 1.0f };
+	int size, width, height;
 
 	if (scale <= 0.0)
 		scale = auto_resolution_scale(vr.info.system);
 	if (scale < 0.5) scale = 0.5;
-	if (scale > 1.5) scale = 1.5;
-	size = (int)(vr.info.width[HALO_XR_SWAPCHAIN_LEFT] * scale) & ~1;
+	if (scale > 2.0) scale = 2.0;
+	vr.glasses = !strcmp(config_string("vr.fov_mode"), "glasses");
+	vr.glasses_half[0] = (float)(fmin(fmax(config_real("vr.glasses_fov_h"), 20.0), 160.0) * 0.5 * 0.017453293);
+	vr.glasses_half[1] = (float)(fmin(fmax(config_real("vr.glasses_fov_v"), 20.0), 160.0) * 0.5 * 0.017453293);
+	if (vr.glasses)
+	{
+		int eye;
+
+		ratio[0] = ratio[1] = 0.0f;
+		for (eye = 0; eye < 2; eye++)
+		{
+			float eye_ratio[2];
+
+			glasses_ratio(vr.fov_known ? vr.runtime_fov[eye] : typical_fov[eye], eye_ratio);
+			ratio[0] = fmaxf(ratio[0], eye_ratio[0]);
+			ratio[1] = fmaxf(ratio[1], eye_ratio[1]);
+		}
+	}
+	width = (int)(vr.recommended_width * scale * ratio[0] + 0.5) & ~1;
+	height = (int)(vr.recommended_height * scale * ratio[1] + 0.5) & ~1;
+	if (width < 64) width = 64;
+	if (height < 64) height = 64;
+	/* the game draws each eye square, as wide as its image (as before:
+	the copy stretches it to the image's height) */
+	size = width;
 	if (size != vr.eye_size)
 	{
 		vr.eye_size = size;
 		platform_log("vr: drawing %dx%d per eye", size, size);
 	}
+	vr.eye_image_width = (unsigned int)width;
+	vr.eye_image_height = (unsigned int)height;
+	if (vr.glasses)
+		platform_log("vr: glasses field of view %.0fx%.0f degrees: %.0f%% x %.0f%% of each eye's image%s",
+			vr.glasses_half[0] * 2.0f * 57.29578f, vr.glasses_half[1] * 2.0f * 57.29578f, ratio[0] * 100.0f,
+			ratio[1] * 100.0f, vr.fov_known ? "" : " (the Quest 3's view until the headset's is seen)");
+}
+
+/* the eye images remade at the size chosen, between frames (nothing of
+them acquired or drawn yet) */
+static void apply_eye_images(void)
+{
+	if (!vr.eye_image_width || (vr.eye_image_width == vr.info.width[HALO_XR_SWAPCHAIN_LEFT] &&
+		vr.eye_image_height == vr.info.height[HALO_XR_SWAPCHAIN_LEFT]))
+	{
+		return;
+	}
+	if (host_xr_resize_eyes(&vr.info, vr.eye_image_width, vr.eye_image_height) == 0)
+	{
+		platform_log("vr: eye images %ux%u (the headset recommends %ux%u; %s field of view)", vr.info.width[0],
+			vr.info.height[0], vr.recommended_width, vr.recommended_height, vr.glasses ? "glasses" : "full");
+	}
+	else
+	{
+		platform_log("vr: eye images stay %ux%u (%ux%u unavailable)", vr.info.width[0], vr.info.height[0],
+			vr.eye_image_width, vr.eye_image_height);
+	}
+	/* asked once: a failure is not retried every frame */
+	vr.eye_image_width = vr.info.width[HALO_XR_SWAPCHAIN_LEFT];
+	vr.eye_image_height = vr.info.height[HALO_XR_SWAPCHAIN_LEFT];
+}
+
+/* each frame's views: the runtime's kept (for sizing), and with the
+glasses window each eye cut to it */
+static void apply_glasses(void)
+{
+	int eye, first = !vr.fov_known;
+
+	vr.frame_glasses = 0;
+	if (!(vr.frame.flags & HALO_XR_FRAME_VIEWS_VALID))
+		return;
+	for (eye = 0; eye < 2; eye++)
+		memcpy(vr.runtime_fov[eye], vr.frame.fov[eye], sizeof(vr.runtime_fov[eye]));
+	vr.fov_known = 1;
+	if (first)
+	{
+		platform_log("vr: the headset's views: left %.3f %.3f %.3f %.3f, right %.3f %.3f %.3f %.3f (radians: left, "
+			"right, up, down)", vr.frame.fov[0][0], vr.frame.fov[0][1], vr.frame.fov[0][2], vr.frame.fov[0][3],
+			vr.frame.fov[1][0], vr.frame.fov[1][1], vr.frame.fov[1][2], vr.frame.fov[1][3]);
+		/* sized again for the headset's own views */
+		if (vr.glasses)
+			choose_eye_size();
+	}
+	if (!vr.glasses)
+		return;
+	for (eye = 0; eye < 2; eye++)
+		glasses_fov(vr.runtime_fov[eye], vr.frame.fov[eye]);
+	vr.frame_glasses = 1;
 }
 
 /* the display's rate, from vr.refresh_rate (0 the runtime's own) */
@@ -718,7 +842,10 @@ void vr_initialize(void)
 		return;
 	}
 	glGenFramebuffers(1, &vr.framebuffer);
+	vr.recommended_width = vr.info.width[HALO_XR_SWAPCHAIN_LEFT];
+	vr.recommended_height = vr.info.height[HALO_XR_SWAPCHAIN_LEFT];
 	choose_eye_size();
+	apply_eye_images();
 	vr.touch_layout = strstr(vr.info.system, "Quest") != NULL;
 	/* the swapchains are sRGB and the game's picture is gamma-encoded
 	already: written without conversion, the compositor shows it as it is */
@@ -1825,6 +1952,10 @@ static int frame_begin(void)
 		return 0;
 	}
 	vr.frame_begun = 1;
+	/* the views cut to the glasses window (vr.fov_mode), and
+	the eye images remade at a new size before any of this frame is drawn */
+	apply_glasses();
+	apply_eye_images();
 	/* a recentre moves the room's origin: walking resumes from the head */
 	if (vr.frame.flags & HALO_XR_FRAME_RECENTRED)
 	{
@@ -3520,7 +3651,16 @@ int vr_present(unsigned int source, unsigned int texture, int width, int height)
 		/* the eyes are in their images; what is left in the back buffer is
 		the HUD on a transparent ground, which rides ahead of the head */
 		if (vr.eyes_resolved == 3)
+		{
 			layers.flags |= HALO_XR_LAYER_PROJECTION;
+			/* the eyes were drawn over the glasses window only;
+			the compositor shows them there, and nothing round it */
+			if (vr.frame_glasses)
+			{
+				layers.flags |= HALO_XR_LAYER_EYE_FOV;
+				memcpy(layers.eye_fov, vr.frame.fov, sizeof(layers.eye_fov));
+			}
+		}
 		if (copy_hud(texture))
 		{
 			layers.flags |= HALO_XR_LAYER_QUAD | HALO_XR_LAYER_QUAD_HEAD_LOCKED | HALO_XR_LAYER_QUAD_ALPHA;

@@ -57,7 +57,7 @@ Test20d gives each decision one row. Rows that only mattered together with anoth
 | Hands + Gun | Hand Pitch / Yaw / Roll (both hands, left mirrored; default −70 / 0 / 0); Reset Hands; Gun Pitch / Yaw / Roll (default 0); Reset Gun; Gun Forward / Up / Out ±20 cm; Gun Grip Anchored / Classic |
 | Gameplay | Haptics 0–100%; Flashlight Gesture / Button; Scope Off / On; Cutscenes Immersive / 3D Screen / Flat; Close Contact Off / On; Crosshair Native / Off; Crosshair Size 25–300%; Crosshair Opacity 0–100% |
 | Vehicles | Third Person (default) / First Person; Steering Right Hand (default) / Left Hand / Head / Stick; global and Warthog/Ghost/Banshee/Scorpion/Pelican Up/Forward/Right seat offsets ±50 cm |
-| Graphics | Preset Auto / Low / Medium / High / Max; Resolution Auto / 70 / 85 / 100 / 115 / 130%; Shadows, Lights, Specular, Reflections, Bump Maps, Grass, Fog Layers: Auto / On / Off |
+| Graphics | Preset Auto / Low / Medium / High / Max; Resolution Auto / 60 / 70 / 80 / 90 / 100 / 110 / **125% Q3 Native** / 140 / 160 / 180 / 200%; **FOV** Full (default) / Glasses 70×66; Shadows, Lights, Specular, Reflections, Bump Maps, Grass, Fog Layers: Auto / On / Off |
 | Display | Decals, Particles, Contrails, Weather, Lens Flares, Camo: Auto / On / Off; Refresh 72 / 80 / 90 / 120 Hz |
 | Controller Left / Right | Advanced tracking correction for hand and gun together (see below) |
 
@@ -65,7 +65,9 @@ Important defaults: right-handed with Mirror Controls Auto; body `legs`; Hands B
 
 Close Contact reduces only the offline local VR capsule radius: up to 15%, at most 5 cm, never below 18 cm. Solid collision and height remain. Physical + MP concerns weapon holding/drop behavior, not visual avatar sharing; peers may not reproduce physical drops/pickups correctly.
 
-Auto graphics effects follow the preset. Resolution is relative to runtime eye targets. Refresh requests a supported rate; it does not guarantee frame timing. The simulation remains 30 Hz with interpolated rendering.
+Auto graphics effects follow the preset. Resolution is relative to the runtime's recommended eye size (1680×1760 on the Quest 3), and the eye images handed to the compositor follow it, so steps above 100% reach the display: **125% Q3 Native** is about the Quest 3's panels (2064×2208 per eye), higher steps supersample. Refresh requests a supported rate; it does not guarantee frame timing. The simulation remains 30 Hz with interpolated rendering.
+
+**FOV Glasses 70×66** draws only a 70° × 66° window ahead of each eye (black around it), simulating the field of view of upcoming VR glasses so players can get an idea of it. Because only that window is drawn, at the same sharpness, it costs about a fifth of the pixels on a Quest 3 and fewer objects, which leaves room for a higher frame rate or a higher Resolution step. HUD and menus are unaffected; the window size is `vr.glasses_fov_h` / `vr.glasses_fov_v` in `config.toml`.
 
 ## Flat Android touch and controller
 
