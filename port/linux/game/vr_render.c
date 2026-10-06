@@ -1544,18 +1544,26 @@ int vr_render_grab_point(long unit_index, real_point3d *point)
 /* ---------- impact melee (vr.melee "impact")
 
 Each tick each hand's path since the last tick is swept through the world
-(the weapon hand's from the gun's middle, 20 cm ahead of the grip, the other
-hand's from the fist); moving at vr.melee_speed or more about the room, what
-it meets takes a blow (unit_vr_impact_melee: the weapon's melee damage,
-every object, vehicles shoved and broken, glass), harder the faster the
-swing. A hand that struck rests 0.35 s, as a swing's one blow. */
+(the weapon hand's from points along the gun: the grip, its middle and, a
+long gun, its far end; the other hand's from the fist); moving at
+vr.melee_speed or more about the room, what it meets takes a blow
+(unit_vr_impact_melee: the weapon's melee damage, every object, vehicles
+shoved and broken, glass), harder the faster the swing. A hand that struck
+rests 0.35 s, as a swing's one blow.
+
+test26: a swing reaches on past where the hand was at the tick, as it
+would carry on (5 hundredths of a second at its speed, at most 15 cm): the
+bodies' collision holds the player off a character, so a natural swing at
+one stopped short of it. And a gun strikes with its length, not its middle
+alone. */
+#define VR_MELEE_POINTS 3
 
 void vr_render_impact_melee(
 	short local_player_index)
 {
 	static long last_unit = NONE;
-	static boolean last_valid[2];
-	static real_point3d last[2];
+	static boolean last_valid[2][VR_MELEE_POINTS];
+	static real_point3d last[2][VR_MELEE_POINTS];
 	static real rest[2];
 	real units = vr_units_per_metre();
 	long player_index, unit_index;
@@ -1571,7 +1579,7 @@ void vr_render_impact_melee(
 		object_get(unit_index)->object.parent_object_index != NONE ||
 		TEST_FLAG(object_get(unit_index)->object.damage_flags, _object_dead_bit))
 	{
-		last_valid[0] = last_valid[1] = FALSE;
+		memset(last_valid, 0, sizeof(last_valid));
 		rest[0] = rest[1] = 0.0f;
 		last_unit = unit_index;
 		return;
@@ -1579,45 +1587,77 @@ void vr_render_impact_melee(
 	unit_get_camera_position(unit_index, &camera);
 	for (hand = 0; hand < 2; hand++)
 	{
-		real_point3d point;
-		real_vector3d forward, up, sweep;
-		real speed;
+		real_point3d grip;
+		real_vector3d forward, up;
+		real speed, along[VR_MELEE_POINTS] = { 0.0f, 0.0f, 0.0f };
+		int point_count = 1, index;
+		boolean armed = hand == vr_weapon_hand() && !vr_hand_empty() &&
+			unit_get(unit_index)->unit.current_weapon_index != NONE;
 
 		if (rest[hand] > 0.0f)
 			rest[hand] -= 1.0f / 30.0f;
-		if (!vr_hand_world(hand, camera.n, point.n, forward.n, up.n))
+		if (!vr_hand_world(hand, camera.n, grip.n, forward.n, up.n))
 		{
-			last_valid[hand] = FALSE;
+			for (index = 0; index < VR_MELEE_POINTS; index++)
+				last_valid[hand][index] = FALSE;
 			continue;
 		}
-		if (hand == vr_weapon_hand() && !vr_hand_empty() && unit_get(unit_index)->unit.current_weapon_index != NONE)
+		/* the gun's points along its length from the grip (metres): a
+		pistol's short, a long gun's to its far end */
+		if (armed)
 		{
-			point.x += forward.i * 0.2f * units;
-			point.y += forward.j * 0.2f * units;
-			point.z += forward.k * 0.2f * units;
+			int kind = vr_gun_class();
+			boolean short_gun = kind == VR_GUN_PISTOL || kind == VR_GUN_PLASMA_PISTOL || kind == VR_GUN_NEEDLER;
+
+			along[0] = 0.0f;
+			along[1] = short_gun ? 0.12f : 0.2f;
+			along[2] = short_gun ? 0.0f : 0.4f;
+			point_count = short_gun ? 2 : 3;
 		}
 		speed = vr_hand_speed(hand);
-		if (last_valid[hand] && rest[hand] <= 0.0f && speed >= vr_melee_speed())
+		for (index = 0; index < point_count; index++)
 		{
-			vector_from_points3d(&last[hand], &point, &sweep);
-			real distance_squared = sweep.i * sweep.i + sweep.j * sweep.j + sweep.k * sweep.k;
-			/* Tracking recovery/teleports are not a punch across the level. */
-			if (isfinite(distance_squared) && distance_squared > 1e-8f && distance_squared < units * units)
-			{
-				real scale = speed / (2.0f * vr_melee_speed()) + 0.25f;
+			real_point3d point = grip;
+			real_vector3d sweep;
+			real distance_squared;
 
-				scale = scale < 0.5f ? 0.5f : scale > 1.5f ? 1.5f : scale;
-				if (unit_vr_impact_melee(unit_index, &last[hand], &sweep, scale,
-					hand == vr_weapon_hand() && !vr_hand_empty(), 0.035f * units))
+			point.x += forward.i * along[index] * units;
+			point.y += forward.j * along[index] * units;
+			point.z += forward.k * along[index] * units;
+			if (last_valid[hand][index] && rest[hand] <= 0.0f && speed >= vr_melee_speed())
+			{
+				vector_from_points3d(&last[hand][index], &point, &sweep);
+				distance_squared = sweep.i * sweep.i + sweep.j * sweep.j + sweep.k * sweep.k;
+				/* Tracking recovery/teleports are not a punch across the level. */
+				if (isfinite(distance_squared) && distance_squared > 1e-8f && distance_squared < units * units)
 				{
-					rest[hand] = 0.35f;
-					vr_haptic(hand, 1.0f, 0.08f);
-					platform_log("vr: %s hand struck at %.1f m/s (blow %.2f)", hand ? "right" : "left", speed, scale);
+					real scale = speed / (2.0f * vr_melee_speed()) + 0.25f;
+					real length = (real)sqrt(distance_squared);
+					/* (the swing carried on: test26) */
+					real reach = speed * 0.05f;
+					real extend;
+
+					reach = (reach > 0.15f ? 0.15f : reach) * units;
+					extend = (length + reach) / length;
+					sweep.i *= extend;
+					sweep.j *= extend;
+					sweep.k *= extend;
+					scale = scale < 0.5f ? 0.5f : scale > 1.5f ? 1.5f : scale;
+					if (unit_vr_impact_melee(unit_index, &last[hand][index], &sweep, scale, armed,
+						(armed && index ? 0.05f : 0.035f) * units))
+					{
+						rest[hand] = 0.35f;
+						vr_haptic(hand, 1.0f, 0.08f);
+						platform_log("vr: %s hand struck at %.1f m/s (blow %.2f, %s)", hand ? "right" : "left", speed, scale,
+							!armed ? "fist" : index == 0 ? "the gun's grip" : index == 1 ? "the gun's middle" : "the gun's end");
+					}
 				}
 			}
+			last[hand][index] = point;
+			last_valid[hand][index] = TRUE;
 		}
-		last[hand] = point;
-		last_valid[hand] = TRUE;
+		for (index = point_count; index < VR_MELEE_POINTS; index++)
+			last_valid[hand][index] = FALSE;
 	}
 }
 
@@ -2470,11 +2510,14 @@ static void vr_orient_hand(struct animation_graph *graph, real_matrix4x3 *matric
 	vr_turn_subtree(graph, matrices, hand, rotation);
 }
 
-/* Absolute segment directions replace the animation's existing grip curl. */
-static boolean vr_pose_finger(struct animation_graph *graph, real_matrix4x3 *matrices,
-	short hand, short joints[3], int finger, real curl, real_vector3d const *palm,
+/* Absolute segment directions replace the animation's existing grip curl.
+test26: each joint its own curl (the base, middle and last: a finger
+meeting a wall bends joint by joint, vr_touch_fingers) */
+static boolean vr_pose_finger_joints(struct animation_graph *graph, real_matrix4x3 *matrices,
+	short hand, short joints[3], int finger, real const curls[3], real_vector3d const *palm,
 	real_vector3d const *forward, real_vector3d const *up, real_point3d *tip)
 {
+	real curl = curls[0];
 	static real const rest[3] = { 0.12f, 0.15f, 0.10f }, bend[3] = { 1.25f, 1.6f, 1.1f };
 	real_vector3d base, axis, direction, wanted;
 	real angle = 0.0f, dot, rotation[3][3], length = 0.0f;
@@ -2530,6 +2573,7 @@ static boolean vr_pose_finger(struct animation_graph *graph, real_matrix4x3 *mat
 		}
 		if (!vr_unit_vector(&direction))
 			return FALSE;
+		curl = curls[depth];
 		angle += finger == 0 ? (depth == 0 ? 0.0f : (depth == 1 ? 0.35f : 0.3f) * curl) : rest[depth] + bend[depth] * curl;
 		vr_axis_rotation(&axis, angle, rotation);
 		vr_rotate_vector(rotation, &base, &wanted);
@@ -2545,14 +2589,71 @@ static boolean vr_pose_finger(struct animation_graph *graph, real_matrix4x3 *mat
 	return TRUE;
 }
 
+/* test26: a finger's joints given how far (`t`, 0 none to 1 all the way)
+contact moves it from the curl it wants toward straight (`direction` -1:
+the base first, as fingers lie flat on what the palm presses) or curled
+(+1: the tip first, as fingertips pressed to a wall buckle) */
+static void vr_finger_contact_curls(real wanted, int direction, real t, real curls[3])
+{
+	/* (at what share of the way each joint, base, middle and last, has
+	moved all the way: the smaller, the sooner) */
+	static real const flatten[3] = { 0.5f, 0.75f, 1.0f }, buckle[3] = { 1.0f, 0.75f, 0.5f };
+	real const *pace = direction < 0 ? flatten : buckle;
+	real goal = direction < 0 ? 0.0f : 1.0f;
+	int depth;
+
+	for (depth = 0; depth < 3; depth++)
+	{
+		real share = direction ? PIN(t / pace[depth], 0.0f, 1.0f) : 0.0f;
+
+		curls[depth] = wanted + (goal - wanted) * share;
+	}
+}
+
+/* how far (0..1) the posed finger's first segment that meets the world gets
+before it does, 1 for none: the pose is left in `matrices` */
+static real vr_finger_clearance(struct animation_graph *graph, real_matrix4x3 *matrices, short hand,
+	short joints[3], int finger, real const curls[3], real_vector3d const *palm, real_vector3d const *forward,
+	real_vector3d const *up, long ignore, boolean *valid)
+{
+	real_point3d tip;
+	real score = 1.0f;
+	int segment;
+
+	*valid = vr_pose_finger_joints(graph, matrices, hand, joints, finger, curls, palm, forward, up, &tip);
+	if (!*valid)
+		return 1.0f;
+	for (segment = 0; segment < 3; segment++)
+	{
+		real_point3d const *from = &matrices[joints[segment]].position;
+		real_point3d const *to = segment < 2 ? &matrices[joints[segment + 1]].position : &tip;
+		real_vector3d vector;
+		struct collision_result hit;
+
+		vr_point_minus(to, from, &vector);
+		if (vr_length(&vector) > 1e-5f && vr_touch_trace(from, &vector, ignore, &hit))
+			score = MIN(score, hit.t);
+	}
+	return score;
+}
+
+/* test26: the free hand's fingers against the world. Each finger takes the
+curl its controller gives it; where that meets the world, it bends away
+from it continuously (searched, not picked from a few poses: the old
+search's jumps between a few curls were the snapping and twisting), joint by
+joint (vr_finger_contact_curls), keeping the way it bent while it stays in
+contact (it never flips between curling and straightening), and eases back
+as the contact ends (into contact the world wins at once: never through a
+wall). A palm pressed flat relaxes the loose fingers gradually. */
 static int vr_touch_fingers(struct animation_graph *graph, real_matrix4x3 *matrices,
 	int controller, short hand, short joints[5][3], real const curls[4], real_vector3d const *palm,
 	real_vector3d const *forward, real_vector3d const *up, boolean pressed)
 {
-	/* Render poses are evaluated serially. No allocation; only the curl/velocity state persists.
+	/* Render poses are evaluated serially. No allocation; only the contact state persists.
 	Every attempt starts from this frame's original hand matrices. */
 	static real_matrix4x3 saved[MAXIMUM_NODES_PER_ANIMATION];
-	static real contact_curl[2][5];
+	static real contact_t[2][5], pressed_weight[2];
+	static int contact_direction[2][5];
 	static double last_time[2];
 	double now = vr_pose_time(), dt = now - last_time[controller];
 	boolean reset = dt <= 0.0 || dt > 0.25;
@@ -2561,63 +2662,120 @@ static int vr_touch_fingers(struct animation_graph *graph, real_matrix4x3 *matri
 	long player = local != NONE ? local_player_get_player_index(local) : NONE;
 	long unit = player != NONE ? player_get(player)->unit_index : NONE;
 	long ignore = unit != NONE ? object_get_ultimate_parent(unit) : NONE;
-	int f, attempt, contacts = 0;
+	real ease = reset ? 1.0f : 1.0f - expf(-14.0f * (real)MIN(dt, 0.05));
+	int f, contacts = 0;
+
+	if (reset)
+	{
+		memset(contact_t[controller], 0, sizeof(contact_t[controller]));
+		memset(contact_direction[controller], 0, sizeof(contact_direction[controller]));
+		pressed_weight[controller] = pressed ? 1.0f : 0.0f;
+	}
+	else
+	{
+		/* (the palm's press eased in and out over a tenth of a second) */
+		pressed_weight[controller] += ((pressed ? 1.0f : 0.0f) - pressed_weight[controller]) *
+			(1.0f - expf(-20.0f * (real)MIN(dt, 0.05)));
+	}
+	memcpy(saved, matrices, count * sizeof(*matrices));
 	for (f = 0; f < 5; f++)
 	{
-		real curl = curls[f < 3 ? f : 3], best_score = -1.0f, best_curl;
-		real tries[5];
-		boolean touched = FALSE;
-		real_point3d tip;
+		real curl = curls[f < 3 ? f : 3], joint_curls[3], t = 0.0f, clear;
+		real *state_t = &contact_t[controller][f];
+		int *state_direction = &contact_direction[controller][f];
+		int direction = *state_direction;
+		boolean valid;
+
 		if (joints[f][0] == NONE || joints[f][1] == NONE || joints[f][2] == NONE)
 			continue;
-		if (pressed && curl < 0.6f) curl *= 0.35f;
-		tries[0] = best_curl = curl; tries[1] = curl * 0.5f; tries[2] = 0.0f;
-		tries[3] = MIN(curl + 0.4f, 1.0f); tries[4] = 1.0f;
-		memcpy(saved, matrices, count * sizeof(*matrices));
-		for (attempt = 0; attempt < 5; attempt++)
+		/* a pressed palm relaxes the loose fingers (no step at 0.6 curl) */
 		{
-			real score = 1.0f;
-			int segment;
-			memcpy(matrices, saved, count * sizeof(*matrices));
-			if (!vr_pose_finger(graph, matrices, hand, joints[f], f, tries[attempt], palm, forward, up, &tip))
-				break;
-			for (segment = 0; segment < 3; segment++)
-			{
-				real_point3d const *from = &matrices[joints[f][segment]].position;
-				real_point3d const *to = segment < 2 ? &matrices[joints[f][segment + 1]].position : &tip;
-				real_vector3d vector;
-				struct collision_result hit;
-				vr_point_minus(to, from, &vector);
-				if (vr_length(&vector) > 1e-5f && vr_touch_trace(from, &vector, ignore, &hit))
-					score = MIN(score, hit.t);
-			}
-			if (score > best_score) { best_score = score; best_curl = tries[attempt]; }
-			if (score >= 1.0f) break;
-			touched = TRUE;
+			real loose = 1.0f - PIN((curl - 0.45f) / 0.3f, 0.0f, 1.0f);
+
+			curl *= 1.0f - 0.65f * loose * pressed_weight[controller];
 		}
+		vr_finger_contact_curls(curl, 0, 0.0f, joint_curls);
+		clear = vr_finger_clearance(graph, matrices, hand, joints[f], f, joint_curls, palm, forward, up, ignore, &valid);
 		memcpy(matrices, saved, count * sizeof(*matrices));
-		/* Release from contact continuously. Into contact, the collision
-		constraint wins immediately so smoothing never drives through a wall. */
-		if (!touched && !reset) {
-			real filtered = contact_curl[controller][f] + (best_curl - contact_curl[controller][f]) *
-				(1.0f - expf(-18.0f * MIN(dt, 0.05)));
-			vr_pose_finger(graph, matrices, hand, joints[f], f, filtered, palm, forward, up, &tip);
-			boolean safe = TRUE;
-			for (int segment = 0; segment < 3; segment++) {
-				real_point3d const *from = &matrices[joints[f][segment]].position;
-				real_point3d const *to = segment < 2 ? &matrices[joints[f][segment + 1]].position : &tip;
-				real_vector3d vector;
-				struct collision_result hit;
-				vr_point_minus(to, from, &vector);
-				if (vr_touch_trace(from, &vector, ignore, &hit)) safe = FALSE;
+		if (!valid)
+			continue;
+		if (clear < 1.0f)
+		{
+			/* into contact: which way, kept while it lasts unless that way
+			cannot clear and the other can (a fresh contact: the way that
+			clears, straightening if both do) */
+			real clear_way[2];
+			int way;
+
+			for (way = 0; way < 2; way++)
+			{
+				vr_finger_contact_curls(curl, way ? 1 : -1, 1.0f, joint_curls);
+				clear_way[way] = vr_finger_clearance(graph, matrices, hand, joints[f], f, joint_curls, palm, forward, up,
+					ignore, &valid);
+				memcpy(matrices, saved, count * sizeof(*matrices));
 			}
-			if (safe) best_curl = filtered;
+			if (!direction || clear_way[direction > 0] < 1.0f)
+				direction = clear_way[0] >= 1.0f ? -1 : clear_way[1] >= 1.0f ? 1 : clear_way[1] > clear_way[0] ? 1 : -1;
+			/* the least contact moves it that clears (bisected) */
+			if (clear_way[direction > 0] < 1.0f)
+			{
+				t = 1.0f;
+			}
+			else
+			{
+				real low = 0.0f, high = 1.0f;
+				int step;
+
+				for (step = 0; step < 6; step++)
+				{
+					real middle = 0.5f * (low + high);
+
+					vr_finger_contact_curls(curl, direction, middle, joint_curls);
+					if (vr_finger_clearance(graph, matrices, hand, joints[f], f, joint_curls, palm, forward, up, ignore,
+						&valid) >= 1.0f)
+					{
+						high = middle;
+					}
+					else
+					{
+						low = middle;
+					}
+					memcpy(matrices, saved, count * sizeof(*matrices));
+				}
+				t = high;
+			}
+			contacts++;
+		}
+		/* out of contact (or less of it): eased back, the way kept until it
+		is all the way back; into it: at once */
+		if (t < *state_t && direction == *state_direction && !reset)
+		{
+			real eased = *state_t + (t - *state_t) * ease;
+
+			vr_finger_contact_curls(curl, direction ? direction : *state_direction, eased, joint_curls);
+			if (vr_finger_clearance(graph, matrices, hand, joints[f], f, joint_curls, palm, forward, up, ignore,
+				&valid) >= 1.0f)
+			{
+				t = eased;
+			}
 			memcpy(matrices, saved, count * sizeof(*matrices));
 		}
-		if (dt == 0.0) best_curl = contact_curl[controller][f];
-		else contact_curl[controller][f] = best_curl;
-		vr_pose_finger(graph, matrices, hand, joints[f], f, best_curl, palm, forward, up, &tip);
-		if (touched) contacts++;
+		if (t <= 0.001f && clear >= 1.0f)
+		{
+			t = 0.0f;
+			direction = 0;
+		}
+		*state_t = t;
+		*state_direction = direction;
+		vr_finger_contact_curls(curl, direction, t, joint_curls);
+		{
+			real_point3d tip;
+
+			vr_pose_finger_joints(graph, matrices, hand, joints[f], f, joint_curls, palm, forward, up, &tip);
+		}
+		/* (the next finger poses from this one's result: the hand's own
+		matrices, carried) */
+		memcpy(saved, matrices, count * sizeof(*matrices));
 	}
 	last_time[controller] = now;
 	return contacts;

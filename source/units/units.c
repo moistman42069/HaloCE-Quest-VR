@@ -9060,7 +9060,21 @@ boolean unit_vr_impact_melee(
 		if (probe) origin.n[(probe - 1) / 2] += (probe & 1 ? radius : -radius);
 		vector_from_points3d(&eye, &origin, &sight);
 		if (collision_test_vector(_collision_test_for_projectiles_flags, &eye, &sight, unit_index, &obstruction))
+		{
+			/* test26: a hand a tick's swing carried inside what it strikes
+			(a fast swing's last tick lands it there, and the bodies'
+			collision keeps the player from reaching further): the object
+			between the eye and the hand is what it struck. A wall there
+			still stops the blow. */
+			if (obstruction.type == _collision_result_object && obstruction.t >= 0.0f && obstruction.t <= 1.0f &&
+				!hit)
+			{
+				collision = obstruction;
+				nearest = 0.0f;
+				hit = TRUE;
+			}
 			continue;
+		}
 		if (collision_test_vector(_collision_test_for_projectiles_flags, &origin, sweep, unit_index, &candidate) &&
 			candidate.t >= 0.0f && candidate.t <= nearest)
 		{
