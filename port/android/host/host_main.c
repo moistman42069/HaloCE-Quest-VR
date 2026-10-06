@@ -495,8 +495,12 @@ static void *game_main(void *unused)
 	image = SDL_LoadFile("halo_guest.elf", &image_size);
 	if (!image)
 		host_fatal("cannot read the game image from the APK: %s", SDL_GetError());
+	/* test26: the files were found (the launcher checked them); this is the
+	device's memory, said so in words, with the log for the details */
 	if (host_load_image(image, image_size) != 0)
-		host_fatal("cannot load the game image; see logcat (tag \"halo\") for details");
+		host_fatal("The game files are fine, but the game could not start on this device: %s "
+			"Restart the headset or phone and try again. If it keeps happening, send the log "
+			"(Download/HaloCE).", host_memory_failure ? host_memory_failure : "it could not load its code.");
 	SDL_free(image);
 
 	{

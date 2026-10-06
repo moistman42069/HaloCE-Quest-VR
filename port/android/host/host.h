@@ -41,6 +41,8 @@ mappings) from pools of address space it reserves below 4 GB on demand. */
 
 /* reserves the fixed ranges; returns 0 on success */
 int host_memory_initialize(uint32_t image_base, uint32_t image_size);
+/* what stopped host_memory_initialize, in words for the player (NULL: none) */
+extern const char *host_memory_failure;
 /* page-granular allocations below 4 GB; NULL on failure */
 void *host_low_map(size_t size, int protection);
 void host_low_unmap(void *address, size_t size);

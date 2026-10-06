@@ -56,6 +56,8 @@ static pthread_mutex_t memory_lock = PTHREAD_MUTEX_INITIALIZER;
 
 static uint64_t window_base, window_end;
 static uint64_t image_base, image_end;
+/* what stopped host_memory_initialize, for the player (host_main.c) */
+const char *host_memory_failure;
 
 /* the window Halo Custom Edition tag data are linked to, with room for
 OpenSauce's memory upgrades (port/linux/game/cache_file_formats.h,
@@ -215,18 +217,32 @@ static int reclaim_art_overlap(uint64_t address, uint64_t size)
 /* reclaim_art: the fixed ranges the guest was built for may take ART's
 idle large object space (reclaim_art_overlap); the pools, placed in free
 gaps, never do: a mapping in the way there is one ART just made, maybe live */
-static int reserve(uint64_t address, uint64_t size, int reclaim_art)
+/* test26: a kernel before 4.17 does not know MAP_FIXED_NOREPLACE and takes
+the address as a hint, placing the mapping elsewhere when the range is in
+use, without an error: that is the newer kernels' EEXIST. Taken as success,
+it was refused with errno left as it was (the first Oculus Quest, Android 10:
+"cannot reserve the Xbox memory window at 80000000 (No such file or
+directory)"), and ART's idle space in the way was never reclaimed. */
+static void *map_fixed_noreplace(uint64_t address, uint64_t size)
 {
 	void *result = mmap((void *)address, size, PROT_NONE,
 		MAP_PRIVATE | MAP_ANONYMOUS | MAP_NORESERVE | MAP_FIXED_NOREPLACE, -1, 0);
 
-	if (result == (void *)address)
-		return 0;
-	if (result != MAP_FAILED)
+	if (result != MAP_FAILED && result != (void *)address)
 	{
 		munmap(result, size);
-		return -1;
+		errno = EEXIST;
+		return MAP_FAILED;
 	}
+	return result;
+}
+
+static int reserve(uint64_t address, uint64_t size, int reclaim_art)
+{
+	void *result = map_fixed_noreplace(address, size);
+
+	if (result == (void *)address)
+		return 0;
 	if (reclaim_art && errno == EEXIST)
 	{
 		int error = errno;
@@ -237,13 +253,9 @@ static int reserve(uint64_t address, uint64_t size, int reclaim_art)
 			errno = error;
 			return -1;
 		}
-		result = mmap((void *)address, size, PROT_NONE,
-			MAP_PRIVATE | MAP_ANONYMOUS | MAP_NORESERVE | MAP_FIXED_NOREPLACE,
-			-1, 0);
+		result = map_fixed_noreplace(address, size);
 		if (result == (void *)address)
 			return 0;
-		if (result != MAP_FAILED)
-			munmap(result, size);
 	}
 	return -1;
 }
@@ -292,6 +304,8 @@ int host_memory_initialize(uint32_t base, uint32_t size)
 	{
 		host_logf(HOST_LOG_ERROR, "cannot reserve the Xbox memory window at %08llx (%s)",
 			(unsigned long long)window_base, strerror(errno));
+		host_memory_failure = "Android has already used the memory range the game needs on this device "
+			"(the Xbox memory window at 0x80000000).";
 		return -1;
 	}
 	image_base = base;
@@ -300,6 +314,8 @@ int host_memory_initialize(uint32_t base, uint32_t size)
 	{
 		host_logf(HOST_LOG_ERROR, "cannot reserve the guest image range at %08llx (%s)",
 			(unsigned long long)image_base, strerror(errno));
+		host_memory_failure = "Android has already used the memory range the game needs on this device "
+			"(the game's code range).";
 		return -1;
 	}
 	/* (without it, Custom Edition maps cannot run; the rest of the game can) */
