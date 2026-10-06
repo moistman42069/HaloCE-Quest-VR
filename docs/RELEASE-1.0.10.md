@@ -83,7 +83,7 @@ For touch gameplay, use MOVE and swipe aiming, or drag from FIRE to move, aim an
 2. Open launcher **Controller & touch settings** to adjust stick dead zones and response, trigger dead zone, vibration, face-button swap, touch visibility and gyro aim. Touch visibility can be **Auto**, **Always show** or **Always hide**; Auto hides the HUD for a supported connected controller and restores it after disconnect.
 3. To reposition touch controls, enter a game, tap **HUD** to open the editor, move or resize controls, adjust opacity/color/response, then save. Use **MOVE + swipe** to move and aim, or drag from **FIRE** to combine movement, aiming and firing.
 
-See the detailed [Android gamepad guide](https://github.com/moistman42069/HaloCE-Quest-VR/blob/v1.0.10/docs/ANDROID-GAMEPAD.md) and [touch/HUD guide](https://github.com/moistman42069/HaloCE-Quest-VR/blob/v1.0.10/docs/ANDROID-TOUCH-CONTROLS.md) for complete mappings and options.
+See the detailed [Android gamepad guide](https://github.com/moistman42069/HaloCE-Quest-VR/blob/main/docs/ANDROID-GAMEPAD.md) and [touch/HUD guide](https://github.com/moistman42069/HaloCE-Quest-VR/blob/main/docs/ANDROID-TOUCH-CONTROLS.md) for complete mappings and options.
 
 ## 4. VR Features and Settings
 
