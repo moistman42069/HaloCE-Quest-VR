@@ -222,6 +222,9 @@ enum
 	VR_BUTTON_ACTION_SWITCH_WEAPON,
 	VR_BUTTON_ACTION_GRENADE,
 	VR_BUTTON_ACTION_SWITCH_GRENADE,
+	/* test26: shows or hides the reticle (the crosshair) for the session;
+	it starts shown */
+	VR_BUTTON_ACTION_RETICLE,
 	VR_BUTTON_ACTIONS
 };
 enum
@@ -234,6 +237,8 @@ enum
 	VR_BUTTON_SOURCE_RIGHT_STICK,
 	VR_BUTTON_SOURCE_LEFT_STICK,
 	VR_BUTTON_SOURCE_GRIP,
+	/* test26: the turning stick held down (it never turns; not while seated) */
+	VR_BUTTON_SOURCE_RIGHT_STICK_DOWN,
 	VR_BUTTON_SOURCE_HOLD,
 	VR_BUTTON_SOURCES
 };
@@ -249,6 +254,11 @@ float vr_vignette_aperture(float strength, float amount, float corner);
 int vr_vignette_shown(void);
 /* test25: vr.vehicle_tilt, 0 to 1 */
 float vr_vehicle_tilt(void);
+/* test26: the HUD hidden by its head tap (vr.hud_tap_distance), the
+reticle by its button (vr.button_reticle): the session's, both start
+shown; menus, prompts and messages always show */
+int vr_hud_hidden(void);
+int vr_reticle_hidden(void);
 void vr_set_gun_class(int kind);
 int vr_gun_class(void);
 const char *vr_gun_class_label(int kind);

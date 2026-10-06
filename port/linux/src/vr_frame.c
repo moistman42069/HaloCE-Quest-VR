@@ -196,6 +196,15 @@ static struct
 	int holster_zone;
 	float melee_rearm;
 	int flashlight_armed, crouching, in_holster, two_hand_held;
+	/* test26: the HUD tap (vr.hud_tap_distance: the weapon hand brought to
+	its own side of the head) and the reticle's button toggle what the
+	session shows (both start shown); the reticle button's press, given up
+	if the other stick's click joins it (both recentre) or in a seat (stick
+	clicks sound the horn); the turning stick held down (a button); the
+	wrist HUD (vr.wrist_hud) and whether menus are up (none masked then) */
+	float hud_tap_distance;
+	int hud_tap_armed, hud_hidden, reticle_hidden, reticle_press, reticle_cancelled, turn_stick_down;
+	int wrist_hud, menus_active;
 	/* the aim's smoothing by zoom level (vr_set_zoom_level), as the PC mod
 	HaloCEVR's: its direction, eased toward the hand's */
 	int zoom_level, smoothed_valid;
@@ -417,6 +426,48 @@ static void migrate_gun_aim_reset(void)
 /* Test21: two-hand grip locks automatically when the off hand rests at the
 gun's support grip (vr.two_handed "auto", the new default). Configs still on
 the old "grip" default move to it once; a later choice is kept. */
+/* test26: the left stick's click toggles the reticle by default, and
+crouching moved to the turning stick held down. A crouch left on the left
+stick (the old default, written to every config.toml) moves there, unless
+another action has it (then crouching has no button: the room-scale crouch
+stays); a left stick another action has leaves the reticle without one */
+static void migrate_reticle_button(void)
+{
+	int action, ok = 1;
+	int crouch = vr_button_source_of(config_string("vr.button_crouch"), VR_BUTTON_SOURCE_RIGHT_STICK_DOWN);
+	int reticle = vr_button_source_of(config_string("vr.button_reticle"), VR_BUTTON_SOURCE_LEFT_STICK);
+
+	if (config_boolean("vr.controls_reticle_applied"))
+		return;
+	if (crouch == VR_BUTTON_SOURCE_LEFT_STICK && reticle == VR_BUTTON_SOURCE_LEFT_STICK)
+	{
+		crouch = VR_BUTTON_SOURCE_RIGHT_STICK_DOWN;
+		for (action = 0; action < VR_BUTTON_ACTIONS; action++)
+		{
+			if (action != VR_BUTTON_ACTION_CROUCH &&
+				vr_button_source_of(config_string(vr_button_action_key(action)), vr_button_default(action)) == crouch)
+				crouch = VR_BUTTON_SOURCE_NONE;
+		}
+		ok = config_write_string("vr.button_crouch", vr_button_source_value(crouch));
+		platform_log("vr: crouch moved to %s; the left stick's click shows or hides the reticle (Buttons page)%s",
+			crouch == VR_BUTTON_SOURCE_NONE ? "no button (another action has the turning stick held down)" :
+			"the turning stick held down", ok ? "" : " (save failed)");
+	}
+	for (action = 0; reticle != VR_BUTTON_SOURCE_NONE && action < VR_BUTTON_ACTIONS; action++)
+	{
+		if (action != VR_BUTTON_ACTION_RETICLE &&
+			vr_button_source_of(config_string(vr_button_action_key(action)), vr_button_default(action)) == reticle)
+		{
+			platform_log("vr: %s has %s; the reticle toggle has no button (Buttons page)",
+				vr_button_action_key(action), vr_button_source_value(reticle));
+			reticle = VR_BUTTON_SOURCE_NONE;
+		}
+	}
+	ok = config_write_string("vr.button_reticle", vr_button_source_value(reticle)) && ok;
+	if (ok)
+		config_write_boolean("vr.controls_reticle_applied", 1);
+}
+
 static void migrate_two_hand_auto(void)
 {
 	int ok = 1;
@@ -614,6 +665,17 @@ void vr_reload_settings(void)
 	if (vr.arm_run_speed < 0.1f)
 		vr.arm_run_speed = 0.1f;
 	vr.flashlight_distance = (float)config_real("vr.flashlight_distance");
+	/* test26: the head taps' reach (0 off), bounded */
+	if (!(vr.flashlight_distance >= 0.0f)) vr.flashlight_distance = 0.0f;
+	if (vr.flashlight_distance > 0.4f) vr.flashlight_distance = 0.4f;
+	vr.hud_tap_distance = (float)config_real("vr.hud_tap_distance");
+	if (!(vr.hud_tap_distance >= 0.0f)) vr.hud_tap_distance = 0.0f;
+	if (vr.hud_tap_distance > 0.3f) vr.hud_tap_distance = 0.3f;
+	vr.wrist_hud = config_boolean("vr.wrist_hud");
+	platform_log("vr: head taps: flashlight %s, HUD %s; wrist HUD %s",
+		vr.flashlight_distance > 0.0f ? "the off hand to the head" : "off (its button)",
+		vr.hud_tap_distance > 0.0f ? "the weapon hand to its temple" : "off",
+		vr.wrist_hud ? "on (the off hand's wrist)" : "off");
 	vr.crouch_height = (float)config_real("vr.crouch_height");
 	vr.holsters = config_boolean("vr.holsters");
 	vr.holster_size = (float)config_real("vr.holster_size");
@@ -716,7 +778,7 @@ void vr_initialize(void)
 		return;
 	vr.initialized = 1;
 	config_vr_vehicle_defaults();
-	platform_log("vr: HaloCE Quest test25 candidate 1.0.7 (vehicle seat and recentre diagnostics, first-person horizon option and seat glass, settings rows that fit, vehicle offset reset; test24b: comfort vignette, smooth speed and snap angle, SPV1 marked not working; test24: co-op cutscenes animate for the second player; test23: remappable Quest buttons with the grenade on X; test22: co-op campaign host crash fixed, steady first-person vehicle view, left-hand ammo display, adjustable scopes, shot diagnostics; test21b: floating hands restored, torso-following arms, neck-pivot full body, auto two-hand lock, horn, online melee off, two-hand gun roll, pistol shots from the hand, reticle converges as shots do, per-gun aim, horn from either stick)");
+	platform_log("vr: HaloCE Quest test26 candidate 1.0.8 (co-op: death screams no longer stop the second player, cutscene characters placed and animated as on the first; HUD head tap, reticle toggle on the left stick click with crouch on the turning stick held down (or crouch kept on the click: Controls), optional wrist HUD, adjustable head taps; impact melee along the gun with a follow-through; fingers bend smoothly against walls; test25: vehicle seat and recentre diagnostics, first-person horizon option and seat glass, settings rows that fit, vehicle offset reset; test24b: comfort vignette, smooth speed and snap angle, SPV1 marked not working; test24: co-op cutscenes animate for the second player; test23: remappable Quest buttons with the grenade on X; test22: co-op campaign host crash fixed, steady first-person vehicle view, left-hand ammo display, adjustable scopes, shot diagnostics; test21b: floating hands restored, torso-following arms, neck-pivot full body, auto two-hand lock, horn, online melee off, two-hand gun roll, pistol shots from the hand, reticle converges as shots do, per-gun aim, horn from either stick)");
 	if (!config_boolean("vr.enabled"))
 	{
 		platform_log("vr: off (vr.enabled)");
@@ -752,9 +814,11 @@ void vr_initialize(void)
 	migrate_handedness();
 	migrate_two_hand_auto();
 	migrate_gun_aim_reset();
+	migrate_reticle_button();
 	vr_reload_settings();
 	vr.zoom_level = -1;
 	vr.flashlight_armed = 1;
+	vr.hud_tap_armed = 1;
 	vr.noted_weapon = -1;
 	vr.gun_class = -1;
 	vr.pending_state = -1;
@@ -890,16 +954,18 @@ const char *vr_gun_class_key(int kind)
 static const char *const button_action_keys[VR_BUTTON_ACTIONS] =
 {
 	"vr.button_jump", "vr.button_action", "vr.button_melee", "vr.button_crouch",
-	"vr.button_switch_weapon", "vr.button_grenade", "vr.button_switch_grenade"
+	"vr.button_switch_weapon", "vr.button_grenade", "vr.button_switch_grenade", "vr.button_reticle"
 };
 static const char *const button_source_values[VR_BUTTON_SOURCES] =
 {
-	"none", "a", "b", "x", "y", "right_stick", "left_stick", "grip", "hold"
+	"none", "a", "b", "x", "y", "right_stick", "left_stick", "grip", "right_stick_down", "hold"
 };
+/* test26: the reticle toggle took the left stick's click, and crouching
+the turning stick held down (a room-scale crouch works as ever) */
 static const int button_defaults[VR_BUTTON_ACTIONS] =
 {
-	VR_BUTTON_SOURCE_A, VR_BUTTON_SOURCE_B, VR_BUTTON_SOURCE_RIGHT_STICK, VR_BUTTON_SOURCE_LEFT_STICK,
-	VR_BUTTON_SOURCE_Y, VR_BUTTON_SOURCE_X, VR_BUTTON_SOURCE_HOLD
+	VR_BUTTON_SOURCE_A, VR_BUTTON_SOURCE_B, VR_BUTTON_SOURCE_RIGHT_STICK, VR_BUTTON_SOURCE_RIGHT_STICK_DOWN,
+	VR_BUTTON_SOURCE_Y, VR_BUTTON_SOURCE_X, VR_BUTTON_SOURCE_HOLD, VR_BUTTON_SOURCE_LEFT_STICK
 };
 
 const char *vr_button_action_key(int action)
@@ -1099,8 +1165,26 @@ static int touch_source_down(int source, unsigned int right, unsigned int left)
 	case VR_BUTTON_SOURCE_RIGHT_STICK: return (right & HALO_XR_HAND_STICK) != 0;
 	case VR_BUTTON_SOURCE_LEFT_STICK: return (left & HALO_XR_HAND_STICK) != 0;
 	case VR_BUTTON_SOURCE_GRIP: return !physical_weapons() && vr.grip_held[vr.weapon_hand] && !vr.in_holster;
+	case VR_BUTTON_SOURCE_RIGHT_STICK_DOWN: return vr.turn_stick_down;
 	}
 	return 0;
+}
+
+/* test26: the hand (0 left, 1 right) a source is on, for its buzz */
+static int touch_source_hand(int source)
+{
+	int major = vr.controls_mirrored ? 0 : 1;
+
+	switch (source)
+	{
+	case VR_BUTTON_SOURCE_X:
+	case VR_BUTTON_SOURCE_Y:
+	case VR_BUTTON_SOURCE_LEFT_STICK:
+		return 1 - major;
+	case VR_BUTTON_SOURCE_GRIP:
+		return vr.weapon_hand;
+	}
+	return major;
 }
 
 /* test23: the Quest's buttons from the remappable table (vr.button_*):
@@ -1114,7 +1198,7 @@ static unsigned int touch_buttons(unsigned int right, unsigned int left, double 
 	static const unsigned int pad[VR_BUTTON_ACTIONS] =
 	{
 		HALO_XR_BUTTON_A, HALO_XR_BUTTON_X, HALO_XR_BUTTON_B, HALO_XR_BUTTON_LEFT_THUMB,
-		HALO_XR_BUTTON_Y, 0, HALO_XR_BUTTON_BLACK
+		HALO_XR_BUTTON_Y, 0, HALO_XR_BUTTON_BLACK, 0
 	};
 	unsigned int buttons = 0;
 	int action, grenade = vr.button_source[VR_BUTTON_ACTION_GRENADE];
@@ -1126,6 +1210,33 @@ static unsigned int touch_buttons(unsigned int right, unsigned int left, double 
 		if (action != VR_BUTTON_ACTION_GRENADE && pad[action] &&
 			touch_source_down(vr.button_source[action], right, left))
 			buttons |= pad[action];
+	}
+	/* test26: the reticle's button: pressed and let go, the reticle shows
+	or hides; not if the other stick's click joined it (both sticks
+	recentre) or in a seat (a stick click sounds the horn) */
+	{
+		int source = vr.button_source[VR_BUTTON_ACTION_RETICLE];
+
+		if (source != VR_BUTTON_SOURCE_NONE && touch_source_down(source, right, left))
+		{
+			if (!vr.reticle_press)
+			{
+				vr.reticle_press = 1;
+				vr.reticle_cancelled = 0;
+			}
+			if (vr.seated || ((right & HALO_XR_HAND_STICK) && (left & HALO_XR_HAND_STICK)))
+				vr.reticle_cancelled = 1;
+		}
+		else if (vr.reticle_press)
+		{
+			vr.reticle_press = 0;
+			if (!vr.reticle_cancelled)
+			{
+				vr.reticle_hidden = !vr.reticle_hidden;
+				vr_haptic(touch_source_hand(source), 0.3f, 0.03f);
+				platform_log("vr: reticle %s (vr.button_reticle)", vr.reticle_hidden ? "hidden" : "shown");
+			}
+		}
 	}
 	if (!hold_switches)
 	{
@@ -1169,6 +1280,11 @@ static void layout_controls(void)
 		memcpy(vr.pad_trigger, vr.frame.trigger, sizeof(vr.pad_trigger));
 		return;
 	}
+	/* test26: the turning stick held nearly straight down, a button (it
+	never turns: snap and smooth turns are its sideways), let go a little
+	sooner than taken; never in a seat */
+	vr.turn_stick_down = !vr.seated && fabsf(vr.frame.thumb[2]) < 0.6f &&
+		vr.frame.thumb[3] < (vr.turn_stick_down ? -0.55f : -0.75f);
 	if (vr.frame.hand_buttons[1 - vr.weapon_hand] & HALO_XR_HAND_BUMPER)
 		buttons |= HALO_XR_BUTTON_WHITE;                                    /* flashlight, the off hand's */
 	if ((right | left) & HALO_XR_HAND_MENU) buttons |= HALO_XR_BUTTON_START;
@@ -1449,6 +1565,35 @@ static void update_gestures(void)
 		else if (distance > vr.flashlight_distance + 0.05f)
 		{
 			vr.flashlight_armed = 1;
+		}
+	}
+
+	/* test26: the HUD tap: the weapon hand brought to its own side of the
+	head (its temple: 8 cm out from between the eyes, 4 cm back; the right
+	one for a right hand), once each time, shows or hides the HUD
+	(vr_hud_hidden; menus, prompts, messages and the reticle stay). The
+	right shoulder's holster is about 24 cm from there, a gun held to the
+	cheek about 20 */
+	if (vr.hud_tap_distance > 0.0f && (vr.frame.hand_valid[w] & 1))
+	{
+		const float side[3] = { w ? 0.08f : -0.08f, 0.0f, 0.04f };
+		float temple[3], distance;
+
+		rotate(vr.frame.head.orientation, side, temple);
+		temple[0] += vr.frame.head.position[0];
+		temple[1] += vr.frame.head.position[1];
+		temple[2] += vr.frame.head.position[2];
+		distance = distance3(vr.frame.grip[w].position, temple);
+		if (distance < vr.hud_tap_distance && vr.hud_tap_armed)
+		{
+			vr.hud_hidden = !vr.hud_hidden;
+			vr.hud_tap_armed = 0;
+			vr_haptic(w, 0.4f, 0.04f);
+			platform_log("vr: HUD %s (head tap)", vr.hud_hidden ? "hidden" : "shown");
+		}
+		else if (distance > vr.hud_tap_distance + 0.05f)
+		{
+			vr.hud_tap_armed = 1;
 		}
 	}
 
@@ -2747,7 +2892,17 @@ void vr_set_reticle_world(const float anchor[3], const float hit[3])
 
 int vr_crosshair_enabled(void)
 {
-	return vr.crosshair_enabled && vr.crosshair_opacity > 0.0f;
+	return vr.crosshair_enabled && vr.crosshair_opacity > 0.0f && !vr.reticle_hidden;
+}
+
+int vr_hud_hidden(void)
+{
+	return vr.active && vr.hud_hidden;
+}
+
+int vr_reticle_hidden(void)
+{
+	return vr.active && vr.reticle_hidden;
 }
 
 void vr_crosshair_source(unsigned int texture, float u0, float v0, float u1, float v1)
@@ -2958,6 +3113,44 @@ static const char hud_fragment_source[] =
 
 static GLuint hud_program, scope_program, hud_vertex_array;
 static GLuint crosshair_program;
+/* test26: the wrist HUD (vr.wrist_hud): the HUD's corners that tell the
+player's state, as Halo lays its HUD out on the 640x480 screen (shield and
+health top right; the weapon's ammunition and the grenades top left; the
+motion tracker bottom left), drawn on a panel on the off hand's wrist and
+left out of the HUD ahead (not while menus are up). In the HUD's image
+coordinates (0 at the top): left, top, right, bottom */
+static const float wrist_crops[3][4] =
+{
+	{ 0.60f, 0.00f, 1.00f, 0.17f },
+	{ 0.00f, 0.00f, 0.40f, 0.27f },
+	{ 0.00f, 0.66f, 0.30f, 1.00f },
+};
+static const char hud_masked_fragment_source[] =
+	"#version 300 es\n"
+	"precision mediump float;\n"
+	"uniform sampler2D hud;\n"
+	"uniform vec4 masks[3];\n"
+	"in vec2 coordinate;\n"
+	"out vec4 colour;\n"
+	"bool inside(vec4 r) { return coordinate.x >= r.x && coordinate.x <= r.z && coordinate.y >= r.y && coordinate.y <= r.w; }\n"
+	"void main()\n"
+	"{\n"
+	"	vec3 rgb = texture(hud, coordinate).rgb;\n"
+	"	if (inside(masks[0]) || inside(masks[1]) || inside(masks[2])) rgb = vec3(0.0);\n"
+	"	colour = vec4(rgb, max(rgb.r, max(rgb.g, rgb.b)));\n"
+	"}\n";
+static GLuint hud_masked_program;
+static int hud_masked_failed;
+
+/* whether the HUD's corners go to the wrist this frame: not in a seat, nor
+with the off hand untracked (the panel cannot show then: the HUD ahead is
+whole); with both hands on the gun they stay off it, the panel hidden */
+static int wrist_hud_active(void)
+{
+	return vr.wrist_hud && !vr.menus_active && !vr.hud_hidden && !vr.seated &&
+		(vr.frame.hand_valid[1 - vr.weapon_hand] & 1);
+}
+
 static const char crosshair_fragment_source[] =
 	"#version 300 es\n"
 	"precision mediump float;\n"
@@ -3104,8 +3297,23 @@ static int copy_hud(GLuint texture)
 	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 	if (vr.srgb_write_control)
 		glDisable(GL_FRAMEBUFFER_SRGB_EXT);
-	glUseProgram(hud_program);
-	glUniform1i(glGetUniformLocation(hud_program, "hud"), 0);
+	/* test26: the wrist HUD's corners left out of the HUD ahead */
+	if (wrist_hud_active() && !hud_masked_program && !hud_masked_failed)
+	{
+		hud_masked_program = link_program(hud_masked_fragment_source, "masked HUD");
+		hud_masked_failed = !hud_masked_program;
+	}
+	if (wrist_hud_active() && hud_masked_program)
+	{
+		glUseProgram(hud_masked_program);
+		glUniform1i(glGetUniformLocation(hud_masked_program, "hud"), 0);
+		glUniform4fv(glGetUniformLocation(hud_masked_program, "masks"), 3, wrist_crops[0]);
+	}
+	else
+	{
+		glUseProgram(hud_program);
+		glUniform1i(glGetUniformLocation(hud_program, "hud"), 0);
+	}
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, texture);
 	glBindSampler(0, 0);
@@ -3120,6 +3328,121 @@ static int copy_hud(GLuint texture)
 	if (dumping())
 		dump_image(which, index, "vr-hud.bmp");
 	host_xr_release(which);
+	return 1;
+}
+
+/* test26: the wrist HUD's panel: the HUD's corners (wrist_crops) on a dark
+ground, the shield and health across the top, the motion tracker under it
+on the left and the ammunition beside it, each as wide as its height keeps
+its shape (the panel's image row 0 is OpenXR's bottom) */
+static int copy_wrist(GLuint texture)
+{
+	unsigned int which = HALO_XR_SWAPCHAIN_WRIST;
+	int index, region, width = (int)vr.info.width[which], height = (int)vr.info.height[which];
+	int place[3][4];
+
+	if (!crosshair_program)
+		crosshair_program = link_program(crosshair_fragment_source, "crosshair");
+	if (!crosshair_program || width < 64 || height < 64 || (index = host_xr_acquire(which)) < 0)
+		return 0;
+	{
+		/* (each crop's shape: its share of the 4:3 screen) */
+		float aspect[3];
+		int top, rest, tracker_width;
+
+		for (region = 0; region < 3; region++)
+			aspect[region] = (wrist_crops[region][2] - wrist_crops[region][0]) * 4.0f /
+				((wrist_crops[region][3] - wrist_crops[region][1]) * 3.0f);
+		top = (int)((float)width / aspect[0]);
+		if (top > height / 2) top = height / 2;
+		rest = height - top;
+		tracker_width = (int)((float)rest * aspect[2]);
+		if (tracker_width > width / 2) tracker_width = width / 2;
+		/* x, y from the top, width, height */
+		place[0][0] = 0; place[0][1] = 0; place[0][2] = width; place[0][3] = top;
+		place[2][0] = 0; place[2][1] = top; place[2][2] = tracker_width; place[2][3] = rest;
+		place[1][0] = tracker_width; place[1][1] = top; place[1][2] = width - tracker_width;
+		place[1][3] = (int)((float)(width - tracker_width) / aspect[1]);
+		if (place[1][3] > rest) place[1][3] = rest;
+	}
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, vr.framebuffer);
+	glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
+		vr.info.images[which][index], 0);
+	glViewport(0, 0, width, height);
+	glDisable(GL_SCISSOR_TEST);
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_STENCIL_TEST);
+	glDisable(GL_CULL_FACE);
+	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+	if (vr.srgb_write_control)
+		glDisable(GL_FRAMEBUFFER_SRGB_EXT);
+	/* (a dark ground, premultiplied, so it reads against a bright world) */
+	glClearColor(0.0f, 0.0f, 0.0f, 0.45f);
+	glClear(GL_COLOR_BUFFER_BIT);
+	glEnable(GL_BLEND);
+	glBlendEquation(GL_FUNC_ADD);
+	glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+	glUseProgram(crosshair_program);
+	glUniform1i(glGetUniformLocation(crosshair_program, "hud"), 0);
+	glUniform1f(glGetUniformLocation(crosshair_program, "opacity"), 1.0f);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, texture);
+	glBindSampler(0, 0);
+	glBindVertexArray(hud_vertex_array);
+	for (region = 0; region < 3; region++)
+	{
+		if (place[region][2] < 1 || place[region][3] < 1)
+			continue;
+		glViewport(place[region][0], height - place[region][1] - place[region][3], place[region][2], place[region][3]);
+		glUniform4fv(glGetUniformLocation(crosshair_program, "crop"), 1, wrist_crops[region]);
+		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+	}
+	glBindVertexArray(0);
+	glUseProgram(0);
+	glDisable(GL_BLEND);
+	if (vr.srgb_write_control)
+		glEnable(GL_FRAMEBUFFER_SRGB_EXT);
+	glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, 0, 0);
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+	host_xr_release(which);
+	return 1;
+}
+
+/* test26: where the wrist HUD's panel goes: on the back of the off hand's
+wrist (7.5 cm behind the grip, as the gun's wrist is, and 4 cm out of the
+back of the hand), facing out of it, as a watch is read: its long side
+along the arm, its top the little finger's side (the far side, the forearm
+across the body). Shown while it faces the eyes, not while the hand holds
+the gun or steers, and 11 by 8 cm. 0 when not shown */
+static int place_wrist(struct halo_xr_layers *layers)
+{
+	static const float back[3] = { 0.0f, 0.0f, 0.075f }, grip_down[3] = { 0.0f, -1.0f, 0.0f };
+	int o = 1 - vr.weapon_hand, axis;
+	const struct halo_xr_pose *grip = &vr.frame.grip[o];
+	float offset[3], centre[3], outward[3], up[3], forward[3], to_eyes[3], length;
+	/* (OpenXR's grip +x is out of a left palm and into a right one: the
+	back of a left hand is -x, of a right one +x; +y the thumb's side) */
+	const float out_axis[3] = { o == 0 ? -1.0f : 1.0f, 0.0f, 0.0f };
+
+	if (!(vr.frame.hand_valid[o] & 1) || vr.two_hand_held || vr.seated)
+		return 0;
+	rotate(grip->orientation, back, offset);
+	rotate(grip->orientation, out_axis, outward);
+	rotate(grip->orientation, grip_down, up);
+	for (axis = 0; axis < 3; axis++)
+	{
+		centre[axis] = grip->position[axis] + offset[axis] + outward[axis] * 0.04f;
+		to_eyes[axis] = vr.frame.head.position[axis] - centre[axis];
+		forward[axis] = -outward[axis];
+	}
+	length = sqrtf(to_eyes[0] * to_eyes[0] + to_eyes[1] * to_eyes[1] + to_eyes[2] * to_eyes[2]);
+	if (!(length > 0.05f) || (outward[0] * to_eyes[0] + outward[1] * to_eyes[1] + outward[2] * to_eyes[2]) < 0.45f * length)
+		return 0;
+	memcpy(layers->wrist_pose.position, centre, sizeof(centre));
+	look_rotation(forward, up, layers->wrist_pose.orientation);
+	layers->wrist_size[0] = 0.11f;
+	layers->wrist_size[1] = 0.11f * (float)vr.info.height[HALO_XR_SWAPCHAIN_WRIST] /
+		(float)(vr.info.width[HALO_XR_SWAPCHAIN_WRIST] ? vr.info.width[HALO_XR_SWAPCHAIN_WRIST] : 1);
 	return 1;
 }
 
@@ -3229,6 +3552,7 @@ int vr_ui_pointer(int menus_active, struct halo_ui_pointer *pointer)
 	int trigger_down, back_down;
 	short x, y;
 
+	vr.menus_active = menus_active != 0;
 	if (!vr.active || !menus_active)
 	{
 		vr.pointer_age = 0;
@@ -3588,6 +3912,9 @@ int vr_present(unsigned int source, unsigned int texture, int width, int height)
 			layers.quad_pose.orientation[3] = 1.0f;
 			layers.quad_size[0] = vr.hud_width;
 			layers.quad_size[1] = vr.hud_width * 0.75f;
+			/* test26: and the wrist HUD's panel, while it faces the eyes */
+			if (wrist_hud_active() && place_wrist(&layers) && copy_wrist(texture))
+				layers.flags |= HALO_XR_LAYER_WRIST;
 		}
 		/* (not while the hand points at a menu: its dot has the layer) */
 		if ((!vr.hand_aiming || (vr.reticle_distance > 0.0f && (vr.frame.hand_valid[vr.weapon_hand] & 2))) &&

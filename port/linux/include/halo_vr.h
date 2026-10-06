@@ -55,6 +55,10 @@ void halo_vr_crosshair_end(void);
 
 #define VR_RENDER_EYE() (vr_render_pass == _vr_render_pass_left_eye || vr_render_pass == _vr_render_pass_right_eye)
 #define VR_RENDER_HUD() (vr_render_pass == _vr_render_pass_hud)
+/* test26: the HUD tapped away (port/linux/src/vr_frame.c): the player's
+state, weapon and waypoints undrawn; prompts, messages and the reticle stay */
+int vr_hud_hidden(void);
+#define VR_HUD_HIDDEN() vr_hud_hidden()
 #define VR_RENDER_SCOPE() (vr_render_pass == _vr_render_pass_scope)
 /* a view of the world for the headset alone: no HUD drawn over it, and no
 fog screen (which assumes the game's own camera and frustum) */
@@ -202,6 +206,7 @@ void halo_vr_resolve_scope(short x0, short y0, short x1, short y1, int shape);
 
 #define VR_RENDER_EYE() 0
 #define VR_RENDER_HUD() 0
+#define VR_HUD_HIDDEN() 0
 #define VR_RENDER_SCOPE() 0
 #define VR_RENDER_VIEW() 0
 #define VR_RENDER_REPEAT() 0

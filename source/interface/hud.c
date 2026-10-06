@@ -108,6 +108,7 @@ symbols in this file:
 #include "text/text_group.h"
 #include "units/unit_definitions.h"
 #include "units/units.h"
+#include "halo_vr.h" /* port: the VR HUD tap, test26 */
 
 /* ---------- constants */
 
@@ -1152,9 +1153,15 @@ void hud_draw_screen(
 				hud_render_weapon_interface(player);
 				hud_show_action_response(player_index);
 				hud_play_unit_sounds(player, hud_scripted_globals->show_hud);
-				hud_render_unit_interface(player);
-				hud_render_nav_points(render.local_player_index);
-				hud_render_damage_indicators(render.local_player_index);
+				/* port: the VR HUD tapped away (test26): the player's state,
+				waypoints and damage arrows undrawn; the reticle
+				(hud_render_weapon_interface), prompts and messages stay */
+				if (!VR_HUD_HIDDEN())
+				{
+					hud_render_unit_interface(player);
+					hud_render_nav_points(render.local_player_index);
+					hud_render_damage_indicators(render.local_player_index);
+				}
 			}
 			else
 			{

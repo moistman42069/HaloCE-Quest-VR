@@ -909,7 +909,8 @@ int host_xr_init(struct halo_xr_info *out, uint32_t quad_width, uint32_t quad_he
 	if (!create_swapchain(HALO_XR_SWAPCHAIN_QUAD, quad_width, quad_height) ||
 		!create_swapchain(HALO_XR_SWAPCHAIN_RETICLE, 256, 256) ||
 		!create_swapchain(HALO_XR_SWAPCHAIN_FADE, 16, 16) ||
-		!create_swapchain(HALO_XR_SWAPCHAIN_SCOPE, 768, 768))
+		!create_swapchain(HALO_XR_SWAPCHAIN_SCOPE, 768, 768) ||
+		!create_swapchain(HALO_XR_SWAPCHAIN_WRIST, 512, 384))
 	{
 		return -1;
 	}
@@ -1252,7 +1253,8 @@ void host_xr_end_frame(const struct halo_xr_layers *layers)
 	XrCompositionLayerQuad screen[2] = { { XR_TYPE_COMPOSITION_LAYER_QUAD }, { XR_TYPE_COMPOSITION_LAYER_QUAD } };
 	XrCompositionLayerQuad fade = { XR_TYPE_COMPOSITION_LAYER_QUAD };
 	XrCompositionLayerQuad scope = { XR_TYPE_COMPOSITION_LAYER_QUAD };
-	const XrCompositionLayerBaseHeader *list[7];
+	XrCompositionLayerQuad wrist = { XR_TYPE_COMPOSITION_LAYER_QUAD };
+	const XrCompositionLayerBaseHeader *list[9];
 	XrFrameEndInfo end = { XR_TYPE_FRAME_END_INFO };
 	uint32_t count = 0;
 	int which;
@@ -1365,6 +1367,22 @@ void host_xr_end_frame(const struct halo_xr_layers *layers)
 		local_pose(&layers->scope_pose, &scope.pose);
 		list[count++] = (const XrCompositionLayerBaseHeader *)&scope;
 	}
+	/* test26: the wrist HUD, on the off hand's wrist: nearer than the HUD */
+	if (layers && (layers->flags & HALO_XR_LAYER_WRIST) && xr.frame_state.shouldRender)
+	{
+		const struct swapchain *swapchain = &xr.swapchains[HALO_XR_SWAPCHAIN_WRIST];
+
+		wrist.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT;
+		wrist.eyeVisibility = XR_EYE_VISIBILITY_BOTH;
+		wrist.subImage.swapchain = swapchain->handle;
+		wrist.subImage.imageRect.extent.width = (int32_t)swapchain->width;
+		wrist.subImage.imageRect.extent.height = (int32_t)swapchain->height;
+		wrist.size.width = layers->wrist_size[0];
+		wrist.size.height = layers->wrist_size[1];
+		wrist.space = xr.local;
+		local_pose(&layers->wrist_pose, &wrist.pose);
+		list[count++] = (const XrCompositionLayerBaseHeader *)&wrist;
+	}
 	/* a fade to black over everything: a quad just ahead of the eyes,
 	wider than they see */
 	if (layers && (layers->flags & HALO_XR_LAYER_FADE) && xr.frame_state.shouldRender)
@@ -1400,13 +1418,14 @@ void host_xr_end_frame(const struct halo_xr_layers *layers)
 		screen or HUD quad, the reticle, a 3D screen, the fade, the scope */
 		if (flags != xr.last_layer_flags || (count && !xr.first_frame_logged))
 		{
-			host_logf(HOST_LOG_INFO, "[openxr] layers now:%s%s%s%s%s%s%s (%u submitted%s)",
+			host_logf(HOST_LOG_INFO, "[openxr] layers now:%s%s%s%s%s%s%s%s (%u submitted%s)",
 				(flags & HALO_XR_LAYER_PROJECTION) ? " stereo" : "",
 				(flags & HALO_XR_LAYER_QUAD) ? ((flags & HALO_XR_LAYER_QUAD_HEAD_LOCKED) ? " hud" : " screen") : "",
 				(flags & HALO_XR_LAYER_RETICLE) ? ((flags & HALO_XR_LAYER_RETICLE_ON_TOP) ? " pointer" : " reticle") : "",
 				(flags & HALO_XR_LAYER_STEREO_SCREEN) ? " 3d-screen" : "",
 				(flags & HALO_XR_LAYER_FADE) ? " fade" : "",
 				(flags & HALO_XR_LAYER_SCOPE) ? " scope" : "",
+				(flags & HALO_XR_LAYER_WRIST) ? " wrist" : "",
 				flags ? "" : " none",
 				count, xr.views_valid ? "" : ", head not tracked");
 			xr.last_layer_flags = flags;

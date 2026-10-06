@@ -356,7 +356,8 @@ static const struct config_setting config_settings[] =
 		"jump, B reload and action, X switch grenades, Y switch weapons, right\n"
 		"bumper grenade, left bumper flashlight, right stick click melee, left\n"
 		"stick click crouch, menu pause, view back (held a second, recentre).\n"
-		"\"pad\": as an Xbox controller." },
+		"Quest Touch controllers take their buttons from the vr.button_* settings\n"
+		"(VR Settings > BUTTONS). \"pad\": as an Xbox controller." },
 	{ "vr.move_relative", _config_string, "\"head\"", "HALO_VR_MOVE_RELATIVE", _environment_value, _platform_vr,
 		"What the move stick moves you relative to: \"head\", or where the\n"
 		"\"left\" or \"right\" controller points." },
@@ -462,7 +463,16 @@ static const struct config_setting config_settings[] =
 		"quick hand movement does not melee; the melee button always does." },
 	{ "vr.flashlight_distance", _config_real, "0.2", "HALO_VR_FLASHLIGHT_DISTANCE", _environment_value, _platform_vr,
 		"The off hand brought this close (metres) to the middle of the head\n"
-		"turns the flashlight on or off; 0 turns the gesture off." },
+		"turns the flashlight on or off; 0 turns the gesture off (0.10 to 0.30 in the menu)." },
+	{ "vr.hud_tap_distance", _config_real, "0.1", "HALO_VR_HUD_TAP_DISTANCE", _environment_value, _platform_vr,
+		"The weapon hand brought this close (metres) to its own side of the head (the right temple\n"
+		"for a right hand) shows or hides the HUD for the session; menus, prompts, messages and the\n"
+		"reticle stay. 0 turns the gesture off." },
+	{ "vr.wrist_hud", _config_boolean, "false", "HALO_VR_WRIST_HUD", _environment_value, _platform_vr,
+		"Shield and health, ammunition and grenades, and the motion tracker on a panel on the off\n"
+		"hand's wrist (shown while you look at it), and left out of the HUD ahead. Off by default." },
+	{ "vr.controls_reticle_applied", _config_boolean, "false", "HALO_VR_CONTROLS_RETICLE_APPLIED", _environment_value, _platform_vr,
+		"Internal one-time move of crouch off the left stick's click (now the reticle toggle's)." },
 	{ "vr.crouch_height", _config_real, "0.35", "HALO_VR_CROUCH_HEIGHT", _environment_value, _platform_vr,
 		"Ducking this far (metres) below your height at the last recentre\n"
 		"crouches; 0 turns it off." },
@@ -545,25 +555,29 @@ static const struct config_setting config_settings[] =
 		"The sniper rifle scope's size as a share of vr.scope_size (1 = as usual)." },
 	{ "vr.button_jump", _config_string, "\"a\"", "HALO_VR_BUTTON_JUMP", _environment_value, _platform_vr,
 		"Quest: the button that jumps: a, b (the gun hand's lower and upper), x, y (the other hand's),\n"
-		"right_stick, left_stick, grip or none." },
+		"right_stick, left_stick, right_stick_down (the turning stick held down), grip or none." },
 	{ "vr.button_action", _config_string, "\"b\"", "HALO_VR_BUTTON_ACTION", _environment_value, _platform_vr,
 		"Quest: the button for action and reload: a, b (the gun hand's lower and upper), x, y (the other hand's),\n"
-		"right_stick, left_stick, grip or none." },
+		"right_stick, left_stick, right_stick_down (the turning stick held down), grip or none." },
 	{ "vr.button_melee", _config_string, "\"right_stick\"", "HALO_VR_BUTTON_MELEE", _environment_value, _platform_vr,
 		"Quest: the button that melees: a, b (the gun hand's lower and upper), x, y (the other hand's),\n"
-		"right_stick, left_stick, grip or none." },
-	{ "vr.button_crouch", _config_string, "\"left_stick\"", "HALO_VR_BUTTON_CROUCH", _environment_value, _platform_vr,
-		"Quest: the button that crouches: a, b (the gun hand's lower and upper), x, y (the other hand's),\n"
-		"right_stick, left_stick, grip or none." },
+		"right_stick, left_stick, right_stick_down (the turning stick held down), grip or none." },
+	{ "vr.button_crouch", _config_string, "\"right_stick_down\"", "HALO_VR_BUTTON_CROUCH", _environment_value, _platform_vr,
+		"Quest: the button that crouches (default since 1.0.8: the turning stick held down; ducking\n"
+		"also crouches): a, b (the gun hand's lower and upper), x, y (the other hand's),\n"
+		"right_stick, left_stick, right_stick_down (the turning stick held down), grip or none." },
+	{ "vr.button_reticle", _config_string, "\"left_stick\"", "HALO_VR_BUTTON_RETICLE", _environment_value, _platform_vr,
+		"Quest: the button that shows or hides the reticle (it starts shown; not in a seat, and not\n"
+		"with both sticks clicked, which recentres): a, b, x, y, right_stick, left_stick, right_stick_down (the turning stick held down), grip or none." },
 	{ "vr.button_switch_weapon", _config_string, "\"y\"", "HALO_VR_BUTTON_SWITCH_WEAPON", _environment_value, _platform_vr,
 		"Quest: the button that switches weapons: a, b (the gun hand's lower and upper), x, y (the other hand's),\n"
-		"right_stick, left_stick, grip or none." },
+		"right_stick, left_stick, right_stick_down (the turning stick held down), grip or none." },
 	{ "vr.button_grenade", _config_string, "\"x\"", "HALO_VR_BUTTON_GRENADE", _environment_value, _platform_vr,
 		"Quest: the button that throws a grenade (\"grip\": the gun hand's grip, locked weapons only, throws while held): a, b (the gun hand's lower and upper), x, y (the other hand's),\n"
-		"right_stick, left_stick, grip or none." },
+		"right_stick, left_stick, right_stick_down (the turning stick held down), grip or none." },
 	{ "vr.button_switch_grenade", _config_string, "\"hold\"", "HALO_VR_BUTTON_SWITCH_GRENADE", _environment_value, _platform_vr,
 		"Quest: the button that switches grenades, or \"hold\" (default): holding the grenade\n"
-		"button switches and tapping it throws. Also a, b, x, y, right_stick, left_stick, grip or none." },
+		"button switches and tapping it throws. Also a, b, x, y, right_stick, left_stick, right_stick_down (the turning stick held down), grip or none." },
 	{ "vr.align_left_pitch", _config_real, "0.0", "HALO_VR_ALIGN_LEFT_PITCH", _environment_value, _platform_vr,
 		"Left controller tracking correction, local pitch: degrees (-180..180). Moves hand AND gun;\n"
 		"for comfort use vr.hand_* (hand) or vr.weapon_* (gun). Zero preserves runtime tracking." },

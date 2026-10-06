@@ -75,7 +75,8 @@ checked on both sides below. */
 #define HALO_XR_SWAPCHAIN_RETICLE 3
 #define HALO_XR_SWAPCHAIN_FADE 4
 #define HALO_XR_SWAPCHAIN_SCOPE 5
-#define HALO_XR_SWAPCHAIN_COUNT 6
+#define HALO_XR_SWAPCHAIN_WRIST 6          /* test26: the wrist HUD's panel */
+#define HALO_XR_SWAPCHAIN_COUNT 7
 #define HALO_XR_MAXIMUM_IMAGES 4
 
 struct halo_xr_pose
@@ -173,6 +174,7 @@ left Y), west and north the Frame's right X and Y. */
 #define HALO_XR_LAYER_SCOPE 0x80u           /* the scope swapchain at scope_pose (LOCAL), blended */
 #define HALO_XR_LAYER_RETICLE_ON_TOP 0x100u /* the reticle over the quad (the menus' pointer on their
                                                screen), else under it (the hand's aim, under the HUD) */
+#define HALO_XR_LAYER_WRIST 0x200u          /* test26: the wrist swapchain at wrist_pose (LOCAL), blended */
 
 struct halo_xr_layers
 {
@@ -183,6 +185,8 @@ struct halo_xr_layers
 	float reticle_size[2];
 	struct halo_xr_pose scope_pose;
 	float scope_size[2];
+	struct halo_xr_pose wrist_pose;
+	float wrist_size[2];
 };
 
 #ifdef __cplusplus
@@ -191,10 +195,10 @@ struct halo_xr_layers
 #define HALO_XR_ASSERT _Static_assert
 #endif
 HALO_XR_ASSERT(sizeof(struct halo_xr_pose) == 28, "halo_xr_pose layout");
-HALO_XR_ASSERT(sizeof(struct halo_xr_info) == 312, "halo_xr_info layout");
+HALO_XR_ASSERT(sizeof(struct halo_xr_info) == 344, "halo_xr_info layout");
 HALO_XR_ASSERT(sizeof(struct halo_xr_frame) == 304, "halo_xr_frame layout");
 HALO_XR_ASSERT(__builtin_offsetof(struct halo_xr_frame, head) == 24, "halo_xr_frame.head");
 HALO_XR_ASSERT(__builtin_offsetof(struct halo_xr_frame, buttons) == 260, "halo_xr_frame.buttons");
-HALO_XR_ASSERT(sizeof(struct halo_xr_layers) == 112, "halo_xr_layers layout");
+HALO_XR_ASSERT(sizeof(struct halo_xr_layers) == 148, "halo_xr_layers layout");
 
 #endif

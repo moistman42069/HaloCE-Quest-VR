@@ -1980,14 +1980,18 @@ void hud_render_weapon_interface(
 				weapon_index,
 				hud_index,
 				&weapon_state);
-			render_weapon_hud(
-				hud_index,
-				player->local_player_index,
-				definition,
-				&weapon_state,
-				NULL,
-				NULL,
-				NULL);
+			/* port: the VR HUD tapped away (test26): the reticle only */
+			if (!VR_HUD_HIDDEN())
+			{
+				render_weapon_hud(
+					hud_index,
+					player->local_player_index,
+					definition,
+					&weapon_state,
+					NULL,
+					NULL,
+					NULL);
+			}
 			play_weapon_hud_sounds(
 				player->local_player_index,
 				hud_index,
@@ -2005,9 +2009,12 @@ void hud_render_weapon_interface(
 			&weapon_state);
 	}
 
-	render_grenade_hud(
-		player->local_player_index,
-		player->unit_index);
+	if (!VR_HUD_HIDDEN())
+	{
+		render_grenade_hud(
+			player->local_player_index,
+			player->unit_index);
+	}
 	if (player->local_player_index != NONE)
 	{
 		get_hud_state(player->local_player_index)->last_weapon_index = weapon_index;

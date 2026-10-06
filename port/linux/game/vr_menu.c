@@ -159,6 +159,10 @@ enum
 	/* test25: every vehicle seat offset (vr.vehicle_*_up/_forward/_right)
 	back to its default; view, horizon and steering kept */
 	_vr_setting_reset_vehicle_offsets,
+	/* test26: what the left stick's click does: shows or hides the reticle
+	(the 1.0.8 default; crouch on the turning stick held down) or crouches,
+	as before 1.0.8 (values "reticle", "crouch"; vr_menu_button_set) */
+	_vr_setting_crouch_click,
 };
 
 #define VR_MENU_MAXIMUM_VALUES 12
@@ -202,6 +206,8 @@ static struct vr_menu_setting const vr_menu_controls[] =
 	{ "HOLSTERS", "vr.holsters", _vr_setting_multi, 7, { { "OFF", "vr.holsters=false" }, { "10 CM", "vr.holsters=true;vr.holster_size=0.1" }, { "15 CM", "vr.holsters=true;vr.holster_size=0.15" }, { "20 CM", "vr.holsters=true;vr.holster_size=0.2" }, { "25 CM", "vr.holsters=true;vr.holster_size=0.25" }, { "30 CM", "vr.holsters=true;vr.holster_size=0.3" }, { "40 CM", "vr.holsters=true;vr.holster_size=0.4" } } },
 	{ "AIM", "vr.aim", _vr_setting_string, 2, { { "HAND", "hand" }, { "HEAD", "head" } } },
 	{ "CONTROLS", "vr.controls", _vr_setting_string, 2, { { "VR", "vr" }, { "XBOX", "pad" } } },
+	/* test26: the left stick's click: the reticle's toggle or crouch, as before */
+	{ "L STICK CLICK", "buttons", _vr_setting_crouch_click, 2, { { "RETICLE", "reticle" }, { "CROUCH", "crouch" } } },
 };
 
 static struct vr_menu_setting const vr_menu_body[] =
@@ -226,13 +232,28 @@ static struct vr_menu_setting const vr_menu_body[] =
 static struct vr_menu_setting const vr_menu_vr[] =
 {
 	{ "HAPTICS", "vr.haptics", _vr_setting_real, 11, { { "0%", "0.0" }, { "10%", "0.1" }, { "20%", "0.2" }, { "30%", "0.3" }, { "40%", "0.4" }, { "50%", "0.5" }, { "60%", "0.6" }, { "70%", "0.7" }, { "80%", "0.8" }, { "90%", "0.9" }, { "100%", "1.0" } } },
-	{ "FLASHLIGHT", "vr.flashlight_distance", _vr_setting_real_choice, 2, { { "GESTURE", "0.2" }, { "BUTTON", "0" } } },
 	{ "SCOPE", "vr.scope", _vr_setting_boolean, 2, { { "OFF", "false" }, { "ON", "true" } } },
 	{ "CUTSCENES", "vr.cutscenes", _vr_setting_string, 3, { { "IMMERSIVE", "immersive" }, { "3D SCREEN", "screen" }, { "FLAT", "flat" } } },
 	{ "CLOSE CONTACT", "vr.close_contact", _vr_setting_boolean, 2, { { "OFF", "false" }, { "ON", "true" } } },
+};
+
+/* test26: what the HUD shows and where: the crosshair (formerly on
+GAMEPLAY; its button is on BUTTONS) and the wrist HUD */
+static struct vr_menu_setting const vr_menu_hud[] =
+{
 	{ "CROSSHAIR", "vr.crosshair", _vr_setting_string, 2, { { "NATIVE", "native" }, { "OFF", "off" } } },
 	{ "CROSSHAIR SIZE", "vr.crosshair_size", _vr_setting_real, 8, { { "25%", "0.25" }, { "50%", "0.5" }, { "75%", "0.75" }, { "100%", "1" }, { "125%", "1.25" }, { "150%", "1.5" }, { "200%", "2" }, { "300%", "3" } } },
 	{ "OPACITY", "vr.crosshair_opacity", _vr_setting_real, 11, { { "0%", "0" }, { "10%", "0.1" }, { "20%", "0.2" }, { "30%", "0.3" }, { "40%", "0.4" }, { "50%", "0.5" }, { "60%", "0.6" }, { "70%", "0.7" }, { "80%", "0.8" }, { "90%", "0.9" }, { "100%", "1" } } },
+	{ "WRIST HUD", "vr.wrist_hud", _vr_setting_boolean, 2, { { "OFF", "false" }, { "ON", "true" } } },
+};
+
+/* test26: the head taps, each with its reach or off (the flashlight's
+button stays): the off hand to the head toggles the flashlight, the weapon
+hand to its own temple the HUD */
+static struct vr_menu_setting const vr_menu_gestures[] =
+{
+	{ "FLASHLIGHT", "vr.flashlight_distance", _vr_setting_real, 6, { { "OFF", "0" }, { "10 CM", "0.1" }, { "15 CM", "0.15" }, { "20 CM", "0.2" }, { "25 CM", "0.25" }, { "30 CM", "0.3" } } },
+	{ "HUD TAP", "vr.hud_tap_distance", _vr_setting_real, 6, { { "OFF", "0" }, { "6 CM", "0.06" }, { "8 CM", "0.08" }, { "10 CM", "0.1" }, { "12 CM", "0.12" }, { "15 CM", "0.15" } } },
 };
 
 static struct vr_menu_setting const vr_menu_vehicles[] =
@@ -344,13 +365,15 @@ gun hand's lower/upper buttons and "X"/"Y" the other hand's (mirrored with
 Mirror Controls); the grip is the gun hand's, with locked weapons only */
 static struct vr_menu_setting const vr_menu_buttons[] =
 {
-    { "JUMP", "vr.button_jump", _vr_setting_button, 8, { { "A", "a" }, { "B", "b" }, { "X", "x" }, { "Y", "y" }, { "R STICK", "right_stick" }, { "L STICK", "left_stick" }, { "GRIP", "grip" }, { "NONE", "none" } } },
-    { "USE / RELOAD", "vr.button_action", _vr_setting_button, 8, { { "A", "a" }, { "B", "b" }, { "X", "x" }, { "Y", "y" }, { "R STICK", "right_stick" }, { "L STICK", "left_stick" }, { "GRIP", "grip" }, { "NONE", "none" } } },
-    { "MELEE", "vr.button_melee", _vr_setting_button, 8, { { "A", "a" }, { "B", "b" }, { "X", "x" }, { "Y", "y" }, { "R STICK", "right_stick" }, { "L STICK", "left_stick" }, { "GRIP", "grip" }, { "NONE", "none" } } },
-    { "CROUCH", "vr.button_crouch", _vr_setting_button, 8, { { "A", "a" }, { "B", "b" }, { "X", "x" }, { "Y", "y" }, { "R STICK", "right_stick" }, { "L STICK", "left_stick" }, { "GRIP", "grip" }, { "NONE", "none" } } },
-    { "NEXT WEAPON", "vr.button_switch_weapon", _vr_setting_button, 8, { { "A", "a" }, { "B", "b" }, { "X", "x" }, { "Y", "y" }, { "R STICK", "right_stick" }, { "L STICK", "left_stick" }, { "GRIP", "grip" }, { "NONE", "none" } } },
-    { "GRENADE", "vr.button_grenade", _vr_setting_button, 8, { { "A", "a" }, { "B", "b" }, { "X", "x" }, { "Y", "y" }, { "R STICK", "right_stick" }, { "L STICK", "left_stick" }, { "GRIP", "grip" }, { "NONE", "none" } } },
-    { "NEXT GRENADE", "vr.button_switch_grenade", _vr_setting_button, 9, { { "HOLD", "hold" }, { "A", "a" }, { "B", "b" }, { "X", "x" }, { "Y", "y" }, { "R STICK", "right_stick" }, { "L STICK", "left_stick" }, { "GRIP", "grip" }, { "NONE", "none" } } },
+    { "JUMP", "vr.button_jump", _vr_setting_button, 9, { { "A", "a" }, { "B", "b" }, { "X", "x" }, { "Y", "y" }, { "R STICK", "right_stick" }, { "L STICK", "left_stick" }, { "R DOWN", "right_stick_down" }, { "GRIP", "grip" }, { "NONE", "none" } } },
+    { "USE / RELOAD", "vr.button_action", _vr_setting_button, 9, { { "A", "a" }, { "B", "b" }, { "X", "x" }, { "Y", "y" }, { "R STICK", "right_stick" }, { "L STICK", "left_stick" }, { "R DOWN", "right_stick_down" }, { "GRIP", "grip" }, { "NONE", "none" } } },
+    { "MELEE", "vr.button_melee", _vr_setting_button, 9, { { "A", "a" }, { "B", "b" }, { "X", "x" }, { "Y", "y" }, { "R STICK", "right_stick" }, { "L STICK", "left_stick" }, { "R DOWN", "right_stick_down" }, { "GRIP", "grip" }, { "NONE", "none" } } },
+    { "CROUCH", "vr.button_crouch", _vr_setting_button, 9, { { "A", "a" }, { "B", "b" }, { "X", "x" }, { "Y", "y" }, { "R STICK", "right_stick" }, { "L STICK", "left_stick" }, { "R DOWN", "right_stick_down" }, { "GRIP", "grip" }, { "NONE", "none" } } },
+    { "NEXT WEAPON", "vr.button_switch_weapon", _vr_setting_button, 9, { { "A", "a" }, { "B", "b" }, { "X", "x" }, { "Y", "y" }, { "R STICK", "right_stick" }, { "L STICK", "left_stick" }, { "R DOWN", "right_stick_down" }, { "GRIP", "grip" }, { "NONE", "none" } } },
+    { "GRENADE", "vr.button_grenade", _vr_setting_button, 9, { { "A", "a" }, { "B", "b" }, { "X", "x" }, { "Y", "y" }, { "R STICK", "right_stick" }, { "L STICK", "left_stick" }, { "R DOWN", "right_stick_down" }, { "GRIP", "grip" }, { "NONE", "none" } } },
+    { "NEXT GRENADE", "vr.button_switch_grenade", _vr_setting_button, 10, { { "HOLD", "hold" }, { "A", "a" }, { "B", "b" }, { "X", "x" }, { "Y", "y" }, { "R STICK", "right_stick" }, { "L STICK", "left_stick" }, { "R DOWN", "right_stick_down" }, { "GRIP", "grip" }, { "NONE", "none" } } },
+    /* test26: shows or hides the reticle (starts shown) */
+    { "RETICLE", "vr.button_reticle", _vr_setting_button, 9, { { "A", "a" }, { "B", "b" }, { "X", "x" }, { "Y", "y" }, { "R STICK", "right_stick" }, { "L STICK", "left_stick" }, { "R DOWN", "right_stick_down" }, { "GRIP", "grip" }, { "NONE", "none" } } },
     { "RESET BUTTONS", "buttons", _vr_setting_reset_buttons, 0, { { NULL,NULL } } },
 };
 
@@ -396,6 +419,8 @@ static struct vr_menu_page
 	{ "HANDS + GUN", vr_menu_hands, NUMBEROF(vr_menu_hands) },
 	{ "SCOPES", vr_menu_scopes, NUMBEROF(vr_menu_scopes) },
 	{ "GAMEPLAY", vr_menu_vr, NUMBEROF(vr_menu_vr) },
+	{ "HUD + RETICLE", vr_menu_hud, NUMBEROF(vr_menu_hud) },
+	{ "HEAD GESTURES", vr_menu_gestures, NUMBEROF(vr_menu_gestures) },
 	{ "VEHICLES", vr_menu_vehicles, NUMBEROF(vr_menu_vehicles) },
 	{ "GRAPHICS", vr_menu_graphics, NUMBEROF(vr_menu_graphics) },
 	{ "DISPLAY", vr_menu_effects, NUMBEROF(vr_menu_effects) },
@@ -566,6 +591,11 @@ static long vr_menu_value_index(
 			break;
 		case _vr_setting_button:
 			if (!strcmp(vr_button_source_value(vr_menu_button_source(vr_menu_button_action(setting->key))), value))
+				return index;
+			break;
+		case _vr_setting_crouch_click:
+			if (vr_menu_button_source(!strcmp(value, "crouch") ? VR_BUTTON_ACTION_CROUCH : VR_BUTTON_ACTION_RETICLE) ==
+				VR_BUTTON_SOURCE_LEFT_STICK)
 				return index;
 			break;
 		}
@@ -1271,6 +1301,23 @@ boolean vr_menu_setting_change(
 		the new 3D SCREEN mode explicitly enables that screen. */
 		if (!strcmp(setting->key, "vr.cutscenes") && !strcmp(value, "screen"))
 			written = config_write_boolean("vr.cinema_3d", TRUE) && written;
+		break;
+	case _vr_setting_crouch_click:
+		/* crouch: on the left stick's click with the reticle's toggle off it
+		(no button; BUTTONS can give it one) and the turning stick held down
+		free, the layout before 1.0.8; the reticle: crouch back on the
+		turning stick held down. Each through the BUTTONS page's swap, so
+		no button does two things */
+		if (!strcmp(value, "crouch"))
+		{
+			written = vr_menu_button_set(VR_BUTTON_ACTION_RETICLE, VR_BUTTON_SOURCE_NONE);
+			written = vr_menu_button_set(VR_BUTTON_ACTION_CROUCH, VR_BUTTON_SOURCE_LEFT_STICK) && written;
+		}
+		else
+		{
+			written = vr_menu_button_set(VR_BUTTON_ACTION_CROUCH, VR_BUTTON_SOURCE_RIGHT_STICK_DOWN);
+			written = vr_menu_button_set(VR_BUTTON_ACTION_RETICLE, VR_BUTTON_SOURCE_LEFT_STICK) && written;
+		}
 		break;
 	}
 	vr_reload_settings();
