@@ -23,7 +23,8 @@ Version 1.0.10 updates the co-op integration based on owner testing and adds opt
 - **Release build behavior:** Android/Quest builds now use OpenCE's release configuration. Assertion-style checks that would halt a debug build are logged as release-build exceptions. If one appears in a log, please report it even if play continues.
 - **Larger co-op lobby sizes:** campaign hosting offers OpenCE's choices of 2, 4, 8, 12, 16, 24, 32, 48, 64, 96 and 128 players. Default is 4. These are supported engine/session options; 128-player performance is not verified on Quest or phone.
 - **Android gyro aiming:** optional, off by default. Turn the phone to aim; select Always or only while touching LOOK/FIRE; adjust horizontal/vertical sensitivity and inversion. Works with touch swipes and gamepad input.
-- The earlier OpenCE networking/co-op integration, Android/Quest port, VR avatars, body/hand features, controller/touch support, vehicle and comfort options, and game-data manager remain.
+- **VR and mobile options carried forward:** the headset build includes the optional wrist HUD, configurable crouch/reticle and action bindings, flashlight/HUD gestures, finger and world/weapon contact, per-weapon aim tuning, close-contact movement, and adjustable vehicle views/seats. Android retains customizable touch and gamepad controls; see sections 4 and 5 below for practical details.
+- The build also retains the native in-game server browser and launcher server lists, VR-avatar sharing, game-revision manager/updater and detailed per-launch logs.
 
 The OpenCE base is [Build 138](https://github.com/OpenCommunityEdition/OpenCE/releases/tag/build-138), network v20. This port adds Android/Quest VR and launcher integration.
 
@@ -88,11 +89,14 @@ See the detailed [Android gamepad guide](https://github.com/moistman42069/HaloCE
 ## 4. VR Features and Settings
 
 - Standalone OpenXR stereo rendering, tracked headset/controllers, room-scale movement, recentering, smooth/snap turning, hand/head aim and weapon-aligned scopes.
-- **Legs + Arms** remains the default body representation. Full body, Arms + Hands, Hands Only and other modes remain available. Procedural IK estimates untracked joints; finger contact uses controller sensors, not optical finger tracking.
-- Weapon alignment, physical/locked holding, first-grip protection, two-hand support grip, holsters, native reload/grenade animation handoff and melee options remain.
+- **Legs + Arms** remains the default body representation, with room-scale leg following. Full body, Arms + Hands, Hands Only and other modes remain available. Body and hand modes include procedural IK for untracked joints. Smoothed finger poses use controller touch/trigger sensors, not optical finger tracking; hand/world contact, approximate held-weapon contact and haptics are supported.
+- **Wrist HUD (optional, off by default):** enable it under **VR Settings → HUD + Reticle → Wrist HUD**. Shields/health, ammo, grenades and the motion tracker move to a small panel on the back of the off-hand wrist; turn that wrist toward your face to read it. The panel hides while both hands hold the weapon or a menu is open. It falls back to the normal forward HUD in a vehicle or if the off-hand tracking is lost.
+- **Head gestures:** bring the off hand near your head to toggle the flashlight; bring the gun hand to its own temple to hide/show the main HUD. **Head Gestures** lets you adjust each gesture's distance or turn it off.
+- Gun handling includes controller-anchored placement, per-weapon aim tuning, physical/locked holding, first-grip protection, two-hand support grip (**Auto Lock / Squeeze / Off**), holsters and native reload/grenade animation handoff. **VR Settings → BUTTONS** remaps the main actions. Physical impact/swing melee options are also available; network play retains native melee events as needed.
+- **Closer physical interaction:** **Close Contact** reduces only the local offline VR collision capsule so you can reach nearer to objects and characters while solid world collisions remain. Physical crouch and optional **Arm Run** are available; Arm Run's sprint effect is offline only, while online movement speed remains stock.
 - VR Safe geometry remains enabled by default for compatibility; it may reduce performance. Flat Android continues to default to Normal geometry.
 - Comfort options include smooth/snap turn, turn speed, snap angle and vignette.
-- Vehicle defaults remain **Third Person + Right Hand steering**. First-person vehicle mode is still experimental and not recommended.
+- Vehicle defaults remain **Third Person + Right Hand steering**. Steering can use the left hand, head or stick instead. First-person vehicle mode is still experimental and not recommended; when used, seat height/forward/side offsets can be adjusted globally or for individual supported vehicles.
 - The opening gaze calibration uses tracked headset direction, not eye tracking.
 - Networked VR avatar presentation remains available to compatible 1.0.9/1.0.10 peers. Other OpenCE players see the regular Halo character model.
 

@@ -19,7 +19,8 @@ Both APKs are ARM64 and require Android 9/API 28 or newer. Quest requires Develo
 - Campaign co-op supports joining an active mission. Lobby-size choices now range from 2 to 128; 128 is an engine option, not a tested Quest/phone performance target.
 - Fixed the join-in-progress blue-screen camera fault and build mode now matches OpenCE's release builds.
 - Flat Android gyro aiming is optional and off by default, with Always / touch-to-aim modes, sensitivity and inversion.
-- Includes earlier VR, gamepad/touch, revision manager, updater, vehicle, body and hand features.
+- VR options include the optional wrist HUD, flashlight/HUD gestures, configurable body and finger modes, weapon grip/aim tuning, close-contact movement, melee and vehicle adjustments. **Legs + Arms** and **Third Person + Right Hand steering** are the defaults; first-person vehicles remain experimental.
+- Android includes the controller/touch adjustment guide below, game-data revision manager, updater and per-launch logging.
 
 ## Quick inputs
 
