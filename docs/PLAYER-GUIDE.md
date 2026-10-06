@@ -36,7 +36,7 @@ This release carries forward the project features and adds performance recovery,
 
 ### Quest Touch — default VR layout
 
-Use **Controls = VR** and the standard native controller profile. Right is the default weapon hand. **Controls → Handedness: Left**  mirrors the whole layout: gun, triggers, sticks (move on the right, turn on the left) and face buttons (jump on X, reload on Y, grenades on A, switch weapons on B); Mirror Controls Off keeps the standard buttons. **VR Settings → BUTTONS** remaps jump, action/reload, melee, crouch, switch weapon, grenade and switch grenade, with Reset Buttons.
+Use **Controls = VR** and the standard native controller profile. Right is the default weapon hand. **Controls → Handedness: Left**  mirrors the whole layout: gun, triggers, sticks (move on the right, turn on the left) and face buttons (jump on X, reload on Y, grenades on A, switch weapons on B); Mirror Controls Off keeps the standard buttons. **VR Settings → BUTTONS** remaps jump, action/reload, melee, crouch, switch weapon, grenade, switch grenade and the reticle toggle, with Reset Buttons.
 
 | Input | Action |
 | --- | --- |
@@ -49,8 +49,11 @@ Use **Controls = VR** and the standard native controller profile. Right is the d
 | Weapon-hand grip, Physical | Hold the gun; release after the first grip to drop/holster/transfer |
 | Weapon-hand grip, Locked | Switch weapon at a holster; nothing elsewhere |
 | Other-hand grip near the support region | Lock the support hand; release to detach |
-| Left / right stick click | Crouch / native melee |
+| Left stick click | Show or hide the reticle (Controls → L Stick Click: Crouch keeps crouch here, as before 1.0.8) |
+| Right stick held down | Crouch (since 1.0.8; ducking also crouches) |
+| Right stick click | Native melee |
 | Both stick clicks together | Recenter during gameplay |
+| Gun hand to its own temple | Show or hide the HUD (Head Gestures → HUD Tap) |
 | Left menu button | Pause/menu; online co-op continues running |
 | Weapon pointer + trigger | Select menu item; right B returns |
 

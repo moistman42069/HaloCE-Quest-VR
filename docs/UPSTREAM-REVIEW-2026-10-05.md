@@ -61,3 +61,29 @@ not a bug, and it is **not** changed in test25.
 - **PR #85 Steam Frame/OpenXR**: open; arm64 Linux only. See [PC-STEAM-FRAME-FEASIBILITY.md](PC-STEAM-FRAME-FEASIBILITY.md).
 
 Not applicable: Windows console/logging, gamescope fullscreen, macOS Android build host, split-screen joins and divider, resolution/scaling settings (desktop UI).
+
+## Build 128 (network 17), reviewed for test26 (1.0.8)
+
+OpenCE's Build 128 is `2b0327bc` ("Network version 17"), 14 commits after
+Build 125 (`13c14df9`). This project stays on PvP network 11 (9–11) and its
+own two-player campaign protocol, now **CE02** (1.0.8 adds two campaign
+messages; a 1.0.7 device is refused with a plain "different version of this
+app" message). The launcher's updater still installs only this project's own
+releases; it never replaces the game with an upstream build.
+
+| Upstream | Decision | Notes |
+| --- | --- | --- |
+| `197c1994` ~80% faster with many enemies | **Adopted** (engine half, exactly) | `cluster_partitions.c/.h`, `object_lights.c`, `data.c`, `profile.c`, `game_state.c` (the partitions forgotten before a load). Not adopted: its `d3d8_gl.c`/`gl.h`/`xbox_textures.c` render-target cache, which keys targets in a way this tree's per-eye and resolution-scale targets would reuse wrongly. |
+| `7a1ffca2` glass breaks the same for everyone | **Adopted** (glass half, adapted) | `breakable_surface_port_break` exactly; the host's breaks travel in a new CE02 message (reliable, with a slow resend of every broken pane so a lost message or a late join heals). The destructible-scenery half rides on upstream's `network_damage.c`, which this tree does not have. |
+| `b843156f` a client never reverts its game on its own | **Adopted** | `main.c`: a network client neither reverts nor skips a cutscene by itself. |
+| `1e74e9b0`, `8e6b9a21`, `99a31ca8` co-op scripts for every player | Not adopted; worth porting with two-device tests | Upstream's `coop_scripts.c` design (followers of player0, one player enough for `volume_test_objects_all`, a safe-to-save test for one player). Relevant to this project's two players (the Maw's bridge, a30's Pelicans) but not reported here yet. |
+| `16361bde` a client waits on its floor for the host's BSP | Not adopted; candidate | Upstream's distributed-unit path; this tree's BSP switch differs. Port with a co-op BSP test. |
+| `0acc3b13` damage events filled in one place | Not applicable | Upstream's `network_damage.c`. |
+| `5d108579`, `9666575b`, `d0016bca` extra enemies; `a143d949`, `e55c29a9` loading zones | Not applicable | Upstream co-op features (extra enemies, team loading zones) this project does not have. |
+| `2b0327bc` network 17 | Not adopted | Protocol boundary, as for 12–16 above. |
+
+LivingFray/HaloCEVR PR #153 (open; the maintainer declined it as written)
+targets the PC Direct3D 9 VR mod: it keeps a remote player's shots from
+using the local VR hand's aim. Here that separation already holds: shots
+from the hand (`vr_render_hand_origin`) apply only to the local player's
+unit in a local game, and haptics only to the local player.

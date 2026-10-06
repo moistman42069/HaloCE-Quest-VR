@@ -441,7 +441,8 @@ The controllers' layout. "vr": right trigger fire, left trigger zoom, A
 jump, B reload and action, X switch grenades, Y switch weapons, right
 bumper grenade, left bumper flashlight, right stick click melee, left
 stick click crouch, menu pause, view back (held a second, recentre).
-"pad": as an Xbox controller.
+Quest Touch controllers take their buttons from the vr.button_* settings
+(VR Settings > BUTTONS). "pad": as an Xbox controller.
 
 vr.move_relative [string]
 Default: "head"
@@ -621,7 +622,22 @@ quick hand movement does not melee; the melee button always does.
 vr.flashlight_distance [real]
 Default: 0.2
 The off hand brought this close (metres) to the middle of the head
-turns the flashlight on or off; 0 turns the gesture off.
+turns the flashlight on or off; 0 turns the gesture off (0.10 to 0.30 in the menu).
+
+vr.hud_tap_distance [real]
+Default: 0.1
+The weapon hand brought this close (metres) to its own side of the head (the right temple
+for a right hand) shows or hides the HUD for the session; menus, prompts, messages and the
+reticle stay. 0 turns the gesture off.
+
+vr.wrist_hud [boolean]
+Default: false
+Shield and health, ammunition and grenades, and the motion tracker on a panel on the off
+hand's wrist (shown while you look at it), and left out of the HUD ahead. Off by default.
+
+vr.controls_reticle_applied [boolean]
+Default: false
+Internal one-time move of crouch off the left stick's click (now the reticle toggle's).
 
 vr.crouch_height [real]
 Default: 0.35
@@ -753,37 +769,43 @@ The sniper rifle scope's size as a share of vr.scope_size (1 = as usual).
 vr.button_jump [string]
 Default: "a"
 Quest: the button that jumps: a, b (the gun hand's lower and upper), x, y (the other hand's),
-right_stick, left_stick, grip or none.
+right_stick, left_stick, right_stick_down (the turning stick held down), grip or none.
 
 vr.button_action [string]
 Default: "b"
 Quest: the button for action and reload: a, b (the gun hand's lower and upper), x, y (the other hand's),
-right_stick, left_stick, grip or none.
+right_stick, left_stick, right_stick_down (the turning stick held down), grip or none.
 
 vr.button_melee [string]
 Default: "right_stick"
 Quest: the button that melees: a, b (the gun hand's lower and upper), x, y (the other hand's),
-right_stick, left_stick, grip or none.
+right_stick, left_stick, right_stick_down (the turning stick held down), grip or none.
 
 vr.button_crouch [string]
+Default: "right_stick_down"
+Quest: the button that crouches (default since 1.0.8: the turning stick held down; ducking
+also crouches): a, b (the gun hand's lower and upper), x, y (the other hand's),
+right_stick, left_stick, right_stick_down (the turning stick held down), grip or none.
+
+vr.button_reticle [string]
 Default: "left_stick"
-Quest: the button that crouches: a, b (the gun hand's lower and upper), x, y (the other hand's),
-right_stick, left_stick, grip or none.
+Quest: the button that shows or hides the reticle (it starts shown; not in a seat, and not
+with both sticks clicked, which recentres): a, b, x, y, right_stick, left_stick, right_stick_down (the turning stick held down), grip or none.
 
 vr.button_switch_weapon [string]
 Default: "y"
 Quest: the button that switches weapons: a, b (the gun hand's lower and upper), x, y (the other hand's),
-right_stick, left_stick, grip or none.
+right_stick, left_stick, right_stick_down (the turning stick held down), grip or none.
 
 vr.button_grenade [string]
 Default: "x"
 Quest: the button that throws a grenade ("grip": the gun hand's grip, locked weapons only, throws while held): a, b (the gun hand's lower and upper), x, y (the other hand's),
-right_stick, left_stick, grip or none.
+right_stick, left_stick, right_stick_down (the turning stick held down), grip or none.
 
 vr.button_switch_grenade [string]
 Default: "hold"
 Quest: the button that switches grenades, or "hold" (default): holding the grenade
-button switches and tapping it throws. Also a, b, x, y, right_stick, left_stick, grip or none.
+button switches and tapping it throws. Also a, b, x, y, right_stick, left_stick, right_stick_down (the turning stick held down), grip or none.
 
 vr.align_left_pitch [real]
 Default: 0.0

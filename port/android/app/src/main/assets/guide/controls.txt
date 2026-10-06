@@ -17,16 +17,18 @@ These mappings follow the shipped code. Start with Controls = VR and a standard 
 | Weapon-hand grip, Locked | At a holster, switches weapon; elsewhere nothing (the grenade moved to Left X in 1.0.5) |
 | Weapon-hand grip, Physical | Hold; releasing after the initial protected grip can drop/holster/transfer |
 | Other-hand grip near support region | Lock support hand in Two Hands = Grip; release detaches |
-| Left stick click | Crouch |
+| Left stick click | Show or hide the reticle (it starts shown; since 1.0.8) |
+| Right stick held down | Crouch (since 1.0.8, on foot; ducking also crouches) |
 | Right stick click | Native melee |
 | Both stick clicks | Recenter during gameplay; stand normally first |
 | Left menu | Pause/menu; online co-op keeps the shared world running |
 | Weapon pointer + trigger in menus | Select; right B goes back |
 | Off hand near head | Flashlight gesture when enabled |
+| Gun hand to its own temple | Show or hide the HUD (since 1.0.8) |
 
 **VR Settings → BUTTONS** remaps the face buttons, stick clicks and the locked grip (below, test23).
 
-**Left-handed (test20d):** Controls → **Handedness: Left** puts the gun in the left hand and, with **Mirror Controls: Auto** (default), mirrors the whole table above: move on the right stick, turn on the left, jump on left X, reload/use on left Y, switch weapons on right B, grenades on right A, crouch on the right stick click, melee on the left stick click, and Back in menus on left Y. Triggers, grips, zoom, flashlight, holsters and the menu pointer already follow the gun hand. Switching Handedness in the menu also moves vehicle **Steering** and **Move With** to the other hand when they were set to a hand. **Mirror Controls: Off** keeps the right-handed button layout with the gun in the left hand. A config that was already left-handed before test20d keeps its standard buttons (Mirror Controls Off) until you change it. Palms together plus the other hand's grip still pass the gun across. Controllers with bumpers/View use weapon-hand bumper for grenade, off-hand bumper for flashlight, and View tap/hold for Back/recenter. Use the Touch-specific table above on Quest.
+**Left-handed (test20d):** Controls → **Handedness: Left** puts the gun in the left hand and, with **Mirror Controls: Auto** (default), mirrors the whole table above: move on the right stick, turn on the left, jump on left X, reload/use on left Y, switch weapons on right B, grenades on right A, crouch with the left (turning) stick held down, the reticle on the right stick click, melee on the left stick click, and Back in menus on left Y. Triggers, grips, zoom, flashlight, holsters and the menu pointer already follow the gun hand. Switching Handedness in the menu also moves vehicle **Steering** and **Move With** to the other hand when they were set to a hand. **Mirror Controls: Off** keeps the right-handed button layout with the gun in the left hand. A config that was already left-handed before test20d keeps its standard buttons (Mirror Controls Off) until you change it. Palms together plus the other hand's grip still pass the gun across. Controllers with bumpers/View use weapon-hand bumper for grenade, off-hand bumper for flashlight, and View tap/hold for Back/recenter. Use the Touch-specific table above on Quest.
 
 **Physical weapons is the offline default. Weapons: Physical keeps network play on Locked weapon holding and its grenade inputs; Physical + MP opts multiplayer into physical holding/drop behavior.** This is independent of avatar visibility.
 
@@ -35,7 +37,8 @@ Physical weapons is the local default. A gun supplied on load/pickup stays suppo
 ## Gestures
 
 - Crouch compares height against the last recenter; default 35 cm, zero disables physical crouch.
-- Flashlight gesture: off hand within 20 cm of the head by default. Button mode disables proximity activation.
+- Flashlight gesture: off hand within 20 cm of the head by default. **Head Gestures → Flashlight** sets the reach (10–30 cm) or Off (the old Button choice).
+- HUD tap (1.0.8): the gun hand within 10 cm of its own temple (the right temple for a right-handed player) shows or hides the HUD. **Head Gestures → HUD Tap** sets the reach (6–15 cm) or Off.
 - Shoulder/hip holsters: default region size 20 cm, with entry haptics. Locked and Physical modes use them differently as above.
 - Arm Run defaults off. Pumping or two-hand weapon bob supplies forward movement with a neutral stick. A lower Arm Run number (Easy 0.3) makes activation easier. Strong offline effort can reach 1.5x speed; network speed stays stock. Stick input wins.
 - Impact melee sweeps the hand/weapon; Swing requests native melee. Default threshold 2 m/s, zero disables motion melee. The button still works. Network clients use Swing.
@@ -52,10 +55,13 @@ Test20d gives each decision one row. Rows that only mattered together with anoth
 
 | Category | Menu options |
 | --- | --- |
-| Controls | **Handedness** Right / Left; **Mirror Controls** Auto / Off; **Turning** Smooth 60–300 degrees/s or Snap 22.5 / 30 / 45 / 60 / 90 (finer on the Comfort page); Move With Head / Left Hand / Right Hand; **Two Hands** Auto Lock (default) / Squeeze / Off; **Weapons** Locked / Physical / Physical + MP; **Holsters** Off or 10–40 cm; Aim Hand / Head; Controls VR / Xbox |
+| Controls | **Handedness** Right / Left; **Mirror Controls** Auto / Off; **Turning** Smooth 60–300 degrees/s or Snap 22.5 / 30 / 45 / 60 / 90 (finer on the Comfort page); Move With Head / Left Hand / Right Hand; **Two Hands** Auto Lock (default) / Squeeze / Off; **Weapons** Locked / Physical / Physical + MP; **Holsters** Off or 10–40 cm; Aim Hand / Head; Controls VR / Xbox; **L Stick Click** Reticle (default) / Crouch (1.0.8) |
 | Body | Body Arms + Hands / Full / Legs + Arms / Hands Only; **Hands** Body IK / Floating / Float + Arms / Animated / Gun Only; Fingers Off / Tracked; Room-scale Off / On; Crouch Depth Off or 5–40 cm; **Arm Run** Off or effort 0.3–1.2; **Melee** Impact / Swing / Impact + Online / Swing + Online; Melee Speed Off or 1.0–3.6 m/s |
 | Hands + Gun | Hand Pitch / Yaw / Roll (both hands, left mirrored; default −70 / 0 / 0); Reset Hands; Gun Pitch / Yaw / Roll (default 0); Reset Gun; Gun Forward / Up / Out ±20 cm; Gun Grip Anchored / Classic |
-| Gameplay | Haptics 0–100%; Flashlight Gesture / Button; Scope Off / On; Cutscenes Immersive / 3D Screen / Flat; Close Contact Off / On; Crosshair Native / Off; Crosshair Size 25–300%; Opacity (crosshair) 0–100% |
+| Gameplay | Haptics 0–100%; Scope Off / On; Cutscenes Immersive / 3D Screen / Flat; Close Contact Off / On |
+| HUD + Reticle (1.0.8) | Crosshair Native / Off; Crosshair Size 25–300%; Opacity (crosshair) 0–100%; Wrist HUD Off (default) / On |
+| Head Gestures (1.0.8) | Flashlight Off or 10–30 cm (20 default); HUD Tap Off or 6–15 cm (10 default) |
+| Buttons | Jump, Use / Reload, Melee, Crouch, Next Weapon, Grenade, Next Grenade, Reticle (below); Reset Buttons |
 | Vehicles | Third Person (default) / First Person; Horizon Level (default) / Half / Vehicle (first person, driver); Steering Right Hand (default) / Left Hand / Head / Stick; global and Warthog/Ghost/Banshee/Scorpion/Pelican Up/Fwd/Right seat offsets ±50 cm; Reset Offsets |
 | Graphics | Preset Auto / Low / Medium / High / Max; Resolution Auto / 70 / 85 / 100 / 115 / 130%; Shadows, Lights, Specular, Reflections, Bump Maps, Grass, Fog Layers: Auto / On / Off |
 | Display | Decals, Particles, Contrails, Weather, Lens Flares, Camo: Auto / On / Off; Refresh 72 / 80 / 90 / 120 Hz |
@@ -100,6 +106,18 @@ Quit before external edits. In `[vr]`, `body = "legs"` explicitly selects the de
 
 - **Upside-down hands or guns** (reported on Quest OS v78): use **Controller Left/Right → Flip Roll 180** for the affected controller; it turns hand, gun and two-hand aim together. Hand Roll turns only the visible hand and Gun Roll only the gun; since test21 Gun Roll also holds in two-hand grip (it used to flip back).
 
+## HUD, reticle, head gestures, melee and fingers (test26, 1.0.8)
+
+- **Reticle toggle:** click the **left stick** to hide the reticle and again to show it. It starts shown every time the game starts. Clicking both sticks together still recenters and does not toggle it, and while seated the stick clicks still sound the horn. The toggle can be moved to another button (BUTTONS → **Reticle**).
+- **Crouch moved:** push the **right (turning) stick straight down and hold** to crouch on foot. Turning only uses the stick's sideways movement, so this does not turn you. Ducking with your real head still crouches as before. A config that still had crouch on the left stick click is moved once when 1.0.8 first starts. A layout you set yourself is kept.
+- **Keep the old crouch:** Controls → **L Stick Click: Crouch** puts crouch back on the left stick click, exactly as before 1.0.8. The turning stick held down then does nothing, and the reticle toggle has no button (give it one on BUTTONS if you want it). **Reticle** switches back.
+- **HUD tap:** bring your **gun hand to the side of your head** (its own temple: the right one for right-handed players) to hide the HUD: shields and health, ammunition, grenades, the motion tracker, waypoints and damage arrows. Tap again to bring it back. Menus, prompts, messages and the reticle stay. The HUD comes back each time the game starts. **Head Gestures → HUD Tap** sets how close the hand must come (6–15 cm, 10 by default) or turns it Off. Your gun at your cheek or held up to aim, and the shoulder holster, are too far away to trigger it.
+- **Flashlight tap:** unchanged (off hand to your head, 20 cm). **Head Gestures → Flashlight** now sets the distance (10–30 cm) or Off.
+- **Wrist HUD (optional, off by default):** HUD + Reticle → **Wrist HUD: On** moves shields and health, ammunition and grenades, and the motion tracker onto a small panel on the back of your **off-hand wrist**. Turn that wrist toward your face as if checking a watch to read it. Those parts are then left out of the HUD in front of you. The panel hides while both hands hold the gun and while menus are open. In a vehicle seat, or if the off-hand controller loses tracking, the whole HUD shows ahead as normal. Waypoints and prompts always stay ahead.
+- **Settings grouped:** the crosshair rows and the Wrist HUD are on the new **HUD + Reticle** page; the flashlight and HUD taps are on the new **Head Gestures** page. Gameplay keeps Haptics, Scope, Cutscenes and Close Contact. Saved settings are unchanged.
+- **Impact melee:** a swing with the gun now hits with the whole gun (the grip, its middle and, for long guns, the end of the barrel), not only its middle. A fast swing also carries through a few centimetres past where your hand stopped, so swings that stopped just short of an enemy now land. Walls still stop the blow, and the button melee is unchanged.
+- **Fingers against walls:** each finger now bends smoothly, joint by joint, as it meets a surface, and eases back as you pull away. Fingertips pressed into a wall curl from the tip; a palm laid flat lets the fingers straighten from the knuckles. No more snapping or twisting between poses.
+
 ## Vehicles and settings rows (test25, 1.0.7)
 
 - **Settings rows fit.** Longer VR Settings rows used to be cut off at the right ("ALL FORWARD: < 0 C"), which hid their **>** arrow. Rows are now wider and some names shorter. Every numeric row still steps down with its left side (**<**) and up with its right side (**>**). Renamed rows (saved settings unchanged): Vehicles **ALL / HOG / GHOST / BANSHEE / TANK / PELICAN FWD** (was FORWARD); Scopes **PISTOL FWD**, **SNIPER FWD**; Gameplay **OPACITY** (crosshair opacity); Buttons **USE / RELOAD** (was Action / Reload), **NEXT WEAPON** (Switch Weapon), **NEXT GRENADE** (Switch Grenade), values **GRIP** (Grip (Locked)) and **HOLD** (Hold Grenade); Comfort **VIGNETTE ON: MOVING / TURNING / ALWAYS** (was Vignette When) and **SMOOTH SPEED** in degrees a second without the unit.
@@ -124,12 +142,12 @@ Moving includes walking with the stick, arm-swing running and driving (the left 
 ## Buttons and co-op cutscenes (test23, 1.0.5)
 
 - **Grenade on Left X in both weapon modes.** Tap and release X to throw; hold it 0.4 seconds to switch grenade type. With **Locked** weapons the gun hand's grip used to throw grenades; it now does nothing except switch weapons at a holster. Physical weapons are unchanged (X already threw there, and the grip still holds and drops the gun).
-- **VR Settings → BUTTONS** (Quest Touch controllers) remaps Jump, Use / Reload, Melee, Crouch, Next Weapon, Grenade and Next Grenade (named Action / Reload, Switch Weapon and Switch Grenade before 1.0.7). Each can be A, B, X, Y, R Stick, L Stick, Grip (locked weapons only) or None; Next Grenade can also be **Hold** (the default: holding the grenade button switches). Picking a button another action already uses swaps the two, so one button never does two things. **Reset Buttons** restores the defaults below.
-- Defaults: Jump **A**, Use / Reload **B**, Melee **R Stick**, Crouch **L Stick**, Next Weapon **Y**, Grenade **X**, Next Grenade **Hold**. These are the earlier layout except the grenade.
+- **VR Settings → BUTTONS** (Quest Touch controllers) remaps Jump, Use / Reload, Melee, Crouch, Next Weapon, Grenade, Next Grenade and (1.0.8) Reticle (named Action / Reload, Switch Weapon and Switch Grenade before 1.0.7). Each can be A, B, X, Y, R Stick, L Stick, R Down (1.0.8: the turning stick held down), Grip (locked weapons only) or None; Next Grenade can also be **Hold** (the default: holding the grenade button switches). Picking a button another action already uses swaps the two, so one button never does two things. **Reset Buttons** restores the defaults below.
+- Defaults: Jump **A**, Use / Reload **B**, Melee **R Stick**, Crouch **R Down** (**L Stick** before 1.0.8), Next Weapon **Y**, Grenade **X**, Next Grenade **Hold**, Reticle **L Stick**. These are the earlier layout except the grenade, crouch and the reticle.
 - To get the old Locked layout back, set **Grenade: Grip**: the grip then throws while held, and Next Grenade moves to X by itself.
 - **Grip** is the gun hand's grip and works only with Locked weapons and away from the holsters. With Physical weapons the grip holds the gun, so an action put on it does nothing.
 - **Left-handed:** with Mirror Controls: Auto, A and B mean the gun hand's lower and upper buttons and X and Y the other hand's, so the whole layout mirrors as before. Not remappable: triggers (fire, zoom), the flashlight, the menu button, both stick clicks together (recenter), the off hand's grip (two hands, passing the gun), the Warthog horn (either stick click while driving) and the pointer menus.
-- Saved as `vr.button_jump`, `vr.button_action`, `vr.button_melee`, `vr.button_crouch`, `vr.button_switch_weapon`, `vr.button_grenade` and `vr.button_switch_grenade` (values `a`, `b`, `x`, `y`, `right_stick`, `left_stick`, `grip`, `none`; `hold` for switch grenade). A config edited by hand that puts two actions on one button does both, and the log warns. Other controllers (Index, Steam Frame) keep their own layout.
+- Saved as `vr.button_jump`, `vr.button_action`, `vr.button_melee`, `vr.button_crouch`, `vr.button_switch_weapon`, `vr.button_grenade`, `vr.button_switch_grenade` and `vr.button_reticle` (values `a`, `b`, `x`, `y`, `right_stick`, `left_stick`, `right_stick_down`, `grip`, `none`; `hold` for switch grenade). A config edited by hand that puts two actions on one button does both, and the log warns. Other controllers (Index, Steam Frame) keep their own layout.
 - **Co-op cutscenes (fixed in 1.0.6):** on a device that joined co-op, cutscene characters now animate as on the host instead of T-posing and sliding. The joining device now also wakes up the part of the map the cutscene plays in, as the host's script does (1.0.5's attempt did not fix it and was withdrawn).
 
 ## Scopes, first-person vehicles and the left hand (test22)
