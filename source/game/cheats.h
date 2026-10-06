@@ -50,6 +50,10 @@ void cheats_dispose_from_old_map(
 	void);
 void cheats_update(
 	void);
+/* port: whether a network client must draw what the switch draws
+(cheats.c; vr_graphics.c's presets leave it on there) */
+boolean cheats_network_client_switch_enforced(
+	boolean const *game_switch);
 void cheats_network_client_enforce(
 	void);
 void cheats_load(

@@ -125,6 +125,47 @@ extern boolean player_magnetism_flag;
 /* game_time.c's */
 boolean game_time_reset_speed(void);
 
+/* port: the parts of the world a client may leave undrawn for its own
+speed, which show nothing through walls, past fog or under grass and water:
+shadows, lights' highlights, reflections and lens flares. The VR build's
+graphics presets leave them off on the Quest 2 and first Quest
+(vr_graphics.c), every frame: put back every frame, the two fought, and the
+warning filled a Quest 2 client's screen with red text (test26) */
+static boolean cheats_network_client_switch_free(
+	boolean const *game_switch)
+{
+	return game_switch == &rasterizer_debug_options.draw_environment_shadows ||
+		game_switch == &rasterizer_debug_options.draw_environment_diffuse_lights ||
+		game_switch == &rasterizer_debug_options.draw_environment_specular_lights ||
+		game_switch == &rasterizer_debug_options.draw_environment_specular_lightmaps ||
+		game_switch == &rasterizer_debug_options.draw_environment_reflections ||
+		game_switch == &rasterizer_debug_options.draw_lens_flares;
+}
+
+/* whether a client must draw what the switch draws (vr_graphics.c leaves
+those on, in another's game) */
+boolean cheats_network_client_switch_enforced(
+	boolean const *game_switch)
+{
+	boolean const *environment_part;
+
+	if (game_switch == &rasterizer_debug_options.draw_water ||
+		game_switch == &rasterizer_debug_options.draw_detail_objects ||
+		game_switch == &rasterizer_debug_options.fog_atmospheric_enabled ||
+		game_switch == &rasterizer_debug_options.fog_planar_enabled)
+	{
+		return TRUE;
+	}
+	for (environment_part = &rasterizer_debug_options.draw_environment_lightmaps;
+		environment_part <= &rasterizer_debug_options.draw_environment_fog_screen;
+		environment_part++)
+	{
+		if (environment_part == game_switch)
+			return !cheats_network_client_switch_free(game_switch);
+	}
+	return FALSE;
+}
+
 /* port: what the machine draws of the world put back as it draws it for
 everyone: nothing seen through walls (wireframe, a drawing mode, the
 environment or its parts left out), past fog, or under grass and water;
@@ -137,8 +178,7 @@ static boolean cheats_network_client_rasterizer_enforce(
 
 	if (rasterizer_debug_options.wireframe_enabled || rasterizer_debug_options.drawing_mode != 0 ||
 		!rasterizer_debug_options.draw_water || !rasterizer_debug_options.draw_detail_objects ||
-		!rasterizer_debug_options.draw_lens_flares || !rasterizer_debug_options.fog_atmospheric_enabled ||
-		!rasterizer_debug_options.fog_planar_enabled)
+		!rasterizer_debug_options.fog_atmospheric_enabled || !rasterizer_debug_options.fog_planar_enabled)
 	{
 		changed = TRUE;
 	}
@@ -146,15 +186,17 @@ static boolean cheats_network_client_rasterizer_enforce(
 	rasterizer_debug_options.drawing_mode = 0;
 	rasterizer_debug_options.draw_water = TRUE;
 	rasterizer_debug_options.draw_detail_objects = TRUE;
-	rasterizer_debug_options.draw_lens_flares = TRUE;
 	rasterizer_debug_options.fog_atmospheric_enabled = TRUE;
 	rasterizer_debug_options.fog_planar_enabled = TRUE;
 	/* (the environment and its parts, lightmaps to screen fog, all drawn,
-	as rasterizer_frame_begin leaves them from its switch: 2, given) */
+	as rasterizer_frame_begin leaves them from its switch: 2, given; those a
+	client may leave off for its speed left as they are) */
 	for (environment_part = &rasterizer_debug_options.draw_environment_lightmaps;
 		environment_part <= &rasterizer_debug_options.draw_environment_fog_screen;
 		environment_part++)
 	{
+		if (cheats_network_client_switch_free(environment_part))
+			continue;
 		if (!*environment_part)
 			changed = TRUE;
 		*environment_part = TRUE;
@@ -174,10 +216,15 @@ void cheats_network_client_enforce(
 	void)
 {
 	static struct cheat_globals const none = { 0 };
+	/* (said once a game: test26) */
+	static boolean warned = FALSE;
 	boolean changed;
 
 	if (!network_game_distributed_client())
+	{
+		warned = FALSE;
 		return;
+	}
 	changed = csmemcmp(&cheat, &none, sizeof(cheat)) != 0 || !rider_ejection || !player_autoaim_flag ||
 		!player_magnetism_flag;
 	csmemset(&cheat, 0, sizeof(cheat));
@@ -186,8 +233,9 @@ void cheats_network_client_enforce(
 	player_magnetism_flag = TRUE;
 	changed |= game_time_reset_speed();
 	changed |= cheats_network_client_rasterizer_enforce();
-	if (changed)
+	if (changed && !warned)
 	{
+		warned = TRUE;
 		console_warning("playing in another's game: its host's rules (cheats, game speed and drawing put back)");
 		error(_error_log, "playing in another's game: cheats, game speed and drawing put back to the host's");
 	}

@@ -22,6 +22,7 @@ as the game's wish, kept, and combined with the setting's.
 #ifdef HALO_VR
 
 #include "cseries.h"
+#include "game/cheats.h"
 #include "rasterizer/rasterizer_console_vars.h"
 
 #include "halo_vr.h"
@@ -33,6 +34,8 @@ as the game's wish, kept, and combined with the setting's.
 /* port/linux/src/platform.h (a variadic call needs its prototype in scope
 on the Android guest's ABI) */
 void platform_log(const char *format, ...);
+/* source/networking/network_game_globals.c */
+boolean network_game_distributed_client(void);
 
 /* source/render/render.c, render_objects.c; source/effects/decals.c,
 weather_particle_systems.c */
@@ -188,7 +191,10 @@ void vr_graphics_apply(void)
 			/* the game (a script, the console) changed it since: its wish */
 			if (*game_switch != vr_graphics.written[index][which])
 				vr_graphics.wanted[index][which] = *game_switch;
-			value = vr_graphics.wanted[index][which] && vr_graphics.allowed[index];
+			/* (in another's game, what everyone must draw is drawn: its
+			host's rules, cheats.c, which would put it back every frame) */
+			value = vr_graphics.wanted[index][which] && (vr_graphics.allowed[index] ||
+				(network_game_distributed_client() && cheats_network_client_switch_enforced(game_switch)));
 			*game_switch = value;
 			vr_graphics.written[index][which] = value;
 		}
