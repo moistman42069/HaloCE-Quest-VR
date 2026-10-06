@@ -1837,8 +1837,14 @@ void main_pregame_render(
 static void main_revert_map_private(
 	void)
 {
-	game_state_revert();
-	ui_widgets_disable_pause_game(30);
+	/* port: a network client never reverts on its own: its game is the
+	host's (OpenCE b843156f; a co-op client's was already refused,
+	network_campaign_checkpoint_request) */
+	if (game_connection() != _game_connection_network_client)
+	{
+		game_state_revert();
+		ui_widgets_disable_pause_game(30);
+	}
 	main_globals.revert_map = FALSE;
 	return;
 }
@@ -1846,7 +1852,7 @@ static void main_revert_map_private(
 static void main_skip_cinematic_private(
 	void)
 {
-	if (cinematic_can_be_skipped())
+	if (cinematic_can_be_skipped() && game_connection() != _game_connection_network_client)
 	{
 		game_state_revert();
 		ui_widgets_disable_pause_game(30);
