@@ -1513,11 +1513,26 @@ static void client_watch_host_from_behind(
 	}
 	*position = coop_presentation.watching_host_position;
 	*forward = coop_presentation.watching_host_forward;
-	/* keep the camera upright */
-	up->i = 0.0f;
-	up->j = 0.0f;
-	up->k = 1.0f;
-	distributed_axes_make_valid(forward, up);
+	/* keep the camera upright: the world's up made square to forward
+	(port, test28: distributed_axes_make_valid takes an up within about 6
+	degrees of square and refuses the rest, leaving them as they were; with
+	the host looking further up or down than that this camera's axes were
+	not square, and the scripted camera's check, camera_scripting.c #370,
+	halted a client that joined in progress and had nothing else to watch) */
+	{
+		real along = forward->k;
+
+		up->i = -along * forward->i;
+		up->j = -along * forward->j;
+		up->k = 1.0f - along * forward->k;
+		if (normalize3d(up) == 0.0f)
+		{
+			/* (looking straight up or down: any up square to it) */
+			up->i = 1.0f;
+			up->j = 0.0f;
+			up->k = 0.0f;
+		}
+	}
 }
 
 /* client: looks through the host's camera, or with its own */

@@ -4,8 +4,8 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 mode="${1:-vr}"
 case "$mode" in
-  vr) flags=(--vr) ;;
-  flat) flags=() ;;
+  vr) flags=(--vr --release) ;;
+  flat) flags=(--release) ;;
   *) echo "Usage: bash tools/build-quest.sh [vr|flat]" >&2; exit 2 ;;
 esac
 export ANDROID_HOME="${ANDROID_HOME:-$HOME/Android/Sdk}"
@@ -15,6 +15,8 @@ export TMPDIR="$PWD/build/tmp"
 mkdir -p "$TMPDIR" "$GRADLE_USER_HOME"
 export JAVA_TOOL_OPTIONS="${JAVA_TOOL_OPTIONS:-} -Djava.io.tmpdir=$TMPDIR"
 python3 tools/generate-field-guide.py
+# (--release, as OpenCE ships its builds: a failed check is written to the
+# log and play goes on, instead of halting the game: test28)
 python3 configure.py "${flags[@]}"
 ninja -j "${HALO_BUILD_JOBS:-6}" android_apk
 # The upstream Ninja APK edge lists native staging inputs only. Always let

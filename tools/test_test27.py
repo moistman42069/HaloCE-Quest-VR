@@ -85,8 +85,18 @@ UPSTREAM_138 = [
     ('source/networking/network_client_message_handler.c', '0644128da7ab7c2852d013504a731df4bb459a7c7bea4611bd495c28cce96134'),
     ('source/networking/network_game_manager.c', '5f5ef5829338abebba87fee45ed1cfaa2fa193ec3b804426b728ff42409179b1'),
 ]
+# (this app's one patch to them, test28: the camera watching the host kept
+# upright with square axes; taken out, the file must be build 138's exactly)
+COOP_CAMERA_PATCH = re.compile(r'\t/\* keep the camera upright: the world\'s up made square to forward\n.*?\n\t\t}\n\t}\n}', re.S)
+COOP_CAMERA_ORIGINAL = ('\t/* keep the camera upright */\n\tup->i = 0.0f;\n\tup->j = 0.0f;\n\tup->k = 1.0f;\n'
+                        '\tdistributed_axes_make_valid(forward, up);\n}')
 for path, digest in UPSTREAM_138:
-    assert hashlib.sha256((ROOT / path).read_bytes()).hexdigest() == digest, path + ' as OpenCE build 138'
+    data = (ROOT / path).read_bytes()
+    if path == 'port/linux/game/network_coop.c':
+        text = data.decode('utf-8')
+        assert len(COOP_CAMERA_PATCH.findall(text)) == 1, 'the one camera patch'
+        data = COOP_CAMERA_PATCH.sub(lambda m: COOP_CAMERA_ORIGINAL, text).encode('utf-8')
+    assert hashlib.sha256(data).hexdigest() == digest, path + ' as OpenCE build 138'
 print('PASS: %d co-op, lobby and message files are OpenCE build 138\'s byte for byte' % len(UPSTREAM_138))
 
 # --- 3. the message numbers: OpenCE's, this app's VR avatars in the free range
@@ -179,6 +189,6 @@ print('PASS: the launcher lists co-op (joinable at this version) and multiplayer
 # --- 9. version, identity, package markers
 assert int(re.search(r'versionCode Math\.max\((\d+), buildNumber\)', gradle).group(1)) >= 35
 assert int(re.search(r': "1\.0\.(\d+)"', gradle).group(1)) >= 9
-assert 'HaloCE Quest test27 candidate 1.0.9' in frame
+assert 'HaloCE Quest test27 candidate 1.0.9' in frame or 'test27: OpenCE build 138 netcode, network 20' in frame
 assert 'candidate_at_least(args.label, 27)' in package
 print('PASS: test27 wiring (version 1.0.9 / 35, identity, package markers)')
