@@ -154,7 +154,9 @@ def main():
                 for marker in [b"Co-op (network v", b"Directory classified for the ", b"Up to "]:
                     if marker not in dex: raise SystemExit("Test27 launcher co-op classification missing: " + repr(marker))
             if candidate_at_least(args.label, 26):
-                for marker in [b"it is the host's to erase", b"co-op protocol %X here, %X on the host"]:
+                # (test27 retired CE02: its gate names this app's old co-op hosts instead)
+                for marker in [b"it is the host's to erase", b"This version plays co-op as OpenCE does"
+                               if candidate_at_least(args.label, 27) else b"co-op protocol %X here, %X on the host"]:
                     if marker not in guest: raise SystemExit("Test26 co-op marker missing: " + repr(marker))
                 if b"could not start on this device" not in host:
                     raise SystemExit("Test26 start failure message missing")
