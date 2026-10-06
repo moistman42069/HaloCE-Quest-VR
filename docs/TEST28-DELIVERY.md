@@ -1,14 +1,13 @@
-# Test28 — 1.0.10 candidate (private): co-op joined in progress, bigger co-op lobbies, gyro aim
+# Test28 — v1.0.10 release delivery: co-op joined in progress, larger lobbies, gyro aim
 
-Not a release. GitHub's Latest is v1.0.6; v1.0.7, v1.0.8 and v1.0.9 were
-delivered as candidates only. Do not publish without explicit owner approval.
-Details: [TEST28-PROGRESS.md](TEST28-PROGRESS.md),
-[OPENCE-COOP-COMPATIBILITY.md](OPENCE-COOP-COMPATIBILITY.md).
+Prepared for publication as the new Latest release on 2026-10-06. The previous public v1.0.6
+release and its assets remain intact. Test27 (1.0.9) and test28 are candidates until publication. Details: [TEST28-PROGRESS.md](TEST28-PROGRESS.md),
+[OpenCE co-op compatibility](OPENCE-COOP-COMPATIBILITY.md).
 
 ## Installation
 
-- Quest/VR: `HaloCE-Quest-test28.apk` (package `com.halo.decomp.vr`)
-- Android/flat: `HaloCE-Android-test28.apk` (package `com.halo.decomp`)
+- Android/flat: `HaloCE-Android-1.0.10.apk` (package `com.halo.decomp`)
+- Quest/VR: `HaloCE-Quest-1.0.10.apk` (package `com.halo.decomp.vr`)
 
 Both are **version 1.0.10 / code 36**, ARM64, API 28+, signed with the same
 certificate as every release since v1.0.2. They install over v1.0.6 through
@@ -45,8 +44,8 @@ clear data. The network is unchanged from 1.0.9: OpenCE network version
 
 | File | Bytes | SHA-256 |
 | --- | ---: | --- |
-| `HaloCE-Quest-test28.apk` | 28,265,091 | `5e7beecb4ea9216b3f3d8268899fd210db1f4b8adfbe47bea3f714caa1f207ba` |
-| `HaloCE-Android-test28.apk` | 26,253,876 | `70c712edb5a7b525a0f806ff6643e0ed6be61067022223dd45532ae60c0f28d8` |
+| `HaloCE-Android-1.0.10.apk` | 26,253,876 | `70c712edb5a7b525a0f806ff6643e0ed6be61067022223dd45532ae60c0f28d8` |
+| `HaloCE-Quest-1.0.10.apk` | 28,265,091 | `5e7beecb4ea9216b3f3d8268899fd210db1f4b8adfbe47bea3f714caa1f207ba` |
 
 Runtime source `235c2f5b` on branch `test27-opence-netcode`; later commits
 change only documentation. Certificate SHA-256
@@ -61,7 +60,11 @@ serially from a clean tree; payload, signing and 16 KB alignment verified.
   - co-op sizes against OpenCE's list;
   - the gyro math and wiring.
 - Cache formats pass. Both editions build in release mode without errors.
-- **Not done:** no device session with 1.0.10 yet.
+- The owner reports that co-op testing on this candidate works well. The exact
+  device pairing, lobby size and mission coverage were not supplied, so this
+  does not establish every cross-platform pairing or performance at 128 players.
+- The new Android gyro option and maximum-size lobbies still need broader
+  device/performance feedback.
 
 ## Please test (for each test, note the app version on every device, the OpenCE build if any, the devices, and Wi-Fi or mobile data)
 

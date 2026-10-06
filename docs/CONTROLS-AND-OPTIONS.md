@@ -1,4 +1,4 @@
-# Controls and options - 1.0 VR / flat
+# Controls and options - 1.0.10 VR / flat
 
 These mappings follow the shipped code. Start with Controls = VR and a standard native controller profile. Changing either can change the resulting actions. Touch controllers lack conventional gamepad bumpers/View.
 
@@ -27,6 +27,8 @@ These mappings follow the shipped code. Start with Controls = VR and a standard 
 | Gun hand to its own temple | Show or hide the HUD (since 1.0.8) |
 
 **VR Settings → BUTTONS** remaps the face buttons, stick clicks and the locked grip (below, test23).
+
+**Co-op inputs (1.0.9+):** while dead and spectating, press **A** to cycle the teammate being watched. During a skippable co-op cutscene, press **A** to vote; keyboard players press **Space**. The host performs the skip after the required majority. Pause does not pause the shared game.
 
 **Left-handed (test20d):** Controls → **Handedness: Left** puts the gun in the left hand and, with **Mirror Controls: Auto** (default), mirrors the whole table above: move on the right stick, turn on the left, jump on left X, reload/use on left Y, switch weapons on right B, grenades on right A, crouch with the left (turning) stick held down, the reticle on the right stick click, melee on the left stick click, and Back in menus on left Y. Triggers, grips, zoom, flashlight, holsters and the menu pointer already follow the gun hand. Switching Handedness in the menu also moves vehicle **Steering** and **Move With** to the other hand when they were set to a hand. **Mirror Controls: Off** keeps the right-handed button layout with the gun in the left hand. A config that was already left-handed before test20d keeps its standard buttons (Mirror Controls Off) until you change it. Palms together plus the other hand's grip still pass the gun across. Controllers with bumpers/View use weapon-hand bumper for grenade, off-hand bumper for flashlight, and View tap/hold for Back/recenter. Use the Touch-specific table above on Quest.
 
@@ -79,6 +81,8 @@ The flat edition includes relative swipe aim, a draggable HUD editor, saved
 positions/size/opacity/color and response settings. MOVE + FIRE/drag supports
 simultaneous movement and aiming. Cancel, focus loss and hiding release touch
 input. See [touch controls and editor](ANDROID-TOUCH-CONTROLS.md).
+
+**Gyro aim (1.0.10, flat Android only):** off by default. Set **Off**, **Always**, or **Only while touching LOOK/FIRE** in HUD → Options → Gyro Aim or launcher **Controller & touch settings**. Horizontal and vertical sensitivity range from 0.25 to 4; vertical inversion is available. It works with swipe and gamepad input. Phones without a gyroscope can keep using touch/gamepad normally.
 
 Connected Xbox-style USB/Bluetooth gamepads use Android + SDL3. Both sticks,
 triggers, face buttons, shoulders, stick clicks, Start/Back and D-pad reach

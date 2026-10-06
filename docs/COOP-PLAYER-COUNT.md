@@ -1,6 +1,24 @@
-> **1.0.9 candidate (test27, 2026-10-06):** this app now runs OpenCE build 138's netcode (network 20, exact match), co-op included: up to 16 players, hosting and joining with OpenCE players, listed through the signed lobby and the community directory. This app's own CE01/CE02 co-op and the v9-11 window are retired. See [OPENCE-COOP-COMPATIBILITY.md](OPENCE-COOP-COMPATIBILITY.md). Not yet verified in a real cross-build session.
+> **Current release candidate: v1.0.10 (test28, 2026-10-06).** OpenCE Build 138/network 20 is integrated for PvP and campaign co-op. Co-op hosting offers 2–128 players, default 4. The owner reports co-op works well; tested lobby size and pairing are not specified. High-count device performance is not established. See [OpenCE compatibility](OPENCE-COOP-COMPATIBILITY.md).
 
-# Campaign co-op player count: status and feasibility (2026-10-05)
+# Campaign co-op player count: status and feasibility
+
+## Current release candidate: v1.0.10 / OpenCE network 20 (2026-10-06)
+
+Campaign co-op now uses the integrated OpenCE co-op implementation, replacing
+the project's former CE01/CE02 two-player protocol. The host can select
+2, 4, 8, 12, 16, 24, 32, 48, 64, 96 or 128 players (default 4). The owner has
+tested co-op and reports it works well. The tested lobby size and device/map
+coverage were not specified. The selector exposes OpenCE's supported lobby
+sizes; it is not evidence that Quest/Android can run a 128-player campaign
+stably. Treat the upper sizes as experimental until measured on target devices.
+
+The source investigation below documents the older project-owned protocol and
+remains useful as historical context for why its old two-player cap existed.
+It does not describe the current OpenCE campaign implementation.
+
+---
+
+# Historical campaign co-op player count audit (2026-10-05)
 
 ## Correction
 

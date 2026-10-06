@@ -1,4 +1,4 @@
-> **1.0.9 candidate (test27, 2026-10-06):** this app now runs OpenCE build 138's netcode (network 20, exact match), co-op included: up to 16 players, hosting and joining with OpenCE players, listed through the signed lobby and the community directory. This app's own CE01/CE02 co-op and the v9-11 window are retired. See [OPENCE-COOP-COMPATIBILITY.md](OPENCE-COOP-COMPATIBILITY.md). Not yet verified in a real cross-build session.
+> **Current release candidate: v1.0.10 (test28, 2026-10-06).** OpenCE Build 138/network 20 co-op is integrated. The host selector offers 2–128 players, default 4. The owner reports co-op works well; exact player count/device pairing was not provided. Maximum-count stability is not certified. The old test15 audit below concerns a retired project-owned protocol, not the current OpenCE implementation. See [OpenCE compatibility](OPENCE-COOP-COMPATIBILITY.md).
 
 # Campaign player-count audit — test15
 

@@ -1,17 +1,16 @@
-# OpenCE co-op and browser compatibility (test27/test28, 1.0.9/1.0.10 candidates)
+# OpenCE co-op and browser compatibility (test28, v1.0.10)
 
-Updated 2026-10-06. Candidate **test27, version 1.0.9 / code 35**, branch
-`test27-opence-netcode`. Not released.
+Updated 2026-10-06 for **v1.0.10 / code 36**, based on OpenCE Build 138,
+network version 20.
 
-**Status (1.0.10, test28): partly verified on a device.** On 2026-10-06 a
-Quest 3 on 1.0.9 found a public OpenCE co-op game (18 players on d40) through
-the signed lobby, connected (join stages 1/3 to 3/3, network 20), joined in
-progress and loaded the map. It then halted on an upstream camera check that
-OpenCE's release builds only log; 1.0.10 fixes that
-([TEST28-PROGRESS.md](TEST28-PROGRESS.md)). Still to confirm: play after
-joining, an OpenCE player joining a Quest or Android host, and games of three
-or more mixed players. Do not call cross-play fully working until those logs
-are in.
+**Status: the owner reports co-op works well on this release.** The initial
+Quest 3 cross-play test found a public OpenCE co-op game, connected at network
+20, joined an 18-player mission in progress and loaded its map. That candidate
+then halted on a camera check; v1.0.10 corrects the camera and uses OpenCE's
+release build mode. The owner's successful follow-up confirms co-op works in
+their tested setup. Exact pairing, lobby size and mission coverage were not
+provided, so this does not establish every device, player count or full
+campaign path. See [test28 notes](TEST28-PROGRESS.md).
 
 ## What OpenCE's "co-op server browser update" is
 
@@ -37,11 +36,11 @@ Network versions 12–20 changed the wire format for every game, multiplayer inc
 
 | Peer | Listing / discovery | Join / handshake | Gameplay sync | Game data |
 | --- | --- | --- | --- | --- |
-| OpenCE build 138 (network 20), co-op | Listed: in-game System Link list and launcher co-op browser (seen on a Quest, 2026-10-06) | **Seen working** (Quest 3, 1.0.9: connected, joined in progress, map loaded) | Expected: OpenCE's co-op modules byte for byte | Same campaign maps; Xbox caches, PAL as NTSC |
+| OpenCE build 138 (network 20), co-op | Listed: in-game System Link list and launcher co-op browser (seen on a Quest, 2026-10-06) | **Owner-tested successfully**; earlier Quest test joined in-progress and loaded a map before the camera fix | OpenCE co-op modules integrated; owner reports co-op works well | Same campaign maps; Xbox caches, PAL as NTSC |
 | OpenCE build 138, multiplayer | Listed | Expected | Expected: OpenCE's netcode | Same map files |
 | OpenCE builds 128–136 (network 17–19) | Listed, marked as another version | Refused by name ("the host is on version N") | n/a | n/a |
 | Newer OpenCE (network 21+) | Listed, marked | Refused: "update this app when a version for it is out" | n/a | n/a |
-| This app 1.0.9 (Quest or Android) | Listed (signed lobby; directory mirror) | Expected (same code as OpenCE's path) | Expected; VR avatars between 1.0.9 devices (messages 37/38, negotiated) | Same campaign maps |
+| This app 1.0.10 (Quest or Android) | Listed (signed lobby; directory mirror) | Owner reports co-op works well; network v20 gate matches OpenCE | OpenCE co-op code plus the optional VR avatar extension | Same campaign maps |
 | This app 1.0.8 or older (CE01/CE02 co-op, network 11 multiplayer) | Co-op listed as "Co-op of this app 1.0.8 or older"; network 11 games marked | Refused by name; the host must update | n/a | n/a |
 
 "Expected" means implemented and covered by the automated checks below, but not yet observed in a real session.

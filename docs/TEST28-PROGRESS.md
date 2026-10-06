@@ -1,8 +1,9 @@
 # Test28 checkpoint: co-op joined in progress, OpenCE-sized co-op hosting, gyro aim
 
-Updated 2026-10-06. Private candidate **test28, version 1.0.10 / code 36**,
-branch `test27-opence-netcode`, on top of test27 (1.0.9 / code 35). Not
-released: GitHub's Latest is still v1.0.6.
+Updated 2026-10-06. **Test28, version 1.0.10 / code 36**, branch
+`test27-opence-netcode`, on top of test27 (1.0.9 / code 35), is the v1.0.10
+release candidate awaiting publication. The owner reports that co-op works well in testing.
+The exact device pairing, lobby size and mission coverage were not supplied.
 
 ## Reports and requests
 
@@ -71,7 +72,7 @@ build 138 co-op game work. Play after the load is still to be confirmed.
 
 ## Next
 
-The owner's device tests ([TEST28-DELIVERY.md](TEST28-DELIVERY.md)):
-- join an OpenCE co-op game in progress (VR) and play on;
-- host a co-op game larger than 16;
-- gyro aim on a phone.
+Further device follow-up ([TEST28-DELIVERY.md](TEST28-DELIVERY.md)):
+- collect pairing/build/mission details and logs from the owner's successful co-op test;
+- check performance for larger co-op lobbies, especially above 16 players;
+- verify gyro aim modes and settings synchronization on a phone.

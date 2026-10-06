@@ -1,4 +1,4 @@
-> **1.0.9 candidate (test27, 2026-10-06):** this app now runs OpenCE build 138's netcode (network 20, exact match), co-op included: up to 16 players, hosting and joining with OpenCE players, listed through the signed lobby and the community directory. This app's own CE01/CE02 co-op and the v9-11 window are retired. See [OPENCE-COOP-COMPATIBILITY.md](OPENCE-COOP-COMPATIBILITY.md). Not yet verified in a real cross-build session.
+> **Current release candidate: v1.0.10 (test28, 2026-10-06).** Native System Link and the launcher's separate multiplayer/co-op browsers use OpenCE Build 138/network 20. The prior app's network 9–11 and CE01/CE02 paths are retired. Co-op lobby choices are 2–128; owner testing reports co-op works well, but maximum-size performance is not established. The detailed implementation notes below include earlier browser revisions; see [current OpenCE compatibility](OPENCE-COOP-COMPATIBILITY.md) for the active protocol.
 
 # Current browser behavior (test19 candidate)
 

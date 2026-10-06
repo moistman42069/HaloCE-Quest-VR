@@ -1,5 +1,11 @@
 # Upstream and network review, 2026-10-05
 
+> **Current status (2026-10-06):** This review records the earlier test25 decision
+> and is historical. Test27/test28 subsequently integrated OpenCE Build 138
+> directly, including network 20 and campaign co-op; project-specific network 11
+> and CE01/CE02 paths are retired. v1.0.10 owner testing reports co-op works
+> well. See [current compatibility notes](OPENCE-COOP-COMPATIBILITY.md).
+
 Reviewed for test25 (1.0.7 candidate) against this tree (`test25-vehicle-recenter`,
 from v1.0.6 `f04f5612`). Sources: the local upstream clone
 (`cybersecurity/halo-ce-universal`, whose tags and history match
