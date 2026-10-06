@@ -256,7 +256,12 @@ static struct vr_menu_setting const vr_menu_vehicles[] =
 static struct vr_menu_setting const vr_menu_graphics[] =
 {
 	{ "PRESET", "graphics.preset", _vr_setting_string, 5, { { "AUTO", "auto" }, { "LOW", "low" }, { "MEDIUM", "medium" }, { "HIGH", "high" }, { "MAX", "max" } } },
-	{ "RESOLUTION", "vr.resolution_scale", _vr_setting_real, 6, { { "AUTO", "0" }, { "70%", "0.7" }, { "85%", "0.85" }, { "100%", "1" }, { "115%", "1.15" }, { "130%", "1.3" } } },
+	/* a slider of the eye images' size against the headset's
+	recommendation (Quest 3: 1680x1760), the Quest 3's own panels (2064x2208)
+	marked, supersampling above; FOV's glasses window draws about a fifth
+	of the pixels, which pays for the higher notches */
+	{ "RESOLUTION", "vr.resolution_scale", _vr_setting_real, 12, { { "AUTO", "0" }, { "60%", "0.6" }, { "70%", "0.7" }, { "80%", "0.8" }, { "90%", "0.9" }, { "100%", "1" }, { "110%", "1.1" }, { "125% Q3 NATIVE", "1.25" }, { "140%", "1.4" }, { "160%", "1.6" }, { "180%", "1.8" }, { "200%", "2" } } },
+	{ "FOV", "vr.fov_mode", _vr_setting_string, 2, { { "FULL", "full" }, { "GLASSES 70X66", "glasses" } } },
 	VR_MENU_EFFECT("SHADOWS", "graphics.shadows"),
 	VR_MENU_EFFECT("LIGHTS", "graphics.dynamic_lights"),
 	VR_MENU_EFFECT("SPECULAR", "graphics.specular"),

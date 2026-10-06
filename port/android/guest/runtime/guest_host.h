@@ -139,5 +139,9 @@ void host_xr_recenter(void);
 or 0 when the runtime cannot change it */
 float host_xr_set_refresh_rate(float hertz);
 void host_xr_haptic(unsigned int hand, float amplitude, float seconds);
+/* remakes both eye swapchains at this size (within the runtime's maximum),
+none of their images acquired, and describes them in info again; 0 on
+success, else the old ones stay */
+int host_xr_resize_eyes(struct halo_xr_info *info, unsigned int width, unsigned int height);
 
 #endif

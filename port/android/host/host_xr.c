@@ -101,6 +101,8 @@ static struct
 	XrPath hands[2];
 	int actions_ready;
 	struct swapchain swapchains[HALO_XR_SWAPCHAIN_COUNT];
+	/* the largest eye image the runtime takes (host_xr_resize_eyes) */
+	uint32_t eye_max_width, eye_max_height;
 	int64_t color_format;
 	XrFrameState frame_state;
 	int frame_begun;
@@ -906,6 +908,8 @@ int host_xr_init(struct halo_xr_info *out, uint32_t quad_width, uint32_t quad_he
 		if (!create_swapchain(index, views[index].recommendedImageRectWidth, views[index].recommendedImageRectHeight))
 			return -1;
 	}
+	xr.eye_max_width = views[0].maxImageRectWidth;
+	xr.eye_max_height = views[0].maxImageRectHeight;
 	if (!create_swapchain(HALO_XR_SWAPCHAIN_QUAD, quad_width, quad_height) ||
 		!create_swapchain(HALO_XR_SWAPCHAIN_RETICLE, 256, 256) ||
 		!create_swapchain(HALO_XR_SWAPCHAIN_FADE, 16, 16) ||
@@ -935,6 +939,49 @@ describe:
 		out->height[which] = xr.swapchains[which].height;
 		out->image_count[which] = xr.swapchains[which].count;
 		memcpy(out->images[which], xr.swapchains[which].images, sizeof(out->images[which]));
+	}
+	return 0;
+}
+
+/* the eye images remade at another size (vr.resolution_scale,
+vr.fov_mode): sharper than the runtime's recommendation, or smaller for a
+narrower field of view. The new ones are made before the old ones go, so a
+failure leaves the eyes as they were. Only info's eye entries change. */
+int host_xr_resize_eyes(struct halo_xr_info *out, uint32_t width, uint32_t height)
+{
+	int eye;
+
+	if (!xr.initialized || xr.failed || xr.swapchains[0].acquired || xr.swapchains[1].acquired)
+		return -1;
+	if (xr.eye_max_width && width > xr.eye_max_width)
+		width = xr.eye_max_width;
+	if (xr.eye_max_height && height > xr.eye_max_height)
+		height = xr.eye_max_height;
+	if (width < 64)
+		width = 64;
+	if (height < 64)
+		height = 64;
+	for (eye = 0; eye < 2; eye++)
+	{
+		struct swapchain old = xr.swapchains[eye];
+
+		if (old.width == width && old.height == height)
+			continue;
+		if (!create_swapchain(eye, width, height))
+		{
+			xr.swapchains[eye] = old;
+			host_logf(HOST_LOG_ERROR, "[openxr] eye %d stays %ux%u: no swapchain of %ux%u", eye, old.width,
+				old.height, width, height);
+			return -1;
+		}
+		check(xrDestroySwapchain(old.handle), "xrDestroySwapchain");
+	}
+	for (eye = 0; eye < 2; eye++)
+	{
+		out->width[eye] = xr.swapchains[eye].width;
+		out->height[eye] = xr.swapchains[eye].height;
+		out->image_count[eye] = xr.swapchains[eye].count;
+		memcpy(out->images[eye], xr.swapchains[eye].images, sizeof(out->images[eye]));
 	}
 	return 0;
 }
@@ -1271,6 +1318,15 @@ void host_xr_end_frame(const struct halo_xr_layers *layers)
 			views[eye].type = XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW;
 			views[eye].pose = xr.views[eye].pose;
 			views[eye].fov = xr.views[eye].fov;
+			/* the eyes drawn narrower than the runtime's view (vr.fov_mode):
+			the compositor shows them over that part only */
+			if (layers->flags & HALO_XR_LAYER_EYE_FOV)
+			{
+				views[eye].fov.angleLeft = layers->eye_fov[eye][0];
+				views[eye].fov.angleRight = layers->eye_fov[eye][1];
+				views[eye].fov.angleUp = layers->eye_fov[eye][2];
+				views[eye].fov.angleDown = layers->eye_fov[eye][3];
+			}
 			views[eye].subImage.swapchain = xr.swapchains[eye].handle;
 			views[eye].subImage.imageRect.extent.width = (int32_t)xr.swapchains[eye].width;
 			views[eye].subImage.imageRect.extent.height = (int32_t)xr.swapchains[eye].height;

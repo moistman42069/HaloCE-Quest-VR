@@ -9,3 +9,4 @@ host_xr_end_frame
 host_xr_recenter
 host_xr_set_refresh_rate
 host_xr_haptic
+host_xr_resize_eyes
