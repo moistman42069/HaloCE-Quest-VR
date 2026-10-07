@@ -1,7 +1,8 @@
-# Test31c / Android 1.0.13 code41 — original touch layout restored
+# Test31c / 1.0.13 code41 — original Android touch layout and VR glass repair
 
-This is an Android-only private update. Keep the accepted Test31b Quest VR
-APK (1.0.13/code40); its VR settings and implementation are preserved.
+This private pair updates Android touch presentation and the VR Warthog glass
+toggle. The accepted Test31b Quest APK remains the comparison baseline; its
+new VR settings design is preserved.
 
 Android now keeps the familiar circular controls and your saved layout in both
 menus and gameplay. It no longer switches to a rectangular menu strip. Direct
@@ -16,14 +17,15 @@ position when this option is disabled. Save keeps the option; Cancel restores
 your previous layout and preferences. Free-looking does not rotate the camera
 while navigating menus.
 
-The prior startup/menu fixes and OpenCE features below remain in place. This
-private Android build still requires owner device testing before publication.
+The prior startup/menu fixes and OpenCE features below remain in place. The
+Warthog glass repair passes the real rendered object handle to the visibility
+check. Both private APKs require owner device testing before publication.
 
 ## Install
 
-Install the Android code41 APK over the existing Android app on the phone/tablet.
-Keep the existing Quest code40 APK. Both are version 1.0.13, network22; the
-original project signing certificate is retained.
+Install the Android code41 APK over the existing Android app on the phone/tablet,
+and the Quest code41 APK over the Quest app. Both are version 1.0.13, network22;
+the original project signing certificate is retained.
 Do not uninstall or clear data. Keep a backup of saves and imported game files.
 Continue using the launcher to import/select your own game files and revisions;
 no maps, ISOs or game assets from your installation are included in these APKs.
@@ -131,7 +133,8 @@ been added. Preserve both host and client logs for connection failures.
   Test Warthog/stationary turrets and both VR and Xbox control layouts.
 - Mounted reticles use the native muzzle/aim preview. Test against actual shots.
 - **Vehicles > HOG GLASS** chooses Hidden or Visible for your first-person
-  Warthog glass. Hidden preserves the preceding build's behavior. Third-person
+  Warthog glass. Hidden is the default; Test31c repairs its draw-queue wiring.
+  Third-person
   vehicles with right-hand steering remain the initial defaults. First-person
   vehicles still need device feedback; this change is not a new camera rewrite.
 - Left-handed weapon-part winding handles the AR display's actual vertex

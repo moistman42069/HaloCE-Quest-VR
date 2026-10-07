@@ -16,6 +16,11 @@ replaced the familiar circular touch controls with a rectangular strip.
 and making optional free look hide only LOOK. See `TEST31C-PROGRESS.md`.
 Public GitHub v1.0.12 remains unchanged.
 
+Follow-up before Test31c packaging: owner reports Warthog HOG GLASS does not
+work and requests that specific VR fix plus both replacement APKs. Code40
+remains the accepted VR comparison baseline, with this glass issue now noted.
+Test31c/code41 device acceptance remains pending for both editions.
+
 ## Current GitHub latest release: v1.0.12 (test30 APKs)
 
 **Published as Latest on 2026-10-07** from `D:\HaloQuest\builds\test30-20261007-v1.0.12`. Version **1.0.12 / code 38**, OpenCE Build 144/network 21. This incremental release fixes Quest face-button behavior in VR menus and adds an optional remembered name for campaign co-op hosts; prior release features remain. See [`RELEASE-1.0.12.md`](RELEASE-1.0.12.md), [`RELEASE-PROVENANCE-1.0.12.md`](RELEASE-PROVENANCE-1.0.12.md), and [`TEST30-DELIVERY.md`](TEST30-DELIVERY.md). Previous releases remain intact; the GitHub About description was not changed.

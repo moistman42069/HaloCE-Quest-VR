@@ -304,7 +304,9 @@ player sits in, as the renderer draws them (rasterizer_xbox_transparent_
 geometry.c): each kind said once a vehicle; its glass not drawn from the
 seat. The owner's video (Silent Cartographer, a Warthog) showed its
 windshield as a bright white sheet from the driver's seat, a view the game
-was never made for; outside the seat it is drawn as ever */
+was never made for; outside the seat it is drawn as ever. The caller must
+pass the draw's object_index; source_object_index is an effect owner and is
+zero for ordinary surfaces, even when the real vehicle handle is valid. */
 boolean vr_render_seat_transparent(long object_index, short shader_type, short glass_type)
 {
 	static char const *const names[] = { "screen", "effect", "decal", "environment", "model", "generic",
@@ -317,10 +319,9 @@ boolean vr_render_seat_transparent(long object_index, short shader_type, short g
 	char const *profile;
 
 	if (object_index == NONE || !vr_render.seat.seated || vr_render.seat.vehicle_index == NONE ||
-		!vr_first_person_vehicles() || !object_try_and_get(object_index) ||
+		!vr_first_person_vehicles() || !vr_seat_view() || !object_try_and_get(object_index) ||
 		(object_index != vr_render.seat.vehicle_index &&
-			object_get_ultimate_parent(object_index) != vr_render.seat.vehicle_index) ||
-		!vr_seat_view())
+			object_get_ultimate_parent(object_index) != vr_render.seat.vehicle_index))
 	{
 		return FALSE;
 	}

@@ -8,7 +8,10 @@ and VR/native implementation. Android's switch from circular controls to a
 rectangular menu strip is rejected. Retain the familiar circular controls,
 their saved placement and direct menu taps. Optional free-space look should
 hide only LOOK, keeping MOVE and action buttons. Branch `test31c-flat-ui`,
-Android 1.0.13/code41; see `TEST31C-PROGRESS.md`. No release/push/install.
+**Latest addition before packaging:** fix the VR Warthog HOG GLASS toggle too,
+then supply BOTH 1.0.13/code41 APKs. Preserve the code40 Quest artifact as the
+comparison baseline and its new VR settings design. See `TEST31C-PROGRESS.md`.
+No release/push/install.
 
 ## Active priority: repair rejected Test31
 

@@ -49,7 +49,7 @@ for key, kind, default in [('vr.vehicle_view', '_config_string', r'"\"chase\""')
 assert 'const char *values[] = {"\\"chase\\"", "\\"right\\"", "true"};' in config, 'the one-time vehicle default migration kept'
 
 # --- the renderer: the glass hook before the shader switch, VR build only
-hook = transparent.index('vr_render_seat_transparent(group->source_object_index, group->shader->base.type,')
+hook = transparent.index('vr_render_seat_transparent(group->object_index, group->shader->base.type,')
 assert transparent.rindex('#ifdef HALO_VR', 0, hook) > transparent.rindex('else if (pass > 0)', 0, hook)
 assert hook < transparent.index('switch (group->shader->base.type)', hook)
 assert transparent[hook:hook + 200].count('continue;') == 1

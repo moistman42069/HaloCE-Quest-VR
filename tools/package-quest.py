@@ -350,6 +350,8 @@ def main():
                       "TEST31-UPSTREAM-DECISIONS.md", "VR-INTERACTION-REQUIREMENTS.md"]
     if candidate_at_least(args.label, 31, "b") and not args.stable:
         documents += ["TEST31B-PLAYER-NOTES.md"]
+    if candidate_at_least(args.label, 31, "c") and not args.stable:
+        documents += ["TEST31C-PLAYER-NOTES.md"]
     for doc in documents:
         shutil.copy2(ROOT / "docs" / doc, output / doc)
     for notice in ["CREDITS.md", "THIRD-PARTY-NOTICES.txt", "LICENSE.md"]:

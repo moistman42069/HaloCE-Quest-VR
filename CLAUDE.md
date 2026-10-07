@@ -1,6 +1,6 @@
 # Agent and contributor continuation
 
-## Active Android-only correction and accepted VR preference (2026-10-07)
+## Active touch/glass correction and accepted VR preference (2026-10-07)
 
 The owner reports **Test31b Quest VR works great** and explicitly prefers its
 new VR settings. Preserve that implementation and the exact Quest code40 APK.
@@ -8,8 +8,11 @@ Android Test31b's rectangular menu control strip is rejected: keep the original
 circular layout/positions across menu and gameplay, retain direct menu taps,
 and have optional drag-anywhere look hide only the LOOK joystick. MOVE and
 action controls remain. Follow `docs/TEST31C-PROGRESS.md` on `test31c-flat-ui`.
-Target Android 1.0.13/code41 only; do not rebuild VR or publish. The later
-interaction scope remains queued. This supersedes the pending-results text below.
+Latest owner addition: fix VR's non-working Warthog HOG GLASS option before
+packaging BOTH builds. Target 1.0.13/code41 for both editions. The accepted
+Quest code40 APK stays preserved as the comparison baseline; retain its new
+VR settings and change only the broken glass path. Do not publish. The later
+interaction scope remains queued. This supersedes the Android-only plan.
 
 ## Active repair: Test31 rejected (2026-10-07)
 

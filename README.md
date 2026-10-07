@@ -1,9 +1,10 @@
 # Halo CE Quest VR + Android 1.0.12
 
-Development branch: **test31c / 1.0.13 private Android correction** restores
+Development branch: **test31c / 1.0.13 private touch/glass correction** restores
 the familiar circular touch layout while retaining direct menu taps and optional
 free look. The owner accepted Test31b VR and prefers its new VR settings;
-that Quest APK and implementation are preserved. Build145/network22 remains.
+that Quest APK is preserved as the baseline. This pass also fixes its Warthog
+glass toggle while keeping the VR settings design. Build145/network22 remains.
 [Current evidence and scope](docs/TEST31C-PROGRESS.md).
 The public download links below remain v1.0.12 until a release is authorized.
 

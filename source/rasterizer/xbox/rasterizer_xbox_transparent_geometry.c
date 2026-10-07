@@ -1459,7 +1459,7 @@ void rasterizer_transparent_geometry_group_draw(
 #ifdef HALO_VR
 					/* test25: a first-person seat's own vehicle: its glass
 					not drawn from inside (port/linux/game/vr_render.c) */
-					if (vr_render_seat_transparent(group->source_object_index, group->shader->base.type,
+					if (vr_render_seat_transparent(group->object_index, group->shader->base.type,
 						_shader_type_transparent_glass))
 						continue;
 #endif
