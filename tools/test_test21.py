@@ -431,6 +431,8 @@ project = fn(aim, 'player_aim_projectile_internal' if 'player_aim_projectile_int
 assert ('aim_assist_collision_direction(player->unit_index, aiming_unit_index, camera_position, camera_direction,\n'
         '\t\t\tposition, direction, &collision_direction);') in project
 assert 'collision_test_vector' not in project, 'the camera trace lives only in the shared helper'
+if 'player_aim_projectile_internal(' in aim:
+    project += '\n' + fn(aim, 'player_aim_projectile')
 converge = re.search(r'#ifdef HALO_VR\n/\* test21: the VR reticle.*?#endif\n', aim, re.S).group(0)
 assert 'player->aim_assist_unit_index' not in converge and 'aim_assist(&' not in converge, \
     'the reticle never changes the player or searches targets'

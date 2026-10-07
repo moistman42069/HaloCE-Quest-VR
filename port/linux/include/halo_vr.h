@@ -213,9 +213,9 @@ void halo_vr_resolve_scope(short x0, short y0, short x1, short y1, int shape);
 
 #endif
 
-#endif
-
 #ifdef HALO_VR
 void vr_preview_player_projectile(long player_index, union real_point3d const *position, union real_vector3d *direction);
 boolean weapon_vr_preview_primary_ray(long weapon_index, long player_index, union real_point3d *origin, union real_vector3d *direction);
+#endif
+
 #endif

@@ -227,6 +227,6 @@ extern short dashboard_abort_error;
 
 /* ---------- public code */
 
-#endif // __UI_WIDGET_H
-
 void display_error_text_when_main_menu_loaded(wchar_t const *text);
+
+#endif // __UI_WIDGET_H
