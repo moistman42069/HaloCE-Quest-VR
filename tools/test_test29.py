@@ -347,6 +347,7 @@ int main(void){
 # --- 8. version, identity, package markers
 assert int(re.search(r'versionCode Math\.max\((\d+), buildNumber\)', gradle).group(1)) >= 37
 assert int(re.search(r': "1\.0\.(\d+)"', gradle).group(1)) >= 11
-assert 'HaloCE Quest test29 candidate 1.0.11 (OpenCE build 144 netcode, network 21;' in frame
+assert 'HaloCE Quest test29 candidate 1.0.11 (OpenCE build 144 netcode, network 21;' in frame or \
+    'test29: OpenCE build 144 netcode, network 21;' in frame
 assert 'candidate_at_least(args.label, 29)' in package
 print('PASS: test29 wiring (version 1.0.11 / 37, identity, package markers)')

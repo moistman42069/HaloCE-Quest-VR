@@ -148,6 +148,14 @@ def main():
             if candidate_at_least(args.label, 23):
                 if b"client dropped presentation" not in guest:
                     raise SystemExit("Test23 co-op cutscene diagnostic missing")
+            if candidate_at_least(args.label, 30):
+                # the co-op host's server name (format 3) in both; the menus' letters in the VR guest
+                if b"co-op: lobby open: %s (%s), difficulty %d, up to %d players, %s, named %s" not in guest:
+                    raise SystemExit("Test30 co-op server name missing")
+                if b"Server name (optional, up to " not in dex:
+                    raise SystemExit("Test30 launcher server name missing")
+                if vr and b"test30 candidate 1.0.12" not in guest:
+                    raise SystemExit("Test30 VR identity missing")
             if candidate_at_least(args.label, 29):
                 # OpenCE build 144's network 21, and the held HUD tap's and PR #1's text
                 if b"OpenCE build 144 (network 21)" not in dex:

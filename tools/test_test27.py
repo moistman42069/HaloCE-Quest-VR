@@ -167,19 +167,20 @@ typedef int boolean;
 #define VALID_INDEX(i,n) ((i)>=0&&(i)<(long)(n))
 static char const *missions[] = {"a10", "a30", "a50", "b30", "b40", "c10", "c20", "c40", "d20", "d40"};
 ''' + limits + r'''
-static boolean list_publicly; static short mission, difficulty, most_players;
+static boolean list_publicly; static short mission, difficulty, most_players; static char host_name[16]; /* (test30: format 3 names the server) */
 ''' + reader + r'''
 int main(void){
  assert(coop_request_read("2 4 2 1 8\n") && mission==4 && difficulty==2 && list_publicly==1 && most_players==8);
  assert(coop_request_read("1 0 1 0\n") && mission==0 && most_players==COOP_FORMAT_1_PLAYERS);   /* the 1.0.8 launcher's format */
  assert(!coop_request_read("2 10 1 1 4")); assert(!coop_request_read("2 1 4 1 4")); assert(!coop_request_read("2 1 1 2 4"));
  assert(!coop_request_read("2 1 1 1 1")); assert(!coop_request_read("2 1 1 1 129")); assert(!coop_request_read("2 1 1 1 4 x"));
- assert(!coop_request_read("3 1 1 1 4")); assert(!coop_request_read("")); assert(!coop_request_read("2 1 1 1"));
+ assert(!coop_request_read("4 1 1 1 4")); /* (an unknown format; test30 made 3 the named one) */ assert(!coop_request_read("")); assert(!coop_request_read("2 1 1 1"));
  for(int p=2;p<=COOP_MAXIMUM_PLAYERS;p++){ char t[32]; snprintf(t,sizeof t,"2 9 3 0 %d",p); assert(coop_request_read(t) && most_players==p); }
  puts("PASS: the launcher's co-op host request: mission, difficulty, public, 2-128 players (16 until test28); 1.0.8's format read; malformed refused");
 }
 ''')
-assert '"2 " + selected + " " + difficulty.getSelectedItemPosition()' in coop and 'PLAYER_CHOICES = {2, 4, 8, 12, 16, 24, 32, 48, 64, 96, 128}' in coop
+assert ('"2 " + selected + " " + difficulty.getSelectedItemPosition()' in coop or
+        '"3 " + selected + " " + difficulty.getSelectedItemPosition()' in coop) and 'PLAYER_CHOICES = {2, 4, 8, 12, 16, 24, 32, 48, 64, 96, 128}' in coop
 assert 'CoopPublisher' not in activity and not (ROOT / (java + 'CoopPublisher.java')).exists(), 'no HTTP announcer'
 print('PASS: launcher co-op hosting opens an OpenCE co-op lobby (2-128 since test28, public through the signed lobby); '
       'the CE02 announcer and settings retired')

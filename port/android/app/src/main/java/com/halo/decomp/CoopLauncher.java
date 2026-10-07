@@ -3,7 +3,9 @@ package com.halo.decomp;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.widget.ArrayAdapter;
+import android.text.InputFilter;
 import android.widget.CheckBox;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -23,6 +25,13 @@ final class CoopLauncher {
     // (OpenCE's Server Setup's co-op sizes, 16 by default there; here a smaller lobby, as it starts when full)
     static final int[] PLAYER_CHOICES = {2, 4, 8, 12, 16, 24, 32, 48, 64, 96, 128};
     static final int DEFAULT_PLAYERS = 4;
+    // test30: the server's name (a network game's name holds 15, as the PvP host's)
+    static final int NAME_LENGTH = 15;
+
+    /** a server name the game takes: printable ASCII, NAME_LENGTH at most (empty: the device's) */
+    static boolean validName(String name) {
+        return name != null && name.matches("[ -~]{0," + NAME_LENGTH + "}");
+    }
     private final Activity activity;
     private final File root;
     private final BooleanSupplier ready, start;
@@ -37,7 +46,7 @@ final class CoopLauncher {
             .setMessage("Co-op as OpenCE plays it: up to 128 players on Quest, Android, Windows, Mac and Linux "
                 + "(OpenCE network version " + BuildConfig.HALO_NETWORK_MAXIMUM + "), with the same campaign maps. "
                 + "Players can join a mission already under way.\n\n"
-                + "TO HOST: press Host campaign, pick the mission, difficulty and most players, leave the public "
+                + "TO HOST: press Host campaign, pick the mission, difficulty and most players, name your server if you like, leave the public "
                 + "box ticked to be listed, and press Host. Start from the lobby when everyone is in (a full "
                 + "lobby starts by itself).\n\n"
                 + "TO JOIN: in the game, open Multiplayer > System Link: public co-op games (this app's and "
@@ -75,6 +84,16 @@ final class CoopLauncher {
         }
         Spinner players = select(layout, counts);
         players.setSelection(chosen);
+        // test30: the server's name, as the browsers list it (empty: the device's name, as before)
+        TextView nameLabel = new TextView(activity);
+        nameLabel.setText("Server name (optional, up to " + NAME_LENGTH + " letters, numbers or symbols)");
+        layout.addView(nameLabel);
+        EditText serverName = new EditText(activity);
+        serverName.setSingleLine(true);
+        serverName.setHint("The device's name");
+        serverName.setFilters(new InputFilter[]{new InputFilter.LengthFilter(NAME_LENGTH)});
+        serverName.setText(activity.getSharedPreferences("coop-host", 0).getString("server_name", ""));
+        layout.addView(serverName);
         CheckBox publish = new CheckBox(activity);
         publish.setText("Public: list this game in the server browsers (in-game System Link, OpenCE's and the community list)");
         // On by default so others find the game in the browsers.
@@ -89,6 +108,11 @@ final class CoopLauncher {
         dialog.setOnShowListener(ignored -> dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
             if (!ready.getAsBoolean()) return;
             int selected = mission.getSelectedItemPosition();
+            String name = serverName.getText().toString().trim();
+            if (!validName(name)) {
+                status.setText("Use up to " + NAME_LENGTH + " plain letters, numbers, spaces or symbols for the server name.");
+                return;
+            }
             if (root == null || !new File(root, "maps/" + MAPS[selected] + ".map").isFile()) {
                 status.setText("The selected campaign map is missing. Import it before hosting."); return;
             }
@@ -100,15 +124,17 @@ final class CoopLauncher {
                 File invite = new File(root, "join_link.txt");
                 if (invite.exists() && !invite.delete()) throw new java.io.IOException("Pending invite could not be cleared");
                 try (FileOutputStream out = new FileOutputStream(partial)) {
-                    out.write(("2 " + selected + " " + difficulty.getSelectedItemPosition() + " "
-                        + (publish.isChecked() ? 1 : 0) + " " + PLAYER_CHOICES[players.getSelectedItemPosition()] + "\n")
-                        .getBytes(StandardCharsets.UTF_8));
+                    out.write(("3 " + selected + " " + difficulty.getSelectedItemPosition() + " "
+                        + (publish.isChecked() ? 1 : 0) + " " + PLAYER_CHOICES[players.getSelectedItemPosition()] + "\n"
+                        + name + "\n").getBytes(StandardCharsets.UTF_8));
                     out.getFD().sync();
                 }
                 if (!partial.renameTo(request)) throw new java.io.IOException("Could not save host request");
+                activity.getSharedPreferences("coop-host", 0).edit().putString("server_name", name).apply();
                 RunLog.line("Campaign host requested: mission=" + MAPS[selected] + " difficulty="
                     + difficulty.getSelectedItemPosition() + " players=" + PLAYER_CHOICES[players.getSelectedItemPosition()]
-                    + " public=" + publish.isChecked() + " network=" + BuildConfig.HALO_NETWORK_MAXIMUM);
+                    + " public=" + publish.isChecked() + " network=" + BuildConfig.HALO_NETWORK_MAXIMUM
+                    + " name=" + (name.isEmpty() ? "(the device's)" : name));
                 if (start.getAsBoolean()) dialog.dismiss();
                 else request.delete();
             } catch (java.io.IOException e) {

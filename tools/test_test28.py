@@ -109,7 +109,8 @@ assert 'server->game.maximum_players = (byte)PIN(maximum_players, 2, MAXIMUM_NET
 assert 'MIN(16, MAXIMUM_NETWORK_PLAYER_COUNT));' not in server.split('network_game_server_port_set_cooperative_players(')[1].split('\n}')[0]
 # (OpenCE's own list, menu_functions.c: maximum_players[] = { 2, 4, 8, 12, 16, 24, 32, 48, 64, 96, 128 })
 assert 'PLAYER_CHOICES = {2, 4, 8, 12, 16, 24, 32, 48, 64, 96, 128};' in launcher and 'DEFAULT_PLAYERS = 4;' in launcher
-assert 'PLAYER_CHOICES[players.getSelectedItemPosition()] + "\\n")' in launcher
+assert 'PLAYER_CHOICES[players.getSelectedItemPosition()] + "\\n")' in launcher or \
+    'PLAYER_CHOICES[players.getSelectedItemPosition()] + "\\n"\n' in launcher  # (test30: the server's name follows)
 print('PASS: co-op hosted for 2 to 128 players, as OpenCE\'s Server Setup offers (16 at most before); the old request format still 16')
 
 # --- gyro aim (flat Android): the math, run without Android

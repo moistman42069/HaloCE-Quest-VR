@@ -314,7 +314,9 @@ static struct { struct { uint32_t hand_buttons[2], buttons; float trigger[2], th
  grip_held[2], in_holster, hand_state, physical, button_source[VR_BUTTON_ACTIONS], recentre_source; unsigned pad_buttons; float pad_trigger[2];
  double x_held, grenade_pulse, view_held;
  /* test26: crouch on the turning stick held down, the reticle's toggle */
- int seated, turn_stick_down, reticle_hidden, reticle_press, reticle_cancelled; } vr;
+ int seated, turn_stick_down, reticle_hidden, reticle_press, reticle_cancelled;
+ /* test30: the menus' letters (0: in play, as these frames are) */
+ int menus_active; } vr;
 static int recentres, buzzes;
 static void platform_log(const char *f, ...){(void)f;}
 static int physical_weapons(void){return vr.physical;}

@@ -933,7 +933,7 @@ void vr_initialize(void)
 		return;
 	vr.initialized = 1;
 	config_vr_vehicle_defaults();
-	platform_log("vr: HaloCE Quest test29 candidate 1.0.11 (OpenCE build 144 netcode, network 21; the HUD head tap held by the temple, HUD and head tap on the HUD page, wrist HUD on the wrist and movable, moving with a hand while holding the gun in both, glasses FOV and resolution to 200%% (PR #1); test28: co-op games entered in progress keep their camera upright, release checks as OpenCE ships, co-op hosted for 2 to 128 players as OpenCE's Server Setup offers, gyro aim on phones as an option; test27: OpenCE build 138 netcode, network 20, with its co-op for up to 16 players; test26: co-op: death screams no longer stop the second player, cutscene characters placed and animated as on the first; HUD head tap, reticle toggle on the left stick click with crouch on the turning stick held down (or crouch kept on the click: Controls), optional wrist HUD, adjustable head taps; impact melee along the gun with a follow-through; fingers bend smoothly against walls; test25: vehicle seat and recentre diagnostics, first-person horizon option and seat glass, settings rows that fit, vehicle offset reset; test24b: comfort vignette, smooth speed and snap angle, SPV1 marked not working; test24: co-op cutscenes animate for the second player; test23: remappable Quest buttons with the grenade on X; test22: co-op campaign host crash fixed, steady first-person vehicle view, left-hand ammo display, adjustable scopes, shot diagnostics; test21b: floating hands restored, torso-following arms, neck-pivot full body, auto two-hand lock, horn, online melee off, two-hand gun roll, pistol shots from the hand, reticle converges as shots do, per-gun aim, horn from either stick)");
+	platform_log("vr: HaloCE Quest test30 candidate 1.0.12 (the menus' face buttons as the Xbox's of the same letter: X deletes a profile; the co-op host's server name; test29: OpenCE build 144 netcode, network 21; the HUD head tap held by the temple, HUD and head tap on the HUD page, wrist HUD on the wrist and movable, moving with a hand while holding the gun in both, glasses FOV and resolution to 200%% (PR #1); test28: co-op games entered in progress keep their camera upright, release checks as OpenCE ships, co-op hosted for 2 to 128 players as OpenCE's Server Setup offers, gyro aim on phones as an option; test27: OpenCE build 138 netcode, network 20, with its co-op for up to 16 players; test26: co-op: death screams no longer stop the second player, cutscene characters placed and animated as on the first; HUD head tap, reticle toggle on the left stick click with crouch on the turning stick held down (or crouch kept on the click: Controls), optional wrist HUD, adjustable head taps; impact melee along the gun with a follow-through; fingers bend smoothly against walls; test25: vehicle seat and recentre diagnostics, first-person horizon option and seat glass, settings rows that fit, vehicle offset reset; test24b: comfort vignette, smooth speed and snap angle, SPV1 marked not working; test24: co-op cutscenes animate for the second player; test23: remappable Quest buttons with the grenade on X; test22: co-op campaign host crash fixed, steady first-person vehicle view, left-hand ammo display, adjustable scopes, shot diagnostics; test21b: floating hands restored, torso-following arms, neck-pivot full body, auto two-hand lock, horn, online melee off, two-hand gun roll, pistol shots from the hand, reticle converges as shots do, per-gun aim, horn from either stick)");
 	if (!config_boolean("vr.enabled"))
 	{
 		platform_log("vr: off (vr.enabled)");
@@ -1489,6 +1489,30 @@ static void layout_controls(void)
 	{
 		buttons |= HALO_XR_BUTTON_BLACK;
 	}
+	}
+	/* test30: in the menus the Quest's face buttons are the Xbox's of the
+	same letter, as the screens' prompts name them: A, X and Y (and B for
+	a left-handed player). The gameplay table (vr.button_*) gave the
+	menus no X (the Quest's X throws a grenade; the game's X, use and
+	reload, is on B, which in the menus is the pointer's back), so a
+	profile could not be deleted (the profile list's X). The button that
+	is the pointer's back (vr_ui_pointer: the major hand's upper, right B)
+	gives nothing else, so one press goes back once. No grenade in menus */
+	if (vr.menus_active && vr.touch_layout)
+	{
+		unsigned int physical_right = vr.frame.hand_buttons[1], physical_left = vr.frame.hand_buttons[0];
+		unsigned int back = vr.controls_mirrored ? HALO_XR_BUTTON_Y : HALO_XR_BUTTON_B;
+
+		buttons &= ~(HALO_XR_BUTTON_A | HALO_XR_BUTTON_B | HALO_XR_BUTTON_X | HALO_XR_BUTTON_Y | HALO_XR_BUTTON_BLACK);
+		if (physical_right & HALO_XR_HAND_SOUTH) buttons |= HALO_XR_BUTTON_A;
+		if (physical_right & HALO_XR_HAND_EAST) buttons |= HALO_XR_BUTTON_B;
+		if (physical_left & HALO_XR_HAND_SOUTH) buttons |= HALO_XR_BUTTON_X;
+		if (physical_left & HALO_XR_HAND_EAST) buttons |= HALO_XR_BUTTON_Y;
+		buttons &= ~back;
+		grenade_down = 0;
+		vr.grenade_pulse = 0.0;
+		vr.x_held = 0.0;
+		vr.x_hold_switched = 1;
 	}
 	/* the off hand's trigger zooms */
 	if (vr.frame.trigger[1 - vr.weapon_hand] > zoom_on)

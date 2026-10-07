@@ -2,7 +2,10 @@
 
 The launcher (CoopLauncher) writes a one-shot coop_host.txt in the game data
 root: "2 <mission 0..9> <difficulty 0..3> <public 0/1> <most players 2..128>"
-(format 1, the four before the most players, still reads: 16 players). With
+(format 1, the four before the most players, still reads: 16 players;
+test30's format 3 is format 2's line, then the server's name on a line of
+its own: printable ASCII, COOP_NAME_LENGTH at most, empty for the
+machine's name as before). With
 the main menu up, this opens a native network lobby (as the Xbox's Create
 Game does), adds the local player, and sets it up as upstream's Create Game
 does for a SINGLEPLAYER map (ui_widget_port_cooperative_level_choose): the
@@ -43,9 +46,13 @@ enum
 	COOP_MAXIMUM_PLAYERS = 128,
 	/* (the 1.0.8 launcher's format, without the most players: Server Setup's default) */
 	COOP_FORMAT_1_PLAYERS = 16,
+	/* (the server's name: a network game's name holds 15, as the launcher's PvP host) */
+	COOP_NAME_LENGTH = 15,
 };
 static boolean requested, booted, configured, player_added, start_requested, list_publicly;
 static short mission, difficulty, most_players;
+/* test30: the server's name asked for (empty: the machine's) */
+static char host_name[COOP_NAME_LENGTH + 1];
 static real settle_seconds;
 static unsigned long last_poll, request_time;
 
@@ -59,6 +66,7 @@ void network_campaign_session_end(void)
 	if (requested)
 		p2p_set_hosting_public(FALSE);
 	requested = booted = configured = player_added = start_requested = list_publicly = FALSE;
+	host_name[0] = 0;
 	settle_seconds = 0.0f;
 	remove("d:\\coop_status.txt");
 }
@@ -71,14 +79,23 @@ boolean network_campaign_change_level(boolean next)
 	return FALSE;
 }
 
-/* a request's fields; FALSE if malformed */
+/* a request's fields; FALSE if malformed (test30: format 3, the server's
+name on the second line; nothing else after the fields) */
 static boolean coop_request_read(char const *text)
 {
 	int version = 0, selected = -1, level = -1, publish = -1, players = COOP_MAXIMUM_PLAYERS;
-	char extra;
-	int read = sscanf(text, "%d %d %d %d %d %c", &version, &selected, &level, &publish, &players, &extra);
+	char line[64], extra;
+	char const *rest = strchr(text, '\n');
+	size_t length = rest ? (size_t)(rest - text) : strlen(text);
+	char const *after;
+	int read;
 
-	if (version == 2 && read == 5)
+	if (length >= sizeof(line))
+		return FALSE;
+	memcpy(line, text, length);
+	line[length] = 0;
+	read = sscanf(line, "%d %d %d %d %d %c", &version, &selected, &level, &publish, &players, &extra);
+	if ((version == 2 || version == 3) && read == 5)
 	{
 	}
 	else if (version == 1 && read == 4)
@@ -87,6 +104,28 @@ static boolean coop_request_read(char const *text)
 	}
 	else
 		return FALSE;
+	after = rest ? rest + 1 : "";
+	host_name[0] = 0;
+	if (version == 3)
+	{
+		size_t name_length = strcspn(after, "\r\n"), index;
+
+		if (name_length > COOP_NAME_LENGTH)
+			return FALSE;
+		for (index = 0; index < name_length; index++)
+		{
+			if (after[index] < ' ' || after[index] > '~')
+				return FALSE;
+		}
+		memcpy(host_name, after, name_length);
+		host_name[name_length] = 0;
+		after += name_length;
+	}
+	if (after[strspn(after, " \t\r\n")])
+	{
+		host_name[0] = 0;
+		return FALSE;
+	}
 	if (!VALID_INDEX(selected, NUMBEROF(missions)) || level < 0 || level > 3 || (publish != 0 && publish != 1) ||
 		players < COOP_MINIMUM_PLAYERS || players > COOP_MAXIMUM_PLAYERS)
 	{
@@ -172,10 +211,22 @@ void network_campaign_session_update(boolean menu_loaded, real seconds)
 			}
 			return;
 		}
+		/* test30: the server's name as the launcher asked (none: the
+		machine's, as before); the players' count below sends it to any
+		client already in, the listing reads it (network_game_server_list) */
+		if (host_name[0] && game)
+		{
+			int index;
+
+			for (index = 0; host_name[index] && index < (int)NUMBEROF(game->name) - 1; index++)
+				game->name[index] = (wchar_t)(unsigned char)host_name[index];
+			game->name[index] = 0;
+		}
 		network_game_server_port_set_cooperative_players(most_players);
 		p2p_set_hosting_public(list_publicly);
-		platform_log("co-op: lobby open: %s (%s), difficulty %d, up to %d players, %s", missions[mission], map_name,
-			difficulty, most_players, list_publicly ? "listed publicly" : "private (invite)");
+		platform_log("co-op: lobby open: %s (%s), difficulty %d, up to %d players, %s, named %s", missions[mission], map_name,
+			difficulty, most_players, list_publicly ? "listed publicly" : "private (invite)",
+			host_name[0] ? host_name : "(the device's name)");
 	}
 	if (!player_added && menu_loaded && global_network_game_client_get())
 		player_added = network_game_client_add_player(global_network_game_client_get(), 0);
