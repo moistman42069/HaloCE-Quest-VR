@@ -194,6 +194,8 @@ struct peer
 	/* test20e: sealed packets in its name that did not open (a key or build
 	mismatch, not a blocked path), for the reason it is dropped */
 	int rejected;
+	/* test31: bounded nearby-port fallback, never used once connected. */
+	unsigned int predicted_attempts;
 };
 
 /* a UDP stand-in for one port of a peer */
@@ -1109,6 +1111,48 @@ static void peer_heard(struct peer *peer, unsigned long address, unsigned short 
 	}
 }
 
+/* A destination-dependent NAT sometimes allocates the peer mapping close
+to its STUN mapping. Only a locally measured endpoint-independent (lenient)
+mapping should probe: sending from a strict NAT would change our own port.
+These are ordinary authenticated OpenCE pings; no packet/offer changes.
+Two extra attempts per 200 ms, at most 256 per offer and 8 opening peers:
+at most 80 extra packets/s overall. Only advertised public IPs, ports >=1024,
+within +/-16 of their advertised port. No random scan or additional sockets.
+Random ports and unadvertised egress IPs can still require a relay. */
+static int prediction_public_address(unsigned long address)
+{
+	unsigned long ip = network_long(address);
+	unsigned long first = ip >> 24;
+	return first != 0 && first != 10 && first != 127 && first < 224 &&
+		(ip & 0xffff0000UL) != 0xa9fe0000UL &&
+		(ip & 0xfff00000UL) != 0xac100000UL &&
+		(ip & 0xffff0000UL) != 0xc0a80000UL &&
+		(ip & 0xffc00000UL) != 0x64400000UL;
+}
+
+static void peer_predict_punch(struct peer *peer)
+{
+	int attempt;
+	if (p2p.nat_strict != 0 || peer->connected || peer->candidate_count <= 0 ||
+		!elapsed(peer->offered_time, 2000))
+		return;
+	for (attempt = 0; attempt < 2 && peer->predicted_attempts < 256; attempt++)
+	{
+		unsigned int sequence = peer->predicted_attempts++;
+		unsigned int step = sequence / peer->candidate_count;
+		struct p2p_candidate candidate = peer->candidates[sequence % peer->candidate_count];
+		int delta = (int)((step % 32) / 2 + 1);
+		int port = network_short(candidate.port);
+		if (step & 1) delta = -delta;
+		port += delta;
+		if (prediction_public_address(candidate.address) && port >= 1024 && port <= 65535)
+		{
+			candidate.port = network_short((unsigned short)port);
+			peer_ping(peer, &candidate);
+		}
+	}
+}
+
 static void update_peers(void)
 {
 	int index;
@@ -1139,8 +1183,8 @@ static void update_peers(void)
 			else
 				snprintf(reason, sizeof(reason), "could not connect: no packet from it arrived in %d s at any of "
 					"its %d addresses (this network: %s). Both networks' NATs may be too strict for a direct "
-					"connection; forwarding network.tunnel_port on one router helps, as UPnP does where the "
-					"router allows it: network.allow_upnp", PUNCH_TIMEOUT / 1000, peer->candidate_count,
+					"connection. Disable VPN/split routing or try Wi-Fi; forwarding UDP network.tunnel_port "
+					"on one reachable router may help. No relay is available", PUNCH_TIMEOUT / 1000, peer->candidate_count,
 					p2p.nat_strict < 0 ? "NAT not measured" : p2p.nat_strict ?
 					"strict NAT, a new port per destination, as on mobile data" : "lenient NAT");
 			if (peer->is_host && p2p.joining && !memcmp(p2p.join_host, peer->identifier, P2P_IDENTIFIER_SIZE))
@@ -1148,10 +1192,8 @@ static void update_peers(void)
 				p2p.join_stage = P2P_JOIN_FAILED;
 				snprintf(p2p.join_failure, sizeof(p2p.join_failure), "%s", peer->rejected ?
 					"The host answered, but its packets did not match this session. Refresh and try again." :
-					p2p.nat_strict == 1 ? "No direct path to this host: your network (often mobile data) and "
-					"its router both block it. Try Wi-Fi." : p2p.nat_strict == 0 ?
-					"No direct path to this host: its router blocks new connections. Try another game." :
-					"No direct path to this host from this network. Try Wi-Fi or another game.");
+					"No direct UDP path. Turn off VPN/split routing and retry, or try Wi-Fi. "
+					"A host with a reachable UDP tunnel port may help. See Launcher > Network; no relay is available.");
 			}
 			drop_peer(peer, reason);
 		}
@@ -1165,6 +1207,7 @@ static void update_peers(void)
 			this) */
 			for (candidate = 0; candidate < peer->candidate_count; candidate++)
 				peer_ping(peer, &peer->candidates[candidate]);
+			peer_predict_punch(peer);
 			peer->sent_time = p2p_now();
 		}
 	}
@@ -1324,15 +1367,18 @@ static void stun_received(const unsigned char *packet, int size, const struct so
 				for (other = 0; other < p2p.stun_count; other++)
 				{
 					if (other != index && p2p.stun[other].has_mapped &&
-						p2p.stun[other].mapped.port != server->mapped.port && !p2p.reported_symmetric)
+						(p2p.stun[other].mapped.port != server->mapped.port ||
+						 p2p.stun[other].mapped.address != server->mapped.address) && !p2p.reported_symmetric)
 					{
-						platform_log("Internet play: this network's NAT gives each destination its own "
-							"port, so it can only connect to machines behind more lenient ones");
+						platform_log("Internet play: STUN destinations see different public IP/port mappings; "
+							"direct reachability is restricted. VPN/split routing can use multiple egress IPs. "
+							"Try without VPN or use Wi-Fi if joining fails.");
 						p2p.reported_symmetric = 1;
 						p2p.nat_strict = 1;
 					}
 					else if (other != index && p2p.stun[other].has_mapped &&
-						p2p.stun[other].mapped.port == server->mapped.port && !p2p.reported_lenient &&
+						p2p.stun[other].mapped.port == server->mapped.port &&
+						p2p.stun[other].mapped.address == server->mapped.address && !p2p.reported_lenient &&
 						!p2p.reported_symmetric)
 					{
 						platform_log("Internet play: this network's NAT keeps one public port for every "

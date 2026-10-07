@@ -68,3 +68,83 @@ int main(void){
  puts("PASS: real trigger path: both hands, seated/foot, physical/classic, empty/held; secondary untouched");
 }
 ''')
+
+# The real update_peers/prediction code sends through a deterministic NAT
+# model. Crypto is outside this simulation: delivery is an already authenticated
+# peer packet, as peer_heard receives after the unchanged tunnel receive checks.
+p2p=read('port/linux/src/p2p.c')
+assert 'p2p.stun[other].mapped.address == server->mapped.address' in fn(p2p,'stun_received')
+run('nat_punch', r'''
+#include <assert.h>
+#include <stdio.h>
+#include <string.h>
+#define P2P_MAXIMUM_PEERS 8
+#define P2P_IDENTIFIER_SIZE 16
+#define P2P_JOIN_FAILED 4
+#define P2P_JOIN_CONNECTED 3
+#define PEER_TIMEOUT 20000
+#define PING_INTERVAL 1000
+#define PUNCH_TIMEOUT 30000
+#define PUNCH_INTERVAL 200
+#define ENDPOINT_SWITCH_TIME 3000
+struct p2p_candidate {unsigned long address; unsigned short port;};
+struct peer {int used,connected,is_host,rejected,candidate_count; unsigned int predicted_attempts;
+ unsigned long offered_time,heard_time,sent_time,endpoint_heard_time;
+ unsigned char identifier[16]; char name[33];
+ struct p2p_candidate candidates[4],endpoint;};
+static struct {struct peer peers[8]; int nat_strict,joining,join_stage; unsigned char join_host[16]; char join_failure[400];} p2p;
+static unsigned long now; static int sends,extra,max_extra,full_cone,delivered;
+static unsigned long actual_ip; static unsigned short actual_port;
+static unsigned long p2p_now(void){return now;}
+static int elapsed(unsigned long then,unsigned long delay){return now-then>=delay;}
+static void platform_log(const char *format,...){(void)format;}
+static void p2p_signal_stop_joining(void){}
+static const char *address_text(unsigned long ip,unsigned short port,char *s){return "simulation";}
+static void drop_peer(struct peer *p,const char *why){p->used=0;}
+''' + fn(p2p,'network_long') + fn(p2p,'network_short') + fn(p2p,'peer_heard') + r'''
+/* The remote has already sent to our stable public socket. Full cone accepts
+   any source; port-restricted accepts only a tuple we have punched. Symmetric
+   remote maps use actual_port rather than their STUN port. Two-egress uses
+   actual_ip; only an advertised IP can be tried. */
+static void peer_ping(struct peer *p,const struct p2p_candidate *c){
+ sends++; int advertised=0;
+ for(int i=0;i<p->candidate_count;i++) if(c->address==p->candidates[i].address && c->port==p->candidates[i].port) advertised=1;
+ if(!advertised && !p->connected){extra++; assert(network_short(c->port)>=1024);}
+ if(full_cone || (c->address==actual_ip && c->port==actual_port)){
+  peer_heard(p,actual_ip,actual_port,1); delivered++;
+ }
+}
+''' + fn(p2p,'prediction_public_address') + fn(p2p,'peer_predict_punch') + fn(p2p,'update_peers') + r'''
+static void scenario(int strict,int cone,int delta,int egress,int advertised_second,int expected){
+ memset(&p2p,0,sizeof(p2p)); sends=extra=delivered=0; full_cone=cone; now=0;
+ struct peer *p=&p2p.peers[0]; p->used=1; p->is_host=1; p->candidate_count=1;
+ p2p.nat_strict=strict; p2p.joining=1;
+ p->candidates[0]=(struct p2p_candidate){network_long(0x08080808),network_short(40000)};
+ if(advertised_second){p->candidates[1]=(struct p2p_candidate){network_long(0x09090909),network_short(41000)};p->candidate_count++;}
+ actual_ip=network_long(egress?0x09090909:0x08080808);
+ actual_port=network_short((egress?41000:40000)+delta);
+ for(now=0;now<=30000 && p->used && !p->connected;now+=10){
+  int previous=extra; update_peers(); assert(extra-previous<=2);
+ }
+ assert(p->connected==expected); assert(extra<=256);
+ if(strict || cone || (!delta && !egress)) assert(extra==0);
+ if(expected){int previous=extra;now+=1000;update_peers();assert(extra==previous);}
+ else assert(strstr(p2p.join_failure,"VPN") && strstr(p2p.join_failure,"no relay"));
+}
+int main(void){
+ scenario(0,1,15000,0,0,1); /* full cone receives symmetric peer's first packet */
+ scenario(0,0,0,0,0,1); /* endpoint-independent mapping, port-restricted filter */
+ scenario(0,0,7,0,0,1); /* sequential symmetric remote: bounded prediction succeeds */
+ scenario(0,0,-9,0,0,1); /* negative port delta */
+ scenario(0,0,12000,0,0,0); /* random symmetric remote: honest failure */
+ scenario(1,0,7,0,0,0); /* no spray from a strict local NAT */
+ scenario(-1,0,7,0,0,0); /* no spray before local mapping is measured */
+ scenario(0,0,4,1,1,1); /* two egress IPs, actual route among advertised candidates */
+ scenario(0,0,4,1,0,0); /* unadvertised egress cannot be guessed */
+ assert(!prediction_public_address(network_long(0x7f000001)));
+ assert(!prediction_public_address(network_long(0x0a000001)));
+ assert(!prediction_public_address(network_long(0xc0a80001)));
+ assert(!prediction_public_address(network_long(0xe0000001)));
+ puts("PASS: real punching and endpoint adoption under full-cone, restricted, symmetric and two-egress NAT models; bounds/timeouts/stop-on-connect");
+}
+''')
