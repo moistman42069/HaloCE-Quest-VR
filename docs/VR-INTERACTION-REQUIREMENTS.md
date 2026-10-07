@@ -1,5 +1,23 @@
 # Subsequent VR interaction requirements
 
+## Owner packaging hold — 2026-10-07
+
+Do not package or deliver either APK until **all three task prompts** have been
+worked through in full. A passing test31 baseline alone does not clear this
+hold. This supersedes the earlier instruction to deliver test31 before starting
+these additional workstreams. Keep implementation sequential: baseline fixes
+and menus, manual reload/hand contact, then world interaction/NPC handling.
+Device acceptance remains pending until the eventual combined candidate is
+tested; do not make prior device acceptance a circular prerequisite for doing
+the remaining authorized source work. Complete available source/build/test
+validation between subsystems instead.
+
+Acknowledging a row or recording an initial dependency does not complete it.
+Investigate each dependency and resolve what can be resolved. Any genuinely
+unsupported behavior or remaining external dependency requires specific evidence
+and an explicit disposition before the packaging decision. No unsupported
+feature may be presented as implemented.
+
 Owner requests received after test31 began. **Order: finish and validate test31,
 then manual reload/finger architecture investigation and reported plan, then
 world-interaction investigation and reported plan.** No new feature here is

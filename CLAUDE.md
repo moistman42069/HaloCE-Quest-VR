@@ -1,5 +1,17 @@
 # Agent and contributor continuation
 
+## Active private work / packaging hold (2026-10-07)
+
+Read `docs/ACTIVE-WORK-CHECKPOINT.md` and `docs/TEST31-PROGRESS.md` first.
+The current branch is `test31-network-menus-vehicles`; the target is
+1.0.13/code39. **Do not package either APK until all three owner task prompts
+have been worked through**, including manual reload/hand contact and world
+objects/NPCs/ragdolls/recovery/impact damage. Track all requirements in
+`docs/VR-INTERACTION-REQUIREMENTS.md`. Menu scope still requires the owner's
+explicit choice per `docs/TEST31-MENU-PLAN.md`. No publication, push, tag,
+installation or game launch is authorized. Public release pointers below are
+historical/public state, not permission to release this work.
+
 ## Current GitHub latest release: v1.0.12 (test30 APKs)
 
 **Published release: test30 (version 1.0.12 / code 38),** branch `test30-profiles-coopname`, on v1.0.11. Quest A/X/Y now match the button labels in VR menus (X deletes a profile; B backs out once), with gameplay mappings unchanged. Campaign hosting accepts an optional remembered server name. The network remains OpenCE Build 144 / version 21. The exact APK pair has no recorded device session at publication. See `docs/RELEASE-1.0.12.md`, `docs/RELEASE-PROVENANCE-1.0.12.md`, `docs/TEST30-PROGRESS.md` and `docs/TEST30-DELIVERY.md`.

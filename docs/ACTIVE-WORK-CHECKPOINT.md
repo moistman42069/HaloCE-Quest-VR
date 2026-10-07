@@ -1,5 +1,22 @@
 # Active work checkpoint — after v1.0.12 release (2026-10-07)
 
+## Current private work and packaging hold (2026-10-07)
+
+Branch `test31-network-menus-vehicles`, based on test30 `fe725aff`. Target
+1.0.13/code 39 remains unbuilt as an APK. The owner now explicitly requires
+**all three attached prompts** to be worked through before any packaging:
+test31 network/menu/vehicle fixes, manual reload/finger/palm interaction, and
+world objects/NPC grabbing, ragdolls, recovery and impact damage. A test31-only
+delivery is no longer authorized. Do not publish, push, tag, install or launch.
+
+Read [TEST31-PROGRESS.md](TEST31-PROGRESS.md),
+[TEST31-UPSTREAM-DECISIONS.md](TEST31-UPSTREAM-DECISIONS.md),
+[TEST31-MENU-PLAN.md](TEST31-MENU-PLAN.md), and the complete indexed follow-on
+checklist [VR-INTERACTION-REQUIREMENTS.md](VR-INTERACTION-REQUIREMENTS.md).
+The menu scope question remains awaiting the owner's required go-ahead.
+Work through the subsystems sequentially; acknowledgment alone is not completion.
+Public/accepted build pointers below remain unchanged.
+
 The latest public release is [v1.0.12](https://github.com/moistman42069/HaloCE-Quest-VR/releases/tag/v1.0.12), built from test30. Preserve v1.0.11 and all earlier releases. Provenance and APK hashes are in [RELEASE-PROVENANCE-1.0.12.md](RELEASE-PROVENANCE-1.0.12.md). The repository About description was not changed.
 
 ## Queued future work (owner, 2026-10-07; not started)
