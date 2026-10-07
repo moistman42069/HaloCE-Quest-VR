@@ -14,6 +14,14 @@ bash tools/build-quest.sh flat
 
 Both commands share `build/android` native staging, so run them serially. Gradle is explicitly invoked after Ninja so Java-only changes are included. Outputs are `port/android/app/build/outputs/apk/vr/debug/app-vr-debug.apk` and `port/android/app/build/outputs/apk/debug/app-debug.apk`.
 
+Each build now runs the full deterministic regression runner before configure.
+Do not bypass this gate to produce a candidate. Mandatory coverage includes
+complete menu assets built into game tags, production guest allocator semantics,
+first-load/failure/reload paths, and the Android input view lifecycle. A parser
+test or libc allocator substitute alone missed the rejected Test31 regressions.
+Device startup and usable gameplay input must still be verified separately;
+record them as pending when no device run is available.
+
 Public source does not contain the project signing key. A locally generated debug key can install a separate clean app, but generally cannot update the published app in place. Do not commit keys, passwords, game maps, logs, invites, personal recordings, SDKs or build caches. Use GitHub's noreply identity for new commits if email privacy matters.
 
 ## Change and report discipline

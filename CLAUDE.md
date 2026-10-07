@@ -1,12 +1,20 @@
 # Agent and contributor continuation
 
-## Active private work / packaging hold (2026-10-07)
+## Active repair: Test31 rejected (2026-10-07)
+
+Read `docs/TEST31B-PROGRESS.md` first. The owner reports Quest startup crashes
+and unusable Android touch input in Test31. Branch `test31b-startup-touch`
+repairs those regressions and adds optional in-game touch-anywhere look.
+Target 1.0.13/code40. Do not use Test31's prior passing host checks as device
+acceptance. Prepare a corrected private pair; keep larger interaction work queued.
+
+## Historical Test31 delivery / retained scope (superseded by repair above)
 
 Read `docs/ACTIVE-WORK-CHECKPOINT.md` and `docs/TEST31-PROGRESS.md` first.
-The current branch is `test31-network-menus-vehicles`; the target is
-1.0.13/code39. The private pair is now built and signed from `585a5643`, with
+The rejected branch was `test31-network-menus-vehicles`; its target was
+1.0.13/code39. That private pair was built and signed from `585a5643`, with
 47 regression suites passing; see `docs/TEST31-DELIVERY.md`. Await owner device
-testing before the next interaction phase. **Latest owner override:** finish and validate the full OpenCE
+acceptance of the corrected pair before the next interaction phase. **Retained owner override:** finish and validate the full OpenCE
 menus, turret fixes, Warthog window setting and upstream/network upgrade, then
 package the Quest and flat APKs for testing BEFORE the manual reload/hand
 contact and world/NPC interaction phase. Those later requirements remain queued

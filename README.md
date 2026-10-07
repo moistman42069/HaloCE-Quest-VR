@@ -1,8 +1,9 @@
 # Halo CE Quest VR + Android 1.0.12
 
-Development branch: **test31 / 1.0.13 private candidate** integrates OpenCE
-Build 145/network 22, in-game menus and turret/vehicle-glass fixes.
-[Candidate guide and testing scope](docs/TEST31-PLAYER-NOTES.md).
+Development branch: **test31b / 1.0.13 private repair** addresses the rejected
+Test31 startup and touch-navigation regressions while retaining Build 145/
+network 22, in-game menus and turret/vehicle-glass work.
+[Current repair evidence and scope](docs/TEST31B-PROGRESS.md).
 The public download links below remain v1.0.12 until a release is authorized.
 
 [Latest release and downloads](https://github.com/moistman42069/HaloCE-Quest-VR/releases/tag/v1.0.12) · [Previous release v1.0.11](https://github.com/moistman42069/HaloCE-Quest-VR/releases/tag/v1.0.11) · [Full release notes](docs/RELEASE-1.0.12.md) · [Controls and settings](docs/CONTROLS-AND-OPTIONS.md) · [Credits](CREDITS.md)

@@ -1,5 +1,9 @@
 # Test31 / 1.0.13 private candidate
 
+**REJECTED after owner device testing on 2026-10-07.** Quest startup crashes
+and Android touch navigation is unusable. Do not use these APKs as a known-good
+baseline. The repair and missed test coverage are tracked in TEST31B-PROGRESS.md.
+
 This is the baseline requested before manual reload, hand contact and world/NPC
 interaction work. It is not a public release or a device-accepted build.
 Public v1.0.12 remains unchanged. Both APKs are built and signed for owner

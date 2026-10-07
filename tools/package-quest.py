@@ -238,7 +238,7 @@ def main():
                     if marker not in guest:
                         raise SystemExit("Test31 menu/runtime marker missing: " + repr(marker))
                 if vr:
-                    for marker in [b"test31 candidate 1.0.13", b"HOG GLASS", b"vr.vehicle_warthog_hide_glass"]:
+                    for marker in [("HaloCE Quest " + args.label + " candidate " + version_name).encode("ascii"), b"HOG GLASS", b"vr.vehicle_warthog_hide_glass"]:
                         if marker not in guest:
                             raise SystemExit("Test31 VR marker missing: " + repr(marker))
             if candidate_at_least(args.label, 28):
@@ -348,6 +348,8 @@ def main():
     if candidate_at_least(args.label, 31) and not args.stable:
         documents += ["TEST31-PLAYER-NOTES.md", "TEST31-MENU-SETTINGS-AUDIT.md",
                       "TEST31-UPSTREAM-DECISIONS.md", "VR-INTERACTION-REQUIREMENTS.md"]
+    if candidate_at_least(args.label, 31, "b") and not args.stable:
+        documents += ["TEST31B-PLAYER-NOTES.md"]
     for doc in documents:
         shutil.copy2(ROOT / "docs" / doc, output / doc)
     for notice in ["CREDITS.md", "THIRD-PARTY-NOTICES.txt", "LICENSE.md"]:

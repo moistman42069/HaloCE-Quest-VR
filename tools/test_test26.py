@@ -576,7 +576,7 @@ print('PASS: OpenCE build 128 adopted where it fits (engine speed-ups, glass, a 
 # --- 14. version, identity and package markers
 code = int(re.search(r'versionCode Math\.max\((\d+), buildNumber\)', gradle).group(1))
 assert code >= 34 and int(re.search(r': "1\.0\.(\d+)"', gradle).group(1)) >= 8
-identity = re.search(r'platform_log\("vr: (HaloCE Quest test\d+ candidate [^"]+)"\);', frame).group(1)
+identity = re.search(r'platform_log\("vr: (HaloCE Quest test\d+[a-z]? candidate [^"]+)"\);', frame).group(1)
 # Test31 separates current identity from the retained baseline-history line.
 # Keep the history assertion, and validate parity exclusions on the current banner.
 assert 'test26 candidate 1.0.8' in frame or 'test26:' in frame

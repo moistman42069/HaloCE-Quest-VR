@@ -1,11 +1,21 @@
 # Active work checkpoint — after v1.0.12 release (2026-10-07)
 
-## Current private work and delivery gate (2026-10-07)
+## Active priority: repair rejected Test31
+
+The owner rejected Test31 on 2026-10-07: Quest startup crashes and Android
+loses usable touch navigation. Follow `TEST31B-PROGRESS.md` on branch
+`test31b-startup-touch`, targeting 1.0.13/code40. Fix the reported paths,
+add optional touch-anywhere look in the in-game touch customization, and
+deliver both corrected private APKs after strengthened integration checks.
+The Test31 delivery record below is historical evidence, not acceptance.
+
+## Historical Test31 delivery and retained scope (superseded above)
 
 Branch `test31-network-menus-vehicles`, based on test30 `fe725aff`. Target
 1.0.13/code 39 is built and signed from runtime source `585a5643`; see
 `TEST31-DELIVERY.md` for exact identities, checks and the device checklist.
-All 47 regression suites pass; device acceptance remains pending.
+All 47 host regression suites passed; the subsequent device report rejected
+this pair. Those results did not cover the failing startup/input paths.
 **Latest owner override:** finish the
 full OpenCE in-game menus, turret/window fixes and current upstream/network
 upgrade, validate them, then package BOTH APKs for testing before moving to

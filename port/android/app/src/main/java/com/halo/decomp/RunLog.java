@@ -73,7 +73,8 @@ final class RunLog {
             try { output = new ParcelFileDescriptor.AutoCloseOutputStream(ParcelFileDescriptor.dup(publicFile.getFileDescriptor())); }
             catch (Exception e) { Log.e("halo", "Cannot open Java launch log", e); }
         }
-        line("HaloCE launch; package=" + context.getPackageName() + " version=" + BuildConfig.VERSION_NAME);
+        line("HaloCE launch; package=" + context.getPackageName() + " version=" + BuildConfig.VERSION_NAME
+            + " code=" + BuildConfig.VERSION_CODE);
         line("device=" + Build.MANUFACTURER + " " + Build.MODEL + " Android=" + Build.VERSION.RELEASE
             + " SDK=" + Build.VERSION.SDK_INT + " ABI=" + java.util.Arrays.toString(Build.SUPPORTED_ABIS));
         line("Log destination: " + destination);

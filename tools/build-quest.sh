@@ -15,6 +15,9 @@ export TMPDIR="$PWD/build/tmp"
 mkdir -p "$TMPDIR" "$GRADLE_USER_HOME"
 export JAVA_TOOL_OPTIONS="${JAVA_TOOL_OPTIONS:-} -Djava.io.tmpdir=$TMPDIR"
 python3 tools/generate-field-guide.py
+# Required for every candidate: includes full menu construction with the guest
+# ABI/allocator and Android input lifecycle, not just compilation or XML parsing.
+python3 tools/run-quest-checks.py
 # (--release, as OpenCE ships its builds: a failed check is written to the
 # log and play goes on, instead of halting the game: test28)
 python3 configure.py "${flags[@]}"
