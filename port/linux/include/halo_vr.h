@@ -171,6 +171,7 @@ functions, one past the end of each table) */
 #define VR_MENU_NEXT_FUNCTION 102
 #define VR_MENU_PREVIOUS_FUNCTION 103
 void vr_menu_tags_loaded(void);
+void vr_menu_tags_unloaded(void);
 /* Releases the local avatar's filtered draw buffers before map teardown. */
 void vr_body_geometry_dispose(void);
 /* the text of the widget with that definition, if it is one of the menu's */

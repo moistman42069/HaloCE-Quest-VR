@@ -1,24 +1,13 @@
 /*
 VR_MENU.C
 
-The pause menu's VR settings, in the VR build (HALO_VR): the headset's
-options changed in play, in the pause menu's own boxes, font and buttons.
-
-Halo's menus are widget tags in each map. When a level's tags load, this
-adds a "VR SETTINGS" item to the solo pause menu's list (its button hints
-move from under the list to under the mission objectives, making room). It
-opens a screen of categories (CONTROLS, VR, GRAPHICS, EFFECTS), each opening
-a page of settings. Every screen is cloned from the pause menu: the same
-dimmed backdrop and boxes, with its list where the pause menu's list and the
-mission objectives were (a page's settings in two columns). Each setting is
-a button cloned from "RESUME GAME": A or right steps it to its next value,
-left to its previous; B goes back a screen. The settings are written into
-config.toml as they change, and the VR layer takes them up at once
-(vr_reload_settings).
-
-The widget code calls back here for the text of these buttons (a game data
-input function: VR_MENU_GAME_DATA_FUNCTION) and for their changes (event
-handler functions: VR_MENU_NEXT_FUNCTION, VR_MENU_PREVIOUS_FUNCTION).
+Quest VR settings are native DeLa widgets built from verified definitions,
+using the current map's UI font and the existing setting callbacks. OpenCE's
+main menu and Settings hub expose them; campaign pause keeps a direct entry,
+and stock multiplayer menus get a fallback entry when OpenCE is unavailable.
+The settings, four-row columns, paging, laser hit tests and immediate config
+persistence remain shared across all entry paths. No solo-pause templates or
+fixed child counts are required to create a functioning screen.
 */
 
 #ifdef HALO_VR
@@ -43,6 +32,7 @@ on the Android guest's ABI) */
 void platform_log(const char *format, ...);
 /* source/cache/cache_files.c */
 long cache_file_add_tag(unsigned long group_tag, unsigned long parent_group_tag, char *name, void *base_address);
+char const *ui_widget_event_handler_function_name(long function_index);
 
 /* ---------- the widget definition tag ('DeLa'), as ui_widget.c views it */
 
@@ -90,7 +80,22 @@ struct vr_menu_widget
 	struct tag_block search_and_replace_functions;
 	byte unknown06C[0xEC - 0x6C];
 	struct tag_reference text_label_string_list;
-	byte unknown0FC[0x3E0 - 0xFC];
+	struct tag_reference text_font;
+	real_argb_color text_color;
+	short justification;
+	word text_box_flags;
+	byte unknown120[0x12E - 0x120];
+	short string_list_index;
+	short horizontal_offset, vertical_offset;
+	byte unknown134[0x150 - 0x134];
+	long list_flags;
+	struct tag_reference list_header_bitmap, list_footer_bitmap;
+	rectangle2d list_header_bounds, list_footer_bounds;
+	byte unknown184[0x1A4 - 0x184];
+	struct tag_reference extended_description_widget;
+	byte unknown1B4[0x2D4 - 0x1B4];
+	struct tag_block conditional_widgets;
+	byte unknown2E0[0x3E0 - 0x2E0];
 	struct tag_block child_widgets;
 };
 
@@ -102,6 +107,8 @@ typedef char vr_menu_widget_bounds[offsetof(struct vr_menu_widget, bounds) == 0x
 typedef char vr_menu_widget_game_data_inputs[offsetof(struct vr_menu_widget, game_data_inputs) == 0x48 ? 1 : -1];
 typedef char vr_menu_widget_event_handlers[offsetof(struct vr_menu_widget, event_handlers) == 0x54 ? 1 : -1];
 typedef char vr_menu_widget_text[offsetof(struct vr_menu_widget, text_label_string_list) == 0xEC ? 1 : -1];
+typedef char vr_menu_widget_font[offsetof(struct vr_menu_widget, text_font) == 0xFC ? 1 : -1];
+typedef char vr_menu_widget_list_flags[offsetof(struct vr_menu_widget, list_flags) == 0x150 ? 1 : -1];
 
 /* event handler flags and events (ui_widget.c) */
 #define VR_MENU_CLOSE_CURRENT 0x1
@@ -637,6 +644,8 @@ static struct
 	pause menu's item, the categories' screen and its buttons, and each
 	page's screen and buttons */
 	long button_tag_index, categories_tag_index;
+	long title_tag_index, hints_tag_index;
+	boolean loaded;
 	long category_tag_indices[NUMBEROF(vr_menu_pages)];
 	long page_tag_indices[NUMBEROF(vr_menu_pages)];
 	long *setting_tag_indices[NUMBEROF(vr_menu_pages)];
@@ -703,13 +712,14 @@ static long vr_menu_clone(
 	char const *widget_name,
 	struct vr_menu_widget **out_widget)
 {
-	struct vr_menu_widget *widget = tag_name ? vr_menu_allocate(sizeof(*widget)) : NULL;
+	struct vr_menu_widget *source = vr_menu_widget_get(template_index);
+	struct vr_menu_widget *widget = tag_name && source ? vr_menu_allocate(sizeof(*widget)) : NULL;
 	long tag_index;
 
 	*out_widget = NULL;
 	if (!widget)
 		return NONE;
-	memcpy(widget, vr_menu_widget_get(template_index), sizeof(*widget));
+	memcpy(widget, source, sizeof(*widget));
 	memset(widget->name, 0, sizeof(widget->name));
 	strncpy(widget->name, widget_name, sizeof(widget->name) - 1);
 	tag_index = cache_file_add_tag(VR_MENU_WIDGET_TAG, (unsigned long)NONE, tag_name, widget);
@@ -723,7 +733,14 @@ static boolean vr_menu_handlers(
 	struct vr_menu_event_handler const *handlers,
 	long count)
 {
-	struct vr_menu_event_handler *copy = vr_menu_allocate(count * (long)sizeof(*copy));
+	struct vr_menu_event_handler *copy;
+    if (!count) {
+        widget->event_handlers.count = 0;
+        widget->event_handlers.address = NULL;
+        return TRUE;
+    }
+    if (count < 0 || !handlers) return FALSE;
+    copy = vr_menu_allocate(count * (long)sizeof(*copy));
 
 	if (!copy)
 		return FALSE;
@@ -784,75 +801,97 @@ static void vr_menu_open_handler(
 	vr_menu_reference(&handler->sound_effect, NONE);
 }
 
-/* a screen cloned from the pause menu: its backdrop and boxes, a list of
-`buttons` (each `column_count` to a row of five down, the second column
-`column_x` across), and the button hints at `hints_x`; B (or back) closes
-it, start resumes the game */
-static long vr_menu_screen(
-	long pause_index,
-	long list_index,
-	char *screen_name,
-	char *list_name,
-	char const *widget_name,
-	long const *buttons,
-	long button_count,
-	long left_count,
-	short column_x,
-	short hints_x)
+/* Native DeLa definitions, independent of a map's optional solo pause tags.
+ * All references are initialized to NONE, including fields a container does
+ * not currently use. A zero tag index would name an unrelated map asset. */
+static long vr_menu_native(char *name, char const *label, short type,
+    short width, short height, struct vr_menu_widget **out)
 {
-	struct vr_menu_widget *pause = vr_menu_widget_get(pause_index);
-	struct vr_menu_widget *pause_list = vr_menu_widget_get(list_index);
-	struct vr_menu_widget *screen, *list;
-	struct vr_menu_child *children;
-	struct vr_menu_event_handler handlers[3];
-	long list_tag_index, screen_tag_index, index;
+    struct vr_menu_widget *widget = name ? vr_menu_allocate(sizeof(*widget)) : NULL;
+    long index;
+    *out = NULL;
+    if (!widget) return NONE;
+    widget->type = type;
+    widget->controller_index = 4; /* inherit the invoking controller */
+    strncpy(widget->name, label, sizeof(widget->name) - 1);
+    widget->bounds.x1 = width;
+    widget->bounds.y1 = height;
+    widget->flags = type == 3 ? (1 | (1 << 5)) : type == 0 ? 1 : 0;
+    vr_menu_reference(&widget->background_bitmap, NONE);
+    widget->background_bitmap.group_tag = 'bitm';
+    vr_menu_reference(&widget->text_label_string_list, NONE);
+    widget->text_label_string_list.group_tag = 'ustr';
+    vr_menu_reference(&widget->text_font, NONE);
+    widget->text_font.group_tag = 'font';
+    vr_menu_reference(&widget->list_header_bitmap, NONE);
+    widget->list_header_bitmap.group_tag = 'bitm';
+    vr_menu_reference(&widget->list_footer_bitmap, NONE);
+    widget->list_footer_bitmap.group_tag = 'bitm';
+    vr_menu_reference(&widget->extended_description_widget, NONE);
+    index = cache_file_add_tag(VR_MENU_WIDGET_TAG, (unsigned long)NONE, name, widget);
+    if (index != NONE) *out = widget;
+    return index;
+}
 
-	list_tag_index = vr_menu_clone(list_index, list_name, "vr settings list", &list);
-	if (list_tag_index == NONE || !(children = vr_menu_allocate(button_count * (long)sizeof(*children))))
-		return NONE;
-	for (index = 0; index < button_count; index++)
-	{
-		boolean navigation = index == VR_MENU_SETTINGS_PER_SCREEN;
+static void vr_menu_child_set(struct vr_menu_child *child, long tag, short x, short y)
+{
+    memset(child, 0, sizeof(*child));
+    vr_menu_reference(&child->widget_tag, tag);
+    child->horizontal_offset = x;
+    child->vertical_offset = y;
+    child->custom_controller_index = 4;
+    strcpy(child->name, "vr_settings");
+}
+
+/* Four settings per column, plus a separate NEXT row. Fixed 640x480 menu
+ * coordinates are also the native pointer/Quest laser hit-test space. */
+static long vr_menu_screen(
+    long pause_index, long list_index, char *screen_name, char *list_name,
+    char const *widget_name, long const *buttons, long button_count,
+    long left_count, short column_x, short hints_x)
+{
+    struct vr_menu_widget *screen, *list;
+    struct vr_menu_child *children;
+    struct vr_menu_event_handler handlers[3];
+    long list_tag_index, screen_tag_index, index;
+    (void)hints_x;
+    if (button_count <= 0 || button_count > VR_MENU_SETTINGS_PER_SCREEN + 1 ||
+        left_count != 4 || column_x < VR_MENU_BUTTON_WIDTH || column_x + VR_MENU_BUTTON_WIDTH > 512)
+        return NONE;
+    list_tag_index = vr_menu_clone(list_index, list_name, "vr settings list", &list);
+    if (list_tag_index == NONE || !(children = vr_menu_allocate(button_count * sizeof(*children))))
+        return NONE;
+    for (index = 0; index < button_count; index++) {
+        boolean navigation = index == VR_MENU_SETTINGS_PER_SCREEN;
         long row = navigation ? 4 : (index < left_count ? index : index - left_count);
-
-		memcpy(&children[index], (struct vr_menu_child *)pause_list->child_widgets.address, sizeof(children[index]));
-		vr_menu_reference(&children[index].widget_tag, buttons[index]);
-		snprintf(children[index].name, sizeof(children[index].name), "vr_button_%ld", index);
-		children[index].vertical_offset = (short)(row * 28);
-		children[index].horizontal_offset = navigation || index < left_count ? 0 : column_x;
-	}
-	if (button_count > left_count)
-		list->bounds.x1 = (short)(list->bounds.x1 + column_x);
-	list->bounds.y1 = MAX(list->bounds.y1, list->bounds.y0 + 5 * 28);
-	list->child_widgets.count = button_count;
-	list->child_widgets.address = children;
-
-	screen_tag_index = vr_menu_clone(pause_index, screen_name, widget_name, &screen);
-	if (screen_tag_index == NONE || !(children = vr_menu_allocate(3 * (long)sizeof(*children))))
-		return NONE;
-	memcpy(&children[0], (struct vr_menu_child *)pause->child_widgets.address + 0, sizeof(children[0]));
-	memcpy(&children[1], (struct vr_menu_child *)pause->child_widgets.address + 1, sizeof(children[1]));
-	memcpy(&children[2], (struct vr_menu_child *)pause->child_widgets.address + 4, sizeof(children[2]));
-	vr_menu_reference(&children[1].widget_tag, list_tag_index);
-	strcpy(children[1].name, "vr_settings_list");
-	children[2].horizontal_offset = hints_x;
-	screen->child_widgets.count = 3;
-	screen->child_widgets.address = children;
-	memset(handlers, 0, sizeof(handlers));
-	handlers[0].flags = VR_MENU_CLOSE_CURRENT;
-	handlers[0].event_type = VR_MENU_EVENT_B;
-	handlers[1] = handlers[0];
-	handlers[1].event_type = VR_MENU_EVENT_BACK;
-	handlers[2].flags = VR_MENU_CLOSE_ALL;
-	handlers[2].event_type = VR_MENU_EVENT_START;
-	for (index = 0; index < 3; index++)
-	{
-		vr_menu_reference(&handlers[index].widget_tag, NONE);
-		vr_menu_reference(&handlers[index].sound_effect, NONE);
-	}
-	if (!vr_menu_handlers(screen, handlers, 3))
-		return NONE;
-	return screen_tag_index;
+        if (buttons[index] == NONE) return NONE;
+        vr_menu_child_set(&children[index], buttons[index],
+            navigation || index < left_count ? 0 : column_x, (short)(row * 28));
+    }
+    list->bounds.x1 = (short)(column_x + VR_MENU_BUTTON_WIDTH);
+    list->bounds.y1 = 5 * 28;
+    list->child_widgets.count = button_count;
+    list->child_widgets.address = children;
+    screen_tag_index = vr_menu_clone(pause_index, screen_name, widget_name, &screen);
+    if (screen_tag_index == NONE || !(children = vr_menu_allocate(3 * sizeof(*children))))
+        return NONE;
+    vr_menu_child_set(&children[0], vr_menu.title_tag_index, 64, 90);
+    vr_menu_child_set(&children[1], list_tag_index, 64, 142);
+    vr_menu_child_set(&children[2], vr_menu.hints_tag_index, 64, 340);
+    screen->child_widgets.count = 3;
+    screen->child_widgets.address = children;
+    memset(handlers, 0, sizeof(handlers));
+    handlers[0].flags = VR_MENU_CLOSE_CURRENT;
+    handlers[0].event_type = VR_MENU_EVENT_B;
+    handlers[1] = handlers[0];
+    handlers[1].event_type = VR_MENU_EVENT_BACK;
+    handlers[2].flags = VR_MENU_CLOSE_ALL;
+    handlers[2].event_type = VR_MENU_EVENT_START;
+    for (index = 0; index < 3; index++) {
+        vr_menu_reference(&handlers[index].widget_tag, NONE);
+        vr_menu_reference(&handlers[index].sound_effect, NONE);
+    }
+    return vr_menu_handlers(screen, handlers, 3) ? screen_tag_index : NONE;
 }
 
 /* Build back-to-front so each NEXT button references an existing screen.
@@ -889,51 +928,220 @@ static long vr_menu_paged(long pause, long list, long resume, long group,
     return next;
 }
 
-void vr_menu_tags_loaded(
-	void)
+/* Add a row without relying on a stock list's exact child count. The
+ * optional before index preserves native profile option/description indices. */
+static boolean vr_menu_insert(long list_index, long tag, short x, short y, long before)
 {
-	/* the button hints, centred under the mission objectives (from under the
-	list); the right column of settings above them, as wide as the list's
-	buttons (the list is 72 from the screen's left) */
-	static short const hints_x = 328, right_column_x = 328 - 72;
-	long pause_index = tag_loaded(VR_MENU_WIDGET_TAG, "ui\\shell\\solo_game\\pause_game\\pause_game");
-	long list_index = tag_loaded(VR_MENU_WIDGET_TAG, "ui\\shell\\solo_game\\pause_game\\pause_list");
-	long resume_index = tag_loaded(VR_MENU_WIDGET_TAG, "ui\\shell\\solo_game\\pause_game\\resume_game_button");
-	struct vr_menu_widget *pause, *pause_list;
-	struct vr_menu_child *children;
-	struct vr_menu_event_handler handlers[3];
-	long page, index;
+    struct vr_menu_widget *list = vr_menu_widget_get(list_index);
+    struct vr_menu_child *old, *grown;
+    long count, index;
+    if (!list || list->type != 3 || tag == NONE) return FALSE;
+    count = list->child_widgets.count;
+    old = list->child_widgets.address;
+    if (count < 0 || count > 128 || (count && !old)) return FALSE;
+    for (index = 0; index < count; index++)
+        if (old[index].widget_tag.index == tag) return TRUE;
+    if (before < 0 || before > count) before = count;
+    grown = vr_menu_allocate((count + 1) * sizeof(*grown));
+    if (!grown) return FALSE;
+    if (before) memcpy(grown, old, before * sizeof(*grown));
+    vr_menu_child_set(&grown[before], tag, x, y);
+    if (before < count) memcpy(grown + before + 1, old + before, (count - before) * sizeof(*grown));
+    list->child_widgets.address = grown;
+    list->child_widgets.count = count + 1;
+    list->bounds.y1 = MAX(list->bounds.y1, y + 28);
+    return TRUE;
+}
 
-	/* (the last map's) */
-	for (index = 0; index < vr_menu.allocation_count; index++)
-		free(vr_menu.allocations[index]);
-    if (vr_menu.allocations) free(vr_menu.allocations);
+/* Fit the extra main-menu entry above the profile footer (y=446). The
+ * imported 33px artwork keeps its size; only its 3px gaps become 1px. */
+static boolean vr_menu_main(long list_index)
+{
+    struct vr_menu_widget *list = vr_menu_widget_get(list_index);
+    struct vr_menu_child *children;
+    long index, y = 247, count;
+    if (!list || list->type != 3 || list->child_widgets.count < 0 ||
+        list->child_widgets.count > 16 || !list->child_widgets.address) return FALSE;
+    count = list->child_widgets.count;
+    children = list->child_widgets.address;
+    for (index = 0; index < count; index++) {
+        struct vr_menu_widget *item = vr_menu_widget_get(children[index].widget_tag.index);
+        if (children[index].widget_tag.index == vr_menu.button_tag_index) return TRUE;
+        if (!item || item->bounds.y1 < item->bounds.y0) return FALSE;
+        y += item->bounds.y1 - item->bounds.y0 + 1;
+    }
+    if (y + 28 > 446 || !vr_menu_insert(list_index, vr_menu.button_tag_index, 192, (short)y, NONE))
+        return FALSE;
+    children = list->child_widgets.address;
+    y = 247;
+    for (index = 0; index < count; index++) {
+        struct vr_menu_widget *item = vr_menu_widget_get(children[index].widget_tag.index);
+        children[index].vertical_offset = (short)(y - item->bounds.y0);
+        y += item->bounds.y1 - item->bounds.y0 + 1;
+    }
+    return TRUE;
+}
+
+/* A stock/CE pause list is identified by its real native quit callback,
+ * not its number/order of children. Shared lists are only extended once. */
+static boolean vr_menu_pause_list(long screen_index, long list_index)
+{
+    struct vr_menu_widget *screen = vr_menu_widget_get(screen_index);
+    struct vr_menu_widget *list = vr_menu_widget_get(list_index);
+    struct vr_menu_child *children;
+    long index, bottom = 0;
+    short list_x = 0, list_y = 0;
+    if (!screen || !list || list->type != 3 || list->child_widgets.count <= 0 ||
+        list->child_widgets.count > 128 || !list->child_widgets.address) return FALSE;
+    children = list->child_widgets.address;
+    for (index = 0; index < list->child_widgets.count; index++) {
+        struct vr_menu_widget *button;
+        if (children[index].widget_tag.index == vr_menu.button_tag_index) return TRUE;
+        button = vr_menu_widget_get(children[index].widget_tag.index);
+        if (button) bottom = MAX(bottom, children[index].vertical_offset + button->bounds.y1);
+    }
+    children = screen->child_widgets.address;
+    for (index = 0; index < screen->child_widgets.count; index++)
+        if (children[index].widget_tag.index == list_index) {
+            list_x = children[index].horizontal_offset + list->bounds.x0;
+            list_y = children[index].vertical_offset + list->bounds.y0;
+        }
+    /* Do not write beyond a custom CE screen. The existing Settings route
+     * remains usable if that map's direct pause list has no spare room. */
+    if (list_x + VR_MENU_BUTTON_WIDTH > 640 || list_y + bottom + 28 > 440) {
+        platform_log("vr: pause layout has no room for a VR row: %s", tag_get_name(list_index));
+        return FALSE;
+    }
+    if (!vr_menu_insert(list_index, vr_menu.button_tag_index, 0, (short)bottom, NONE)) return FALSE;
+    /* The original solo hints shared this row. Move only an overlapping
+     * non-list sibling (typically hints); no hard-coded child[4] access. */
+    for (index = 0; index < screen->child_widgets.count; index++) {
+        struct vr_menu_widget *other;
+        short x, y;
+        if (children[index].widget_tag.index == list_index) continue;
+        other = vr_menu_widget_get(children[index].widget_tag.index);
+        if (!other) continue;
+        x = children[index].horizontal_offset + other->bounds.x0;
+        y = children[index].vertical_offset + other->bounds.y0;
+        if (other->bounds.y1 - other->bounds.y0 <= 40 &&
+            x < list_x + VR_MENU_BUTTON_WIDTH && x + other->bounds.x1 - other->bounds.x0 > list_x &&
+            y < list_y + bottom + 28 && y + other->bounds.y1 - other->bounds.y0 > list_y + bottom) {
+            if (328 + other->bounds.x1 - other->bounds.x0 <= 640)
+                children[index].horizontal_offset = (short)(328 - other->bounds.x0);
+            else if (y + 28 + other->bounds.y1 - other->bounds.y0 <= 480)
+                children[index].vertical_offset += 28;
+        }
+    }
+    return TRUE;
+}
+
+static void vr_menu_multiplayer_fallback(void)
+{
+    long collection = tag_loaded('Soul', "ui\\shell\\multiplayer");
+    struct tag_block *screens;
+    long screen, child, button, handler;
+    if (collection == NONE) return;
+    screens = tag_get('Soul', collection);
+    if (!screens || screens->count < 0 || screens->count > 128 || !screens->address) return;
+    for (screen = 0; screen < screens->count; screen++) {
+        long screen_index = ((struct tag_reference *)screens->address)[screen].index;
+        struct vr_menu_widget *root = vr_menu_widget_get(screen_index);
+        struct vr_menu_child *lists;
+        if (!root || root->child_widgets.count > 128 || !root->child_widgets.address) continue;
+        lists = root->child_widgets.address;
+        for (child = 0; child < root->child_widgets.count; child++) {
+            struct vr_menu_widget *list = vr_menu_widget_get(lists[child].widget_tag.index);
+            struct vr_menu_child *buttons;
+            boolean quit = FALSE;
+            if (!list || list->type != 3 || list->child_widgets.count > 128 || !list->child_widgets.address) continue;
+            buttons = list->child_widgets.address;
+            for (button = 0; button < list->child_widgets.count && !quit; button++) {
+                struct vr_menu_widget *item = vr_menu_widget_get(buttons[button].widget_tag.index);
+                struct vr_menu_event_handler *events;
+                if (!item || item->event_handlers.count > 128 || !item->event_handlers.address) continue;
+                events = item->event_handlers.address;
+                for (handler = 0; handler < item->event_handlers.count; handler++) {
+                    char const *name;
+                    if (!(events[handler].flags & VR_MENU_RUN_FUNCTION)) continue;
+                    name = ui_widget_event_handler_function_name(events[handler].function);
+                    if (name && !strcmp(name, "mp game player quit")) { quit = TRUE; break; }
+                }
+            }
+            if (quit) vr_menu_pause_list(screen_index, lists[child].widget_tag.index);
+        }
+    }
+}
+
+/* Called after widgets/textures close, before native menu tags and the map
+ * table are released. Idempotent; nothing is freed from a live UI callback. */
+void vr_menu_tags_unloaded(void)
+{
+    long index;
+    for (index = 0; index < vr_menu.allocation_count; index++) free(vr_menu.allocations[index]);
+    free(vr_menu.allocations);
     memset(&vr_menu, 0, sizeof(vr_menu));
+    vr_menu.button_tag_index = vr_menu.categories_tag_index = NONE;
+    vr_menu.title_tag_index = vr_menu.hints_tag_index = NONE;
+    for (index = 0; index < VR_MENU_PAGE_COUNT; index++)
+        vr_menu.category_tag_indices[index] = vr_menu.page_tag_indices[index] = NONE;
+}
+
+void vr_menu_tags_loaded(void)
+{
+    static short const hints_x = 328, right_column_x = 328 - 72;
+    long pause_index, list_index, resume_index, font, page, index;
+    struct vr_menu_widget *widget;
+    struct vr_menu_event_handler handlers[3];
+    if (vr_menu.loaded) return; /* menu hooks may be requested twice */
+    vr_menu_tags_unloaded();
+    vr_menu.loaded = TRUE;
+    font = tag_loaded('font', "ui\\small_ui");
+    if (font == NONE) font = tag_loaded('font', "ui\\large_ui");
+    if (font == NONE) font = tag_loaded('font', "ui\\interstate");
+    if (font == NONE) {
+        platform_log("vr: map has no UI font; preserving its menus, VR runtime remains active");
+        return;
+    }
+    pause_index = vr_menu_native(vr_menu_name("vr\\menu\\screen_template", 0, 0),
+        "vr_screen", 0, 640, 480, &widget);
+    if (pause_index == NONE) return;
+    /* The caller's solo pause owns the clock. These screens never pause a
+     * co-op/PvP host/client, regardless of the time the map was loaded. */
+    index = tag_loaded('bitm', "pc\\bitmaps/gradient");
+    if (index != NONE) {
+        vr_menu_reference(&widget->background_bitmap, index);
+        widget->background_bitmap.group_tag = 'bitm';
+    }
+    list_index = vr_menu_native(vr_menu_name("vr\\menu\\list_template", 0, 0),
+        "vr_list", 3, 506, 140, &widget);
+    if (list_index == NONE) return;
+    resume_index = vr_menu_native(vr_menu_name("vr\\menu\\text_template", 0, 0),
+        "vr_text", 1, VR_MENU_BUTTON_WIDTH, 28, &widget);
+    if (resume_index == NONE) return;
+    vr_menu_reference(&widget->text_font, font);
+    widget->text_font.group_tag = 'font';
+    widget->text_color.alpha = 1.0f;
+    widget->text_color.red = 0.25f;
+    widget->text_color.green = 0.75f;
+    widget->text_color.blue = 1.0f;
+    widget->horizontal_offset = 2;
+    widget->vertical_offset = 4;
+    vr_menu.title_tag_index = vr_menu_button(resume_index,
+        vr_menu_name("vr\\menu\\title", 0, 0), "vr_title", NULL, 0);
+    vr_menu.hints_tag_index = vr_menu_button(resume_index,
+        vr_menu_name("vr\\menu\\hints", 0, 0), "vr_hints", NULL, 0);
+    if (vr_menu.title_tag_index == NONE || vr_menu.hints_tag_index == NONE) return;
+    vr_menu_widget_get(vr_menu.hints_tag_index)->bounds.x1 = 512;
     vr_menu.navigation_capacity = VR_MENU_PAGES(VR_MENU_PAGE_COUNT);
     for (page = 0; page < VR_MENU_PAGE_COUNT; page++)
         vr_menu.navigation_capacity += VR_MENU_PAGES(vr_menu_pages[page].count);
     vr_menu.navigation = vr_menu_allocate(vr_menu.navigation_capacity * sizeof(*vr_menu.navigation));
     if (!vr_menu.navigation) return;
-	vr_menu.button_tag_index = vr_menu.categories_tag_index = NONE;
-	for (page = 0; page < VR_MENU_PAGE_COUNT; page++)
-	{
-		vr_menu.category_tag_indices[page] = vr_menu.page_tag_indices[page] = NONE;
-		vr_menu.setting_tag_indices[page] = vr_menu_allocate(vr_menu_pages[page].count * sizeof(long));
-		if (!vr_menu.setting_tag_indices[page]) return;
-		for (index = 0; index < vr_menu_pages[page].count; index++)
-			vr_menu.setting_tag_indices[page][index] = NONE;
-	}
-	if (pause_index == NONE || list_index == NONE || resume_index == NONE)
-		return;
-	pause = vr_menu_widget_get(pause_index);
-	pause_list = vr_menu_widget_get(list_index);
-	/* the pause menu as this expects it: its backdrop's boxes, its list
-	(four buttons, 28 apart), the mission objectives and the button hints */
-	if (pause->child_widgets.count != 5 || pause_list->child_widgets.count != 4)
-	{
-		platform_log("vr: the pause menu is not as expected; no VR settings in it");
-		return;
-	}
+    for (page = 0; page < VR_MENU_PAGE_COUNT; page++) {
+        vr_menu.setting_tag_indices[page] = vr_menu_allocate(vr_menu_pages[page].count * sizeof(long));
+        if (!vr_menu.setting_tag_indices[page]) return;
+        for (index = 0; index < vr_menu_pages[page].count; index++) vr_menu.setting_tag_indices[page][index] = NONE;
+    }
 
 	/* each setting: A or right steps on, left back */
 	memset(handlers, 0, sizeof(handlers));
@@ -993,18 +1201,37 @@ void vr_menu_tags_loaded(
 	vr_menu.button_tag_index = vr_menu_button(resume_index,
 		vr_menu_name("ui\\shell\\solo_game\\pause_game\\vr_settings_button", 0, 0),
 		"vr_settings_button", handlers, 1);
-	if (vr_menu.button_tag_index == NONE || !(children = vr_menu_allocate(5 * (long)sizeof(*children))))
-		return;
-	/* (the map's own tags changed last, when nothing can fail) */
-	memcpy(children, pause_list->child_widgets.address, 4 * sizeof(*children));
-	children[4] = children[3];
-	vr_menu_reference(&children[4].widget_tag, vr_menu.button_tag_index);
-	strcpy(children[4].name, "vr_settings_button");
-	children[4].vertical_offset = (short)(children[3].vertical_offset + 28);
-	pause_list->child_widgets.count = 5;
-	pause_list->child_widgets.address = children;
-	((struct vr_menu_child *)pause->child_widgets.address)[4].horizontal_offset = hints_x;
-	platform_log("vr: VR settings added: %ld categories, %ld pages, four rows per column; paged capacity", VR_MENU_PAGE_COUNT, vr_menu.navigation_capacity);
+    if (vr_menu.button_tag_index == NONE) return;
+    {
+        long main = tag_loaded(VR_MENU_WIDGET_TAG, "pc\\main_menu/main_menu_select_list");
+        long settings = tag_loaded(VR_MENU_WIDGET_TAG,
+            "pc\\main_menu/settings_select/player_setup/player_profile_edit/profile_edit_select_list");
+        boolean settings_added = FALSE, main_added = FALSE;
+        if (main != NONE) main_added = vr_menu_main(main);
+        if (settings != NONE) {
+            struct vr_menu_child *child;
+            long row = vr_menu_native(vr_menu_name("vr\\menu\\settings_row", 0, 0),
+                "vr_settings_row", 3, VR_MENU_BUTTON_WIDTH, 28, &widget);
+            if (row != NONE && (child = vr_menu_allocate(sizeof(*child)))) {
+                vr_menu_child_set(child, vr_menu.button_tag_index, 0, 0);
+                widget->child_widgets.count = 1;
+                widget->child_widgets.address = child;
+                /* The native profile description callback recognizes nested
+                 * button bars; no nonexistent tenth picture/string is read. */
+                settings_added = vr_menu_insert(settings, row, 51, 377,
+                    vr_menu_widget_get(settings)->child_widgets.count - 1);
+            }
+        }
+        pause_index = tag_loaded(VR_MENU_WIDGET_TAG, "ui\\shell\\solo_game\\pause_game\\pause_game");
+        list_index = tag_loaded(VR_MENU_WIDGET_TAG, "ui\\shell\\solo_game\\pause_game\\pause_list");
+        if (pause_index != NONE && list_index != NONE) vr_menu_pause_list(pause_index, list_index);
+        /* OpenCE already puts SETTINGS on every multiplayer pause screen.
+         * The nested VR row makes that route work without growing its art.
+         * Stock-menu fallback gets a direct VR entry when that route is absent. */
+        if (!settings_added) vr_menu_multiplayer_fallback();
+        platform_log("vr: native VR settings ready: %ld categories, four rows per column; main=%d settings=%d",
+            VR_MENU_PAGE_COUNT, main_added, settings_added);
+    }
 }
 
 /* ---------- the widgets' callbacks */
@@ -1015,6 +1242,8 @@ enum
 	_vr_menu_pause_item,
 	_vr_menu_category,
     _vr_menu_navigation,
+    _vr_menu_title,
+    _vr_menu_hints,
 	_vr_menu_setting,
 };
 
@@ -1027,8 +1256,10 @@ static int vr_menu_widget_kind(
 {
 	long index;
 
-	if (definition_tag_index == NONE)
+	if (definition_tag_index == NONE || !vr_menu.loaded)
 		return _vr_menu_none;
+    if (definition_tag_index == vr_menu.title_tag_index) return _vr_menu_title;
+    if (definition_tag_index == vr_menu.hints_tag_index) return _vr_menu_hints;
 	if (definition_tag_index == vr_menu.button_tag_index)
         return _vr_menu_pause_item;
     for (index = 0; index < vr_menu.navigation_count; index++)
@@ -1070,10 +1301,14 @@ boolean vr_menu_setting_text(
 
 	if (kind == _vr_menu_none || size <= 0)
 		return FALSE;
-	if (kind == _vr_menu_pause_item)
+	if (kind == _vr_menu_pause_item || kind == _vr_menu_title)
 	{
 		snprintf(line, sizeof(line), "VR SETTINGS");
 	}
+	else if (kind == _vr_menu_hints)
+    {
+        snprintf(line, sizeof(line), "A/RIGHT: NEXT   LEFT: PREVIOUS   B: BACK");
+    }
 	else if (kind == _vr_menu_navigation)
     {
         snprintf(line, sizeof(line), "NEXT PAGE (%ld/%ld)",
