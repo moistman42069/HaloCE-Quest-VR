@@ -326,7 +326,7 @@ def main():
                 "source_zip": {"file": source.name, "sha256": sha(source)},
                 "native_host_version": network_value("HALO_PORT_NETWORK_VERSION"), "accepted_host_versions": list(range(network_value("HALO_PORT_NETWORK_VERSION_MINIMUM"), network_value("HALO_PORT_NETWORK_VERSION_MAXIMUM")+1)),
                 "coop": "opence-native", "campaign_runtime_verified": False,
-                "avatar_protocol": 1, "avatar_message_ids": [37, 38], "avatar_prior_owner_report": "VR body movement visible on flat Android in accepted test14; current action handoff regression pending",
+                "avatar_protocol": 1, "avatar_message_ids": [37, 38], "avatar_prior_owner_report": "Owner confirmed earlier VR body movement was visible on flat Android; Test32 preserves avatar protocol v1 and native action handoff.",
                 "directory": "https://halo.milenko.org/v1/games.txt"}
     (output / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
     compatibility = {"schema": 1, "project": "moistman42069/HaloCE-Quest-VR",

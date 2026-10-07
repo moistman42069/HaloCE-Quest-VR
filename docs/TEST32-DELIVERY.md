@@ -5,8 +5,8 @@ Android. OpenCE Build 145 / network 22. Public v1.0.12 is unchanged.
 
 Runtime source: `a5e17680d873a354d4a5df9aad60082e34972217` on
 `test32-launcher-vehicles`. The VR and flat APKs were built from this exact
-commit. The documentation-only commit containing this delivery record does
-not change either APK.
+commit. Subsequent documentation and package-metadata updates do not change
+either APK.
 
 ## APKs
 
