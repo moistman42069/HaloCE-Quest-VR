@@ -435,6 +435,31 @@ static struct
 
 /* ---------- private code */
 
+/* Grow without debug_realloc: its failed system allocation invalidates the
+ * old block's debug header. Keep ownership intact until a replacement exists
+ * so failed menu construction can restore stock tags and release everything. */
+static void *grow_array(void *array, long count, long size)
+{
+	void *grown;
+	if (count < 0 || size <= 0 || count >= (0x10000000 - 1) / size)
+	{
+		build.failed = TRUE;
+		return NULL;
+	}
+	grown = malloc((count + 1) * size);
+	if (!grown)
+	{
+		build.failed = TRUE;
+		return NULL;
+	}
+	if (array)
+	{
+		memcpy(grown, array, count * size);
+		free(array);
+	}
+	return grown;
+}
+
 /* (the game's allocator, which malloc and free are here: cseries.h) */
 static void *allocate(long size)
 {
@@ -447,7 +472,7 @@ static void *allocate(long size)
 	}
 	memset(block, 0, size > 0 ? size : 1);
 	{
-		void **blocks = realloc(menu_tags.blocks, (menu_tags.block_count + 1) * sizeof(*menu_tags.blocks));
+		void **blocks = grow_array(menu_tags.blocks, menu_tags.block_count, sizeof(*menu_tags.blocks));
 
 		if (!blocks)
 		{
@@ -822,8 +847,8 @@ static void *bitmap_build(struct halo_menu_bitmap const *source, long tag_index)
 			drawn smaller or larger, ui_widget.c) */
 			if (data->width > 0 && data->height > 0 && data->width <= 2048 && data->height <= 2048)
 			{
-				struct menu_frame_placement *placements = realloc(menu_tags.placements,
-					(menu_tags.placement_count + 1) * sizeof(*menu_tags.placements));
+				struct menu_frame_placement *placements = grow_array(menu_tags.placements,
+					menu_tags.placement_count, sizeof(*menu_tags.placements));
 
 				if (placements)
 				{
@@ -835,6 +860,8 @@ static void *bitmap_build(struct halo_menu_bitmap const *source, long tag_index)
 					placements[menu_tags.placement_count].height = (short)data->height;
 					menu_tags.placement_count++;
 				}
+				else
+					return group;
 			}
 			continue;
 		}
@@ -862,8 +889,18 @@ static void *bitmap_build(struct halo_menu_bitmap const *source, long tag_index)
 		}
 		bitmap->width = (short)width;
 		bitmap->height = (short)height;
-		menu_tags.bitmaps = realloc(menu_tags.bitmaps, (menu_tags.bitmap_count + 1) * sizeof(*menu_tags.bitmaps));
-		menu_tags.bitmaps[menu_tags.bitmap_count++] = bitmap;
+		{
+			struct bitmap_data **bitmaps = grow_array(menu_tags.bitmaps,
+				menu_tags.bitmap_count, sizeof(*menu_tags.bitmaps));
+			if (!bitmaps)
+			{
+				if (bitmap->hardware_format)
+					rasterizer_bitmap_delete(bitmap);
+				return group;
+			}
+			menu_tags.bitmaps = bitmaps;
+			menu_tags.bitmaps[menu_tags.bitmap_count++] = bitmap;
+		}
 		/* (none without a renderer: debug.null_renderer) */
 		if (bitmap->hardware_format)
 			halo_menus_art_register(bitmap->hardware_format, png);
@@ -992,8 +1029,12 @@ static void handler_build(struct ui_widget_event_handler_reference *handler, str
 static void setting_add(struct halo_menu_widget const *source, long definition_index)
 {
 	struct pc_menu_setting *setting;
+	struct pc_menu_setting *settings = grow_array(menu_tags.settings,
+		menu_tags.setting_count, sizeof(*menu_tags.settings));
 
-	menu_tags.settings = realloc(menu_tags.settings, (menu_tags.setting_count + 1) * sizeof(*menu_tags.settings));
+	if (!settings)
+		return;
+	menu_tags.settings = settings;
 	setting = &menu_tags.settings[menu_tags.setting_count++];
 	memset(setting, 0, sizeof(*setting));
 	setting->definition_index = definition_index;
@@ -1523,6 +1564,10 @@ static long pause_list_patch(struct cache_file_tag_instance *instances, struct u
 		instance_set(instances, UI_WIDGET_DEFINITION_TAG, tags[child],
 			child ? "pause/end_game_button" : "pause/settings_button", "", buttons[child]);
 	}
+	/* Tag names/strings can still fail after the buttons themselves exist.
+	 * Do not leave a stock list pointing at memory the failed build frees. */
+	if (build.failed)
+		return 0;
 	if (quit)
 		memcpy(grown, children, quit * sizeof(*grown));
 	for (child = 0; child < added; child++)
@@ -1792,11 +1837,11 @@ failed:
 	menu_tags_release();
 
 done:
-	free(build.widget_tags);
-	free(build.text_tags);
-	free(build.spinner_tags);
-	free(build.strings_tags);
-	free(build.bitmap_tags);
+	if (build.widget_tags) free(build.widget_tags);
+	if (build.text_tags) free(build.text_tags);
+	if (build.spinner_tags) free(build.spinner_tags);
+	if (build.strings_tags) free(build.strings_tags);
+	if (build.bitmap_tags) free(build.bitmap_tags);
 	memset(&build, 0, sizeof(build));
 }
 

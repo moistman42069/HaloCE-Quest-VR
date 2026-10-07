@@ -2,7 +2,9 @@
 
 The tag registry/font/config are test doubles. The complete production tag
 builder, callbacks and allocation lifecycle run on fixtures with and without
-OpenCE/solo/MP templates. Guest ABI offsets remain compile-time assertions in C.
+OpenCE/solo/MP templates. Allocation uses the real debug-memory/CRC functions
+and cseries macros (free(NULL) is invalid), not libc allocator semantics.
+Guest ABI offsets remain compile-time assertions in C.
 """
 from pathlib import Path
 import re
@@ -12,6 +14,10 @@ source = (ROOT / 'port/linux/game/vr_menu.c').read_text()
 header = (ROOT / 'port/linux/include/halo_vr.h').read_text()
 ui = (ROOT / 'source/interface/ui_widget_game_data_input_functions.c').read_text()
 widgets = (ROOT / 'source/interface/ui_widget.c').read_text()
+memory = (ROOT / 'source/cseries/debug_memory.c').read_text()
+crc = (ROOT / 'source/memory/crc.c').read_text()
+cseries = (ROOT / 'source/cseries/cseries.h').read_text()
+menu_tags = (ROOT / 'port/linux/game/menu_tags.c').read_text()
 assert 'void vr_menu_tags_unloaded(void);' in header
 assert 'focused_child->type == _ui_widget_type_column_list' in ui
 assert 'VR_MENU_GAME_DATA_FUNCTION' in ui and 'vr_menu_setting_text(' in ui
@@ -47,9 +53,30 @@ assert 'vr_menu_is_screen(tag_index)' in pause_assignment
 pause_acquire = block(widgets, widgets.index('if (widget->pause_game_time == TRUE)', init))
 pause_release = block(widgets, widgets.index('if (widget->pause_game_time == TRUE)'))
 
-def struct(name):
-    start = source.index('struct ' + name + '\n{')
-    return source[start:source.index('\n};',start)+3]+'\n'
+def struct(name, text=source):
+    start = text.index('struct ' + name + '\n{')
+    return text[start:text.index('\n};',start)+3]+'\n'
+
+def function(text, name):
+    match = re.search(r'^(?:static )?[\w *]+\b' + name + r'\([^;{]*\)\s*\{', text, re.M)
+    assert match, name
+    return block(text, match.start())+'\n'
+
+# These are the deployed allocator's real validation and ownership paths.
+# Only the OS heap boundary is replaced to inject allocation failures.
+enum_start = memory.index('enum\n{')
+memory_constants = memory[enum_start:memory.index('\n};',enum_start)+3]
+debug_allocator = memory_constants + '\n' + struct('debug_memory_globals',memory) + struct('debug_memory_header',memory)
+debug_allocator += 'static struct debug_memory_globals debug_memory_globals;\n'
+debug_allocator += struct('crc_globals',crc) + 'static struct crc_globals crc_globals;\n'
+for name in ('crc_new','build_crc_table','crc_checksum_buffer'):
+    debug_allocator += function(crc,name)
+for name in ('debug_memory_manager_initialize','debug_check_memory_globals','debug_memory_header_checksum',
+             'debug_check_pointer_header','debug_check_pointer_overrun','debug_memory_add_pointer',
+             'debug_memory_remove_pointer','debug_malloc','debug_free','debug_check_memory'):
+    debug_allocator += function(memory,name)
+for name in ('match_malloc','match_free','malloc','free'):
+    debug_allocator += re.search(r'^#define '+name+r'\([^\n]+',cseries,re.M).group(0)+'\n'
 
 shim = r"""
 #include <assert.h>
@@ -82,9 +109,15 @@ struct tag_block {long count;void *address,*definition;};
 #define VR_MENU_SETTINGS_PER_SCREEN 8
 #define VR_MENU_PAGES(n) (((n)+7)/8)
 #define VR_MENU_PAGE_COUNT NUMBEROF(vr_menu_pages)
-static int fail_after=-1;
-static void *test_malloc(size_t n){if(fail_after==0)return NULL;if(fail_after>0)--fail_after;return malloc(n);}
-#define malloc test_malloc
+static int fail_after=-1,allocation_attempts;
+static void *system_malloc(size_t n){allocation_attempts++;if(fail_after==0)return NULL;if(fail_after>0)--fail_after;return malloc(n);}
+static void system_free(void *p){free(p);}
+#define match_assert(file,line,condition) assert(condition)
+#define match_vassert(file,line,condition,message) assert(condition)
+#define MATCH_FILE(file) (file)
+#define MATCH_LINE(line) (line)
+#define csmemset memset
+DEBUG_ALLOCATOR
 static struct {unsigned long group;char *name;void *data;} tags[4096];
 static long tag_count;
 static void *fixture[512];static int fixture_count;
@@ -123,6 +156,23 @@ start=source.index('struct vr_menu_navigation {')
 end=source.index('boolean vr_menu_setting_change(')
 builder=source[start:end]
 checks=r"""
+static struct {boolean failed;} build;
+GROW_ARRAY
+static void menu_array_failure_recovery(void){
+ long *array=NULL;
+ for(long count=0;count<64;count++){
+  build.failed=FALSE;fail_after=0;
+  assert(!grow_array(array,count,sizeof(*array))&&build.failed);
+  fail_after=-1;debug_check_memory(__FILE__,__LINE__);
+  for(long i=0;i<count;i++)assert(array[i]==i+9);
+  build.failed=FALSE;long *grown=grow_array(array,count,sizeof(*array));
+  assert(grown&&!build.failed);array=grown;array[count]=count+9;
+ }
+ free(array);assert(!debug_memory_globals.first_pointer&&!debug_memory_globals.current_heap_size);
+ build.failed=FALSE;assert(!grow_array(NULL,-1,sizeof(long))&&build.failed);
+ build.failed=FALSE;assert(!grow_array(NULL,0,0)&&build.failed);
+ build.failed=FALSE;assert(!grow_array(NULL,0x10000000,sizeof(long))&&build.failed);
+}
 enum { _game_connection_local, _game_connection_network_client, _game_connection_network_server, _game_connection_film_playback };
 enum { _widget_pause_game_time_bit = 1 };
 #define TEST_FLAG(value,bit) (((value)&(1L<<(bit)))!=0)
@@ -221,7 +271,8 @@ static void setup(int kind,int font){
 }
 static void teardown(void){
  vr_menu_tags_unloaded();vr_menu_tags_unloaded();assert(!vr_menu.loaded&&!vr_menu.allocations&&!vr_menu.allocation_count);
- for(int i=0;i<fixture_count;i++)free(fixture[i]);fixture_count=0;tag_count=0;
+ assert(!debug_memory_globals.first_pointer&&!debug_memory_globals.current_heap_size);
+ for(int i=0;i<fixture_count;i++)system_free(fixture[i]);fixture_count=0;tag_count=0;
 }
 static void bounds(long tag,long x,long y){
  struct vr_menu_widget *p=vr_menu_widget_get(tag);assert(p);assert(!!(p->flags&2)==!!vr_menu_is_screen(tag));
@@ -281,21 +332,44 @@ static void verify(void){
  }
 }
 int main(void){
+ debug_memory_manager_initialize();
+ /* Startup calls teardown before any VR allocation; unload remains safe
+  * when imported menus fail, fonts are absent, or unloading repeats. */
+ vr_menu_tags_unloaded();vr_menu_tags_unloaded();
+ menu_array_failure_recovery();
  for(long i=0;i<17;i++){test_settings[i].label="SETTING";test_settings[i].key="vr.fake";test_settings[i].values[0].label="ON";}
  for(int cycle=0;cycle<3;cycle++)for(int kind=0;kind<5;kind++){setup(kind,1);vr_menu_tags_loaded();verify();teardown();}
  setup(0,0);long before=tag_count;vr_menu_tags_loaded();assert(tag_count==before&&vr_menu.categories_tag_index==NONE);teardown();
- /* Failed construction never installs a dead entry into the map's UI. */
- for(int fail=0;fail<120;fail++){
+ /* Fail every allocation reached by a full build, including late pages and
+  * entry installation; failed construction must not install a dead entry. */
+ setup(0,1);int first_attempt=allocation_attempts;vr_menu_tags_loaded();
+ int construction_allocations=allocation_attempts-first_attempt;teardown();assert(construction_allocations>120);
+ for(int fail=0;fail<=construction_allocations;fail++){
   setup(0,1);fail_after=fail;vr_menu_tags_loaded();fail_after=-1;
   if(vr_menu.button_tag_index==NONE){assert(vr_menu_widget_get(main_tag)->child_widgets.count==5);assert(vr_menu_widget_get(settings_tag)->child_widgets.count==10);}
   teardown();
  }
- assert(logs);puts("PASS: native VR main/settings/solo/MP routes, solo pause ownership and online/main-menu no-pause, safe columns/paging, callbacks, reload/idempotence and allocation failures");
+ printf("PASS: %d VR allocation failure positions recovered without leaked debug blocks\n",construction_allocations);
+ assert(logs);puts("PASS: native VR main/settings/solo/MP routes, real guest debug allocator lifecycle/failure recovery, solo pause ownership and online/main-menu no-pause, safe columns/paging, callbacks, reload/idempotence and allocation failures");
 }
 """
 checks = checks.replace('PAUSE_RELEASE', pause_release).replace('PAUSE_ASSIGNMENT', pause_assignment).replace('PAUSE_ACQUIRE', pause_acquire)
+checks = checks.replace('GROW_ARRAY',function(menu_tags,'grow_array'))
 out=ROOT/'build/test31-vr-menu';out.mkdir(parents=True,exist_ok=True)
 cfile=out/'vr_menu.c';exe=out/'vr_menu'
-cfile.write_text(shim+structs+constants+settings_enum+settings_struct+stubs+builder+checks)
-subprocess.run(['clang','-std=gnu11','-DHALO_VR','-Wno-multichar','-O1','-fsanitize=address,undefined',str(cfile),'-o',str(exe)],check=True)
+cfile.write_text(shim.replace('DEBUG_ALLOCATOR',debug_allocator)+structs+constants+settings_enum+settings_struct+stubs+builder+checks)
+# Debug memory deliberately stores its trailing word immediately after the
+# allocation; that address need not be aligned. Other UBSan checks stay on.
+compiler = ['clang','-std=gnu11','-DHALO_VR','-Wno-multichar','-O1','-fsanitize=address,undefined','-fno-sanitize=alignment']
+subprocess.run(compiler+[str(cfile),'-o',str(exe)],check=True)
 subprocess.run([str(exe)],check=True)
+# Negative control: reproduce the shipped unguarded teardown against the
+# same real allocator. A libc-free substitute would incorrectly pass this.
+old = cfile.read_text().replace('if (vr_menu.allocations) free(vr_menu.allocations);', 'free(vr_menu.allocations);')
+old = old.replace('debug_memory_manager_initialize();\n', 'debug_memory_manager_initialize();\n (void)malloc(4);\n', 1)
+badfile, badexe = out/'vr_menu_null_free.c', out/'vr_menu_null_free'
+badfile.write_text(old)
+subprocess.run(compiler+[str(badfile),'-o',str(badexe)],check=True)
+failed = subprocess.run([str(badexe)],capture_output=True,text=True)
+assert failed.returncode != 0 and 'debug_memory_globals.minimum_pointer' in failed.stderr, failed.stderr
+print('PASS: negative control rejects the shipped NULL-free startup path through actual guest debug-header validation')

@@ -1078,7 +1078,9 @@ void vr_menu_tags_unloaded(void)
 {
     long index;
     for (index = 0; index < vr_menu.allocation_count; index++) free(vr_menu.allocations[index]);
-    free(vr_menu.allocations);
+    /* cseries maps free to debug_free, which rejects NULL. First load and
+     * repeated/failed-load teardown can legitimately have no registry. */
+    if (vr_menu.allocations) free(vr_menu.allocations);
     memset(&vr_menu, 0, sizeof(vr_menu));
     vr_menu.button_tag_index = vr_menu.categories_tag_index = NONE;
     vr_menu.title_tag_index = vr_menu.hints_tag_index = NONE;
