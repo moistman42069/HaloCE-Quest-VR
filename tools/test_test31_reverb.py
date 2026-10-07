@@ -9,6 +9,10 @@ OUT.mkdir(parents=True, exist_ok=True)
 source = (ROOT / 'port/linux/src/dsound_sdl.c').read_text()
 prior = subprocess.check_output(['git', 'show', 'cfd1ff6c:port/linux/src/dsound_sdl.c'], cwd=ROOT, text=True)
 xdk = (ROOT / 'port/include/xdk/xdk_pdb.h').read_text()
+win32 = (ROOT / 'port/include/xdk/xdk_win32.h').read_text()
+# Pull the real HRESULT definition; an invented mock constant cannot hide a missing SDK symbol.
+invalid_argument = re.search(r'^#define E_INVALIDARG .*$', win32, re.M).group()
+assert 'DSERR_INVALIDPARAM' not in source
 
 
 def fn(text, name):
@@ -54,7 +58,6 @@ typedef struct { void *unused; } XMEDIAPACKET;
 #define WINAPI
 #define DSBVOLUME_MIN -10000
 #define DS_OK 0
-#define E_INVALIDARG 0x80070057L
 #define DS3DMODE_DISABLE 2
 #define DS3DMODE_HEADRELATIVE 1
 static int mutex_depth;
@@ -66,7 +69,7 @@ static unsigned long config_changes(void){assert(!mutex_depth);return 0;}
 static double config_real(const char *p){assert(!mutex_depth);(void)p;return 1;}
 static int config_boolean(const char *p){assert(!mutex_depth);(void)p;return 0;}
 static void platform_log(const char *p,...){(void)p;}
-''' + types + r'''
+''' + invalid_argument + '\n' + types + r'''
 typedef struct _DSI3DL2LISTENER DSI3DL2LISTENER;
 typedef const DSI3DL2LISTENER *LPCDSI3DL2LISTENER;
 typedef struct _DSI3DL2BUFFER DSI3DL2BUFFER;

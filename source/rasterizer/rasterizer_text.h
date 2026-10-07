@@ -34,4 +34,7 @@ void rasterizer_text_begin(
 void rasterizer_text_end(
 	void);
 
+/* Text scale is private render state; 1 restores normal drawing. */
+void rasterizer_text_set_scale(real scale, real origin_x, real origin_y);
+
 #endif // __RASTERIZER_TEXT_H

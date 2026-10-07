@@ -43,6 +43,15 @@ static float ui_pointer_wheel;
 #endif
 static pthread_mutex_t input_lock = PTHREAD_MUTEX_INITIALIZER;
 
+/* Scoreboard input expires if a level exits without closing it. */
+#define SCOREBOARD_OPEN_MS 250
+static Uint64 scoreboard_open_until_ms;
+static float scoreboard_wheel;
+static long scoreboard_notches, scoreboard_pages;
+static int scoreboard_pad_direction;
+static Uint64 scoreboard_pad_repeat_ms;
+
+
 /* Controls Setup capture is confined to keyboard/mouse input. Touch,
 gamepad and tracked-controller state keep their existing paths. */
 enum { _binding_capture_idle, _binding_capture_waiting, _binding_capture_taken };
@@ -895,6 +904,56 @@ void platform_menus_set_active(BOOL active)
 	pthread_mutex_unlock(&input_lock);
 }
 
+void platform_scoreboard_scroll(int open, long *notches, long *pages)
+{
+	Uint64 now = SDL_GetTicks();
+
+	pthread_mutex_lock(&input_lock);
+	if (!open || now >= scoreboard_open_until_ms)
+	{
+		scoreboard_wheel = 0.0f;
+		scoreboard_notches = 0;
+		scoreboard_pages = 0;
+		scoreboard_pad_direction = 0;
+		scoreboard_pad_repeat_ms = 0;
+	}
+	scoreboard_open_until_ms = open ? now + SCOREBOARD_OPEN_MS : 0;
+	if (notches)
+		*notches = scoreboard_notches;
+	if (pages)
+		*pages = scoreboard_pages;
+	scoreboard_notches = 0;
+	scoreboard_pages = 0;
+	pthread_mutex_unlock(&input_lock);
+}
+
+/* Called after keyboard/controller/touch/VR compose the final logical pad.
+Only while holding score on its visible page: D-pad or right stick pages,
+with repeat, and those controls cannot also operate gameplay. */
+void platform_scoreboard_gamepad(unsigned short *buttons, short *right_y)
+{
+	Uint64 now = SDL_GetTicks();
+	int direction = 0;
+	if (!buttons || !right_y) return;
+	pthread_mutex_lock(&input_lock);
+	if (now < scoreboard_open_until_ms && !input_state.menus && input_state.focused &&
+		(*buttons & XINPUT_GAMEPAD_BACK))
+	{
+		if (*buttons & XINPUT_GAMEPAD_DPAD_UP) direction--;
+		if (*buttons & XINPUT_GAMEPAD_DPAD_DOWN) direction++;
+		if (!direction) direction = *right_y > 16000 ? -1 : *right_y < -16000 ? 1 : 0;
+		*buttons &= ~(XINPUT_GAMEPAD_DPAD_UP | XINPUT_GAMEPAD_DPAD_DOWN);
+		*right_y = 0;
+	}
+	if (direction && (direction != scoreboard_pad_direction || now >= scoreboard_pad_repeat_ms))
+	{
+		scoreboard_pages += direction;
+		scoreboard_pad_repeat_ms = now + (direction != scoreboard_pad_direction ? 350 : 180);
+	}
+	scoreboard_pad_direction = direction;
+	pthread_mutex_unlock(&input_lock);
+}
+
 void platform_pump_events(void)
 {
 	/* debug.exit_after (seconds) ends the game that long after the window
@@ -947,6 +1006,9 @@ void platform_pump_events(void)
 					keys_pressed[event.key.scancode] = 1;
 			}
 			queue_keystroke(&event.key);
+			if (SDL_GetTicks() < scoreboard_open_until_ms && event.key.down &&
+				(event.key.scancode == SDL_SCANCODE_PAGEUP || event.key.scancode == SDL_SCANCODE_PAGEDOWN))
+				scoreboard_pages += event.key.scancode == SDL_SCANCODE_PAGEDOWN ? 1 : -1;
 			/* F12 releases or recaptures the mouse */
 			if (event.key.down && !event.key.repeat && event.key.scancode == SDL_SCANCODE_F12)
 			{
@@ -1006,6 +1068,13 @@ void platform_pump_events(void)
 			}
 			break;
 		case SDL_EVENT_MOUSE_WHEEL:
+			if (SDL_GetTicks() < scoreboard_open_until_ms)
+			{
+				scoreboard_wheel -= event.wheel.y;
+				while (scoreboard_wheel >= 1.0f) { scoreboard_notches++; scoreboard_wheel -= 1.0f; }
+				while (scoreboard_wheel <= -1.0f) { scoreboard_notches--; scoreboard_wheel += 1.0f; }
+				break;
+			}
 #ifndef HALO_ANDROID
 			if (input_state.ui_pointer)
 			{

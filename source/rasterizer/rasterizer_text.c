@@ -88,6 +88,7 @@ struct text_hires_glyph
 	float advance;
 };
 
+unsigned long config_changes(void);
 long text_hires_font(char const *tag_name, float cap_height);
 int text_hires_covers(long font, unsigned long code);
 int text_hires_glyph(long font, unsigned long code, struct text_hires_glyph *glyph);
@@ -170,6 +171,8 @@ struct hardware_character_cache
 
 /* ---------- prototypes */
 
+static void rasterizer_text_draw_scaled_character(struct dynamic_screen_vertex const *vertices);
+
 static struct bitmap_data *hardware_character_cache_get_bitmap(
 	void);
 static void hardware_character_cache_get_origin(
@@ -236,6 +239,8 @@ static void rasterizer_draw_hires_character_with_dropshadow(
 static struct hardware_character_cache hardware_character_cache;
 static struct bitmap_data *hires_text_atlas = NULL;
 static long hires_text_font = NONE;
+static real text_scale = 1.0f;
+static real text_scale_origin_x, text_scale_origin_y;
 static pixel32 global_shadow_color = 0;
 static short rasterizer_text_unused = 0;
 static short magic_number= 12;
@@ -401,7 +406,7 @@ rasterizer_draw_character(
 		vertices[0].texture_coordinates.y = vertices[1].texture_coordinates.y = (real)v0;
 		vertices[2].texture_coordinates.y = vertices[3].texture_coordinates.y = (real)(v0 + dy);
 
-		rasterizer_text_draw_character(vertices);
+		rasterizer_text_draw_scaled_character(vertices);
 	}
 
 	return;
@@ -500,6 +505,16 @@ rasterizer_draw_string(
 					FLOOR(clip->y0, 0),
 					MIN(render.camera.viewport_bounds.x1 - render.camera.viewport_bounds.x0, clip->x1),
 					MIN(render.camera.viewport_bounds.y1 - render.camera.viewport_bounds.y0, clip->y1));
+			}
+			/* port: text drawn scaled (rasterizer_text_set_scale) clipped where
+			it reaches the viewport once scaled: the clip as it is before the
+			scale */
+			if (text_scale != 1.0f)
+			{
+				viewport_bounds.x0 = (short)(text_scale_origin_x + (viewport_bounds.x0 - text_scale_origin_x) / text_scale);
+				viewport_bounds.x1 = (short)(text_scale_origin_x + (viewport_bounds.x1 - text_scale_origin_x) / text_scale);
+				viewport_bounds.y0 = (short)(text_scale_origin_y + (viewport_bounds.y0 - text_scale_origin_y) / text_scale);
+				viewport_bounds.y1 = (short)(text_scale_origin_y + (viewport_bounds.y1 - text_scale_origin_y) / text_scale);
 			}
 
 			memset(&parameters, 0, sizeof(parameters));
@@ -620,6 +635,16 @@ rasterizer_draw_unicode_string(
 					MIN(render.camera.viewport_bounds.x1 - render.camera.viewport_bounds.x0, clip->x1),
 					MIN(render.camera.viewport_bounds.y1 - render.camera.viewport_bounds.y0, clip->y1));
 			}
+			/* port: text drawn scaled (rasterizer_text_set_scale) clipped where
+			it reaches the viewport once scaled: the clip as it is before the
+			scale */
+			if (text_scale != 1.0f)
+			{
+				viewport_bounds.x0 = (short)(text_scale_origin_x + (viewport_bounds.x0 - text_scale_origin_x) / text_scale);
+				viewport_bounds.x1 = (short)(text_scale_origin_x + (viewport_bounds.x1 - text_scale_origin_x) / text_scale);
+				viewport_bounds.y0 = (short)(text_scale_origin_y + (viewport_bounds.y0 - text_scale_origin_y) / text_scale);
+				viewport_bounds.y1 = (short)(text_scale_origin_y + (viewport_bounds.y1 - text_scale_origin_y) / text_scale);
+			}
 
 			memset(&parameters, 0, sizeof(parameters));
 			parameters.map_texture_scale[0].i = 1.0f / (real)bitmap->width;
@@ -698,7 +723,7 @@ rasterizer_draw_character_with_dropshadow(
 			vertices[0].texture_coordinates.y = vertices[1].texture_coordinates.y = (real)v0;
 			vertices[2].texture_coordinates.y = vertices[3].texture_coordinates.y = (real)(v0 + dy);
 
-			rasterizer_text_draw_character(vertices);
+			rasterizer_text_draw_scaled_character(vertices);
 
 			if (!shadow)
 				break;
@@ -713,6 +738,43 @@ rasterizer_draw_character_with_dropshadow(
 
 /* ---------- private code */
 
+void rasterizer_text_set_scale(
+	real scale,
+	real origin_x,
+	real origin_y)
+{
+	text_scale = isfinite(scale) && scale >= 0.25f && scale <= 4.0f ? scale : 1.0f;
+	text_scale_origin_x = isfinite(origin_x) ? origin_x : 0.0f;
+	text_scale_origin_y = isfinite(origin_y) ? origin_y : 0.0f;
+
+	return;
+}
+
+static void rasterizer_text_draw_scaled_character(
+	struct dynamic_screen_vertex const *vertices)
+{
+	struct dynamic_screen_vertex scaled[NUMBER_OF_VERTICES_PER_QUADRILATERAL];
+	short vertex_index;
+
+	if (text_scale == 1.0f)
+	{
+		rasterizer_text_draw_character(vertices);
+		return;
+	}
+	for (vertex_index = 0; vertex_index < NUMBER_OF_VERTICES_PER_QUADRILATERAL; vertex_index++)
+	{
+		scaled[vertex_index] = vertices[vertex_index];
+		scaled[vertex_index].position.x =
+			text_scale_origin_x + (vertices[vertex_index].position.x - text_scale_origin_x) * text_scale;
+		scaled[vertex_index].position.y =
+			text_scale_origin_y + (vertices[vertex_index].position.y - text_scale_origin_y) * text_scale;
+	}
+	rasterizer_text_draw_character(scaled);
+
+	return;
+}
+
+
 /* port: the high-res text's font for a font tag, sized by the height of its
 capital H (its rows with ink), or NONE */
 static long hires_text_font_get(
@@ -724,6 +786,7 @@ static long hires_text_font_get(
 		long hires_font;
 	} fonts[MAXIMUM_HIRES_TEXT_FONTS];
 	static short next_font = 0;
+	static unsigned long read_at = (unsigned long)-1;
 	struct font_header *font;
 	struct font_character *capital;
 	short font_slot;
@@ -732,6 +795,14 @@ static long hires_text_font_get(
 	short row;
 	long hires_font;
 
+	/* Cached NONE while disabled must not survive re-enabling, and a cached
+	font must not bypass the current text setting. */
+	if (read_at != config_changes())
+	{
+		read_at = config_changes();
+		memset(fonts, 0, sizeof(fonts));
+		next_font = 0;
+	}
 	if (font_index == NONE)
 		return NONE;
 	font = font_definition_get(font_index);
@@ -905,7 +976,7 @@ static void rasterizer_draw_hires_glyph(
 		vertices[1].texture_coordinates.x = vertices[2].texture_coordinates.x = u1;
 		vertices[0].texture_coordinates.y = vertices[1].texture_coordinates.y = v0;
 		vertices[2].texture_coordinates.y = vertices[3].texture_coordinates.y = v1;
-		rasterizer_text_draw_character(vertices);
+		rasterizer_text_draw_scaled_character(vertices);
 	}
 
 	return;

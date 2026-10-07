@@ -682,6 +682,8 @@ DWORD WINAPI XInputGetState(HANDLE device, PXINPUT_STATE state)
 		sdl_gamepad_state(gamepads[port], &state->Gamepad);
 	}
 
+	if (port == 0)
+		platform_scoreboard_gamepad(&state->Gamepad.wButtons, &state->Gamepad.sThumbRY);
 	if (memcmp(&state->Gamepad, &controllers[port].previous, sizeof(state->Gamepad)))
 	{
 		controllers[port].packet_number++;

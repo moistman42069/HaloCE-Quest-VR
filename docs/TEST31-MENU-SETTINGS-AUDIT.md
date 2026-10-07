@@ -37,12 +37,12 @@ Quest timing result.
 | V-sync | Flat `platform_display_apply` updates SDL swap interval. Its VR branch deliberately leaves OpenXR scheduling intact; hide or explain runtime-managed VR synchronization instead of implying this changes headset frame pacing. |
 | Interpolation | Current `halo_interpolation_enabled` rereads configuration generation. Preserve accepted VR interpolation defaults. |
 | High-resolution HUD | `hud_hires_override_find` rereads configuration generation, including title-art high-resolution text selection. |
-| High-resolution text | **Font path still caches once** in `text_hires.c::text_enabled`, while title art is live. Adopt the pinned generation-aware helper or clearly label restart required; otherwise the same menu toggle partially applies. |
+| High-resolution text | Font enablement and the rasterizer font lookup now invalidate on configuration generation changes. This also clears cached disabled-font misses, so OFF and ON both apply live. Title art retains its existing live path. |
 | Anti-aliasing | **No app consumer for `display.anti_aliasing` found.** Build 145 adds renderer passes/targets for FXAA/SMAA/SSAA/MSAA. The app OpenXR swapchain has `sampleCount = 1`; legacy D3D multisample state wrappers are not evidence of a working MSAA pipeline. Do not expose the upstream AA choices as working until implemented. |
 | Shadow resolution | **No app consumer for `display.shadow_resolution` found.** Build 145 scales shadow targets and related render state. The app's existing `graphics.shadows` is an enable/preset control, not a substitute for shadow-map size. |
 | Per-pixel lighting | **No app consumer for `display.per_pixel_lighting` found.** Build 145 changes model-lighting shader selection and uniforms. Existing specular/dynamic-light toggles have different semantics. |
 | Player names and name scale | Actual generation-aware consumers in `source/interface/hud.c`; preserve all/allies/enemies/none and existing scale bounds. |
-| Scoreboard layout/background | **No consumer found beyond newly imported keys/XML.** Integrate the pinned scoreboard presentation consumer, or explicitly leave unavailable. Merely saving these keys is inert. |
+| Scoreboard layout/background | Pinned full-screen scoreboard consumer integrated, including network ping rows, 128-player scrolling, team columns or score ordering, background color/enablement, quit-player filtering and co-op names/pings. Existing local split-screen keeps its compact rows. Hold score plus D-pad or right-stick vertical to page; keyboard Page Up/Down and mouse wheel also work. Input ownership expires on closure/map exit/focus loss; ordinary gameplay input remains unchanged outside the hold. |
 
 Quest already has real `vr.resolution_scale`, `vr.refresh_rate` and per-headset
 `graphics.preset`/effect switches. Keep these accessible through VR Settings,
@@ -115,3 +115,12 @@ Keep accepted defaults: shadow size 128, per-pixel lighting OFF, AA OFF.
 Reverb deliberately does not import unrelated upstream ADPCM 65-to-64 sample
 changes, windowed-sinc resampling, distance-law changes or replacement limiter.
 Those would alter the accepted audio baseline independently of this menu task.
+
+`tools/test_test31_menu_presentation.py` compiles the production scoreboard,
+settings, scaled-text and controller paging helpers with ASan/UBSan. It covers
+128-player teams/score/co-op, opening on the viewer's page, empty lists, scroll
+bounds, panel bounds, default text-geometry identity, live controls, color
+parser saturation, paging debounce and release/expiry. The actual XDK header
+supplies pad constants. Reverb tests also derive E_INVALIDARG from the real
+project HRESULT header, preventing a mock-only declaration from hiding an
+unknown SDK constant. Audio enabled now explicitly says SOUND (RESTART).

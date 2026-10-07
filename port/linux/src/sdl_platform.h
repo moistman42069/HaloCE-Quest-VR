@@ -70,6 +70,9 @@ void platform_mouse_capture(BOOL capture);
 
 /* main thread only; a no-op elsewhere */
 void platform_pump_events(void);
+/* Upstream scoreboard wheel/key paging plus logical controller/touch/VR paging. */
+void platform_scoreboard_scroll(int open, long *notches, long *pages);
+void platform_scoreboard_gamepad(unsigned short *buttons, short *right_y);
 /* a snapshot of the input state; consume_motion resets the mouse deltas */
 void platform_input_read(struct platform_input_state *state, BOOL consume_motion);
 #ifndef HALO_ANDROID
