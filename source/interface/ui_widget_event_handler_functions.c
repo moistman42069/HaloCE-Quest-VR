@@ -921,6 +921,7 @@ symbols in this file:
 #include "main/main.h"
 #include "networking/network_game_globals.h"
 #include "networking/network_game_manager.h"
+#include "networking/network_client_manager.h"
 #include "networking/network_messages.h"
 #include "networking/network_server_manager.h"
 #include "network_coop.h" /* port: port/linux/game/network_coop.c */
@@ -935,6 +936,11 @@ symbols in this file:
 #include "halo_vr.h"
 #endif
 #include "halo_menus.h" /* port: PC_MENU_FUNCTION_BASE */
+
+void platform_log(char const *format, ...);
+
+/* network_game_client_state's first value in the pinned OpenCE manager */
+enum { _port_network_game_client_state_searching = 0 };
 
 /* ---------- constants */
 
@@ -6071,7 +6077,20 @@ boolean ui_widget_port_browse(
 	struct event_record *event,
 	boolean *widget_deleted)
 {
-	return global_network_game_client_get() || network_game_server_list_initialize(widget, event, widget_deleted);
+	struct network_game_client *client = global_network_game_client_get();
+	short state = client ? network_game_client_get_state(client, NULL) : _port_network_game_client_state_searching;
+
+	/* A previous local host flow leaves a client joined to its own 127.0.0.1
+	server. Reusing it here makes the public invite connect at P2P level, but
+	that client is no longer searching and can never discover the remote Halo
+	advertisement. Start the same clean search used by the stock browser. */
+	if (client && state != _port_network_game_client_state_searching)
+	{
+		platform_log("menus: resetting network client in state %d before browser search",
+			(int)state);
+		return network_game_server_list_initialize(widget, event, widget_deleted);
+	}
+	return client != NULL || network_game_server_list_initialize(widget, event, widget_deleted);
 }
 
 /* joining a found game (as network_game_join_game_from_server_list), then
