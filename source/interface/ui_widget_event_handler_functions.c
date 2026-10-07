@@ -1040,33 +1040,6 @@ boolean virtual_keyboard_launch(
 	void *text,
 	long maximum_length,
 	long keyboard_type);
-void *network_game_client_get_game(
-	void *client);
-short network_game_client_get_machine_index(
-	void *client);
-boolean network_game_client_request_start_time_change(
-	void *client,
-	boolean start);
-boolean network_game_client_request_remove_player(
-	void *client,
-	void *player);
-boolean network_game_client_initiate_join_game(
-	void *client,
-	void *server,
-	struct network_game_join_descriptor *join_descriptor,
-	struct transport_address *address);
-/* network_client_manager.c's: whether the host's network version is this
-machine's (else the player is told, and it is not joined) */
-boolean network_game_client_advertised_game_compatible(
-	void *client,
-	void const *game,
-	boolean tell);
-boolean network_game_client_update_local_player_data(
-	void *client,
-	struct network_player *player);
-boolean network_game_client_add_player(
-	void *client,
-	short controller_index);
 void playlist_profiles_enumerate_available_to_local_player_index(
 	short local_player_index,
 	long *profile_count,
@@ -1076,9 +1049,6 @@ static boolean new_campaign_chosen(
 	struct widget_instance *widget,
 	struct event_record *event,
 	boolean *widget_deleted);
-short network_game_client_get_state(
-	void *client,
-	short *state);
 static boolean network_game_start_new_server(
 	struct widget_instance *widget,
 	struct event_record *event,
