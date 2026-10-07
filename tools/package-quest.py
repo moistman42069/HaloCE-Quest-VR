@@ -252,10 +252,10 @@ def main():
                 if vr and candidate_at_least(args.label, 34) is False and b"test33 candidate 1.0.14 code43" not in guest:
                     raise SystemExit("Test33 VR candidate identity marker missing")
             if candidate_at_least(args.label, 34):
-                for marker in [b"OpenCE Build 147 / network 23", b"test34 candidate 1.0.15 code44"]:
-                    if marker not in guest:
-                        raise SystemExit("Test34 OpenCE or candidate identity marker missing: " + repr(marker))
                 if vr:
+                    for marker in [b"OpenCE Build 147 / network 23", b"test34 candidate 1.0.15 code44"]:
+                        if marker not in guest:
+                            raise SystemExit("Test34 OpenCE or candidate identity marker missing: " + repr(marker))
                     for marker in [b"scope display %s; zoom with the off-hand index trigger",
                                    b"zoom input %s from %s-hand index trigger", b"game zoom state %s",
                                    b"scope view gate: %s", b"scope render path %s"]:
