@@ -26,6 +26,14 @@ Public source does not contain the project signing key. A locally generated debu
 
 ## Change and report discipline
 
+The full menu startup test requires `clang`, `libc6-dev-i386` and
+`gcc-multilib` on Ubuntu to exercise the actual 32-bit guest layouts. WSL1
+also needs `qemu-user` because it cannot execute ELF32 directly. Its test-only
+mapping compatibility shim is scoped to the QEMU child and never enters an
+APK. This test must not silently substitute a 64-bit tag layout or skip a
+missing dependency. The width-independent cache-file report tests separately
+probe whether a compiled binary can run before selecting their host width.
+
 - Preserve both VR and flat paths. Scope gameplay changes narrowly; keep feature failure local and retain bounds/finite-value/teardown guards.
 - Inspect actual code/evidence before relying on a historical checkpoint. Date findings and distinguish source implementation, build checks and device results.
 - Build the affected variant; shared native/launcher/network changes normally require both. Use focused checks appropriate to the changed behavior. Do not claim a headset result from compilation.
