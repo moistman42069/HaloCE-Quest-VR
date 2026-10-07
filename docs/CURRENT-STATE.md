@@ -8,6 +8,10 @@ The owner confirmed co-op on v1.0.10/network 20. No device-session result for th
 
 The prior public release is v1.0.10. Historical progress and older release notes below are retained as records, not current compatibility guidance.
 
+## Next candidate: test30 (1.0.12 / code 38)
+
+**Next candidate (private, not released): test30, version 1.0.12 / code 38**, branch `test30-profiles-coopname`, on the published v1.0.11. The owner confirmed 1.0.11 ("everything here is great") and reported that X did nothing in the VR main menu when deleting a profile. In menus the Quest's face buttons now act as the Xbox's of the same letter (X deletes a profile, B goes back once). The launcher's Host campaign also gains an optional server name. See [TEST30-PROGRESS.md](TEST30-PROGRESS.md), [TEST30-DELIVERY.md](TEST30-DELIVERY.md).
+
 ## Post-release validation: test29
 
 Collect Quest and Android reports for network-21 PvP/co-op, updated co-op synchronization and transitions, HUD tap, wrist placement/adjustments, Move With under two-hand grip, and FOV/resolution choices. Preserve logs from each peer for connection/desync/crash reports. See [TEST29-DELIVERY.md](TEST29-DELIVERY.md).

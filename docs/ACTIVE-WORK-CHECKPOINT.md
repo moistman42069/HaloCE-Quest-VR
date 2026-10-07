@@ -2,6 +2,10 @@
 
 The latest public release is [v1.0.11](https://github.com/moistman42069/HaloCE-Quest-VR/releases/tag/v1.0.11), built from test29. Preserve v1.0.10, v1.0.6 and all earlier releases. Release APK hashes and validation are in [RELEASE-PROVENANCE-1.0.11.md](RELEASE-PROVENANCE-1.0.11.md). The repository About description was not changed.
 
+## Next candidate (test30, 2026-10-07)
+
+**Next candidate (private, not released): test30, version 1.0.12 / code 38**, branch `test30-profiles-coopname`, on the published v1.0.11. The owner confirmed 1.0.11 ("everything here is great") and reported that X did nothing in the VR main menu when deleting a profile. In menus the Quest's face buttons now act as the Xbox's of the same letter (X deletes a profile, B goes back once). The launcher's Host campaign also gains an optional server name. See [TEST30-PROGRESS.md](TEST30-PROGRESS.md), [TEST30-DELIVERY.md](TEST30-DELIVERY.md).
+
 ## Current release (test29, 2026-10-07)
 
 **Published as v1.0.11 / code 37**, branch `test29-opence-144`, built on v1.0.10:

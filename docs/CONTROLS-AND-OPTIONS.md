@@ -112,6 +112,11 @@ Quit before external edits. In `[vr]`, `body = "legs"` explicitly selects the de
 
 - **Upside-down hands or guns** (reported on Quest OS v78): use **Controller Left/Right → Flip Roll 180** for the affected controller; it turns hand, gun and two-hand aim together. Hand Roll turns only the visible hand and Gun Roll only the gun; since test21 Gun Roll also holds in two-hand grip (it used to flip back).
 
+## Menu buttons and the co-op server name (test30, 1.0.12)
+
+- **Menus use the letters on screen.** In any menu (the main menu, the profile list, the pause menu), the Quest's **A**, **X** and **Y** are the Xbox's A, X and Y, so **X deletes the selected profile** on the profile list. **B** goes back (once), and the trigger still clicks what you point at. Left-handed players: **Y** goes back and **B** is B. In play the buttons are unchanged: X throws a grenade, B uses and reloads.
+- **Co-op server name:** launcher → Campaign co-op → Host campaign → **Server name** (optional, up to 15 characters, remembered). It shows in the server browsers and to players who join. Left empty, the server keeps the device's name.
+
 ## HUD tap, HUD and wrist settings, two-hand movement, graphics (test29, 1.0.11)
 
 - **HUD tap fixed:** hold your **gun hand by the side of your head** (beside the temple, as if touching it with the controller) **for a moment**. A short buzz confirms. Do the same again to bring the HUD back. A hand passing by quickly no longer counts, nor does a hand inside a holster, so reaching for the shoulder holster no longer hides the HUD by accident.

@@ -19,6 +19,8 @@
 - **Graphics:** a glasses field-of-view option, and resolution steps up to 200% (contributed in pull request #1).
 - This version uses network 21. The new APKs have no recorded device-session acceptance yet; see release notes for the verification scope and compatibility details.
 
+**Test candidate 1.0.12 (code 38, not a release):** in VR menus the Quest's A, X and Y act as the on-screen A, X and Y (X deletes a profile; B goes back), and Host campaign can name your server.
+
 1. **Install the appropriate APK.** On Quest, enable developer mode and sideload with SideQuest or your existing installer; open it from **Unknown Sources**. On Android, open the downloaded APK and allow installation from that source when prompted. Both require ARM64, Android 9/API 28 or newer and compatible graphics. **Quest 3 is the reference headset**; other devices are not equally verified.
 2. **Updating this project? Install over it.** Both APKs retain their package IDs and signing certificate. Do not uninstall or clear app data. Optional ADB command: `adb install -r <apk-file>`. Back up your maps, saves and settings first. Another fork using the same package ID but a different key cannot update in place.
 3. **Supply your own legally obtained Xbox Halo: Combat Evolved data.** No game maps are included. Copy your `.iso`/`.xiso` or extracted game folder to the device. MCC and retail PC installation files are not substitutes for the supported Xbox base data.
@@ -141,7 +143,7 @@ Co-op is OpenCE's native campaign mode on the same network version (21 since 1.0
 
 Step-by-step instructions are in the launcher: **How to join co-op & find servers** (also first in the Field guide).
 
-1. **Host:** launcher **Campaign co-op → Host campaign**: mission, difficulty, most players (2 to 128, as OpenCE offers; 4 by default) and **Public** (listed in the server browsers: this app's, OpenCE's and the community list; untick it to share the invite instead). The game opens the lobby; start when everyone is in (a full lobby starts by itself).
+1. **Host:** launcher **Campaign co-op → Host campaign**: mission, difficulty, most players (2 to 128, as OpenCE offers; 4 by default), an optional **Server name** (1.0.12; up to 15 characters, empty for the device's name) and **Public** (listed in the server browsers: this app's, OpenCE's and the community list; untick it to share the invite instead). The game opens the lobby; start when everyone is in (a full lobby starts by itself).
 2. **Join:** in the game, **Multiplayer → System Link → Refresh**: public co-op games show their campaign level. Or look first in the launcher's **Campaign co-op → Browse / join**, press **Join**, then pick the game in System Link. A game marked **LOCK** has a password: use its host's invite instead.
 3. **If it fails:** send both players' logs of that session (see [OpenCE co-op compatibility](OPENCE-COOP-COMPATIBILITY.md)). Strict NAT on both sides (common on mobile data) can block joining; try Wi-Fi.
 
