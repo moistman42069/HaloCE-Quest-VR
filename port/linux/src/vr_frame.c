@@ -395,6 +395,16 @@ static void choose_eye_size(void)
 	}
 	vr.eye_image_width = (unsigned int)width;
 	vr.eye_image_height = (unsigned int)height;
+	/* (test29, PR #1 merged: the full view at 100% or less keeps the
+	runtime's recommended eye images, as before: the game's eye stretched
+	into them. Only a scale above 100% or the glasses window remakes them,
+	so AUTO's 85% and 70% on the Quest 2 and the first Quest are as they
+	were) */
+	if (!vr.glasses && scale <= 1.0)
+	{
+		vr.eye_image_width = vr.recommended_width;
+		vr.eye_image_height = vr.recommended_height;
+	}
 	if (vr.glasses)
 		platform_log("vr: glasses field of view %.0fx%.0f degrees: %.0f%% x %.0f%% of each eye's image%s",
 			vr.glasses_half[0] * 2.0f * 57.29578f, vr.glasses_half[1] * 2.0f * 57.29578f, ratio[0] * 100.0f,

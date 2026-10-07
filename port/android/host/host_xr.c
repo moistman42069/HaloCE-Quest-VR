@@ -950,7 +950,7 @@ narrower field of view. The new ones are made before the old ones go, so a
 failure leaves the eyes as they were. Only info's eye entries change. */
 int host_xr_resize_eyes(struct halo_xr_info *out, uint32_t width, uint32_t height)
 {
-	int eye;
+	int eye, result = 0;
 
 	if (!xr.initialized || xr.failed || xr.swapchains[0].acquired || xr.swapchains[1].acquired)
 		return -1;
@@ -973,7 +973,10 @@ int host_xr_resize_eyes(struct halo_xr_info *out, uint32_t width, uint32_t heigh
 			xr.swapchains[eye] = old;
 			host_logf(HOST_LOG_ERROR, "[openxr] eye %d stays %ux%u: no swapchain of %ux%u", eye, old.width,
 				old.height, width, height);
-			return -1;
+			/* (the other eye may be remade already: info told of both as
+			they are, never of a destroyed image) */
+			result = -1;
+			break;
 		}
 		check(xrDestroySwapchain(old.handle), "xrDestroySwapchain");
 	}
@@ -984,7 +987,7 @@ int host_xr_resize_eyes(struct halo_xr_info *out, uint32_t width, uint32_t heigh
 		out->image_count[eye] = xr.swapchains[eye].count;
 		memcpy(out->images[eye], xr.swapchains[eye].images, sizeof(out->images[eye]));
 	}
-	return 0;
+	return result;
 }
 
 /* XR_EXT_performance_settings: the headset's CPU and GPU kept at their
