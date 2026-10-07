@@ -148,6 +148,15 @@ def main():
             if candidate_at_least(args.label, 23):
                 if b"client dropped presentation" not in guest:
                     raise SystemExit("Test23 co-op cutscene diagnostic missing")
+            if candidate_at_least(args.label, 29):
+                # OpenCE build 144's network 21, and the held HUD tap's and PR #1's text
+                if b"OpenCE build 144 (network 21)" not in dex:
+                    raise SystemExit("Test29 upstream netcode text missing")
+                if vr:
+                    for marker in [b"test29 candidate 1.0.11", b"vr: HUD %s (VR settings)", b"WRIST ALONG", b"RESET WRIST",
+                                   b"GLASSES 70X66", b"125% Q3", b"move with %s"]:
+                        if marker not in guest:
+                            raise SystemExit("Test29 VR marker missing: " + repr(marker))
             if candidate_at_least(args.label, 28):
                 # a release build (HALO_RELEASE, as OpenCE's): checks logged, play goes on
                 if b"(release build)" not in guest:

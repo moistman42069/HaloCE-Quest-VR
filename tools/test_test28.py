@@ -93,7 +93,8 @@ print('PASS: the APKs build with --release (HALO_RELEASE), as OpenCE ships its b
 # --- version, identity, package markers
 assert int(re.search(r'versionCode Math\.max\((\d+), buildNumber\)', gradle).group(1)) >= 36
 assert int(re.search(r': "1\.0\.(\d+)"', gradle).group(1)) >= 10
-assert 'HaloCE Quest test28 candidate 1.0.10' in frame and 'co-op hosted for 2 to 128 players' in frame and 'gyro aim on phones' in frame
+assert ('HaloCE Quest test28 candidate 1.0.10' in frame or 'test28: co-op games entered in progress' in frame) and \
+    'co-op hosted for 2 to 128 players' in frame and 'gyro aim on phones' in frame
 assert 'candidate_at_least(args.label, 28)' in package
 print('PASS: test28 wiring (version 1.0.10 / 36, identity, package markers)')
 

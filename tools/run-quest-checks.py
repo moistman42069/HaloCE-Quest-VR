@@ -17,7 +17,7 @@ SUITES = [
     'test_quest_vr_math', 'test_quest_render_targets', 'test_test15_refinements',
     'test_test15_io', 'test_android_gamepad', 'test_vr_vehicle_lifecycle',
     'test_test18_vehicle_tutorial', 'test_test19_network_browser', 'test_test19_media',
-    'test_test20_render_perf', 'test_test20_alignment', 'test_test20c_hands', 'test_test20d', 'test_test20e_network', 'test_test20e_reticle', 'test_test21', 'test_test22', 'test_test23', 'test_test24', 'test_test24b', 'test_test25', 'test_test26', 'test_test27', 'test_test28',
+    'test_test20_render_perf', 'test_test20_alignment', 'test_test20c_hands', 'test_test20d', 'test_test20e_network', 'test_test20e_reticle', 'test_test21', 'test_test22', 'test_test23', 'test_test24', 'test_test24b', 'test_test25', 'test_test26', 'test_test27', 'test_test28', 'test_test29',
 ]
 
 def main():
