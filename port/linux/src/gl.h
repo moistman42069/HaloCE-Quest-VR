@@ -86,6 +86,11 @@ this list to generate the guest's entry points */
 	X(glCheckFramebufferStatus) \
 	X(glBlitFramebuffer) \
 	X(glDrawBuffers) \
+	X(glGenRenderbuffers) \
+	X(glDeleteRenderbuffers) \
+	X(glBindRenderbuffer) \
+	X(glRenderbufferStorageMultisample) \
+	X(glFramebufferRenderbuffer) \
 	X(glReadBuffer) \
 	X(glInvalidateFramebuffer) \
 	X(glGenBuffers) \
@@ -193,6 +198,11 @@ this list to generate the guest's entry points */
 	X(glCheckFramebufferStatus) \
 	X(glBlitFramebuffer) \
 	X(glDrawBuffers) \
+	X(glGenRenderbuffers) \
+	X(glDeleteRenderbuffers) \
+	X(glBindRenderbuffer) \
+	X(glRenderbufferStorageMultisample) \
+	X(glFramebufferRenderbuffer) \
 	X(glGenBuffers) \
 	X(glDeleteBuffers) \
 	X(glBindBuffer) \
@@ -304,6 +314,11 @@ pointers, sees the declarations without these aliases */
 #define glCheckFramebufferStatus halo_glCheckFramebufferStatus
 #define glBlitFramebuffer halo_glBlitFramebuffer
 #define glDrawBuffers halo_glDrawBuffers
+#define glGenRenderbuffers halo_glGenRenderbuffers
+#define glDeleteRenderbuffers halo_glDeleteRenderbuffers
+#define glBindRenderbuffer halo_glBindRenderbuffer
+#define glRenderbufferStorageMultisample halo_glRenderbufferStorageMultisample
+#define glFramebufferRenderbuffer halo_glFramebufferRenderbuffer
 #define glReadBuffer halo_glReadBuffer
 #define glInvalidateFramebuffer halo_glInvalidateFramebuffer
 #define glGenBuffers halo_glGenBuffers
@@ -409,6 +424,11 @@ pointers, sees the declarations without these aliases */
 #define glCheckFramebufferStatus halo_glCheckFramebufferStatus
 #define glBlitFramebuffer halo_glBlitFramebuffer
 #define glDrawBuffers halo_glDrawBuffers
+#define glGenRenderbuffers halo_glGenRenderbuffers
+#define glDeleteRenderbuffers halo_glDeleteRenderbuffers
+#define glBindRenderbuffer halo_glBindRenderbuffer
+#define glRenderbufferStorageMultisample halo_glRenderbufferStorageMultisample
+#define glFramebufferRenderbuffer halo_glFramebufferRenderbuffer
 #define glGenBuffers halo_glGenBuffers
 #define glDeleteBuffers halo_glDeleteBuffers
 #define glBindBuffer halo_glBindBuffer

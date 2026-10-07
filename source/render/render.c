@@ -439,6 +439,16 @@ static void render_window(
 		if (!VR_RENDER_VIEW())
 			structure_render_fog_screen();
 		rasterizer_lens_flares_draw();
+		/* port: the 3D view antialiased (display.anti_aliasing), before the
+		HUD and menus are drawn over it */
+		if (rasterizer_target == _render_target_primary)
+		{
+			halo_screen_anti_alias(
+				rasterizer_camera->viewport_bounds.x0,
+				rasterizer_camera->viewport_bounds.y0,
+				rasterizer_camera->viewport_bounds.x1,
+				rasterizer_camera->viewport_bounds.y1);
+		}
 		/* Damage and fades cover the eyes and scope, not a floating HUD rectangle. */
 		if (VR_RENDER_VIEW())
 			rasterizer_screen_flash();
