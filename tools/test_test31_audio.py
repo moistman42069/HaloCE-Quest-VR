@@ -41,6 +41,9 @@ source = r'''
 #include <stdio.h>
 #include <string.h>
 typedef float real;
+typedef int BOOL;
+static BOOL reverb_enabled;
+static int config_boolean(const char *key){assert(!strcmp(key,"audio.reverb"));return 0;}
 #define PIN(x,lo,hi) ((x)<(lo)?(lo):((x)>(hi)?(hi):(x)))
 enum { _sound_class_music=26, _sound_class_scripted_dialog_to_player=20,
  _sound_class_scripted_dialog_to_other=21, _sound_class_scripted_dialog_force_unspatialized=22 };

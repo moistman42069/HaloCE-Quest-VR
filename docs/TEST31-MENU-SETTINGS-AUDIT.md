@@ -15,13 +15,19 @@ Imported XML and configuration keys alone do not establish working settings.
 | Master volume | `dsound_sdl.c::audio_update_volume` now reads changes on the game thread and updates the existing mixer under its mutex. No configuration reads were added to the audio callback. Existing positive custom gains above 1 remain supported. |
 | Music/effects volume | `sound_manager.c::sound_manager_port_volume` now follows Build 145's class-gain multiplier. Music affects the music class; effects affects all other classes, including speech. Script class fades and scripted-dialog exemptions from nondialog attenuation remain intact. Defaults are **1.0**, not 100. |
 | Audio enabled | Existing device-start gate; requires restarting the game. Label/help must say so. |
-| Reverb | **Missing backend**, not a functioning toggle. Current `IDirectSound_SetI3DL2Listener` is a no-op; the backend documents unimplemented reverb and high-frequency filters. Build 145's implementation adds a substantial I3DL2 reverb/filter/limiter pipeline, not merely a settings read. Hide or explicitly show unavailable on this backend until separately integrated and validated. Do not claim reverb is implemented. |
+| Reverb | Implemented from OpenCE `8a8e7059` (MrBruh, based on Tyberious #44/#46), default **OFF**. ON enables room reflection/decay and high-frequency obstruction/occlusion filters. OFF preserves the accepted dry decoder, Catmull-Rom resampler, soft limiter, spatial gain and diagnostics. Unlike upstream, filtering also follows the toggle. DSP storage is static and bounded; quiet/OFF tails stop processing and clear history. Listener/source inputs are finite-clamped, environment changes fade for 85 ms, and master mute also silences stored tails. |
 
 `tools/test_test31_audio.py` compiles the production gain helpers with
 ASan/UBSan. It verifies defaults, separate controls, all sound-class baseline
 gains, script/dialog attenuation, cached live changes, finite bounds, mute,
 mutex discipline, legacy master boost and game-thread wiring. Passing it does
 not validate actual speaker output, latency, crackling or room acoustics.
+`tools/test_test31_reverb.py` additionally compiles the production mixer and
+checks byte-identical OFF output against the prior commit, impulse decay,
+2D bypass, environment transitions, finite/range bounds, master mute, and
+OFF state cleanup under ASan/UBSan. Its optimized host CPU measurement was
+0.043 ms per 1,024-frame room block (21.33 ms of audio); this is **not** a
+Quest timing result.
 
 ## Video and presentation
 
@@ -74,3 +80,38 @@ switching, refresh/resolution changes, geometry-safe default and lack of
 OpenXR context resets. Flat: controller and touch navigation, V-sync behavior,
 and external keyboard/mouse where available. No APK has been packaged for
 this audit.
+
+## Exact pending renderer dependency patches
+
+These are feasible upstream integrations, not permanently unsupported options.
+Keep accepted defaults: shadow size 128, per-pixel lighting OFF, AA OFF.
+
+- **Shadow resolution `1dc533fe`**: 168 additions / one deletion overall.
+  The 74-line renderer change identifies the game's 128x128 R5G6B5 shadow
+  targets, applies scales 1/2/4/8 and invalidates recent target lookup between
+  frames. The 86-line `rasterizer_xbox_shadows.c` change scales half-texel blur
+  constants and adds two blur passes per doubled scale. Merge the prototype
+  into source fixups. Preserve VR eye-target scaling and apply changes only
+  before either eye; test target identity, scale/cache switching, blur width,
+  and memory/performance at 1024. Existing shadow-effect OFF still wins.
+- **Per-pixel lighting `3dba558e`**: 444 additions / 36 deletions overall,
+  spanning `d3d8_gl.c`, `nv2a_vsh.c`, `nv2a_psh.c`, `xgpu.h`, the vertex-shader
+  initializer, fixup declaration and config. It recognizes actual model
+  lighting program instructions (9/10/17/27), captures skinned normal/world
+  position, adds a program-key variant and light uniforms, and falls back to
+  existing vertex lighting when recognition/compile/link fails. Preserve the
+  app's constant-serial and cull/mirror fixes. Verify OFF shader text/program
+  choice remains identical, lit and unlit cache keys differ, recognized/
+  rejected programs behave correctly, and left-hand mirrors/fog/transparency
+  keep their existing output. GPU cost/appearance still need device checks.
+- **Anti-aliasing `94882796`**: 2,434 additions / 51 deletions overall,
+  including a 524-line `xgpu_post.c`, SMAA source/tables/license, target
+  allocation/resolution changes, renderer finish hook and asset embedding.
+  It is a separate renderer integration, not a spinner-only patch. Android
+  choices are FXAA/MSAA 2x/4x; desktop also has SMAA/SSAA/MSAA 8x. Quest needs
+  per-eye target/postprocess ownership reviewed independently of desktop
+  back-buffer presentation. Keep OFF and preserve accepted safe geometry.
+
+Reverb deliberately does not import unrelated upstream ADPCM 65-to-64 sample
+changes, windowed-sinc resampling, distance-law changes or replacement limiter.
+Those would alter the accepted audio baseline independently of this menu task.
