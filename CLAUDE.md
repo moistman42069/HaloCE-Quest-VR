@@ -4,9 +4,11 @@
 
 Read `docs/ACTIVE-WORK-CHECKPOINT.md` and `docs/TEST31-PROGRESS.md` first.
 The current branch is `test31-network-menus-vehicles`; the target is
-1.0.13/code39. **Do not package either APK until all three owner task prompts
-have been worked through**, including manual reload/hand contact and world
-objects/NPCs/ragdolls/recovery/impact damage. Track all requirements in
+1.0.13/code39. **Latest owner override:** finish and validate the full OpenCE
+menus, turret fixes, Warthog window setting and upstream/network upgrade, then
+package the Quest and flat APKs for testing BEFORE the manual reload/hand
+contact and world/NPC interaction phase. Those later requirements remain queued
+and must not be marked complete. Track all requirements in
 `docs/VR-INTERACTION-REQUIREMENTS.md`. The owner now requires ALL OpenCE in-game
 menu functionality, superseding the narrower browser/setup approval; see
 `docs/TEST31-MENU-PLAN.md`. No publication, push, tag,

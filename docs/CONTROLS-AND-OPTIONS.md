@@ -1,5 +1,10 @@
 # Controls and options - 1.0.10 VR / flat
 
+**Test31 private candidate:** see [the current menu/input guide](TEST31-PLAYER-NOTES.md)
+for OpenCE's in-game screens, native text keyboard, Android direct touch and
+scoreboard scrolling. Gameplay mappings below are preserved. Menus use the
+displayed A/B/X/Y letters, including when gameplay handedness is mirrored.
+
 These mappings follow the shipped code. Start with Controls = VR and a standard native controller profile. Changing either can change the resulting actions. Touch controllers lack conventional gamepad bumpers/View.
 
 ## Quest Touch, default VR layout

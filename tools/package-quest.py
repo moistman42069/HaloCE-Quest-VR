@@ -158,13 +158,25 @@ def main():
                     raise SystemExit("Test30 VR identity missing")
             if candidate_at_least(args.label, 29):
                 # OpenCE build 144's network 21, and the held HUD tap's and PR #1's text
-                if b"OpenCE build 144 (network 21)" not in dex:
+                expected_upstream = b"OpenCE build 145 (network 22)" if candidate_at_least(args.label, 31) else b"OpenCE build 144 (network 21)"
+                if expected_upstream not in dex:
                     raise SystemExit("Test29 upstream netcode text missing")
                 if vr:
                     for marker in [b"OpenCE build 144 netcode, network 21", b"vr: HUD %s (VR settings)", b"WRIST ALONG", b"RESET WRIST",
                                    b"GLASSES 70X66", b"125% Q3", b"move with %s"]:
                         if marker not in guest:
                             raise SystemExit("Test29 VR marker missing: " + repr(marker))
+            if candidate_at_least(args.label, 31):
+                for marker in [b"display.menus", b"display.shadow_resolution", b"display.per_pixel_lighting",
+                               b"display.anti_aliasing", b"audio.reverb", b"browser.show_empty",
+                               b"browser.passwords", b"main_menu/multiplayer_type_select/join_game",
+                               b"shadow maps: %ldx%ld", b"anti-aliasing:"]:
+                    if marker not in guest:
+                        raise SystemExit("Test31 menu/runtime marker missing: " + repr(marker))
+                if vr:
+                    for marker in [b"test31 candidate 1.0.13", b"HOG GLASS", b"vr.vehicle_warthog_hide_glass"]:
+                        if marker not in guest:
+                            raise SystemExit("Test31 VR marker missing: " + repr(marker))
             if candidate_at_least(args.label, 28):
                 # a release build (HALO_RELEASE, as OpenCE's): checks logged, play goes on
                 if b"(release build)" not in guest:
@@ -269,6 +281,9 @@ def main():
     documents = edition_docs+["GAME-DATA-LIBRARY.md", "TEST15-DELIVERY.md", "TEST15-PROGRESS.md", "TEST15-UPSTREAM.md", "DATA-COMPATIBILITY.md", "CURRENT-STATE.md", "PLAYER-GUIDE.md", "CONTROLS-AND-OPTIONS.md", "COOP-COMPATIBILITY-AUDIT.md", "NETWORK-VR-AVATARS.md", "CAMPAIGN-PROTOCOL-WIP.md",
                  "ANDROID-TOUCH-CONTROLS.md", "ANDROID-GAMEPAD.md", "COOP-PLAYER-LIMITS.md", "MULTIPLAYER-BROWSER.md"]
     documents = list(dict.fromkeys(documents))
+    if candidate_at_least(args.label, 31) and not args.stable:
+        documents += ["TEST31-PLAYER-NOTES.md", "TEST31-MENU-SETTINGS-AUDIT.md",
+                      "TEST31-UPSTREAM-DECISIONS.md", "VR-INTERACTION-REQUIREMENTS.md"]
     for doc in documents:
         shutil.copy2(ROOT / "docs" / doc, output / doc)
     for notice in ["CREDITS.md", "THIRD-PARTY-NOTICES.txt", "LICENSE.md"]:

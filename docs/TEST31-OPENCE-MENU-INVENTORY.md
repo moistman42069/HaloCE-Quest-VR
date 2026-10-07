@@ -4,9 +4,18 @@ Source audit, 2026-10-07. Pinned OpenCE **Build 145**, commit
 `4e8ed2f196e0edd1f2830a4de9841686aabbf466`, network 22. This is an
 implementation inventory, not a claim of device validation. The owner now
 requires the complete in-game menu setup in the next candidate; launcher
-features are supplementary. APK packaging remains held for all three prompts.
+features are supplementary. The later owner override permits packaging after
+the menu/turret/window/upstream baseline, before the two interaction workstreams.
 
-## Findings that change the plan
+**This document preserves the initial dependency and XML inventory.** Its
+"import/adapt", "inert upstream" and missing-consumer observations describe
+the pre-integration source. Current implementation and validation are in
+[TEST31-MENU-SETTINGS-AUDIT.md](TEST31-MENU-SETTINGS-AUDIT.md), with actual user
+paths in [TEST31-PLAYER-NOTES.md](TEST31-PLAYER-NOTES.md). In particular, this
+candidate implements browser filters, preserves population ordering, and
+replaces the desktop updater control with Android launcher guidance.
+
+## Initial upstream findings (historical planning evidence)
 
 - The pinned manifest has **50 XML files and 883 widget definitions**. The old
   handoff's 55-file count is stale. Three XMLs are shared resources; the other

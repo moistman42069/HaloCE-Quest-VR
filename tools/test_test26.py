@@ -577,7 +577,9 @@ print('PASS: OpenCE build 128 adopted where it fits (engine speed-ups, glass, a 
 code = int(re.search(r'versionCode Math\.max\((\d+), buildNumber\)', gradle).group(1))
 assert code >= 34 and int(re.search(r': "1\.0\.(\d+)"', gradle).group(1)) >= 8
 identity = re.search(r'platform_log\("vr: (HaloCE Quest test\d+ candidate [^"]+)"\);', frame).group(1)
-assert 'test26 candidate 1.0.8' in identity or 'test26:' in identity
+# Test31 separates current identity from the retained baseline-history line.
+# Keep the history assertion, and validate parity exclusions on the current banner.
+assert 'test26 candidate 1.0.8' in frame or 'test26:' in frame
 network_words = re.compile(r"Internet play|browser: |signalling|UPnP|upnp|STUN|stun\.|tunnel|invite|network\.[a-z_]+|"
                            r"halo://join|p2p|lobby|games\.txt|joining|join requested|Multiplayer join")
 assert not network_words.search(identity), 'the identity line holds none of the networking parity words'

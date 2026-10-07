@@ -2,6 +2,183 @@ NATIVE SETTINGS REFERENCE
 
 Defaults apply to new settings. Existing saved values win except the one-time VR Safe geometry migration (revision 1); subsequent explicit Safe/Normal choices are preserved. Test18 also applies third-person/right-controller vehicle defaults once; later vehicle selections persist. VR settings apply to Quest only; desktop-only options do not affect Android. Restart for renderer, networking and other startup options. Use the in-game VR pages for live supported adjustments. The integrated project updater checks automatically in the launcher; Versions & updates controls checks and installation; inherited update.auto does not replace the mod with upstream.
 
+browser.show_empty [boolean]
+Default: true
+Include empty games in the in-game server browser.
+
+browser.show_full [boolean]
+Default: true
+Include full games in the in-game server browser.
+
+browser.engine [integer]
+Default: -1
+Browser game type: -1 all, 0 co-op, 1 CTF, 2 Slayer, 3 Oddball, 4 King, 5 Race.
+
+browser.teams [string]
+Default: "all"
+Browser teams: all, teams, or ffa.
+
+browser.passwords [string]
+Default: "all"
+Browser password filter: all, locked, or unlocked.
+
+browser.maps [string]
+Default: "all"
+Browser map filter: all or known (catalog only; joining still checks actual game files).
+
+display.mode [string]
+Default: ""
+"fullscreen" takes the display (at display.resolution's mode),
+"borderless" is a window over the whole desktop, "windowed" a window
+(display.window_size). Empty: display.fullscreen's (true: borderless).
+F11 switches to the window and back.
+
+display.resolution [string]
+Default: "native"
+What fullscreen and borderless draw at: "native", the display's own, or
+"<width>x<height>" ("1920x1080"), 640x480 or more. Fullscreen sets the
+display to it; borderless draws it scaled to the display.
+
+display.resolution_scaling [string]
+Default: "native"
+"native" draws at the window's resolution (fullscreen, the display's or
+display.resolution); "original" draws the Xbox's 640x480 and scales it
+up.
+
+display.window_size [string]
+Default: ""
+The window's size, "<width>x<height>" ("1920x1080"), 640x480 or more (it
+can be resized). Empty: display.window_scale's.
+
+display.max_fps [integer]
+Default: 0
+With vsync off, the most frames a second: 0 for twice the display's
+refresh rate, -1 for no limit (which can hang some Intel graphics).
+
+display.anti_aliasing [string]
+Default: "off"
+Smoothing of jagged edges, which the Xbox did not have: "off"; "fxaa"
+or "smaa" smooth the 3D view once it is drawn (the HUD and menus stay
+sharp); "ssaa2x" draws at twice the resolution each way (four times
+the work); "msaa2x", "msaa4x" or "msaa8x" draw with that many samples
+a pixel. Android has "fxaa" for "smaa", and no "ssaa2x".
+
+display.shadow_resolution [integer]
+Default: 128
+The size the objects' shadows are drawn at, in pixels each way: 128 as
+on the Xbox, or 256, 512 or 1024 for smoother edges, as soft.
+
+display.menus [string]
+Default: "pc"
+The menus: "pc" for the PC version's main menu (port/assets/menus,
+and a menus folder here for your own), "xbox" for the Xbox's.
+
+display.per_pixel_lighting [boolean]
+Default: false
+Light the models (characters, weapons, vehicles, scenery) for each
+pixel by the lights the game gives them, without the facets the light
+of each vertex shows across curved surfaces; false lights each vertex,
+as the Xbox does.
+
+audio.music_volume [real]
+Default: 1.0
+The music's volume, 0.0 to 1.0 (of audio.volume).
+
+audio.effects_volume [real]
+Default: 1.0
+The volume of every other sound (effects and speech), 0.0 to 1.0 (of
+audio.volume).
+
+audio.reverb [boolean]
+Default: false
+Reverberate the world's sounds as the place the player is in does (the
+maps' sound environments, as the Xbox's I3DL2 reverb did); false keeps
+them dry.
+
+input.mouse_vertical_sensitivity [real]
+Default: 0.0
+How far the view turns up and down for the mouse's movement; 0 for the
+same as input.mouse_sensitivity.
+
+controls.move_forward [string]
+Default: "W"
+The keyboard and mouse's controls, which Settings > Controls Setup
+changes: up to two keys or buttons each, separated by a comma. Keys by
+their names ("W", "Space", "Left Ctrl", "F1"), and "Mouse Left",
+"Mouse Right", "Mouse Middle", "Mouse 4", "Mouse 5", "Wheel" (either
+way), "Wheel Up" and "Wheel Down"; empty for none. Moving forward:
+
+controls.move_backward [string]
+Default: "S"
+Moving backward.
+
+controls.strafe_left [string]
+Default: "A"
+Moving left.
+
+controls.strafe_right [string]
+Default: "D"
+Moving right.
+
+controls.jump [string]
+Default: "Space"
+Jumping (and skipping cutscenes).
+
+controls.crouch [string]
+Default: "Left Ctrl, C"
+Crouching.
+
+controls.fire [string]
+Default: "Mouse Left"
+Firing.
+
+controls.throw_grenade [string]
+Default: "Mouse Right, G"
+Throwing a grenade.
+
+controls.melee [string]
+Default: "F, Mouse 4"
+Melee attack.
+
+controls.reload [string]
+Default: "R"
+Reloading.
+
+controls.zoom [string]
+Default: "Z, Mouse Middle"
+Zooming the scope.
+
+controls.switch_weapon [string]
+Default: "Wheel, 1"
+Switching weapons.
+
+controls.switch_grenade [string]
+Default: "X"
+Switching grenades.
+
+controls.action [string]
+Default: "E"
+The action: picking up (held: swapping weapons), entering and leaving
+vehicles, pressing switches; never reloading (the controller's X does
+when there is nothing to act on).
+
+controls.flashlight [string]
+Default: "Q"
+The flashlight.
+
+controls.scoreboard [string]
+Default: "Tab"
+Showing the scores (the controller's Back).
+
+controls.pause [string]
+Default: "Escape"
+The pause menu (the controller's Start).
+
+debug.menu_open [string]
+Default: ""
+Start on this screen of the menus (port/assets/menus) instead of the main
+menu, a player profile being edited; empty for the main menu.
+
 pvp.time_limit [integer]
 Default: 0
 Match time limit in minutes: 0 (unlimited) to 1440.
@@ -605,6 +782,10 @@ First-person seat forward offset in metres (-0.50 to 0.50), all. Global and matc
 vr.vehicle_all_right [real]
 Default: 0.0
 First-person seat right offset in metres (-0.50 to 0.50), all. Global and matching vehicle offsets add; final axis is bounded to 0.50 m.
+
+vr.vehicle_warthog_hide_glass [boolean]
+Default: true
+Hide the occupied Warthog's glass in first-person view. Other vehicles, third-person views and collision are unchanged. On preserves test25 behavior.
 
 vr.vehicle_warthog_up [real]
 Default: 0.0

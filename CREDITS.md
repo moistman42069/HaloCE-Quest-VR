@@ -1,5 +1,18 @@
 # Credits and licenses
 
+## Test31 integration
+
+The OpenCE Build 145 menus, Server Setup, profile/gametype options, scoreboard,
+network-22 changes and optional graphics settings are adapted from
+[OpenCommunityEdition/OpenCE](https://github.com/OpenCommunityEdition/OpenCE),
+principally MrBruh/cybersecurity and its contributors. Shadow resolution,
+per-pixel lighting and I3DL2 room reverb build on Tyberious's contributions
+(upstream #44/#46/#47/#48). FXAA follows Timothy Lottes's published approach;
+desktop SMAA source/data retains its MIT license under `port/third_party/smaa`.
+The XML parser is Expat; its license is retained with the source. Android's
+local scancode-name table is adapted from SDL 3.4.16 under SDL's license.
+Quest/Android input, VR-menu and rendering adaptations are project work.
+
 This fork depends on substantial prior work. Credits distinguish code foundations, reference material and related projects; they do not imply endorsement or that all features of another project are included.
 
 | Project / people | Contribution or relationship |

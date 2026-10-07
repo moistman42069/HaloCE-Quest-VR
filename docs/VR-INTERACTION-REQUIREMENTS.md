@@ -1,6 +1,14 @@
 # Subsequent VR interaction requirements
 
-## Owner packaging hold — 2026-10-07
+## Latest owner packaging override — 2026-10-07
+
+The owner subsequently requested BOTH APKs once the full OpenCE in-game menus,
+turret fixes, window setting and upstream/network upgrade are finished and
+validated, **before** beginning the manual/world interaction phase. That narrow
+baseline delivery is now authorized. It does not finish, cancel, or waive any
+M/W item below. Keep these workstreams queued and tracked for the next phase.
+
+### Earlier hold (superseded for the baseline delivery above)
 
 Do not package or deliver either APK until **all three task prompts** have been
 worked through in full. A passing test31 baseline alone does not clear this

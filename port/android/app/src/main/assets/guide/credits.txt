@@ -1,5 +1,18 @@
 # Credits and licenses
 
+## Test31 integration
+
+The OpenCE Build 145 menus, Server Setup, profile/gametype options, scoreboard,
+network-22 changes and optional graphics settings are adapted from
+[OpenCommunityEdition/OpenCE](https://github.com/OpenCommunityEdition/OpenCE),
+principally MrBruh/cybersecurity and its contributors. Shadow resolution,
+per-pixel lighting and I3DL2 room reverb build on Tyberious's contributions
+(upstream #44/#46/#47/#48). FXAA follows Timothy Lottes's published approach;
+desktop SMAA source/data retains its MIT license under `port/third_party/smaa`.
+The XML parser is Expat; its license is retained with the source. Android's
+local scancode-name table is adapted from SDL 3.4.16 under SDL's license.
+Quest/Android input, VR-menu and rendering adaptations are project work.
+
 This fork depends on substantial prior work. Credits distinguish code foundations, reference material and related projects; they do not imply endorsement or that all features of another project are included.
 
 | Project / people | Contribution or relationship |
@@ -2006,3 +2019,54 @@ Copyright notice:
 
   Jean-loup Gailly        Mark Adler
   jloup@gzip.org          madler@alumni.caltech.edu
+
+
+===== Test31: Expat XML parser =====
+Copyright (c) 1998-2000 Thai Open Source Software Center Ltd and Clark Cooper
+Copyright (c) 2001-2025 Expat maintainers
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be included
+in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
+===== Test31: SMAA =====
+Copyright (C) 2013 Jorge Jimenez (jorge@iryoku.com)
+Copyright (C) 2013 Jose I. Echevarria (joseignacioechevarria@gmail.com)
+Copyright (C) 2013 Belen Masia (bmasia@unizar.es)
+Copyright (C) 2013 Fernando Navarro (fernandn@microsoft.com)
+Copyright (C) 2013 Diego Gutierrez (diegog@unizar.es)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software. As clarification, there is no
+requirement that the copyright notice and permission be included in binary
+distributions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
