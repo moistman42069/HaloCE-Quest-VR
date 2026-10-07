@@ -29,17 +29,29 @@ static SDL_Window *platform_window;
 static SDL_GLContext platform_gl_context;
 static SDL_ThreadID platform_event_thread;
 static BOOL platform_sdl_started = FALSE;
+static BOOL platform_quit_requested;
 
 static struct platform_input_state input_state;
 /* keys pressed since the last read, so a press and release between two
 reads still counts as a press (input injected on Android, or a slow frame) */
 static unsigned char keys_pressed[SDL_SCANCODE_COUNT];
+static unsigned char mouse_buttons_pressed[PLATFORM_MOUSE_BUTTON_COUNT];
 #ifndef HALO_ANDROID
 /* the menus' pointer (platform_ui_pointer_set_active), under input_lock */
 static struct platform_ui_pointer ui_pointer;
 static float ui_pointer_wheel;
 #endif
 static pthread_mutex_t input_lock = PTHREAD_MUTEX_INITIALIZER;
+
+/* Controls Setup capture is confined to keyboard/mouse input. Touch,
+gamepad and tracked-controller state keep their existing paths. */
+enum { _binding_capture_idle, _binding_capture_waiting, _binding_capture_taken };
+static int binding_capture, binding_capture_result, binding_captured_input;
+static BOOL binding_settling;
+static Uint64 binding_taken_ms, binding_polled_ms;
+static unsigned mouse_buttons_down;
+#define BINDING_ABANDONED_MS 500
+#define BINDING_UNCLAIMED_MS 2000
 
 /* debug keyboard queue */
 #define KEYSTROKE_QUEUE_SIZE 64
@@ -305,9 +317,13 @@ BOOL platform_offer_game_data(const char *destination)
 int halo_interpolation_enabled(void)
 {
 	static int enabled = -1;
+	static unsigned long read_at = (unsigned long)-1;
 
-	if (enabled < 0)
+	if (enabled < 0 || read_at != config_changes())
+	{
+		read_at = config_changes();
 		enabled = config_boolean("display.interpolation");
+	}
 	return enabled;
 }
 
@@ -427,6 +443,35 @@ BOOL platform_video_initialize(unsigned long width, unsigned long height)
 void platform_video_drawable_size(int *width, int *height)
 {
 	SDL_GetWindowSizeInPixels(platform_window, width, height);
+}
+
+int platform_display_resolutions(long *widths, long *heights, int maximum)
+{
+	int width = 0, height = 0;
+
+	if (!platform_window || !widths || !heights || maximum < 1)
+		return 0;
+	SDL_GetWindowSizeInPixels(platform_window, &width, &height);
+	if (width <= 0 || height <= 0)
+		return 0;
+	widths[0] = width;
+	heights[0] = height;
+	return 1;
+}
+
+int platform_window_sizes(long *widths, long *heights, int maximum)
+{
+	return platform_display_resolutions(widths, heights, maximum);
+}
+
+void platform_display_apply(void)
+{
+	/* Menu configuration saves must not rebuild the headset's GL context,
+	eye targets, session or refresh scheduling. */
+#ifndef HALO_VR
+	if (platform_window && SDL_GetCurrentThreadID() == platform_event_thread)
+		SDL_GL_SetSwapInterval(config_boolean("display.vsync") ? 1 : 0);
+#endif
 }
 
 void platform_video_swap(void)
@@ -586,6 +631,26 @@ BOOL platform_next_keystroke(struct platform_keystroke *keystroke)
 
 /* ---------- internet play's invite links (p2p.c) */
 
+int platform_clipboard_get(char *text, int size)
+{
+	char *clipboard;
+	int got;
+
+	if (!text || size <= 0)
+		return 0;
+	clipboard = SDL_GetClipboardText();
+	got = clipboard && *clipboard;
+	snprintf(text, (size_t)size, "%s", got ? clipboard : "");
+	SDL_free(clipboard);
+	return got;
+}
+
+void platform_clipboard_set(const char *text)
+{
+	if (text)
+		SDL_SetClipboardText(text);
+}
+
 #ifdef HALO_ANDROID
 /* SDL declares it for Android builds only, which the guest is not
 (guest/runtime/guest_sdl.c passes it to the host) */
@@ -705,6 +770,131 @@ static void platform_show_pending_message(void)
 
 /* ---------- events */
 
+void platform_request_quit(void)
+{
+	/* The Android guest has no SDL_PushEvent bridge. Use the existing event
+	thread's quit path instead of calling a generated no-op SDL stub. */
+	pthread_mutex_lock(&input_lock);
+	platform_quit_requested = TRUE;
+	pthread_mutex_unlock(&input_lock);
+}
+
+/* Called only with input_lock held. Drop pending presses and mouse motion,
+but retain physical held-state until key/button-up so it cannot leak after
+capture ends. */
+static void binding_clear_pending(void)
+{
+	memset(keys_pressed, 0, sizeof(keys_pressed));
+	memset(mouse_buttons_pressed, 0, sizeof(mouse_buttons_pressed));
+	input_state.mouse_dx = input_state.mouse_dy = input_state.mouse_wheel = 0.0f;
+	keystroke_head = keystroke_count = 0;
+#ifndef HALO_ANDROID
+	ui_pointer.left_clicks = ui_pointer.right_clicks = ui_pointer.wheel_steps = 0;
+	ui_pointer_wheel = 0.0f;
+#endif
+}
+
+static void binding_take(int result, int input)
+{
+	binding_capture = _binding_capture_taken;
+	binding_capture_result = result;
+	binding_captured_input = input;
+	binding_taken_ms = SDL_GetTicks();
+	binding_clear_pending();
+}
+
+/* Track physical releases even when their actions are suppressed. Returning
+TRUE consumes only keyboard/mouse events belonging to binding capture. */
+static BOOL binding_capture_event(const SDL_Event *event)
+{
+	BOOL active = binding_capture != _binding_capture_idle || binding_settling;
+
+	switch (event->type)
+	{
+	case SDL_EVENT_KEY_DOWN:
+	case SDL_EVENT_KEY_UP:
+		if (event->key.scancode > SDL_SCANCODE_UNKNOWN && event->key.scancode < SDL_SCANCODE_COUNT)
+		{
+			input_state.keys[event->key.scancode] = event->key.down;
+			if (binding_capture == _binding_capture_waiting && event->key.down && !event->key.repeat &&
+				event->key.scancode != SDL_SCANCODE_F11 && event->key.scancode != SDL_SCANCODE_F12)
+			{
+				binding_take(event->key.scancode == SDL_SCANCODE_ESCAPE ? 3 :
+					event->key.scancode == SDL_SCANCODE_DELETE ? 2 : 1, event->key.scancode);
+			}
+		}
+		return active;
+	case SDL_EVENT_MOUSE_BUTTON_DOWN:
+	case SDL_EVENT_MOUSE_BUTTON_UP:
+		if (event->button.button > 0 && event->button.button < 32)
+		{
+			if (event->button.down)
+				mouse_buttons_down |= 1u << event->button.button;
+			else
+				mouse_buttons_down &= ~(1u << event->button.button);
+		}
+		if (active && event->button.button < PLATFORM_MOUSE_BUTTON_COUNT)
+			input_state.mouse_buttons[event->button.button] = 0;
+		if (binding_capture == _binding_capture_waiting && event->button.down &&
+			event->button.button > 0 && event->button.button < PLATFORM_MOUSE_BUTTON_COUNT)
+			binding_take(1, INPUT_MOUSE + event->button.button);
+		return active;
+	case SDL_EVENT_MOUSE_WHEEL:
+		if (binding_capture == _binding_capture_waiting && (event->wheel.y > 0.0f || event->wheel.y < 0.0f))
+			binding_take(1, event->wheel.y > 0.0f ? INPUT_WHEEL_UP : INPUT_WHEEL_DOWN);
+		return active;
+	case SDL_EVENT_MOUSE_MOTION:
+		return active;
+	case SDL_EVENT_WINDOW_FOCUS_LOST:
+		if (binding_capture != _binding_capture_idle)
+			binding_take(3, -1);
+		break;
+	default:
+		break;
+	}
+	return FALSE;
+}
+
+void platform_binding_capture_begin(void)
+{
+	pthread_mutex_lock(&input_lock);
+	binding_capture = _binding_capture_waiting;
+	binding_settling = TRUE;
+	binding_polled_ms = SDL_GetTicks();
+	binding_clear_pending();
+	pthread_mutex_unlock(&input_lock);
+}
+
+int platform_binding_capture_poll(int *input)
+{
+	int result = 0;
+
+	pthread_mutex_lock(&input_lock);
+	binding_polled_ms = SDL_GetTicks();
+	if (binding_capture == _binding_capture_taken)
+	{
+		result = binding_capture_result;
+		if (input)
+			*input = binding_captured_input;
+		binding_capture = _binding_capture_idle;
+	}
+	pthread_mutex_unlock(&input_lock);
+	return result;
+}
+
+void platform_menus_set_active(BOOL active)
+{
+	pthread_mutex_lock(&input_lock);
+	input_state.menus = active;
+	if (!active && binding_capture != _binding_capture_idle)
+	{
+		binding_capture = _binding_capture_idle;
+		binding_settling = TRUE;
+		binding_clear_pending();
+	}
+	pthread_mutex_unlock(&input_lock);
+}
+
 void platform_pump_events(void)
 {
 	/* debug.exit_after (seconds) ends the game that long after the window
@@ -732,8 +922,16 @@ void platform_pump_events(void)
 	updater_poll(platform_window);
 #endif
 	pthread_mutex_lock(&input_lock);
+	if (platform_quit_requested)
+	{
+		pthread_mutex_unlock(&input_lock);
+		platform_log("quit requested from menu");
+		exit(EXIT_SUCCESS);
+	}
 	while (SDL_PollEvent(&event))
 	{
+		if (binding_capture_event(&event))
+			continue;
 		switch (event.type)
 		{
 		case SDL_EVENT_QUIT:
@@ -742,7 +940,7 @@ void platform_pump_events(void)
 			exit(EXIT_SUCCESS);
 		case SDL_EVENT_KEY_DOWN:
 		case SDL_EVENT_KEY_UP:
-			if (event.key.scancode < SDL_SCANCODE_COUNT)
+			if (event.key.scancode >= SDL_SCANCODE_UNKNOWN && event.key.scancode < SDL_SCANCODE_COUNT)
 			{
 				input_state.keys[event.key.scancode] = event.key.down;
 				if (event.key.down)
@@ -801,7 +999,11 @@ void platform_pump_events(void)
 			}
 #endif
 			if (event.button.button < PLATFORM_MOUSE_BUTTON_COUNT)
+			{
 				input_state.mouse_buttons[event.button.button] = event.button.down;
+				if (event.button.down)
+					mouse_buttons_pressed[event.button.button] = 1;
+			}
 			break;
 		case SDL_EVENT_MOUSE_WHEEL:
 #ifndef HALO_ANDROID
@@ -827,6 +1029,8 @@ void platform_pump_events(void)
 		case SDL_EVENT_WINDOW_FOCUS_LOST:
 			memset(input_state.keys, 0, sizeof(input_state.keys));
 			memset(input_state.mouse_buttons, 0, sizeof(input_state.mouse_buttons));
+			mouse_buttons_down = 0;
+			binding_clear_pending();
 			input_state.focused = FALSE;
 			break;
 		case SDL_EVENT_WINDOW_FOCUS_GAINED:
@@ -867,6 +1071,7 @@ void platform_ui_pointer_set_active(BOOL active)
 	input_state.mouse_dy = 0.0f;
 	input_state.mouse_wheel = 0.0f;
 	memset(input_state.mouse_buttons, 0, sizeof(input_state.mouse_buttons));
+	memset(mouse_buttons_pressed, 0, sizeof(mouse_buttons_pressed));
 	pthread_mutex_unlock(&input_lock);
 	platform_mouse_capture(!active && !input_state.mouse_released);
 	if (active)
@@ -908,6 +1113,26 @@ void platform_input_read(struct platform_input_state *state, BOOL consume_motion
 {
 	pthread_mutex_lock(&input_lock);
 	*state = input_state;
+	if (binding_capture != _binding_capture_idle || binding_settling)
+	{
+		BOOL held = mouse_buttons_down != 0;
+		int scancode;
+		Uint64 now = SDL_GetTicks();
+
+		for (scancode = 0; scancode < SDL_SCANCODE_COUNT && !held; scancode++)
+			held = input_state.keys[scancode] != 0;
+		if ((binding_capture == _binding_capture_taken && now - binding_taken_ms > BINDING_UNCLAIMED_MS) ||
+			(binding_capture == _binding_capture_waiting && now - binding_polled_ms > BINDING_ABANDONED_MS))
+			binding_capture = _binding_capture_idle;
+		if (binding_capture == _binding_capture_idle && !held)
+			binding_settling = FALSE;
+		memset(state->keys, 0, sizeof(state->keys));
+		memset(state->mouse_buttons, 0, sizeof(state->mouse_buttons));
+		state->mouse_dx = state->mouse_dy = state->mouse_wheel = 0.0f;
+		binding_clear_pending();
+		pthread_mutex_unlock(&input_lock);
+		return;
+	}
 	if (consume_motion)
 	{
 		int scancode;
@@ -916,6 +1141,11 @@ void platform_input_read(struct platform_input_state *state, BOOL consume_motion
 		{
 			state->keys[scancode] |= keys_pressed[scancode];
 			keys_pressed[scancode] = 0;
+		}
+		for (scancode = 0; scancode < PLATFORM_MOUSE_BUTTON_COUNT; scancode++)
+		{
+			state->mouse_buttons[scancode] |= mouse_buttons_pressed[scancode];
+			mouse_buttons_pressed[scancode] = 0;
 		}
 	}
 	if (consume_motion)
