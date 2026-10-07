@@ -3,7 +3,9 @@
 ## Current private work and delivery gate (2026-10-07)
 
 Branch `test31-network-menus-vehicles`, based on test30 `fe725aff`. Target
-1.0.13/code 39 has no completed, verified APK delivery recorded yet.
+1.0.13/code 39 is built and signed from runtime source `585a5643`; see
+`TEST31-DELIVERY.md` for exact identities, checks and the device checklist.
+All 47 regression suites pass; device acceptance remains pending.
 **Latest owner override:** finish the
 full OpenCE in-game menus, turret/window fixes and current upstream/network
 upgrade, validate them, then package BOTH APKs for testing before moving to
@@ -53,9 +55,9 @@ It is no longer an unstarted future list:
    are implemented. Existing body, grip, hand/action animation, Safe geometry
    and gameplay control defaults are preserved.
 
-The combined checks passed 46 suites plus 127 cache-format tests (4 skipped).
-Both signed APK builds, source/checksum packaging and owner device testing
-remain distinct gates. Source and automated results do
+The final combined checks passed 47 suites plus 127 cache-format tests (4 skipped).
+Both APKs are built and signed; delivery/source identities are recorded in
+TEST31-DELIVERY.md. Owner device testing remains required. Source and automated results do
 not establish cross-play, headset comfort or performance acceptance. The
 current checklist is [TEST31-PLAYER-NOTES.md](TEST31-PLAYER-NOTES.md).
 

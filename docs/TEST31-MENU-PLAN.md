@@ -30,13 +30,12 @@ settings. See [TEST31-MENU-SETTINGS-AUDIT.md](TEST31-MENU-SETTINGS-AUDIT.md) for
 consumer coverage and [TEST31-UPSTREAM-DECISIONS.md](TEST31-UPSTREAM-DECISIONS.md)
 for the retained loader/platform boundaries.
 
-The final combined run passed all 46 suites plus 127 cache-format tests
+The final combined run passed all 47 suites plus 127 cache-format tests
 (4 skipped). This includes parser/assets, source map catalog, text-entry
 lifecycle, filters/sort/selection, configuration/profile persistence, pointer
-coordinates, graphics fallback and tag teardown. Final build/artifact
-checks remain before delivery; real navigation and cross-play acceptance need
-the owner's device sessions. No packaged or accepted Test31 pair is recorded by
-this document.
+coordinates, graphics fallback, tag teardown, solo pause and Quest local-player
+guards. Both APKs are built and signed; see TEST31-DELIVERY.md for provenance.
+Real navigation and cross-play acceptance still need the owner's device sessions.
 
 The alternatives below are historical planning context. The full scope above
 is now the owner's instruction and does not require another scope approval.

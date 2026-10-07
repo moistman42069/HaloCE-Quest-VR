@@ -4,7 +4,9 @@
 
 Read `docs/ACTIVE-WORK-CHECKPOINT.md` and `docs/TEST31-PROGRESS.md` first.
 The current branch is `test31-network-menus-vehicles`; the target is
-1.0.13/code39. **Latest owner override:** finish and validate the full OpenCE
+1.0.13/code39. The private pair is now built and signed from `585a5643`, with
+47 regression suites passing; see `docs/TEST31-DELIVERY.md`. Await owner device
+testing before the next interaction phase. **Latest owner override:** finish and validate the full OpenCE
 menus, turret fixes, Warthog window setting and upstream/network upgrade, then
 package the Quest and flat APKs for testing BEFORE the manual reload/hand
 contact and world/NPC interaction phase. Those later requirements remain queued

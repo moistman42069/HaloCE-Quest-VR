@@ -2,13 +2,13 @@
 
 This is the baseline requested before manual reload, hand contact and world/NPC
 interaction work. It is not a public release or a device-accepted build.
-Public v1.0.12 remains unchanged. Packaging and exact artifact provenance are
-pending the final build checks described below.
+Public v1.0.12 remains unchanged. Both APKs are built and signed for owner
+testing; the exact runtime source and artifact identities are recorded below.
 
 ## Installation and guide
 
 Install `HaloCE-Quest-test31.apk` on Quest or `HaloCE-Android-test31.apk` on
-Android over the existing project app. Both target **1.0.13 / code 39**, ARM64,
+Android over the existing project app. Both are **1.0.13 / code 39**, ARM64,
 Android API 28 or newer, using the original signing certificate. Do not
 uninstall or clear app data. Back up your saves and imported game sets first.
 
@@ -22,7 +22,9 @@ The same notes are included at the top of the launcher's bundled player guide.
    browser and filters, Server Setup, gametype editing, settings, controls and
    native text entry. Android direct touch and Quest pointing are connected to
    the widget system. Existing VR pages remain accessible from main, profile
-   settings and pause routes.
+   settings and pause routes. Solo VR Settings keeps the game paused; network
+   play stays live. Quest local split-screen entry explains the single-local-VR-
+   player limit and directs users to Internet/LAN co-op before stereo is lost.
 2. **OpenCE Build 145 / network 22:** reviewed upstream changes, explicit
    Custom Edition map namespaces and missing-map errors. Peers on v1.0.12's
    network 21 cannot join this version. Use compatible network-22 peers with
@@ -43,13 +45,30 @@ The same notes are included at the top of the launcher's bundled player guide.
 
 ## Validation and provenance
 
-- All **46** suites in `tools/run-quest-checks.py` pass.
+- All **47** suites in `tools/run-quest-checks.py` pass, including the final
+  solo-pause and local-player guards.
 - Cache-format tests: **127 passed, 4 skipped**.
 - Final settings/lifecycle checks were rerun after the persistence failure fix.
 - Production C sanitizer tests cover menu lifecycle, settings, input, gametype
   persistence, reverb, scoreboard, turret and networking logic. Software GLES
   tests cover default shader parity, optional graphics and allocation failures.
-- Signed-APK and source archive results will be recorded here before delivery.
+- Both editions compile and link in native release mode, then package with
+  the original certificate. Compaction preserves every non-signature payload;
+  signing verification and 16 KB APK alignment pass for each.
+- Delivery gates check version/package/API/ABI, exact guest payloads, embedded
+  menus and guides, networking parity, source privacy, ZIP integrity and hashes.
+
+Runtime source: `585a564373f6bb31370ebca6fa7648f62a9e3865` on
+`test31-network-menus-vehicles`. Later source-snapshot changes are delivery
+documentation only; the manifest records both source commits. Both editions
+were built serially from the same clean runtime commit. Installed clang 18
+does not match the upstream clang 22 PGO profiles, so these builds use no PGO;
+no Quest performance acceptance is inferred.
+
+| File | Bytes | SHA-256 |
+| --- | ---: | --- |
+| `HaloCE-Android-test31.apk` | 32,434,740 | `ce5e6b7ddaa46902de5c8d0cd41d226d3bb063fd722e607e4ebed779b8c0b46e` |
+| `HaloCE-Quest-test31.apk` | 34,523,779 | `d9dd031f16e0dc063c14067d7b730153c1a357078dbd91348908b0d6570f3f43` |
 
 Host/software-renderer tests do not prove headset appearance, Quest performance
 or a real multiplayer session. No device acceptance is claimed.

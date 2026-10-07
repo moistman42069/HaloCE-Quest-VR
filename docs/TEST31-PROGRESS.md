@@ -1,4 +1,4 @@
-# Test31 — private candidate in progress
+# Test31 — private candidate prepared for owner testing
 
 Target: 1.0.13 / Android code 39. Branch `test31-network-menus-vehicles`.
 Based on test30 `fe725aff`. No publication, upload, tag, installation or game
@@ -31,14 +31,14 @@ for acceptance, but are not a reason to skip the remaining pre-package work.
 | CE namespace / missing-map preflight | Implemented, compiled and regression checked | Device missing-map dialog and CE/PAL/.yelo regression checks |
 | Portable script/tag/resource bounds | Integrated selected upstream fixes; range helper tested with sanitizers | Broad tag validator and desktop CE loader explicitly deferred in upstream decisions |
 | LTE / VPN traversal | Bounded standard pings, current IP+port STUN classification and failure guidance implemented | Real LTE/VPN tests; random/unadvertised endpoints remain unsupported without relay design |
-| OpenCE menus | Full screen set imported; browser filters, native keyboard, VR routes, Android direct touch, settings consumers and scoreboard integrated | Final combined regression/build checks and device navigation/host/join acceptance |
+| OpenCE menus | Full screen set imported; browser filters, native keyboard, VR routes, Android direct touch, settings consumers and scoreboard integrated; regression/build checks pass | Device navigation/host/join acceptance |
 | First-person Warthog glass | Persisted setting; prior hidden default; relevant view only | Headset visibility checks for Warthog variants and other views |
 | Left-hand AR display | Per-part winding uses actual vertex influences; bounded CPU work | Headset visibility/orientation/counter updates, right-hand and other-weapon checks |
 | Seated VR trigger | Physical empty-hand suppression no longer blocks seated fire | Actual mounted/stationary turrets and primary/secondary input checks |
 | Turret reticle | Native muzzle/aim preview without writing aim-assist targeting state | Both VR and Xbox layouts; shot alignment and frame-time checks |
 | Manual reload / hand contact | All M1–M29 recorded; not implemented | Investigation/plan after baseline and approved menus, then sequential work |
 | World interaction / NPCs | All W1–W66 recorded; not implemented | Prior interaction dependencies, investigation/plan, sequential viability/implementation work |
-| Version / guides / packaging identity | 1.0.13/code39; candidate guide, credits and package gates updated | Complete final validation, then signed private pair/source packaging |
+| Version / guides / packaging identity | 1.0.13/code39; same-source signed pair; candidate guide, credits and package gates updated | Owner device testing; source/checksum delivery recorded in TEST31-DELIVERY.md |
 
 Before menu integration, all 32 suites in `tools/run-quest-checks.py` passed;
 cache-format pytest: **127 passed, 4 skipped**. VR and flat guest release
@@ -48,12 +48,17 @@ the clang 22 profiles. No performance acceptance is inferred from compilation.
 The subsequent STUN refresh review added an actual packet-parser test covering
 same-response classification, XOR/legacy replies, wrong source/transaction,
 truncation, multiple egress IPs and repeated route changes; focused test31 passes.
-Final combined source checks now pass: **46 suites** in
+Final combined source checks now pass: **47 suites** in
 `tools/run-quest-checks.py`, plus **127 passed / 4 skipped** in cache-format
 pytest. The final settings and lifecycle suites were rerun after the config
-failure fix. Signed pair/artifact validation is the remaining delivery step.
+failure fix. A final complete run includes the solo-pause and local-player
+guards. Both APKs are now built and signed from clean runtime source
+`585a564373f6bb31370ebca6fa7648f62a9e3865`; payload-preserving compaction,
+certificate verification and 16 KB alignment pass. See TEST31-DELIVERY.md.
 
-No test31 APKs have been packaged, signed, installed or published.
+The private pair is prepared for delivery with source and checksums. No test31
+APK has been installed, launched or published by this work; device acceptance
+remains pending. Receive owner feedback before the subsequent interaction phase.
 
 ## Network target and integration
 
@@ -119,6 +124,9 @@ preserved privately with the test31 work records.
   campaign/map selection and menu textures are connected to their consumers.
 - Main, profile Settings and pause paths expose generated VR screens without
   assuming a fixed stock pause layout. Network pages do not pause the game.
+  Final lifecycle review fixed solo pause ownership across VR screens. Quest
+  local-player entry points now explain and block unsupported split-screen
+  before it disables stereo; existing network players can still start a game.
 - Browser filters save six choices and preserve selected/pending host identity
   through population sorting and refresh. No packet format or version gate
   was weakened. Public directory ping remains explicitly unavailable.

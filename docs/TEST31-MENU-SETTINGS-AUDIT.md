@@ -86,8 +86,8 @@ live music/effects/master changes, mute/unmute and background/resume. Quest:
 headset audio and frame timing, settings pointer/input navigation, HUD/text
 switching, refresh/resolution changes, geometry-safe default and lack of
 OpenXR context resets. Flat: controller and touch navigation, V-sync behavior,
-and external keyboard/mouse where available. No APK has been packaged for
-this audit.
+and external keyboard/mouse where available. The signed private pair is now
+recorded in TEST31-DELIVERY.md; this audit does not claim device acceptance.
 
 ## Integrated renderer provenance and validation
 
