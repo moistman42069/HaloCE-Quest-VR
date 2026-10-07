@@ -15,8 +15,10 @@ call multiplayer fixed until the owner retests public joining.
 The owner-confirmed references remain Test31b Quest VR (accepted VR settings)
 and Test31c flat Android (accepted touch/gameplay). Test33 preserves the flat
 input implementation. Upstream networking and transport sources are unchanged
-from Test31b; the defect found here was browser-client lifecycle, not a
-network-version or wire-protocol change. Public GitHub latest remains v1.0.12.
+from Test31b. Its browser handler already reused any existing client without
+checking state, so this was a latent host-local-then-public-browser lifecycle
+case rather than a newly introduced wire/protocol regression. Public GitHub
+latest remains v1.0.12.
 
 ## Latest owner-accepted private result: Test31c Android; Test31b VR
 

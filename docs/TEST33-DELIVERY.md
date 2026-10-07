@@ -34,6 +34,10 @@ are under `D:\HaloQuest\builds\test33-20261007-v1.0.14-final`.
 - Both APKs contain the Test33 recovery log marker. Existing Test31c Android
   controls/gameplay implementation is retained; this pass changes the shared
   browser-client lifecycle only.
+- The Test31b baseline already reused any existing browser client without
+  checking its state. The supplied log's local-host-then-public sequence
+  exercises that latent case; source comparison found no intervening OpenCE
+  protocol or networking-module change to revert.
 - The first compile exposed obsolete declarations in the UI adapter that
   conflicted with the upstream header. The declarations were removed, and both
   clean flavor builds then passed. No files under `source/networking` or

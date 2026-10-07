@@ -11,7 +11,9 @@ both APKs passed native build, signing, payload, network-parity, and alignment
 checks. This is not headset acceptance. Ask the owner to test the local-host,
 return-to-menu, public-browser, join sequence and report fresh logs if it still
 fails. Do not publish or push. Preserve accepted Test31b VR settings and
-Test31c Android touch/gameplay. Network protocol and upstream networking source
+Test31c Android touch/gameplay. Test31b already had the same unchecked global
+client reuse, so the evidence shows a latent flow-specific bug, not a newly
+changed network protocol. Network protocol and upstream networking source
 remain unchanged.
 
 Earlier Test31/Test32 task notes below are historical; Test32 vehicle features

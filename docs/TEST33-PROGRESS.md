@@ -19,9 +19,15 @@ connections are real; the failure occurs after them, at native game discovery.
 I compared the Test31b runtime commit (`3399023a`) with Test32. The P2P
 signalling, tunnel, XNet mapping, game protocol, and browser join code did not
 change in that interval; Test31b and Test32 both use Build 145 / network 22.
-The log's local-host-then-public-browser sequence exposed a missing session
-reset in the shared browser entry path. This is a lifecycle fix, not a change
-to wire compatibility or protocol version. OpenCE's official
+The browser-entry expression also already existed at Test31b: it reused any
+existing global client without checking whether that client was still
+searching. The source comparison therefore does **not** show a new network or
+browser regression introduced after Test31b. Its previously successful joins
+are consistent with entering the browser with a fresh/searching client. The
+provided log exercises a different sequence—join a local host first, then
+select public servers—which exposes this latent lifecycle edge case. Test33
+adds the missing state check; it does not change wire compatibility or protocol
+version. OpenCE's official
 [Build 145 release](https://github.com/OpenCommunityEdition/OpenCE/releases/tag/build-145)
 was the latest release checked for this pass.
 
