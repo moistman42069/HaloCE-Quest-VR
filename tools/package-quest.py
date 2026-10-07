@@ -11,6 +11,7 @@ import json
 from pathlib import Path
 import re
 import shutil
+import struct
 import subprocess
 import zipfile
 
@@ -47,10 +48,70 @@ def printable_strings(data):
     return {m.group() for m in re.finditer(rb"[\x20-\x7e]{6,}", data)}
 
 
+def runtime_elf_strings(data):
+    """Strings in file-backed SHF_ALLOC sections, including dynamic imports.
+
+    Local symbols/debug information are not runtime networking behavior: the
+    approved VR local-player guard can remove functions from .strtab. Do not
+    exclude names or patterns; .dynstr and every other allocated section stay
+    checked. Bounds checks fail closed if section evidence is unavailable.
+    """
+    def reject(message):
+        raise ValueError("invalid ELF: " + message)
+
+    if len(data) < 16 or data[:4] != b"\x7fELF":
+        reject("missing identification")
+    if data[4] not in (1, 2) or data[5] not in (1, 2) or data[6] != 1:
+        reject("unsupported class, byte order or version")
+    endian = "<" if data[5] == 1 else ">"
+    header_format = endian + ("HHIIIIIHHHHHH" if data[4] == 1 else "HHIQQQIHHHHHH")
+    section_format = endian + ("IIIIIIIIII" if data[4] == 1 else "IIQQQQIIQQ")
+    header_size = 16 + struct.calcsize(header_format)
+    section_size = struct.calcsize(section_format)
+    if len(data) < header_size:
+        reject("truncated header")
+    header = struct.unpack_from(header_format, data, 16)
+    offset, entry_size, count, names_index = header[5], header[10], header[11], header[12]
+    if header[2] != 1 or header[7] != header_size:
+        reject("invalid header size or version")
+    if entry_size != section_size or offset < header_size or offset > len(data) - section_size:
+        reject("missing or truncated section table")
+    first = struct.unpack_from(section_format, data, offset)
+    if first[1] != 0 or first[2] != 0:
+        reject("invalid null section")
+    if count == 0:  # ELF extended section count is sh_size in section zero.
+        count = first[5]
+    if count < 1 or count > (len(data) - offset) // entry_size:
+        reject("section table exceeds file")
+    if names_index == 0xFFFF:  # SHN_XINDEX: sh_link in section zero.
+        names_index = first[6]
+    if names_index >= count:
+        reject("section-name table index out of range")
+    sections = [struct.unpack_from(section_format, data, offset + index * entry_size)
+                for index in range(count)]
+    result, runtime_sections = set(), 0
+    for index, section in enumerate(sections):
+        kind, flags, start, size = section[1], section[2], section[4], section[5]
+        if kind in (0, 8):  # SHT_NULL / SHT_NOBITS have no file-backed data.
+            continue
+        if start > len(data) or size > len(data) - start:
+            reject("section " + str(index) + " exceeds file")
+        if flags & 2 and size:  # SHF_ALLOC; preserve .dynstr and import names.
+            result.update(printable_strings(data[start:start + size]))
+            runtime_sections += 1
+    if names_index and sections[names_index][1] != 3:  # SHT_STRTAB
+        reject("section-name table is not a string table")
+    if not runtime_sections:
+        reject("no file-backed runtime sections")
+    return result
+
+
 def networking_parity(vr_path, flat_path):
-    """Equal multiplayer code in both APKs: the same entries (but the VR-only
-    OpenXR loader), the same networking strings in the guest and host, and
-    the same app classes. Platform UI (touch, gamepad, VR) may differ."""
+    """Check APK entries, allocated networking text/imports and app classes.
+
+    Source tests separately guard shared multiplayer code. The OpenXR loader
+    is VR-only; platform UI and nonruntime symbols/debug metadata may differ.
+    """
     with zipfile.ZipFile(vr_path) as vr, zipfile.ZipFile(flat_path) as flat:
         vr_names = {n for n in vr.namelist() if not n.startswith("META-INF/")}
         flat_names = {n for n in flat.namelist() if not n.startswith("META-INF/")}
@@ -58,8 +119,11 @@ def networking_parity(vr_path, flat_path):
             raise SystemExit("APK entries differ beyond the OpenXR loader: VR-only "
                              + repr(sorted(vr_names - flat_names)) + ", flat-only " + repr(sorted(flat_names - vr_names)))
         for member in ["assets/halo_guest.elf", "lib/arm64-v8a/libmain.so"]:
-            a = {x for x in printable_strings(vr.read(member)) if NETWORK_STRING.search(x)}
-            b = {x for x in printable_strings(flat.read(member)) if NETWORK_STRING.search(x)}
+            try:
+                a = {x for x in runtime_elf_strings(vr.read(member)) if NETWORK_STRING.search(x)}
+                b = {x for x in runtime_elf_strings(flat.read(member)) if NETWORK_STRING.search(x)}
+            except ValueError as error:
+                raise SystemExit("Cannot verify networking parity in " + member + ": " + str(error)) from error
             if a != b:
                 raise SystemExit("Networking differs between the Quest and Android " + member + ": VR-only "
                                  + repr(sorted(a - b)[:8]) + ", flat-only " + repr(sorted(b - a)[:8]))
