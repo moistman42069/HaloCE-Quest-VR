@@ -33,6 +33,11 @@ variants. Provide your own legally obtained game files; none are included.
   the same 90 cm reach clamp as the rendered weapon, and the pistol/sniper
   scope offsets can be adjusted through ±30 cm. This applies to every zoomed
   weapon's scope shape, including the round and rocket-style overlays.
+- Scope diagnostics now log changes to the saved Scope setting, off-hand
+  trigger actuation, game zoom state, scope-render admission and VR pose-gate
+  reasons. For right-handed Quest play, hold the left index trigger to zoom.
+  The supplied Test30 log never entered game zoom and submitted no scope layer,
+  so it did not establish an alignment failure.
 
 ## Multiplayer and compatibility
 
@@ -60,7 +65,11 @@ maps, NAT, firewall and network conditions still matter. See
    compare matching and intentionally different CE map-header checksums.
 4. Load campaign and multiplayer maps, transition a co-op mission, and report
    any crash, desync, missing map, or unexpected rejection.
-5. Export logs from every peer and include headset/phone model, OS version,
+5. With the sniper rifle, hold the off-hand index trigger (left trigger for
+   right-handed play). Confirm game zoom and a `scope` OpenXR layer; if either
+   is missing, retain the `scope input`, `game zoom` and `scope render path`
+   log lines.
+6. Export logs from every peer and include headset/phone model, OS version,
    host/join role, map, game-data revision, network type and exact steps.
 
 Send reports in the [Halo CE Decomp Discord](https://discord.gg/S9uSCKxKx) or

@@ -45,7 +45,7 @@ These mappings follow the shipped code. Start with Controls = VR and a standard 
 | Left stick | Move/strafe relative to Head, Left Hand or Right Hand setting (right stick when left-handed, below) |
 | Right stick | Smooth/snap turn; vertical input can satisfy native look/tutorial prompts (left stick when left-handed) |
 | Weapon-hand trigger | Fire the held gun |
-| Other-hand trigger | Zoom; Scope places the zoomed view at the weapon |
+| Other-hand index trigger | Hold to zoom (left trigger for right-handed play). With Scope on and Aim set to Hand, a zoom-capable weapon shows its zoomed view at the weapon |
 | Right A | Jump / confirm |
 | Right B | Reload/use in gameplay (hold for native interaction/pickup prompts); pointer-menu Back in menus |
 | Left Y | Switch weapons |

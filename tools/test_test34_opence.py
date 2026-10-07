@@ -46,6 +46,28 @@ assert "_vr_setting_scope_centimetres" in menu_vr
 assert config_vr.count("(-0.30..0.30)") == 6
 assert "up to ±30 cm" in read("docs/CONTROLS-AND-OPTIONS.md")
 
+# The field report did not show an engine zoom state or scope compositor
+# layer. Keep the diagnostic path transition-only and make its gates legible.
+reload_settings = function(frame_vr, "vr_reload_settings")
+layout_controls = function(frame_vr, "layout_controls")
+set_zoom_level = function(frame_vr, "vr_set_zoom_level")
+scope_view = function(frame_vr, "vr_scope_view")
+render_vr = read("port/linux/game/vr_render.c")
+scope_window = function(render_vr, "scope_window")
+scope_path_log = function(render_vr, "scope_path_log")
+assert "previous_scope_setting != enabled" in reload_settings
+assert "previous_zoom_input_state" in layout_controls and "vr.frame.trigger[off_hand]" in layout_controls
+assert "routed to gamepad zoom" in layout_controls
+assert "vr.zoom_level != zoom_level" in set_zoom_level and "game zoom state" in set_zoom_level
+assert "scope view gate" in scope_view and "weapon-hand aim pose is not tracked" in scope_view
+assert "scope_path_log(0, zoom_level, 0)" in scope_window
+assert "scope_path_log(5, zoom_level, shape)" in scope_window
+assert "state == previous_state" in scope_path_log
+assert "hold the off-hand index trigger" in scope_path_log
+package_gate = read("tools/package-quest.py")
+assert 'b"scope render path %s"' in package_gate
+assert 'b"left trigger for right-handed play"' in package_gate
+
 schema = read("port/linux/game/tag_schema.h")
 validator = read("port/linux/game/tag_validate.c")
 models = read("port/linux/game/tag_schema_models.c")

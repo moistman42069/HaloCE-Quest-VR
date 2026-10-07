@@ -854,7 +854,18 @@ void vr_reload_settings(void)
 		vr.gun_held = vr.hand_state == HAND_HELD;
 	}
 	vr.haptics = (float)config_real("vr.haptics");
-	vr.scope_enabled = config_boolean("vr.scope");
+	{
+		static int previous_scope_setting = -1;
+		int enabled = config_boolean("vr.scope");
+
+		vr.scope_enabled = enabled;
+		if (previous_scope_setting != enabled)
+		{
+			platform_log("vr: scope display %s; zoom with the off-hand index trigger (right-handed Quest: left trigger); requires hand aim",
+				enabled ? "on" : "off");
+			previous_scope_setting = enabled;
+		}
+	}
 	vr.scope_size = (float)config_real("vr.scope_size");
 	{
 		static const char *const kinds[] = { "pistol", "sniper" };
@@ -1436,6 +1447,7 @@ static unsigned int touch_buttons(unsigned int right, unsigned int left, double 
 static void layout_controls(void)
 {
 	static const float zoom_on = 0.6f, zoom_off = 0.45f;
+	static int previous_zoom_input_state = -1;
 	/* "right" is the major hand's buttons, "left" the other's: mirrored
 	for left-handed play (vr.controls_mirrored) */
 	int major = vr.controls_mirrored ? 0 : 1;
@@ -1527,10 +1539,26 @@ static void layout_controls(void)
 		vr.x_hold_switched = 1;
 	}
 	/* the off hand's trigger zooms */
-	if (vr.frame.trigger[1 - vr.weapon_hand] > zoom_on)
-		vr.zoom_down = 1;
-	else if (vr.frame.trigger[1 - vr.weapon_hand] < zoom_off)
-		vr.zoom_down = 0;
+	/* Record only changes in its useful range, including a partial squeeze
+	that never reaches the activation threshold. */
+	{
+		int off_hand = 1 - vr.weapon_hand;
+		float trigger = vr.frame.trigger[off_hand];
+		int state;
+
+		if (trigger > zoom_on)
+			vr.zoom_down = 1;
+		else if (trigger < zoom_off)
+			vr.zoom_down = 0;
+		state = vr.zoom_down ? 2 : trigger >= 0.20f ? 1 : 0;
+		if (state != previous_zoom_input_state)
+		{
+			platform_log("vr: zoom input %s from %s-hand index trigger (%.2f; press >%.2f, release <%.2f); routed to gamepad zoom",
+				state == 2 ? "active" : state == 1 ? "partial" : "released",
+				off_hand ? "right" : "left", trigger, zoom_on, zoom_off);
+			previous_zoom_input_state = state;
+		}
+	}
 	if (vr.zoom_down)
 		buttons |= HALO_XR_BUTTON_RIGHT_THUMB;
 	/* View (Touch: the left's upper face button): a press goes back (as the
@@ -2100,6 +2128,8 @@ static void steady_aim(void)
 
 void vr_set_zoom_level(int zoom_level)
 {
+	if (vr.zoom_level != zoom_level)
+		platform_log("vr: game zoom state %s (level %d)", zoom_level < 0 ? "off" : "on", zoom_level);
 	vr.zoom_level = zoom_level;
 }
 
@@ -4051,14 +4081,39 @@ static const char scope_fragment_source[] =
 int vr_scope_view(const float position[3], float out_position[3], float out_forward[3], float out_up[3],
 	int *out_pixels)
 {
+	static int previous_gate = -1;
+	static int previous_camera = -1;
 	int pixels = (int)vr.info.width[HALO_XR_SWAPCHAIN_SCOPE];
+	int gate = !vr.scope_enabled ? 0 : !vr.stereo ? 1 : !vr_hand_aiming() ? 2 :
+		!(vr.frame.hand_valid[vr.weapon_hand] & 2) ? 3 : 4;
 
-	if (!vr.scope_enabled || !vr.stereo || !vr_hand_aiming() || !(vr.frame.hand_valid[vr.weapon_hand] & 2))
+	if (gate != previous_gate)
+	{
+		static const char *const reasons[] =
+		{
+			"disabled in VR settings", "waiting for stereo frame", "requires hand aim",
+			"weapon-hand aim pose is not tracked", "camera pose check"
+		};
+		platform_log("vr: scope view gate: %s", reasons[gate]);
+		previous_gate = gate;
+	}
+	if (gate < 4)
+	{
+		previous_camera = -1;
 		return 0;
+	}
 	/* the gun's aim, rolled with it: the image keeps the world's way up on
 	the layer, which rolls with the gun too */
 	if (!hand_view(&vr.shot_pose, NULL, position, out_position, out_forward, out_up))
+	{
+		if (previous_camera != 0)
+			platform_log("vr: scope view gate: shot-pose camera could not be built");
+		previous_camera = 0;
 		return 0;
+	}
+	if (previous_camera != 1)
+		platform_log("vr: scope view gate: ready");
+	previous_camera = 1;
 	*out_pixels = pixels < vr.eye_size ? pixels : vr.eye_size;
 	return 1;
 }

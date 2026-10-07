@@ -21,6 +21,15 @@ selection, representative maps, and network-23 joins.
 This is not device acceptance. Keep the public v1.0.12 untouched; do not push,
 tag, publish, install, or launch the game.
 
+**Scope follow-up (2026-10-08):** the reporter's 1.0.12/Test30 log shows the
+sniper rifle and hand aim, but no game zoom state and no submitted scope layer.
+Test34 now logs the off-hand trigger state, native game zoom transitions,
+effective Scope setting, render admission and VR pose rejection reasons. For
+right-handed Quest, test by holding the left index trigger; verify game zoom
+and a `scope` compositor layer before adjusting offsets. The ±30 cm alignment
+implementation remains unchanged unless an actual zoomed layer is shown to
+drift.
+
 Earlier Test31/Test32 task notes below are historical; Test32 vehicle features
 are already incorporated in the candidate and documented in
 [TEST32-PROGRESS.md](TEST32-PROGRESS.md). The queued later interaction backlog

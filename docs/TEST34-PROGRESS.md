@@ -43,6 +43,16 @@ v1.0.12 remains available and unchanged at OpenCE network 21.
    same 90 cm arm clamp as the rendered hand/weapon view. All scope shapes and
    both hands are covered; pistol/sniper position adjustments now range to
    ±30 cm, including config-loaded values.
+7. **Scope report diagnostics:** the supplied 2026-10-07 log identifies the
+   older Test30 / 1.0.12 build, not Test34. It shows a held sniper rifle and
+   hand aim, but every timing sample reports zero scope-render time and no
+   OpenXR layer transition contains `scope`. It records neither an engine zoom
+   state nor the effective `vr.scope` value, so it cannot distinguish an
+   inactive off-hand trigger from a saved Scope-off setting or a render gate.
+   Test34 now logs scope-setting changes, meaningful off-hand trigger states,
+   engine zoom transitions, VR pose-gate reasons and scope-window admission,
+   only when those states change. Existing ±30 cm alignment behavior remains
+   unchanged until a report demonstrates an actual zoomed layer drifting.
 
 Detailed source mapping and limitations: [Test34 upstream integration](TEST34-UPSTREAM-INTEGRATION.md).
 
@@ -51,6 +61,8 @@ Detailed source mapping and limitations: [Test34 upstream integration](TEST34-UP
 - Focused Build147 validator/network/camera/capacity tests pass.
 - Scope regression covers all three scope shapes, left/right hand, calibrated
   shot direction, physical center stability and extended-arm clamping.
+- Scope input/gate diagnostics and the explicit right-handed left-trigger
+  binding are included in the candidate and player guide.
 - Full Quest regression suite passes, including server browser pointer,
   Android touch, VR lifecycle and menu startup.
 - CE cache-format suite: 127 passed, 4 skipped because no local CE map files

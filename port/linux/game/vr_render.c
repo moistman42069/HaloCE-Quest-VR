@@ -775,6 +775,30 @@ static int scope_shape(
 		name && strstr(name, "rocket") ? VR_SCOPE_ROCKET : VR_SCOPE_ROUND;
 }
 
+/* This is reached from the render-window path every frame. Log only a gate
+transition so reports distinguish missing zoom/input from scope rendering
+without adding per-frame log traffic. */
+static void scope_path_log(int state, int zoom_level, int shape)
+{
+	static int previous_state = -1;
+	static int previous_shape = -1;
+	static const char *const names[] =
+	{
+		"waiting: game zoom is off (hold the off-hand index trigger)",
+		"waiting: no current weapon", "rejected: invalid screen scale",
+		"rejected: VR scope view gate (see vr: scope view gate)",
+		"rejected: scope viewport is too small", "render path ready"
+	};
+	if (state == previous_state && (state != 5 || shape == previous_shape))
+		return;
+	if (state == 5)
+		platform_log("vr: scope render path %s (zoom level %d, shape %d)", names[state], zoom_level, shape);
+	else
+		platform_log("vr: scope render path %s (zoom level %d)", names[state], zoom_level);
+	previous_state = state;
+	previous_shape = shape;
+}
+
 /* the scope's window, while the hand aims a zoomed weapon: the player's
 window seen along the gun at the game's zoomed field, in a square of the
 target as large as the scope's image. Its sight shows the middle of that
@@ -790,20 +814,38 @@ static boolean scope_window(
 	struct collision_result collision;
 	float scale[2];
 	real tangent, half, aspect;
-	int pixels, shape;
+	int pixels, shape, zoom_level;
 	short width, height;
 
-	if (player_control_get_zoom_level(player->local_player_index) == NONE ||
-		!(shape = scope_shape(player->local_player_index)) ||
-		!vr_screen_scale(scale) || scale[0] <= 0.0f || scale[1] <= 0.0f ||
-		!vr_scope_view(vr_render.game_camera_position.n, position.n, forward.n, up.n, &pixels))
+	zoom_level = player_control_get_zoom_level(player->local_player_index);
+	if (zoom_level == NONE)
 	{
+		scope_path_log(0, zoom_level, 0);
+		return FALSE;
+	}
+	shape = scope_shape(player->local_player_index);
+	if (!shape)
+	{
+		scope_path_log(1, zoom_level, 0);
+		return FALSE;
+	}
+	if (!vr_screen_scale(scale) || scale[0] <= 0.0f || scale[1] <= 0.0f)
+	{
+		scope_path_log(2, zoom_level, shape);
+		return FALSE;
+	}
+	if (!vr_scope_view(vr_render.game_camera_position.n, position.n, forward.n, up.n, &pixels))
+	{
+		scope_path_log(3, zoom_level, shape);
 		return FALSE;
 	}
 	width = (short)MIN(640.0f, (real)pixels / scale[0] + 0.5f);
 	height = (short)MIN(480.0f, (real)pixels / scale[1] + 0.5f);
 	if (width < 16 || height < 16)
+	{
+		scope_path_log(4, zoom_level, shape);
 		return FALSE;
+	}
 	/* out of walls, as the hand's shots are */
 	vector_from_points3d(&vr_render.game_camera_position, &position, &vector);
 	if (collision_test_vector(FLAG(_collision_test_structure_bit), &vr_render.game_camera_position, &vector,
@@ -834,6 +876,7 @@ static boolean scope_window(
 	vr_render.scope_viewport = camera->viewport_bounds;
 	vr_render.scope_shape = shape;
 	window->render_camera = *camera;
+	scope_path_log(5, zoom_level, shape);
 	return TRUE;
 }
 

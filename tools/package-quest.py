@@ -255,6 +255,14 @@ def main():
                 for marker in [b"OpenCE Build 147 / network 23", b"test34 candidate 1.0.15 code44"]:
                     if marker not in guest:
                         raise SystemExit("Test34 OpenCE or candidate identity marker missing: " + repr(marker))
+                if vr:
+                    for marker in [b"scope display %s; zoom with the off-hand index trigger",
+                                   b"zoom input %s from %s-hand index trigger", b"game zoom state %s",
+                                   b"scope view gate: %s", b"scope render path %s"]:
+                        if marker not in guest:
+                            raise SystemExit("Test34 scope diagnosis marker missing: " + repr(marker))
+                    if b"left trigger for right-handed play" not in archive.read("assets/guide/controls.txt"):
+                        raise SystemExit("Test34 explicit scope zoom input missing from bundled control guide")
             if candidate_at_least(args.label, 28):
                 # a release build (HALO_RELEASE, as OpenCE's): checks logged, play goes on
                 if b"(release build)" not in guest:
