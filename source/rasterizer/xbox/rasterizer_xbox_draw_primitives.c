@@ -981,6 +981,13 @@ void rasterizer_draw_dynamic_vertices(
 {
 	boolean success = TRUE;
 
+#ifdef HALO_VR
+	{
+		void rasterizer_vr_part_winding(struct vertex_buffer const *, struct triangle_buffer const *);
+		rasterizer_vr_part_winding(NULL, NULL);
+	}
+#endif
+
 	match_assert(
 		RASTERIZER_XBOX_DRAW_PRIMITIVES_FILE,
 		651,
@@ -1119,6 +1126,13 @@ void rasterizer_draw_dynamic_triangles_dynamic_vertices(
 	long dynamic_vertex_buffer_index)
 {
 	boolean success = TRUE;
+
+#ifdef HALO_VR
+	{
+		void rasterizer_vr_part_winding(struct vertex_buffer const *, struct triangle_buffer const *);
+		rasterizer_vr_part_winding(NULL, NULL);
+	}
+#endif
 
 	match_assert(
 		RASTERIZER_XBOX_DRAW_PRIMITIVES_FILE,
@@ -1266,6 +1280,13 @@ void rasterizer_draw_dynamic_triangles_static_vertices(
 {
 	boolean success = TRUE;
 
+#ifdef HALO_VR
+	{
+		void rasterizer_vr_part_winding(struct vertex_buffer const *, struct triangle_buffer const *);
+		rasterizer_vr_part_winding(NULL, NULL);
+	}
+#endif
+
 	match_assert(
 		RASTERIZER_XBOX_DRAW_PRIMITIVES_FILE,
 		823,
@@ -1401,6 +1422,13 @@ void rasterizer_draw_dynamic_triangles_static_vertices2(
 	struct vertex_buffer const *vertex_buffer1)
 {
 	boolean success = TRUE;
+
+#ifdef HALO_VR
+	{
+		void rasterizer_vr_part_winding(struct vertex_buffer const *, struct triangle_buffer const *);
+		rasterizer_vr_part_winding(NULL, NULL);
+	}
+#endif
 
 	match_assert(
 		RASTERIZER_XBOX_DRAW_PRIMITIVES_FILE,
@@ -1560,6 +1588,13 @@ void rasterizer_draw_static_triangles_dynamic_vertices(
 {
 	boolean success = TRUE;
 	long local_triangle_vertex_indices_offset = 0;
+
+#ifdef HALO_VR
+	{
+		void rasterizer_vr_part_winding(struct vertex_buffer const *, struct triangle_buffer const *);
+		rasterizer_vr_part_winding(NULL, NULL);
+	}
+#endif
 
 	match_assert(
 		RASTERIZER_XBOX_DRAW_PRIMITIVES_FILE,
@@ -1726,6 +1761,13 @@ void rasterizer_draw_static_triangles_static_vertices(
 {
 	boolean success = TRUE;
 	long local_triangle_vertex_indices_offset = 0;
+
+#ifdef HALO_VR
+	{
+		void rasterizer_vr_part_winding(struct vertex_buffer const *, struct triangle_buffer const *);
+		rasterizer_vr_part_winding(vertex_buffer, triangle_buffer);
+	}
+#endif
 
 	match_assert(
 		RASTERIZER_XBOX_DRAW_PRIMITIVES_FILE,

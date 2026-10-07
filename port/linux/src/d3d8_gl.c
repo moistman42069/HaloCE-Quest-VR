@@ -4121,6 +4121,11 @@ void halo_vr_mirror_winding(int mirrored)
 	vr_skinning_mirrored = 1;
 }
 
+int halo_vr_model_mirrored(void)
+{
+	return vr_mirror_winding;
+}
+
 void halo_vr_skinning_mirrored(int mirrored)
 {
 	vr_skinning_mirrored = mirrored != 0;

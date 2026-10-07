@@ -399,6 +399,7 @@ symbols in this file:
 #include "rasterizer/common/rasterizer_common.h"
 #include "cseries/errors.h"
 #include "rasterizer/rasterizer.h"
+#include "rasterizer/rasterizer_geometry.h"
 #include "rasterizer/rasterizer_cinematics.h"
 #include "rasterizer/rasterizer_console_vars.h"
 #include "rasterizer/rasterizer_lights.h"
@@ -1230,6 +1231,10 @@ void rasterizer_set_model_lighting(
 #ifdef HALO_VR
 /* port/linux/src/d3d8_gl.c (port/linux/include/halo_vr.h) */
 void halo_vr_skinning_mirrored(int mirrored);
+int halo_vr_model_mirrored(void);
+static signed char vr_node_winding[RASTERIZER_MAXIMUM_NODES_PER_MODEL];
+static short vr_node_winding_count;
+static boolean vr_root_mirrored;
 #endif
 
 void rasterizer_set_model_skinning(
@@ -1279,6 +1284,18 @@ void rasterizer_set_model_skinning(
 			m->forward.k * (m->left.i * m->up.j - m->left.j * m->up.i);
 
 		halo_vr_skinning_mirrored(determinant < 0.0f);
+		vr_root_mirrored = determinant < 0.0f;
+		vr_node_winding_count = halo_vr_model_mirrored() ?
+			MIN(skinning->node_matrix_count, RASTERIZER_MAXIMUM_NODES_PER_MODEL) : 0;
+		for (node_index = 0; node_index < vr_node_winding_count; node_index++)
+		{
+			real_matrix4x3 const *n = &skinning->node_matrices[node_index];
+			real d = n->forward.i * (n->left.j*n->up.k - n->left.k*n->up.j) -
+				n->forward.j * (n->left.i*n->up.k - n->left.k*n->up.i) +
+				n->forward.k * (n->left.i*n->up.j - n->left.j*n->up.i);
+			vr_node_winding[node_index] = !isfinite(d) || fabs(d*n->scale) < 0.000001f ? 0 :
+				(d*n->scale < 0.0f ? -1 : 1);
+		}
 	}
 #endif
 	D3DDevice_SetVertexShaderConstant(
@@ -1290,6 +1307,47 @@ void rasterizer_set_model_skinning(
 			skinning->node_matrix_count * sizeof(vsh_constants__nodematrices[0]);
 	return;
 }
+
+#ifdef HALO_VR
+/* Test31: display geometry uses its display node, not palette slot zero.
+The AR panel was unmirrored but still culled as if it used the mirrored root.
+Inspect every used influence in a small rigid display part, not just the first
+vertex. No cull disabling and no extra draw. Large/mixed parts keep the existing
+choice; this is bounded to 512 vertices and only a mirrored first-person model. */
+void rasterizer_vr_part_winding(struct vertex_buffer const *vertices, struct triangle_buffer const *triangles)
+{
+	void const *data, *indices;
+	long i;
+	int sign = 0;
+	if (!halo_vr_model_mirrored() || vr_node_winding_count <= 0) return;
+	/* Reset even when this part is large, dynamic or not a display. */
+	halo_vr_skinning_mirrored(vr_root_mirrored);
+	if (!vertices || !triangles ||
+		vertices->type != _rasterizer_vertex_type_model_compressed ||
+		vertices->count <= 0 || vertices->count > 512)
+		return;
+	if (!rasterizer_model_buffer_data(vertices, triangles, &data, &indices)) return;
+	for (i = 0; i < vertices->count; i++)
+	{
+		byte const *v = (byte const *)data + i * 32;
+		short weight;
+		int influence;
+		memcpy(&weight, v + 30, sizeof(weight));
+		if (weight < 0) return;
+		for (influence = 0; influence < 2; influence++)
+		{
+			unsigned int node = v[28 + influence];
+			int current;
+			if ((influence == 0 && weight == 0) || (influence == 1 && weight == 32767)) continue;
+			if (node % 3 || node / 3 >= (unsigned int)vr_node_winding_count) return;
+			current = vr_node_winding[node / 3];
+			if (!current || (sign && current != sign)) return;
+			sign = current;
+		}
+	}
+	if (sign) halo_vr_skinning_mirrored(sign < 0);
+}
+#endif
 
 boolean rasterizer_set_texture_non_blocking(
 	short stage,

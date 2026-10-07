@@ -69,6 +69,40 @@ int main(void){
 }
 ''')
 
+raster=read('source/rasterizer/xbox/rasterizer_xbox.c')
+part=fn(raster,'rasterizer_vr_part_winding')
+run('display_winding', r'''
+#include <assert.h>
+#include <string.h>
+#include <stdio.h>
+typedef unsigned char byte; typedef int boolean;
+#define _rasterizer_vertex_type_model_compressed 5
+struct vertex_buffer {int type;long count;}; struct triangle_buffer {int unused;};
+static byte vertices[513*32];
+static signed char vr_node_winding[44]; static short vr_node_winding_count=8;
+static boolean vr_root_mirrored=1;static int mirrored=1,selected=-1,reads;
+static int halo_vr_model_mirrored(void){return mirrored;}
+static void halo_vr_skinning_mirrored(int n){selected=n;}
+static int rasterizer_model_buffer_data(const struct vertex_buffer *v,const struct triangle_buffer *t,const void **data,const void **indices){reads++;*data=vertices;*indices=vertices;return 1;}
+''' + part + r'''
+static void v(int i,int node,int second,int weight){vertices[i*32+28]=node*3;vertices[i*32+29]=second*3;short w=weight;memcpy(vertices+i*32+30,&w,2);}
+int main(void){
+ struct vertex_buffer buffer={5,4};struct triangle_buffer triangles={0};
+ for(int i=0;i<8;i++)vr_node_winding[i]=-1;vr_node_winding[7]=1;
+ for(int i=0;i<4;i++)v(i,7,0,32767);
+ rasterizer_vr_part_winding(&buffer,&triangles);assert(selected==0); /* display node 7, root mirrored */
+ for(int i=0;i<4;i++)v(i,0,7,32767);
+ rasterizer_vr_part_winding(&buffer,&triangles);assert(selected==1); /* body remains mirrored */
+ for(int i=0;i<4;i++)v(i,0,7,0);
+ rasterizer_vr_part_winding(&buffer,&triangles);assert(selected==0); /* zero influence ignored */
+ v(3,0,7,10000);rasterizer_vr_part_winding(&buffer,&triangles);assert(selected==1); /* mixed: existing fallback */
+ v(3,43,0,32767);rasterizer_vr_part_winding(&buffer,&triangles);assert(selected==1); /* bounds */
+ selected=0;buffer.count=513;int before=reads;rasterizer_vr_part_winding(&buffer,&triangles);assert(selected==1 && reads==before);
+ mirrored=0;selected=0;buffer.count=4;rasterizer_vr_part_winding(&buffer,&triangles);assert(selected==0 && reads==before);
+ puts("PASS: actual part-winding helper: unmirrored display on mirrored root; both influences, bounds, per-part reset and right-hand no-op");
+}
+''')
+
 weapons=read('source/items/weapons.c')
 aim=read('source/game/aim_assist.c')
 preview=fn(weapons,'weapon_vr_preview_primary_ray')
