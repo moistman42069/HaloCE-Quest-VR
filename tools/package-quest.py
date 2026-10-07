@@ -161,7 +161,7 @@ def main():
                 if b"OpenCE build 144 (network 21)" not in dex:
                     raise SystemExit("Test29 upstream netcode text missing")
                 if vr:
-                    for marker in [b"test29 candidate 1.0.11", b"vr: HUD %s (VR settings)", b"WRIST ALONG", b"RESET WRIST",
+                    for marker in [b"OpenCE build 144 netcode, network 21", b"vr: HUD %s (VR settings)", b"WRIST ALONG", b"RESET WRIST",
                                    b"GLASSES 70X66", b"125% Q3", b"move with %s"]:
                         if marker not in guest:
                             raise SystemExit("Test29 VR marker missing: " + repr(marker))
