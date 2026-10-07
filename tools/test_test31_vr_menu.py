@@ -179,7 +179,7 @@ static void verify(void){
  if(settings_tag!=NONE){
   struct vr_menu_widget *w=vr_menu_widget_get(settings_tag);assert(w->child_widgets.count==11);
   struct vr_menu_child *c=w->child_widgets.address;assert(c[9].vertical_offset==377&&c[10].vertical_offset==414);
-  struct vr_menu_widget *row=vr_menu_widget_get(c[9].widget_tag.index);assert(row->type==3&&row->child_widgets.count==1);
+  struct vr_menu_widget *row=vr_menu_widget_get(c[9].widget_tag.index);assert(row->type==3&&row->child_widgets.count==1&&row->flags==1);
   assert(((struct vr_menu_child*)row->child_widgets.address)->widget_tag.index==vr_menu.button_tag_index);
  }
  if(solo_tag!=NONE){

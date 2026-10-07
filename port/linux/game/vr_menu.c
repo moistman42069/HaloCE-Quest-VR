@@ -1214,6 +1214,9 @@ void vr_menu_tags_loaded(void)
                 "vr_settings_row", 3, VR_MENU_BUTTON_WIDTH, 28, &widget);
             if (row != NONE && (child = vr_menu_allocate(sizeof(*child)))) {
                 vr_menu_child_set(child, vr_menu.button_tag_index, 0, 0);
+                /* The outer Settings list owns up/down. A one-item inner
+                 * list must not consume those events and trap gamepad focus. */
+                widget->flags = 1;
                 widget->child_widgets.count = 1;
                 widget->child_widgets.address = child;
                 /* The native profile description callback recognizes nested
