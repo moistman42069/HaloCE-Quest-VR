@@ -1310,6 +1310,48 @@ static void stun_update(void)
 	}
 }
 
+/* Refreshes must reclassify too: a VPN/route change can alter either IP or
+port after the first replies. Logging flags must never gate current state.
+Matching mappings are evidence of stable mapping, not proof of open filtering. */
+static void stun_classify_mapping(void)
+{
+	int first = -1, count = 0, differs = 0;
+	for (int i = 0; i < p2p.stun_count; i++)
+	{
+		if (!p2p.stun[i].has_mapped)
+			continue;
+		if (first < 0)
+			first = i;
+		else if (p2p.stun[i].mapped.port != p2p.stun[first].mapped.port ||
+			p2p.stun[i].mapped.address != p2p.stun[first].mapped.address)
+			differs = 1;
+		count++;
+	}
+	if (count < 2)
+		p2p.nat_strict = -1;
+	else if (differs)
+	{
+		p2p.nat_strict = 1;
+		if (!p2p.reported_symmetric)
+		{
+			platform_log("Internet play: STUN destinations see different public IP/port mappings; "
+				"direct reachability is restricted. VPN/split routing can use multiple egress IPs. "
+				"Try without VPN or use Wi-Fi if joining fails.");
+			p2p.reported_symmetric = 1;
+		}
+	}
+	else
+	{
+		p2p.nat_strict = 0;
+		if (!p2p.reported_lenient)
+		{
+			platform_log("Internet play: this network's NAT keeps one public port for every "
+				"measured destination (lenient mapping; firewall filtering is not measured)");
+			p2p.reported_lenient = 1;
+		}
+	}
+}
+
 static void stun_received(const unsigned char *packet, int size, const struct sockaddr_in *from)
 {
 	int index;
@@ -1357,42 +1399,19 @@ static void stun_received(const unsigned char *packet, int size, const struct so
 			if (!server->has_mapped)
 			{
 				char text[32];
-				int other;
-
 				memcpy(&server->mapped.address, ip, 4);
 				memcpy(&server->mapped.port, port, 2);
 				server->has_mapped = 1;
 				platform_log("Internet play: this machine's public address is %s (from %s)",
 					address_text(server->mapped.address, server->mapped.port, text), server->host);
-				for (other = 0; other < p2p.stun_count; other++)
-				{
-					if (other != index && p2p.stun[other].has_mapped &&
-						(p2p.stun[other].mapped.port != server->mapped.port ||
-						 p2p.stun[other].mapped.address != server->mapped.address) && !p2p.reported_symmetric)
-					{
-						platform_log("Internet play: STUN destinations see different public IP/port mappings; "
-							"direct reachability is restricted. VPN/split routing can use multiple egress IPs. "
-							"Try without VPN or use Wi-Fi if joining fails.");
-						p2p.reported_symmetric = 1;
-						p2p.nat_strict = 1;
-					}
-					else if (other != index && p2p.stun[other].has_mapped &&
-						p2p.stun[other].mapped.port == server->mapped.port &&
-						p2p.stun[other].mapped.address == server->mapped.address && !p2p.reported_lenient &&
-						!p2p.reported_symmetric)
-					{
-						platform_log("Internet play: this network's NAT keeps one public port for every "
-							"destination (lenient; direct connections usually open)");
-						p2p.reported_lenient = 1;
-						p2p.nat_strict = 0;
-					}
-				}
+
 			}
 			else
 			{
 				memcpy(&server->mapped.address, ip, 4);
 				memcpy(&server->mapped.port, port, 2);
 			}
+			stun_classify_mapping();
 			break;
 		}
 		offset += 4 + ((length + 3) & ~3);

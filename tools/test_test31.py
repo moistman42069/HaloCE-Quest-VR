@@ -220,7 +220,7 @@ int main(void){
 # model. Crypto is outside this simulation: delivery is an already authenticated
 # peer packet, as peer_heard receives after the unchanged tunnel receive checks.
 p2p=read('port/linux/src/p2p.c')
-assert 'p2p.stun[other].mapped.address == server->mapped.address' in fn(p2p,'stun_received')
+assert 'p2p.stun[i].mapped.address != p2p.stun[first].mapped.address' in fn(p2p,'stun_classify_mapping')
 run('nat_punch', r'''
 #include <assert.h>
 #include <stdio.h>
@@ -293,5 +293,61 @@ int main(void){
  assert(!prediction_public_address(network_long(0xc0a80001)));
  assert(!prediction_public_address(network_long(0xe0000001)));
  puts("PASS: real punching and endpoint adoption under full-cone, restricted, symmetric and two-egress NAT models; bounds/timeouts/stop-on-connect");
+}
+''')
+
+assert 'stun_classify_mapping();' in fn(p2p,'stun_received')
+run('nat_mapping_refresh', r'''
+#include <assert.h>
+#include <stdio.h>
+#include <string.h>
+#include <netinet/in.h>
+struct candidate {unsigned long address;unsigned short port;};
+struct stun_server {int has_mapped;struct candidate mapped;
+ unsigned long address;unsigned short port;unsigned char transaction[12];const char *host;};
+static struct {int nat_strict,reported_symmetric,reported_lenient,stun_count;
+ struct stun_server stun[4];} p2p;
+static void platform_log(const char *s,...){(void)s;}
+static const char *address_text(unsigned long ip,unsigned short port,char *text){return "simulated";}
+''' + fn(p2p,'stun_classify_mapping') + fn(p2p,'stun_received') + r'''
+static void reply(int index,int ip,int port,int xor_mapped,int invalid){
+ unsigned char packet[32]={1,1,0,12,0x21,0x12,0xa4,0x42};
+ struct sockaddr_in from={0};
+ struct stun_server *s=&p2p.stun[index];
+ s->address=htonl(0x08080808+index);s->port=htons(3478);s->transaction[0]=index+1;s->host="test";
+ from.sin_addr.s_addr=s->address;from.sin_port=s->port;
+ memcpy(packet+8,s->transaction,12);
+ packet[21]=xor_mapped?0x20:1;packet[23]=8;packet[25]=1;
+ unsigned short np=htons(port);unsigned int ni=htonl(ip);
+ memcpy(packet+26,&np,2);memcpy(packet+28,&ni,4);
+ if(xor_mapped){for(int i=0;i<2;i++)packet[26+i]^=packet[4+i];for(int i=0;i<4;i++)packet[28+i]^=packet[4+i];}
+ if(invalid==1)packet[8]^=0x80;
+ if(invalid==2)from.sin_addr.s_addr++;
+ stun_received(packet,invalid==3?31:32,&from);
+}
+int main(void){
+ p2p.stun_count=4;stun_classify_mapping();assert(p2p.nat_strict==-1);
+ p2p.stun[0].has_mapped=1;p2p.stun[0].mapped=(struct candidate){1,100};
+ stun_classify_mapping();assert(p2p.nat_strict==-1);
+ p2p.stun[1]=p2p.stun[0];stun_classify_mapping();assert(p2p.nat_strict==0);
+ p2p.stun[1].mapped.address=2;stun_classify_mapping();assert(p2p.nat_strict==1);
+ p2p.stun[0].mapped.address=2;stun_classify_mapping();assert(p2p.nat_strict==0);
+ p2p.stun[1].mapped.port++;stun_classify_mapping();assert(p2p.nat_strict==1);
+ p2p.stun[2]=p2p.stun[1];stun_classify_mapping();assert(p2p.nat_strict==1);
+ p2p.stun[0]=p2p.stun[1];stun_classify_mapping();assert(p2p.nat_strict==0);
+ p2p.stun[3]=p2p.stun[0];p2p.stun[3].mapped.address=3;
+ stun_classify_mapping();assert(p2p.nat_strict==1);
+ memset(&p2p,0,sizeof(p2p));p2p.stun_count=2;p2p.nat_strict=-1;
+ reply(0,0x01020304,40000,1,0);assert(p2p.nat_strict==-1);
+ reply(1,0x01020304,40000,0,0);assert(p2p.nat_strict==0);
+ /* The response that changes a mapping must also change classification. */
+ reply(1,0x05060708,40000,1,0);assert(p2p.nat_strict==1);
+ reply(0,0x05060708,40000,1,0);assert(p2p.nat_strict==0);
+ for(int bad=1;bad<=3;bad++){
+  reply(1,0x01020304,45000,1,bad);assert(p2p.nat_strict==0);
+ }
+ reply(1,0x05060708,45000,1,0);assert(p2p.nat_strict==1);
+ reply(0,0x05060708,45000,0,0);assert(p2p.nat_strict==0);
+ puts("PASS: production STUN parser/classification: XOR/legacy mapping, immediate IP/port refresh, invalid source/transaction/length, all destinations and repeated changes");
 }
 ''')
