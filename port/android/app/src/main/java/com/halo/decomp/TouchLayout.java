@@ -5,7 +5,7 @@ final class TouchLayout {
     static final int COUNT=19;
     final float[] x=new float[COUNT],y=new float[COUNT],size=new float[COUNT],alpha=new float[COUNT];
     float scale=1f,opacity=.65f,sensitivityX=1f,sensitivityY=1f,deadZone=.08f;
-    boolean swipe=true,floating=false,invert=false;
+    boolean swipe=true,floating=false,invert=false,lookAnywhere=false;
     int color=0xff69c9ff;
     /** gyro aim (GyroPolicy modes; off by default), its sensitivities (1 = the phone's own turn) and invert */
     int gyroMode=GyroPolicy.OFF;

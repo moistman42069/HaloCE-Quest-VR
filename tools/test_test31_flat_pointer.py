@@ -130,10 +130,10 @@ public class MenuTouchCheck {
     desktop=next(w for w in updates if w.get('platform')=='desktop')
     android=next(w for w in updates if w.get('platform')=='android')
     assert desktop.get('setting')=='update.auto' and android.get('setting') is None
-    assert android.get('strings')=='USE LAUNCHER'
+    assert android.get('text')=='USE LAUNCHER' and android.get('strings') is None
     assert 'if(!menus && !menuStream) return false;' in touch and 'if(!event.isFromSource(InputDevice.SOURCE_TOUCHSCREEN)) return false;' in touch
     assert 'menus || editing || GamepadPolicy.showTouch' in touch
-    assert 'nativePointer(3,0,0)' in touch
+    assert 'input.pointer(3,0,0)' in touch
     for symbol in ['host_touch_menu','host_touch_pointer_read','host_sdl_window_size']:
         assert symbol in (ROOT/'port/android/host_imports.list').read_text().splitlines()
     print('flat pointer: activity interception, hidden-overlay access and host import guards passed')
