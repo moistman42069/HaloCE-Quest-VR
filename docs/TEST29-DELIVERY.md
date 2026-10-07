@@ -49,8 +49,13 @@ build 141 or newer.
 
 | File | Bytes | SHA-256 |
 | --- | ---: | --- |
-| `HaloCE-Quest-test29.apk` | (filled in after the build) | |
-| `HaloCE-Android-test29.apk` | (filled in after the build) | |
+| `HaloCE-Quest-test29.apk` | 28,347,011 | `ba6b3e807ff9f09c9547be048b9d21ef3d2b51a97b9a89de85c968032b30ec60` |
+| `HaloCE-Android-test29.apk` | 26,266,164 | `3f5c385fa35ad8dbf8d327b9d427199b71d74d7d1fff1daf8350a5c2a267cefd` |
+
+Runtime source `e9ea6581` on branch `test29-opence-144`; later commits
+change only documentation. Certificate SHA-256
+`53d416f7e123cc62b749940983209bc9a400002e033fd5f50900d4ffad8e2aa4`. Built
+serially from a clean tree; payload, signing and 16 KB alignment verified.
 
 ## Checks performed
 
