@@ -173,6 +173,30 @@ public class LauncherActivity extends Activity {
         return true;
     }
 
+    /** Plain Play reaches the native menus, even after an older launcher crashed before consuming its command. */
+    private void startFromMenu() {
+        if (!readyToPlay()) return;
+        try {
+            int retired = LauncherRequests.retire(gameRoot());
+            if (retired > 0) RunLog.line("Preserved " + retired + " abandoned launch requests in launcher-history; opening menus");
+        } catch (java.io.IOException e) {
+            LauncherHelp.page(this, "Could not clear an old launch request",
+                "The game was not started, so an old host/join request will not run. Your saved data is unchanged. "
+                + "Check available storage and the active game folder, then try Play again. " + e.getMessage());
+            return;
+        }
+        // An external invite may have waited here while its game files were imported.
+        // Re-apply that explicit intent to the now-active set after retiring old commands.
+        if (isInvite(getIntent())) {
+            String invite = ServerInvite.normalize(getIntent().getData().toString());
+            if (invite != null && !writeInvite(invite)) {
+                LauncherHelp.page(this, "Could not open invite", "The invite could not be saved in the active game folder. Try opening the link again.");
+                return;
+            }
+        }
+        startGame();
+    }
+
     /**
      * The folder the game takes its data from: the app's storage, or in the
      * VR build the headset's Documents/HaloCE when the data is there
@@ -266,21 +290,12 @@ public class LauncherActivity extends Activity {
         label(layout, BuildConfig.VERSION_NAME + " • community release", 12, HALO_BLUE);
         updateStatus = Updater.launcher(this, gameRoot(), layout);
         play = menuButton(layout, "Play");
-        play.setOnClickListener(v -> startGame());
+        play.setOnClickListener(v -> startFromMenu());
 
-        menuButton(layout, "Multiplayer servers").setOnClickListener(v -> new ServerBrowser(this, invite -> {
-            if (!readyToPlay() || !writeInvite(invite)) return false;
-            return startGame();
-        }));
-        menuButton(layout, "Host multiplayer").setOnClickListener(v -> { if (!busy) new PvpLauncher(this, gameRoot(), this::readyToPlay, this::startGame).show(); });
+        label(layout, "Browse and host games in Play > Multiplayer. Use the guide below for online co-op, public servers, LAN and invites.",
+            13, Color.rgb(150, 160, 170));
+        menuButton(layout, "Multiplayer & co-op guide").setOnClickListener(v -> LauncherHelp.network(this));
         menuButton(layout, "Field guide • controls & help").setOnClickListener(v -> LauncherHelp.show(this));
-        menuButton(layout, "Campaign co-op").setOnClickListener(v -> new CoopLauncher(this, gameRoot(),
-            this::readyToPlay, this::startGame, invite -> {
-                if (!readyToPlay() || !writeInvite(invite)) return false;
-                return startGame();
-            }).show());
-        menuButton(layout, "How to join co-op & find servers").setOnClickListener(v ->
-            LauncherHelp.page(this, "How to join co-op & find servers", LauncherHelp.COOP_GUIDE));
 
         TextView modsTitle = label(layout, "MODS", 18, HALO_BLUE);
         modsTitle.setPadding(0, dp(24), 0, dp(4));

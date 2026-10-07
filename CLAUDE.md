@@ -1,5 +1,17 @@
 # Agent and contributor continuation
 
+## Current: Test32 launcher/VR vehicles (2026-10-07)
+
+Read `docs/TEST32-PROGRESS.md` and the latest checkpoint first. The owner accepts
+Test31c mobile controls/gameplay: preserve them. Simplify launcher multiplayer
+duplicates with accurate in-game guidance; refine passenger 6DOF, entry/exit
+recenter, turret aim (right-hand default) and HUD gesture. Handle grabbing is
+explicitly deferred by the owner; finish everything else and package both APKs.
+Keep the accepted VR settings design and other working behavior. Upstream
+rechecked before starting: latest/main remain Build145/network22. Branch
+`test32-launcher-vehicles`; prepare private candidates only. Older active-work
+paragraphs below are historical. Later interaction backlog remains queued.
+
 ## Active touch/glass correction and accepted VR preference (2026-10-07)
 
 The owner reports **Test31b Quest VR works great** and explicitly prefers its

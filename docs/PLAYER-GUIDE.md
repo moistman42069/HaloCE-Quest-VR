@@ -1,4 +1,85 @@
-# Halo CE Quest VR + Android 1.0.12
+# Halo CE Quest VR + Android player guide
+
+## Current private build: Test32
+
+The current development build uses **OpenCE Build 145 / exact network 22** and
+its full in-game menus. The public v1.0.12 downloads documented below use the
+older network 21 and are preserved; they are not the Test32 private APKs.
+Use [Test32 player notes](TEST32-PLAYER-NOTES.md) for the current candidate,
+vehicle/HUD changes and device checklist. The owner accepted Test31c Android
+gameplay/touch; this pass preserves it. Test32 itself still needs device testing.
+
+### Where multiplayer and co-op moved
+
+Press **Play**, then **Multiplayer** in the game. Create/select a profile if
+asked. The old launcher server lists and host dialogs are replaced by these
+in-game paths:
+
+| Goal | Path after Play |
+| --- | --- |
+| Public PvP and campaign co-op | Multiplayer > Join Game > Server Browser |
+| Nearby host on the same network | Multiplayer > Join Game > LAN |
+| An invite | Multiplayer > Join Game > Direct Link > PASTE LINK / ENTER LINK |
+| Host PvP | Multiplayer > Create Game > Internet or LAN > MULTIPLAYER > map > gametype > Server Setup |
+| Host online campaign co-op | Multiplayer > Create Game > Internet or LAN > SINGLEPLAYER > mission > difficulty > Server Setup |
+
+**REFRESH** requests listings, sorted most populated first. Navigate the list
+with stick/D-pad (or MOVE on Android); it scrolls as focus moves. Select a game or **JOIN
+GAME**; a locked game prompts for its password. An in-progress lobby preview
+may need **JOIN GAME** once more. **FILTERS > GAME TYPE > CO-OP > APPLY** finds
+campaign games; ANY restores all types. APPLY saves filters; DEFAULTS then
+APPLY restores their defaults. Known Maps does not verify file fingerprints.
+
+In **Server Setup**, configure the name and player limit, public/private
+listing and optional public password. PvP has game/player/item/vehicle/team
+rules. Campaign has friendly fire, extra-enemy scaling and player collisions.
+**START GAME** opens the lobby; **START NOW** begins. Internet hosting copies an
+invite when available, and **INVITE LINK** copies it again. Share a current
+invite for private games. Direct invites grant access without a listing password.
+The 2-128 player selector is not a performance guarantee; start with a small group.
+
+**CO-OP CAMPAIGN** is the separate local split-screen entry, not online hosting.
+Quest blocks it and ADD PLAYER because it cannot create separate headset views.
+For multiple devices use the SINGLEPLAYER hosting route above. Flat Android
+retains its separate-controller split-screen path, which needs device validation.
+
+The launcher retains import/switching in **Game files & versions**, updater,
+input/device settings, geometry/network recovery controls, mods/restore and
+logs. **Multiplayer & co-op guide** contains detailed topic pages and read-only
+**Saved invites** access for both old launcher lists. Copy an entry into Direct
+Link; old directory preferences remain stored but are not imported into in-game
+discovery. External invite links still open the game. No saved data is deleted.
+
+Normal Play archives stale one-shot host/join requests under `launcher-history`
+in the active game set, so an interrupted old command cannot silently host a
+session. Explicit external invites and the clipboard preference are retained.
+**Geometry compatibility now defaults to Safe on both APKs**; a manual Normal
+choice persists after the one-time upgrade. Restart after changing it. Safe can
+trade performance for compatibility. Desktop renderer defaults are unchanged.
+
+All peers need compatible native-port network versions and game files. Some
+server failures can involve different ISO/revision or modified data; the browser
+cannot infer Original/Rev1/Rev2 requirements. Use **Game files & versions** to
+select another installed set before launch. Retail PC/Custom Edition, MCC and
+original Xbox networking are incompatible. NAT, VPNs, full games and expired
+invites can also prevent joins; no relay is included.
+
+Full steps, menu input, compatibility and reporting:
+[Current launcher/network guide](TEST32-LAUNCHER-GUIDE.md) and
+[multiplayer browser](MULTIPLAYER-BROWSER.md). Report with both peers' logs when
+possible via [support Discord](https://discord.gg/S9uSCKxKx) or DM
+**@MeWhenINameMyself**. Logs are in Download/HaloCE.
+
+---
+
+## Historical public v1.0.12 guide
+
+The remaining release/download details and feature descriptions below are the
+published **v1.0.12 baseline**, retained for users of that release. Its old
+System Link and launcher-browser instructions do not describe Test31 or Test32;
+use the current paths above for those builds. They also do not establish
+Test32 device acceptance.
+
 
 ## 1. Installation
 

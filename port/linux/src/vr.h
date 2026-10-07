@@ -254,6 +254,9 @@ float vr_vignette_aperture(float strength, float amount, float corner);
 int vr_vignette_shown(void);
 /* test25: vr.vehicle_tilt, 0 to 1 */
 float vr_vehicle_tilt(void);
+/* Validated local seat identity from input and stereo rendering. Role is 0
+passenger/on foot, 1 driver, 2 gunner. Entry/exit/seat transfer recentres once. */
+void vr_vehicle_seat(long unit_index, long vehicle_index, int seat_index, int role);
 /* test26: the HUD hidden by its head tap (vr.hud_tap_distance), the
 reticle by its button (vr.button_reticle): the session's, both start
 shown; menus, prompts and messages always show */

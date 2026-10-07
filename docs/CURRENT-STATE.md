@@ -1,5 +1,17 @@
 # Current development state
 
+## Latest private result: Test31c Android accepted; Test32 in progress
+
+On 2026-10-07 the owner reports the mobile port works great and requests leaving
+its gameplay/touch implementation as-is. This applies to Test31c/code41,
+runtime `173708ec068993a7256c7f0431b5d001ba46f8e6`; exact artifacts and hashes:
+[TEST31C-DELIVERY.md](TEST31C-DELIVERY.md). The prior accepted VR settings design
+remains a standing preference. This is not blanket acceptance of all VR vehicle
+features: passenger tracking, recentering, turret controls and HUD gestures are
+the next requested refinements. See [TEST32-PROGRESS.md](TEST32-PROGRESS.md).
+The older pending Android entries below are superseded by this owner result.
+
+
 ## Private device result: Test31b VR accepted; Android UI correction pending
 
 On 2026-10-07 the owner reported that Test31b **VR works great**, and specifically

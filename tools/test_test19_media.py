@@ -21,6 +21,7 @@ c=r'''
 #include <stdio.h>
 #define HEAD_REACH .35f
 static struct {int heading_valid,roomscale;float units_per_metre,heading,reticle_distance,reticle_position[3];
+ struct {int origin_valid,recentre_pending;float origin[3];} vehicle_seat;
  float room_previous[2],room_now[2];struct {struct {float position[3];} head;} frame;} vr;
 static float render_interpolation_fraction(void){return .4f;}
 '''+fn(frame,'rotate')+fn(frame,'to_halo')+fn(frame,'head_offset')+fn(frame,'view')+fn(frame,'vr_set_reticle_world')+r'''

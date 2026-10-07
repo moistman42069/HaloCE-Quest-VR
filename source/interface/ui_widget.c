@@ -5638,6 +5638,7 @@ struct ui_mouse_target
 {
 	struct widget_instance *widget;
 	rectangle2d bounds;
+	point2d value_center;
 	short kind;
 	short button_index;
 };
@@ -5764,6 +5765,40 @@ static boolean ui_mouse_widget_is_item(
 		widget->type == _ui_widget_type_column_list;
 }
 
+/* OpenCE draws a value spinner's arrows separately, often outside its text
+bounds. Include exactly that visible art in the pointer target without moving
+its text's left/right divider or enlarging unrelated action buttons. */
+static void ui_mouse_value_bounds(
+	struct widget_instance *widget,
+	struct ui_widget_definition const *definition,
+	point2d offset,
+	rectangle2d *bounds)
+{
+	long arrow_index;
+
+	if (!pc_menu_tag(widget->definition_tag_index))
+		return;
+	for (arrow_index = 0; arrow_index < 2; arrow_index++)
+	{
+		rectangle2d arrow = arrow_index ? definition->list_footer_bounds : definition->list_header_bounds;
+		long bitmap_index = arrow_index ? definition->list_footer_bitmap.index : definition->list_header_bitmap.index;
+
+		if (bitmap_index == NONE || arrow.x1 <= arrow.x0 || arrow.y1 <= arrow.y0)
+			continue;
+		if (!arrow_index && spinner_string_list_extra_count(definition->text_label_string_list.index))
+		{
+			arrow.x0 -= SPINNER_EXTRA_WIDTH;
+			arrow.x1 -= SPINNER_EXTRA_WIDTH;
+		}
+		bounds->x0 = MIN(bounds->x0, arrow.x0 + offset.x);
+		bounds->x1 = MAX(bounds->x1, arrow.x1 + offset.x);
+		bounds->y0 = MIN(bounds->y0, arrow.y0 + offset.y);
+		bounds->y1 = MAX(bounds->y1, arrow.y1 + offset.y);
+	}
+
+	return;
+}
+
 static void ui_mouse_note_target(
 	struct widget_instance *widget,
 	struct ui_widget_definition const *definition,
@@ -5850,6 +5885,10 @@ static void ui_mouse_note_target(
 	}
 	target = &ui_mouse_targets[ui_mouse_target_count++];
 	target->widget = widget;
+	target->value_center.x = (short)((bounds.x0 + bounds.x1) / 2);
+	target->value_center.y = (short)((bounds.y0 + bounds.y1) / 2);
+	if (kind == _ui_mouse_target_value)
+		ui_mouse_value_bounds(widget, definition, offset, &bounds);
 	target->bounds = bounds;
 	target->kind = kind;
 	target->button_index = button_index;
@@ -6142,8 +6181,8 @@ static void ui_widgets_process_mouse(
 					ui_mouse_give_focus(target->widget);
 					ui_mouse_list_directions(target->widget, &back, &forward);
 					first_half = back == _widget_event_dpad_left ?
-						ui_mouse_click_x < (target->bounds.x0 + target->bounds.x1) / 2 :
-						ui_mouse_click_y < (target->bounds.y0 + target->bounds.y1) / 2;
+						ui_mouse_click_x < target->value_center.x :
+						ui_mouse_click_y < target->value_center.y;
 					ui_mouse_press(first_half ? back : forward);
 					break;
 				}

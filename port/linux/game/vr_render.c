@@ -149,6 +149,32 @@ static int vr_vehicle_steering(
 	return steering;
 }
 
+/* Mounted guns have their own input choice; driver steering is unchanged. */
+static int vr_turret_aim(void)
+{
+	static int aim = -1, generation = -1;
+	if (aim < 0 || generation != vr_settings_generation())
+	{
+		char const *setting = config_string("vr.turret_aim");
+		generation = vr_settings_generation();
+		aim = !strcmp(setting, "head") ? _vr_steering_head :
+			!strcmp(setting, "left") ? _vr_steering_left :
+			!strcmp(setting, "stick") ? _vr_steering_stick : _vr_steering_right;
+	}
+	return aim;
+}
+
+static int vr_vehicle_aim_source(void)
+{
+	int mode;
+	if (!vr_render.seat.seated)
+		return 1; /* existing handheld-weapon aim */
+	if (!vr_render.seat.driver && !vr_render.seat.gunner)
+		return 0; /* existing passenger head aim */
+	mode = vr_render.seat.driver ? vr_vehicle_steering() : vr_turret_aim();
+	return mode == _vr_steering_stick ? -1 : mode == _vr_steering_right ? 2 : mode == _vr_steering_left ? 3 : 0;
+}
+
 static real vr_yaw(
 	real_vector3d const *forward)
 {
@@ -210,40 +236,46 @@ static void vr_diag_drive(
 static void vr_update_seat(
 	long unit_index)
 {
-	struct object_datum *unit = unit_index != NONE ? object_get(unit_index) : NULL;
-	long vehicle_index = unit ? unit->object.parent_object_index : NONE;
-	short seat_index = vehicle_index != NONE ? unit_get(unit_index)->unit.parent_seat_index : NONE;
-	struct object_datum *vehicle;
+	struct unit_datum *unit = NULL, *vehicle = NULL;
+	struct unit_definition *definition;
+	long vehicle_index = NONE;
+	short seat_index = NONE;
 
-	if (vehicle_index == NONE || seat_index == NONE)
+	/* Co-op replication and map teardown may invalidate either salted handle
+	between the input tick and the render. Validate before inspecting a tag. */
+	if (object_header_data && object_header_data->valid && unit_index != NONE)
+		unit = unit_try_and_get(unit_index);
+	if (unit)
 	{
-		vr_render.seat.seated = FALSE;
+		vehicle_index = unit->object.parent_object_index;
+		seat_index = unit->unit.parent_seat_index;
+		if (vehicle_index != NONE && seat_index >= 0)
+			vehicle = unit_try_and_get(vehicle_index);
+	}
+	definition = vehicle ? unit_definition_get(vehicle->definition_index) : NULL;
+	if (!definition || seat_index < 0 || seat_index >= definition->unit.seats.count)
+	{
+		vr_render.seat.seated = vr_render.seat.driver = vr_render.seat.gunner = FALSE;
+		vr_render.seat.unit_index = unit ? unit_index : NONE;
 		vr_render.seat.vehicle_index = NONE;
+		vr_render.seat.seat_index = NONE;
+		vr_vehicle_seat(unit ? unit_index : NONE, NONE, NONE, 0);
 		return;
 	}
-	vehicle = object_get(vehicle_index);
 	if (!vr_render.seat.seated || vr_render.seat.vehicle_index != vehicle_index ||
 		vr_render.seat.seat_index != seat_index || vr_render.seat.unit_index != unit_index)
 	{
-		unsigned long flags = 0;
-
-		if (TEST_FLAG(_object_mask_unit, vehicle->object.type))
-		{
-			struct unit_seat *seat = TAG_BLOCK_GET_ELEMENT(
-				&unit_definition_get(vehicle->definition_index)->unit.seats, seat_index, struct unit_seat);
-
-			flags = seat->flags;
-		}
+		struct unit_seat *seat = TAG_BLOCK_GET_ELEMENT(&definition->unit.seats, seat_index, struct unit_seat);
+		unsigned long flags = seat->flags;
 		vr_render.seat.driver = TEST_FLAG(flags, _unit_seat_driver_bit);
 		vr_render.seat.gunner = TEST_FLAG(flags, _unit_seat_gunner_bit);
-		/* a driver or gunner faces the vehicle's way; a passenger's seat may
-		face aside (the Pelican's face the aisle): its turn as it sits down */
+		/* A passenger may face sideways relative to the vehicle. Keep the
+		seat's authored entry orientation; headset motion never rewrites it. */
 		vr_render.seat.offset = vr_render.seat.driver || vr_render.seat.gunner ? 0.0f :
 			vr_yaw(&unit->object.forward) - vr_yaw(&vehicle->object.forward);
 		vr_render.seat.vehicle_index = vehicle_index;
 		vr_render.seat.seat_index = seat_index;
 		vr_render.seat.unit_index = unit_index;
-		/* test25: the seat, for the vehicle report (vr_frame.c logs the angles) */
 		platform_log("vr: seat: %s seat %d as %s, vehicle yaw %.1f, seat offset %.1f, view %s",
 			tag_get_name(vehicle->definition_index), seat_index,
 			vr_render.seat.driver ? "driver" : vr_render.seat.gunner ? "gunner" : "passenger",
@@ -251,8 +283,9 @@ static void vr_update_seat(
 			vr_first_person_vehicles() ? "first person" : "third person");
 	}
 	vr_render.seat.seated = TRUE;
-	/* the vehicle's heading only: its pitch and roll would tilt the horizon */
 	vr_render.seat.heading = vr_yaw(&vehicle->object.forward) + vr_render.seat.offset;
+	vr_vehicle_seat(unit_index, vehicle_index, seat_index,
+		vr_render.seat.driver ? 1 : vr_render.seat.gunner ? 2 : 0);
 }
 
 /* Seat object handles belong to one map. A map can draw before the first
@@ -266,6 +299,7 @@ void vr_render_reset_vehicle_view(void)
 	vr_render.seat.unit_index = NONE;
 	vr_render.seat.vehicle_index = NONE;
 	vr_render.seat.seat_index = NONE;
+	vr_vehicle_seat(NONE, NONE, NONE, 0);
 }
 
 /* the view rides in the seat (vr.vehicle_view "first_person") */
@@ -899,6 +933,13 @@ short vr_render_windows(
 		vr_render.cinematic_last_yaw = yaw;
 	}
 	vr_render.cinematic_previous = vr_render.cinematic_view;
+	/* Facing input can be inhibited for a passenger or scripted/co-op seat.
+	The camera still needs the actual current seat and positional tracking. */
+	if (!vr_render.cinematic_view)
+	{
+		long player_index = local_player_get_player_index(windows[0].local_player_index);
+		vr_update_seat(player_index != NONE ? player_get(player_index)->unit_index : NONE);
+	}
 	player = windows[0];
 	console = windows[1];
 	for (eye = 0; eye < 2; eye++)
@@ -1316,13 +1357,10 @@ void vr_player_control_facing(
 	/* a driver steered by the stick (vr.vehicle_steering "stick"): the game
 	takes the right stick as it would, and the head only looks */
 	{
-		/* Drivers explicitly select a controller; gunners retain head aim. */
-		int hand_may_aim = !seated ? 1 : 0;
+		/* Drivers and mounted gunners select independently; passengers keep
+		their existing head-aim behavior. */
+		int hand_may_aim = vr_vehicle_aim_source();
 		real heading = vr_render.seat.heading;
-		if (seated && vr_render.seat.driver) {
-			int mode = vr_vehicle_steering();
-			hand_may_aim = mode == _vr_steering_stick ? -1 : mode == _vr_steering_right ? 2 : mode == _vr_steering_left ? 3 : 0;
-		}
 
 		if (!vr_aim(angles->yaw, seated, hand_may_aim, vr_seat_view() ? &heading : NULL, forward.n))
 		{

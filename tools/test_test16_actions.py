@@ -22,13 +22,14 @@ for vr in (False,True):
  name='config-vr' if vr else 'config-flat'
  p=OUT/(name+'.c');p.write_text('#define HALO_ANDROID 1\n'+('#define HALO_VR 1\n' if vr else '')+s+'\n#include <assert.h>\nint main(int argc,char **argv){assert(argc==2);assert(config_boolean("renderer.safe_geometry")==atoi(argv[1]));return 0;}\n')
  subprocess.run(['clang','-std=gnu11','-fno-sanitize-recover=all','-fsanitize=address,undefined','-I',str(ROOT/'port/linux/src'),'-I',str(ROOT/'port/third_party/tomlc17'),str(p),str(ROOT/'port/third_party/tomlc17/tomlc17.c'),'-pthread','-o',str(OUT/name)],check=True)
- cases=[('fresh',None,vr),('legacy','# retain\n[renderer]\nsafe_geometry = false # old\n[vr]\nbody = "legs"\n',vr),
- ('safe','[renderer]\nsafe_geometry=true\n',True),('missing','# keep\n[network]\nonline=false\n',vr),
- ('optout','[renderer]\nsafe_geometry=false\nvr_geometry_revision=1\n',False),
- ('old-revision','[renderer]\nsafe_geometry=false\nvr_geometry_revision=0\n',vr),
- ('crlf','[renderer]\r\nsafe_geometry = false\r\n[network]\r\nonline=false\r\n',vr),
- ('malformed','[renderer]\nsafe_geometry = nope\n',vr),
- ('inline','renderer={safe_geometry=false}\n',vr)]
+ revision='vr_geometry_revision' if vr else 'android_geometry_revision'
+ cases=[('fresh',None,True),('legacy','# retain\n[renderer]\nsafe_geometry = false # old\n[vr]\nbody = "legs"\n',True),
+ ('safe','[renderer]\nsafe_geometry=true\n',True),('missing','# keep\n[network]\nonline=false\n',True),
+ ('optout',f'[renderer]\nsafe_geometry=false\n{revision}=1\n',False),
+ ('old-revision',f'[renderer]\nsafe_geometry=false\n{revision}=0\n',True),
+ ('crlf','[renderer]\r\nsafe_geometry = false\r\n[network]\r\nonline=false\r\n',True),
+ ('malformed','[renderer]\nsafe_geometry = nope\n',True),
+ ('inline','renderer={safe_geometry=false}\n',True)]
  for case,initial,expected in cases:
   with tempfile.TemporaryDirectory(dir=OUT) as folder:
    config=Path(folder)/'config.toml'
@@ -37,24 +38,25 @@ for vr in (False,True):
    # Process-local reload twice, to check persistence / opt-out stability.
    for repeat in range(2):subprocess.run([str(OUT/name),str(int(expected))],env=env,check=True)
    saved=config.read_text()
-   if case=='malformed' or (vr and case=='inline'):assert saved==initial
+   if case in ('malformed','inline'):assert saved==initial
    if case=='legacy':
     assert '# retain' in saved and 'body = "legs"' in saved
-    if vr:assert (Path(folder)/'config.toml.pre-safe-geometry').read_text()==initial
+    assert (Path(folder)/'config.toml.pre-safe-geometry').read_text()==initial
    if case in ('missing','crlf'):assert 'online=false' in saved
-   if vr and case not in ('malformed','inline'):assert re.search(r'vr_geometry_revision\s*=\s*1',saved)
-   if not vr and case=='fresh':assert 'vr_geometry_revision' not in saved
+   if case not in ('malformed','inline'):assert re.search(revision+r'\s*=\s*1',saved)
+   if not vr and case=='fresh':assert not re.search(r'^vr_geometry_revision\s*=',saved,re.M)
  print('PASS:',name,'fresh/upgrade/reload/opt-out/CRLF/malformed/inline config (18 loads)')
 # Exercise a write failure without relying on privileged filesystem permissions.
-with tempfile.TemporaryDirectory(dir=OUT) as folder:
- root=Path(folder);original=b'# retained\n[renderer]\nsafe_geometry=false\n[vr]\nbody="legs"\n'
- config=root/'config.toml';config.write_bytes(original)
- blocked=root/'config.toml.safe-geometry.tmp';blocked.mkdir();(blocked/'keep').write_text('blocks replacement')
- env=dict(os.environ,HALO_DATA_ROOT=folder);env.pop('HALO_SAFE_GEOMETRY',None)
- for _ in range(2):
-  subprocess.run([str(OUT/'config-vr'),'1'],env=env,check=True)
-  assert config.read_bytes()==original
-  assert (root/'config.toml.pre-safe-geometry').read_bytes()==original
+for name in ('config-vr','config-flat'):
+ with tempfile.TemporaryDirectory(dir=OUT) as folder:
+  root=Path(folder);original=b'# retained\n[renderer]\nsafe_geometry=false\n[vr]\nbody="legs"\n'
+  config=root/'config.toml';config.write_bytes(original)
+  blocked=root/'config.toml.safe-geometry.tmp';blocked.mkdir();(blocked/'keep').write_text('blocks replacement')
+  env=dict(os.environ,HALO_DATA_ROOT=folder);env.pop('HALO_SAFE_GEOMETRY',None)
+  for _ in range(2):
+   subprocess.run([str(OUT/name),'1'],env=env,check=True)
+   assert config.read_bytes()==original
+   assert (root/'config.toml.pre-safe-geometry').read_bytes()==original
 print('PASS: failed migration writes preserve original config/backup; Safe in memory across retries')
 fp=(ROOT/'source/interface/first_person_weapons.c').read_text()
 enum=fp[fp.index('enum first_person_weapon_state'):fp.index('enum first_person_weapon_state')+fp[fp.index('enum first_person_weapon_state'):].index('};')+2]

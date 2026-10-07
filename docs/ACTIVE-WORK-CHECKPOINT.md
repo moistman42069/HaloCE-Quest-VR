@@ -1,6 +1,20 @@
 # Active work checkpoint — after v1.0.12 release (2026-10-07)
 
-## Current: preserve accepted Test31b VR; restore Android touch presentation
+## Current: Test32 launcher guidance and VR vehicle refinements
+
+Read [TEST32-PROGRESS.md](TEST32-PROGRESS.md). The owner now accepts Test31c
+mobile gameplay/touch and asks that it remain as-is. Simplify launcher duplicates
+with accurate OpenCE menu guidance; fix passenger positional tracking and add
+entry/exit recentering, selectable turret aim (right-hand default), and reliable
+HUD head gestures. Vehicle handle grabbing is now explicitly deferred; finish
+the remaining items, validate and package both APKs. Upstream was
+checked first: latest/main/tag still Build145/network22 on 2026-10-07.
+Work on `test32-launcher-vehicles`. Preserve Test31c artifacts, accepted VR menu
+design and queued later interaction scope. No publish/push/install/launch.
+Latest owner addition: make Safe geometry the default in BOTH APKs; test flat
+upgrade migration and manual opt-out persistence. Mobile controls stay unchanged.
+
+## Historical Test31c task (mobile now accepted above)
 
 Owner feedback on 2026-10-07: VR works great; its new VR settings are the
 preferred design going forward. Keep the exact Test31b Quest code40 artifact

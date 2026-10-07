@@ -25,6 +25,7 @@ typedef int boolean;
 #define csmemset memset
 #define platform_log(...) ((void)0)
 #define vr_head_look_reset() ((void)0)
+static void vr_vehicle_seat(long u,long v,int s,int r){assert(u==-1&&v==-1&&s==-1&&r==0);}
 typedef struct {float x,y,z;} real_point3d;
 struct render_camera {real_point3d position;};
 struct object_marker {struct {real_point3d position;} matrix;};

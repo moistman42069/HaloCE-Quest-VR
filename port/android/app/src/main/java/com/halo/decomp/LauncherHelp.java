@@ -8,40 +8,79 @@ import java.util.concurrent.*;
 
 final class LauncherHelp {
     static final String DATA_COMPATIBILITY_NOTE = "Some server incompatibilities may be caused by different map files from ISO/revision versions or modified game data. Use Game files & versions to select another supported set. A revision label alone does not prove compatibility; network versions, missing maps and connection problems can also prevent joining.";
-    /** Step-by-step joining for co-op and the in-game server browser (launcher button, field guide, co-op dialog). */
-    static final String COOP_GUIDE =
-        "CO-OP CAMPAIGN (up to 128 players, with OpenCE players too)\n\n"
-        + "Co-op is played as OpenCE plays it (network version " + BuildConfig.HALO_NETWORK_VERSION + "): Quest, "
-        + "Android, Windows, Mac and Linux players in the same game. Everyone needs a game on the same network "
-        + "version and the same campaign maps.\n\n"
-        + "HOST\n"
-        + "1. Launcher: Campaign co-op > Host campaign.\n"
-        + "2. Pick the mission, difficulty and most players. Leave Public ticked to be listed in the server "
-        + "browsers (this app's, OpenCE's and the community list); untick it to share the invite instead.\n"
-        + "3. Press Host. The game opens in the lobby. Start when everyone is in (a full lobby starts by itself). "
-        + "Players can also join while the mission is under way.\n\n"
-        + "JOIN\n"
-        + "1. Launcher: Play. In the game: Multiplayer > System Link, then Refresh. Public co-op games show "
-        + "their campaign level (a10, b30 and so on); games on your Wi-Fi appear too. Pick one to join.\n"
-        + "2. Or first look in the launcher: Campaign co-op > Browse / join, then Refresh directory, lists the "
-        + "community's co-op games; pick one and press Join, then choose it in Multiplayer > System Link.\n"
-        + "(Have an invite? Use Add / paste server invite. A game marked LOCK has a password: ask its host for "
-        + "the invite instead.)\n\n"
-        + "Good to know: games of this app 1.0.8 or older used its own two-player co-op and cannot be joined; "
-        + "their hosts need to update. A game on another network version needs the matching version.\n\n"
-        + "IN-GAME SERVER BROWSER (multiplayer)\n"
-        + "1. Launcher: Play.\n"
-        + "2. In the game's main menu: Multiplayer > System Link.\n"
-        + "3. Press Refresh. Public games and games on your Wi-Fi appear, busiest first, seven to a page. "
-        + "Use Next and Previous to see more.\n"
-        + "4. Pick a game to join it.\n\n"
-        + "Selecting in menus: in VR, point with your gun hand and pull the trigger (B goes back). "
-        + "On a phone, tap. The launcher's Multiplayer servers list is another way in: pick a server, press Join, "
-        + "then use Multiplayer > System Link in the game as above.";
+    // Retained for older internal callers; the launcher now uses topic pages.
+    static final String COOP_GUIDE = InGameNetworkGuide.COOP;
+
+    static void network(Activity activity) {
+        String[] titles={"Join public or LAN games", "Host multiplayer", "Host online campaign co-op",
+            "Invites & passwords", "Compatibility & troubleshooting", "Saved invites"};
+        String[] pages={InGameNetworkGuide.BROWSE, InGameNetworkGuide.HOST_PVP,
+            InGameNetworkGuide.COOP, InGameNetworkGuide.INVITES, InGameNetworkGuide.COMPATIBILITY};
+        new GamepadNavigation.Builder(activity).setTitle("Multiplayer & co-op guide")
+            .setItems(titles,(d,item)->{
+                if(item==pages.length) savedInvites(activity);
+                else page(activity,titles[item],pages[item]);
+            }).setNegativeButton("Back",null).show();
+    }
+
+    /** Read-only access to pre-OpenCE launcher saves. No directory requests or migration writes. */
+    private static void savedInvites(Activity activity) {
+        List<String> names=new ArrayList<>(), links=new ArrayList<>();
+        int unreadable=0;
+        for(String store:new String[]{"server_browser","coop_browser"}) {
+            try {
+                String raw=activity.getSharedPreferences(store,Activity.MODE_PRIVATE).getString("saved","[]");
+                if(raw==null || raw.length()>1024*1024) { unreadable++; continue; }
+                org.json.JSONArray entries=new org.json.JSONArray(raw);
+                for(int i=0;i<entries.length() && i<512;i++) {
+                    org.json.JSONObject entry=entries.optJSONObject(i);
+                    if(entry==null) { unreadable++; continue; }
+                    String link=ServerInvite.normalize(entry.optString("invite",""));
+                    if(link==null) { unreadable++; continue; }
+                    names.add((store.equals("coop_browser")?"Co-op: ":"Multiplayer: ")
+                        +ServerInvite.displayName(entry.optString("name","Unnamed server")));
+                    links.add(link);
+                }
+                if(entries.length()>512) unreadable+=entries.length()-512;
+            } catch(Exception e) { unreadable++; }
+        }
+        String note=unreadable==0?"":" Some saved entries could not be displayed; their stored data is unchanged.";
+        if(links.isEmpty()) {
+            page(activity,"Saved invites","No readable saved invites from earlier launchers."+note
+                +" New joins use Play > Multiplayer > Join Game > Direct Link or Server Browser.");
+            return;
+        }
+        if(unreadable>0) names.add("Some saved entries could not be displayed (details)");
+        final String warning=note;
+        new GamepadNavigation.Builder(activity).setTitle("Saved invites (kept on this device)")
+            .setItems(names.toArray(new String[0]),(d,item)->{
+                if(item>=links.size()) { page(activity,"Saved invites",warning); return; }
+                String link=links.get(item);
+                TextView text=new TextView(activity);
+                text.setText("This saved invite may be from an old session. Copy it, then Play > Multiplayer > Join Game > Direct Link > PASTE LINK. "
+                    +"If the host does not appear, request a new invite. Nothing is uploaded or deleted.\n\n"+link);
+                text.setTextIsSelectable(true); text.setTextSize(16);
+                int pad=(int)(20*activity.getResources().getDisplayMetrics().density);
+                text.setPadding(pad,pad,pad,pad);
+                ScrollView scroll=new ScrollView(activity); scroll.addView(text);
+                new GamepadNavigation.Builder(activity).setTitle(names.get(item)).setView(scroll)
+                    .setPositiveButton("Copy invite",(copy,which)->{
+                        android.content.ClipboardManager clipboard=(android.content.ClipboardManager)
+                            activity.getSystemService(Activity.CLIPBOARD_SERVICE);
+                        if(clipboard==null) { page(activity,"Clipboard unavailable","Select and copy the displayed invite manually."); return; }
+                        try {
+                            clipboard.setPrimaryClip(android.content.ClipData.newPlainText("Halo invite",link));
+                            Toast.makeText(activity,"Invite copied. Use Direct Link in the game.",Toast.LENGTH_LONG).show();
+                        } catch(RuntimeException unavailable) {
+                            page(activity,"Clipboard unavailable","Use ENTER LINK in Direct Link with this invite:\n\n"+link);
+                        }
+                    }).setNegativeButton("Close",null).show();
+            }).setNegativeButton("Back",null).show();
+    }
     static void show(Activity activity) {
         new GamepadNavigation.Builder(activity).setTitle("Field guide")
-            .setItems(new String[]{"How to join co-op & find servers", "Getting started & multiplayer", "VR controls & settings", "Flat touch & gamepad", "Every setting: reference", "Credits & licenses"},(d,item)->{
-                if(item==0) { page(activity,"How to join co-op & find servers",COOP_GUIDE); return; }
+            .setItems(new String[]{"Multiplayer & co-op guide", "Getting started & multiplayer", "VR controls & settings", "Flat touch & gamepad", "Every setting: reference", "Credits & licenses"},(d,item)->{
+                if(item==0) { network(activity); return; }
                 int index=item-1;
                 String[] files={"player-guide.txt","controls.txt","touch.txt","settings.txt","credits.txt"};
                 try(InputStream in=activity.getAssets().open("guide/"+files[index])) {
@@ -91,17 +130,28 @@ final class LauncherHelp {
             });
         }); dialog.show();
     }
+    static String geometryMigrationKey(boolean vr) {
+        return vr?"vr_geometry_revision":"android_geometry_revision";
+    }
+    static boolean geometrySafe(File root,boolean vr) {
+        boolean migrated;
+        try { migrated=Integer.parseInt(ConfigSettings.read(root,"renderer",geometryMigrationKey(vr),"0"))>=1; }
+        catch(NumberFormatException e) { migrated=false; }
+        return !migrated || !ConfigSettings.read(root,"renderer","safe_geometry","true").equals("false");
+    }
+    static void saveGeometry(File root,boolean vr,boolean safe) throws IOException {
+        Map<String,String> changes=new LinkedHashMap<>();
+        changes.put("safe_geometry",Boolean.toString(safe));
+        changes.put(geometryMigrationKey(vr),"1");
+        ConfigSettings.write(root,"renderer",changes);
+    }
     static void graphics(Activity activity,File root) {
         boolean vr=activity.getPackageName().endsWith(".vr");
-        boolean migrated=ConfigSettings.read(root,"renderer","vr_geometry_revision","0").equals("1");
-        boolean current=(vr&&!migrated)||ConfigSettings.read(root,"renderer","safe_geometry",vr?"true":"false").equals("true");
+        boolean current=geometrySafe(root,vr);
         new GamepadNavigation.Builder(activity).setTitle("Geometry compatibility")
-            .setMessage("Safe geometry is the VR default, including upgrades. Flat Android defaults to Normal. Use Safe if scenery stretches into triangles or strips. It bypasses static geometry caching, persistent streaming and GPU base-vertex rebasing. It can reduce frame rate. This is a renderer option, not a game-revision selection. Restart the game after changing it.\n\nCurrent: "+(current?"Safe":"Normal"))
+            .setMessage("Safe geometry is the default for Quest VR and flat Android, including the first upgrade to this default. You can select Normal here; that choice is kept on later launches. Safe avoids scenery stretching into triangles or strips by bypassing static geometry caching, persistent streaming and GPU base-vertex rebasing. It can reduce frame rate. This is a renderer option, not a game-revision selection. Restart the game after changing it.\n\nCurrent: "+(current?"Safe":"Normal"))
             .setPositiveButton(current?"Use normal":"Use safe",(d,w)->{
-                try { Map<String,String> changes=new LinkedHashMap<>();
-                    changes.put("safe_geometry",Boolean.toString(!current));
-                    if(vr) changes.put("vr_geometry_revision","1");
-                    ConfigSettings.write(root,"renderer",changes);
+                try { saveGeometry(root,vr,!current);
                     Toast.makeText(activity,"Saved for next launch",Toast.LENGTH_LONG).show(); }
                 catch(IOException e) { page(activity,"Could not save",e.getMessage()); }
             }).setNegativeButton("Cancel",null).show();

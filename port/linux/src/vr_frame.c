@@ -105,6 +105,13 @@ static struct
 	2 seat seen from itself) */
 	float vehicle_tilt;
 	int recentre_source, seat_logged;
+	/* A seat has its own lean origin. Network play does not advance the
+	on-foot room-scale origin, so it cannot be reused as the seat's centre. */
+	struct {
+		int known, index, role, origin_valid, recentre_pending;
+		long unit, vehicle;
+		float origin[3];
+	} vehicle_seat;
 	int snap_armed, recentre_held;
 	/* vr.aim = "hand": the right controller aims (else the head), and the
 	head's and the aim's yaw this frame, for the left stick */
@@ -221,7 +228,9 @@ static struct
 	/* test29: how long the weapon hand has been held still by its temple
 	(the HUD tap); the wrist HUD's place adjusted from its default
 	(vr.wrist_hud_along/_across/_out, metres) and its size */
-	float hud_tap_dwell;
+	float hud_tap_dwell, hud_tap_release, hud_tap_cooldown;
+	float hud_tap_last[3], hud_tap_anchor[3];
+	int hud_tap_last_valid;
 	float wrist_along, wrist_across, wrist_out, wrist_size;
 	/* the aim's smoothing by zoom level (vr_set_zoom_level), as the PC mod
 	HaloCEVR's: its direction, eased toward the hand's */
@@ -810,6 +819,8 @@ void vr_reload_settings(void)
 	vr.hud_tap_distance = (float)config_real("vr.hud_tap_distance");
 	if (!(vr.hud_tap_distance >= 0.0f)) vr.hud_tap_distance = 0.0f;
 	if (vr.hud_tap_distance > 0.3f) vr.hud_tap_distance = 0.3f;
+	vr.hud_tap_armed = vr.hud_tap_last_valid = 0;
+	vr.hud_tap_dwell = vr.hud_tap_release = vr.hud_tap_cooldown = 0.0f;
 	vr.wrist_hud = config_boolean("vr.wrist_hud");
 	/* test29: the wrist HUD's place and size, bounded */
 	vr.wrist_along = (float)config_real("vr.wrist_hud_along");
@@ -933,7 +944,7 @@ void vr_initialize(void)
 		return;
 	vr.initialized = 1;
 	config_vr_vehicle_defaults();
-	platform_log("vr: HaloCE Quest test31c candidate 1.0.13 code41 (original Android touch layout; optional look without LOOK pad; correct vehicle handle for seated glass; accepted VR settings retained; OpenCE build 145 / network 22; private test, not device accepted)");
+	platform_log("vr: HaloCE Quest test32 candidate 1.0.13 code42 (in-game multiplayer/co-op guidance; seated positional tracking; entry/exit recenter; right-hand turret aim with selection; deliberate HUD hold; Safe geometry default in both Android editions; accepted touch layout, glass and VR settings retained; OpenCE build 145 / network 22; private test, not device accepted)");
 	platform_log("vr: retained baseline history: HaloCE Quest test30 candidate 1.0.12 (the menus' face buttons as the Xbox's of the same letter: X deletes a profile; the co-op host's server name; test29: OpenCE build 144 netcode, network 21; the HUD head tap held by the temple, HUD and head tap on the HUD page, wrist HUD on the wrist and movable, moving with a hand while holding the gun in both, glasses FOV and resolution to 200%% (PR #1); test28: co-op games entered in progress keep their camera upright, release checks as OpenCE ships, co-op hosted for 2 to 128 players as OpenCE's Server Setup offers, gyro aim on phones as an option; test27: OpenCE build 138 netcode, network 20, with its co-op for up to 16 players; test26: co-op: death screams no longer stop the second player, cutscene characters placed and animated as on the first; HUD head tap, reticle toggle on the left stick click with crouch on the turning stick held down (or crouch kept on the click: Controls), optional wrist HUD, adjustable head taps; impact melee along the gun with a follow-through; fingers bend smoothly against walls; test25: vehicle seat and recentre diagnostics, first-person horizon option and seat glass, settings rows that fit, vehicle offset reset; test24b: comfort vignette, smooth speed and snap angle, SPV1 marked not working; test24: co-op cutscenes animate for the second player; test23: remappable Quest buttons with the grenade on X; test22: co-op campaign host crash fixed, steady first-person vehicle view, left-hand ammo display, adjustable scopes, shot diagnostics; test21b: floating hands restored, torso-following arms, neck-pivot full body, auto two-hand lock, horn, online melee off, two-hand gun roll, pistol shots from the hand, reticle converges as shots do, per-gun aim, horn from either stick)");
 	if (!config_boolean("vr.enabled"))
 	{
@@ -977,7 +988,7 @@ void vr_initialize(void)
 	vr_reload_settings();
 	vr.zoom_level = -1;
 	vr.flashlight_armed = 1;
-	vr.hud_tap_armed = 1;
+	vr.hud_tap_armed = 0;
 	vr.noted_weapon = -1;
 	vr.gun_class = -1;
 	vr.pending_state = -1;
@@ -1595,13 +1606,96 @@ static void heading_point(const float offset[3], float out[3])
 	out[2] = vr.frame.head.position[2] - offset[0] * s + offset[2] * c;
 }
 
-/* test29: the HUD tap's point beside the head (metres out from between the
-eyes, and back), the most a hand held there may move (metres a second, its
-recent peak: vr_hand_speed) and how long it is held */
+/* HUD gesture in head-relative metres: a deliberate hold, followed by a
+sustained withdrawal before another hold can toggle. Room-scale motion of
+head and hand together must not prevent it; a head turning past a stationary
+controller must not count as a stationary hand against the temple. */
 #define HUD_TAP_OUT 0.11f
 #define HUD_TAP_BACK 0.03f
-#define HUD_TAP_SLOW 0.6f
-#define HUD_TAP_HOLD_SECONDS 0.15f
+#define HUD_TAP_SLOW 0.45f
+#define HUD_TAP_HOLD_SECONDS 0.30f
+#define HUD_TAP_RELEASE_SECONDS 0.25f
+#define HUD_TAP_RELEASE_MARGIN 0.08f
+#define HUD_TAP_COOLDOWN_SECONDS 0.80f
+#define HUD_TAP_HOLD_MARGIN 0.015f
+#define HUD_TAP_HOLD_DRIFT 0.025f
+
+static void reset_hud_tap(void)
+{
+	vr.hud_tap_armed = vr.hud_tap_last_valid = 0;
+	vr.hud_tap_dwell = vr.hud_tap_release = vr.hud_tap_cooldown = 0.0f;
+}
+
+static void update_hud_tap(int hand, float seconds)
+{
+	const unsigned int needed = HALO_XR_FRAME_FOCUSED | HALO_XR_FRAME_VIEWS_VALID;
+	float relative[3], local[3], inverse[4], target[3], distance, speed, norm = 0.0f;
+	int axis;
+	if (!(vr.hud_tap_distance > 0.0f) || hand < 0 || hand > 1 ||
+		!(vr.frame.hand_valid[hand] & 1) || vr.menus_active ||
+		(vr.frame.flags & (needed | HALO_XR_FRAME_RECENTRED)) != needed ||
+		!isfinite(seconds) || !(seconds > 0.0f) || seconds > 0.05f)
+	{
+		reset_hud_tap();
+		return;
+	}
+	for (axis = 0; axis < 4; axis++)
+	{
+		float value = vr.frame.head.orientation[axis];
+		if (!isfinite(value)) { reset_hud_tap(); return; }
+		inverse[axis] = axis == 3 ? value : -value;
+		norm += value * value;
+	}
+	if (!(norm > 0.95f && norm < 1.05f)) { reset_hud_tap(); return; }
+	for (axis = 0; axis < 3; axis++)
+	{
+		relative[axis] = vr.frame.grip[hand].position[axis] - vr.frame.head.position[axis];
+		if (!isfinite(relative[axis])) { reset_hud_tap(); return; }
+	}
+	rotate(inverse, relative, local);
+	target[0] = hand ? HUD_TAP_OUT : -HUD_TAP_OUT;
+	target[1] = 0.0f;
+	target[2] = HUD_TAP_BACK;
+	distance = distance3(local, target);
+	speed = vr.hud_tap_last_valid ? distance3(local, vr.hud_tap_last) / seconds : HUD_TAP_SLOW;
+	memcpy(vr.hud_tap_last, local, sizeof(local));
+	vr.hud_tap_last_valid = 1;
+	vr.hud_tap_cooldown = fmaxf(0.0f, vr.hud_tap_cooldown - seconds);
+	if (distance > vr.hud_tap_distance + HUD_TAP_RELEASE_MARGIN)
+	{
+		vr.hud_tap_dwell = 0.0f;
+		vr.hud_tap_release += seconds;
+		if (vr.hud_tap_release >= HUD_TAP_RELEASE_SECONDS)
+			vr.hud_tap_armed = 1;
+		return;
+	}
+	vr.hud_tap_release = 0.0f;
+	if (!vr.hud_tap_armed || vr.hud_tap_cooldown > 0.0f || vr.in_holster ||
+		speed >= HUD_TAP_SLOW ||
+		(hand ? local[0] < 0.035f : local[0] > -0.035f) ||
+		distance >= vr.hud_tap_distance + (vr.hud_tap_dwell > 0.0f ? HUD_TAP_HOLD_MARGIN : 0.0f))
+	{
+		vr.hud_tap_dwell = 0.0f;
+		return;
+	}
+	if (vr.hud_tap_dwell <= 0.0f)
+		memcpy(vr.hud_tap_anchor, local, sizeof(local));
+	if (distance3(local, vr.hud_tap_anchor) > HUD_TAP_HOLD_DRIFT)
+	{
+		vr.hud_tap_dwell = 0.0f;
+		return;
+	}
+	vr.hud_tap_dwell += seconds;
+	if (vr.hud_tap_dwell >= HUD_TAP_HOLD_SECONDS)
+	{
+		vr.hud_hidden = !vr.hud_hidden;
+		vr.hud_tap_armed = 0;
+		vr.hud_tap_dwell = 0.0f;
+		vr.hud_tap_cooldown = HUD_TAP_COOLDOWN_SECONDS;
+		vr_haptic(hand, 0.4f, 0.04f);
+		platform_log("vr: HUD %s (head tap)", vr.hud_hidden ? "hidden" : "shown");
+	}
+}
 
 static void update_gestures(void)
 {
@@ -1613,6 +1707,7 @@ static void update_gestures(void)
 
 	if (!(vr.frame.flags & HALO_XR_FRAME_FOCUSED))
 	{
+		reset_hud_tap();
 		vr.two_hand_held = 0;
 		vr.support_near = 0;
 		vr.run_push = 0.0f;
@@ -1761,51 +1856,9 @@ static void update_gestures(void)
 		}
 	}
 
-	/* test26: the HUD tap: the weapon hand by its own side of the head (its
-	temple; the right one for a right hand), once each time, shows or hides
-	the HUD (vr_hud_hidden; menus, prompts, messages and the reticle stay;
-	the HUD page's HUD row does the same). test29: a hand on its way to the
-	right shoulder's holster passed close enough to hide the HUD, and a tap
-	meant to bring it back missed (the point was at the skin, 8 cm out, but
-	a controller's middle is some way off the head with the hand against
-	it). The point is now where that middle is (11 cm out from between the
-	eyes, 3 cm back), and the hand must be held there, slowed, for
-	HUD_TAP_HOLD_SECONDS and not in a holster: a hand passing by does
-	nothing. A gun held to the cheek is about 22 cm from there */
-	if (vr.hud_tap_distance > 0.0f && (vr.frame.hand_valid[w] & 1))
-	{
-		const float side[3] = { w ? HUD_TAP_OUT : -HUD_TAP_OUT, 0.0f, HUD_TAP_BACK };
-		float temple[3], distance;
-
-		rotate(vr.frame.head.orientation, side, temple);
-		temple[0] += vr.frame.head.position[0];
-		temple[1] += vr.frame.head.position[1];
-		temple[2] += vr.frame.head.position[2];
-		distance = distance3(vr.frame.grip[w].position, temple);
-		if (distance < vr.hud_tap_distance && vr.hud_tap_armed && !vr.in_holster &&
-			vr.hand_speed[w] < HUD_TAP_SLOW && seconds > 0.0f)
-		{
-			vr.hud_tap_dwell += seconds;
-			if (vr.hud_tap_dwell >= HUD_TAP_HOLD_SECONDS)
-			{
-				vr.hud_hidden = !vr.hud_hidden;
-				vr.hud_tap_armed = 0;
-				vr.hud_tap_dwell = 0.0f;
-				vr_haptic(w, 0.4f, 0.04f);
-				platform_log("vr: HUD %s (head tap)", vr.hud_hidden ? "hidden" : "shown");
-			}
-		}
-		else
-		{
-			vr.hud_tap_dwell = 0.0f;
-			if (distance > vr.hud_tap_distance + 0.05f)
-				vr.hud_tap_armed = 1;
-		}
-	}
-	else
-	{
-		vr.hud_tap_dwell = 0.0f;
-	}
+	/* test26: the HUD tap: weapon hand at its own temple. Test32 requires
+	a steady head-relative hold and a deliberate withdrawal before rearming. */
+	update_hud_tap(w, seconds);
 
 	/* crouching: the head lower than standing (its height at the last
 	recentre) by vr.crouch_height, until it comes back within 5 cm of it */
@@ -2183,6 +2236,16 @@ int vr_controller(unsigned int *buttons, float trigger[2], float thumb[4])
 	return 1;
 }
 
+/* Called only for a newly acquired, actually recentred runtime frame. */
+static void vehicle_recentered(void)
+{
+	if (!vr.vehicle_seat.known)
+		return;
+	memcpy(vr.vehicle_seat.origin, vr.frame.head.position, sizeof(vr.vehicle_seat.origin));
+	vr.vehicle_seat.origin_valid = vr.seated;
+	vr.vehicle_seat.recentre_pending = 0;
+}
+
 /* begins the runtime's next frame unless one is begun; 0 when the session
 is not running (the host polled and slept) */
 static int frame_begin(void)
@@ -2212,6 +2275,7 @@ static int frame_begin(void)
 		vr.room_previous[0] = vr.room_now[0] = vr.frame.head.position[0];
 		vr.room_previous[1] = vr.room_now[1] = vr.frame.head.position[2];
 		vr.room_held = 1;
+		vehicle_recentered();
 	}
 	/* left-handed (vr.controls_mirrored): the sticks trade jobs, so the
 	off hand moves and the gun hand turns; their clicks follow with the
@@ -2475,7 +2539,14 @@ static void head_offset(float out[3])
 	float head[3], length, scale;
 
 	memcpy(head, vr.frame.head.position, sizeof(head));
-	if (vr.roomscale)
+	if (vr.vehicle_seat.origin_valid || vr.vehicle_seat.recentre_pending)
+	{
+		/* Keep head translation relative to this seat, including on a co-op
+		client. Do not rebase every frame: leaning must remain six-degree. */
+		for (int axis = 0; axis < 3; axis++)
+			head[axis] -= vr.vehicle_seat.origin[axis];
+	}
+	else if (vr.roomscale)
 	{
 		float t = render_interpolation_fraction();
 
@@ -2502,7 +2573,7 @@ int vr_room_step(float out_step[2])
 	const float *head = vr.frame.head.position;
 
 	out_step[0] = out_step[1] = 0.0f;
-	if (!vr.roomscale || !vr.active || !vr.heading_valid ||
+	if (!vr.roomscale || !vr.active || !vr.heading_valid || vr.vehicle_seat.recentre_pending ||
 		(vr.frame.flags & (HALO_XR_FRAME_VIEWS_VALID | HALO_XR_FRAME_RECENTRED)) != HALO_XR_FRAME_VIEWS_VALID)
 	{
 		vr_room_hold();
@@ -2813,6 +2884,44 @@ static int hand_forward(float out[3])
 	return 1;
 }
 
+/* The guest validates the actual local occupant independently of whether
+facing input was allowed this tick. A transition requests one runtime recenter;
+until that new frame arrives, the existing pose is centred locally as well. */
+void vr_vehicle_seat(long unit_index, long vehicle_index, int seat_index, int role)
+{
+	int seated = vehicle_index != -1 && seat_index >= 0;
+	int was_seated = vr.vehicle_seat.known && vr.vehicle_seat.vehicle != -1;
+	int changed = seated != was_seated || (seated &&
+		(unit_index != vr.vehicle_seat.unit || vehicle_index != vr.vehicle_seat.vehicle ||
+		 seat_index != vr.vehicle_seat.index));
+
+	vr.vehicle_seat.known = 1;
+	vr.vehicle_seat.unit = unit_index;
+	vr.vehicle_seat.vehicle = seated ? vehicle_index : -1;
+	vr.vehicle_seat.index = seated ? seat_index : -1;
+	vr.vehicle_seat.role = seated ? role : 0;
+	vr.seated = seated;
+	if (!changed)
+		return;
+	reset_hud_tap();
+	vr.vehicle_seat.origin_valid = seated;
+	vr.vehicle_seat.recentre_pending = vr.active;
+	memcpy(vr.vehicle_seat.origin, vr.frame.head.position, sizeof(vr.vehicle_seat.origin));
+	vr.room_previous[0] = vr.room_now[0] = vr.frame.head.position[0];
+	vr.room_previous[1] = vr.room_now[1] = vr.frame.head.position[2];
+	vr.room_held = 1;
+	vr.heading_valid = 0;
+	if (vr.active)
+	{
+		vr.recentre_source = !seated ? 4 : was_seated ? 5 : 3;
+		host_xr_recenter();
+		platform_log("vr: vehicle tracking: %s; role %s, seat %d; position origin %.3f/%.3f/%.3f, runtime recenter queued",
+			!seated ? "exit" : was_seated ? "seat transfer" : "enter",
+			role == 1 ? "driver" : role == 2 ? "gunner" : seated ? "passenger" : "on foot",
+			seated ? seat_index : -1, vr.vehicle_seat.origin[0], vr.vehicle_seat.origin[1], vr.vehicle_seat.origin[2]);
+	}
+}
+
 /* test25: the vehicle report (a Warthog's view sideways after a
 recentre while driving, kept through getting out and in and through
 switching views): each recentre (and what asked for it), each seat
@@ -2823,7 +2932,7 @@ seat's. Once per event, never per frame */
 static void aim_diagnostics(float game_yaw, int seated, int hand_may_aim, const float *base_heading,
 	float heading_before)
 {
-	static const char *const sources[] = { "the system or the headset regaining focus", "both sticks", "View held" };
+	static const char *const sources[] = { "the system or the headset regaining focus", "both sticks", "View held", "vehicle entry", "vehicle exit", "seat transfer" };
 	static const char *const steering[] = { "stick", "on foot", "head", "right hand", "left hand" };
 	int state = seated ? (base_heading ? 2 : 1) : 0;
 	const char *aim = hand_may_aim >= -1 && hand_may_aim <= 3 ? steering[hand_may_aim + 1] : "?";
@@ -2834,7 +2943,7 @@ static void aim_diagnostics(float game_yaw, int seated, int hand_may_aim, const 
 	if (vr.frame.flags & HALO_XR_FRAME_RECENTRED)
 	{
 		platform_log("vr: recentre (%s): %s, heading %.1f -> %.1f, head %.1f, aim %.1f (%s), game %.1f%s",
-			sources[vr.recentre_source >= 0 && vr.recentre_source <= 2 ? vr.recentre_source : 0],
+			sources[vr.recentre_source >= 0 && vr.recentre_source <= 5 ? vr.recentre_source : 0],
 			state == 2 ? "seated, first person" : state == 1 ? "seated, third person" : "on foot",
 			heading_before * 57.29578f, vr.heading * 57.29578f, vr.head_yaw * 57.29578f, vr.aim_yaw * 57.29578f,
 			aim, game_yaw * 57.29578f, seat);
@@ -3128,7 +3237,7 @@ head tap does, for the session (every start shows it) */
 void vr_set_hud_hidden(int hidden)
 {
 	vr.hud_hidden = hidden != 0;
-	vr.hud_tap_dwell = 0.0f;
+	reset_hud_tap();
 	platform_log("vr: HUD %s (VR settings)", vr.hud_hidden ? "hidden" : "shown");
 }
 

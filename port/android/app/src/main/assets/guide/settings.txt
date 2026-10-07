@@ -1,6 +1,6 @@
 NATIVE SETTINGS REFERENCE
 
-Defaults apply to new settings. Existing saved values win except the one-time VR Safe geometry migration (revision 1); subsequent explicit Safe/Normal choices are preserved. Test18 also applies third-person/right-controller vehicle defaults once; later vehicle selections persist. VR settings apply to Quest only; desktop-only options do not affect Android. Restart for renderer, networking and other startup options. Use the in-game VR pages for live supported adjustments. The integrated project updater checks automatically in the launcher; Versions & updates controls checks and installation; inherited update.auto does not replace the mod with upstream.
+Defaults apply to new settings. Both APKs default to Safe geometry, including a one-time migration of older settings (VR: vr_geometry_revision=1; flat Android: android_geometry_revision=1). Subsequent explicit Safe/Normal choices are preserved; the Android migration does not reset existing VR choices. Desktop geometry defaults stay unchanged. Test18 also applies third-person/right-controller vehicle defaults once; later vehicle selections persist. VR settings apply to Quest only; desktop-only options do not affect Android. Restart for renderer, networking and other startup options. Use the in-game VR pages for live supported adjustments. The integrated project updater checks automatically in the launcher; Versions & updates controls checks and installation; inherited update.auto does not replace the mod with upstream.
 
 browser.show_empty [boolean]
 Default: true
@@ -340,14 +340,18 @@ Where saved games and profiles go; empty for the usual place
 (~/.local/share/halo-linux, or %APPDATA%\halo on Windows).
 
 renderer.safe_geometry [boolean]
-Default: true in VR; false in flat Android
+Default: true in Quest VR and flat Android; false on desktop
 Geometry compatibility mode (Android; restart required). Streams geometry
 through the fenced stream ring with no persistent buffers/static mirrors, and CPU index rebasing.
-Default on in VR, off in flat Android. Can reduce performance. Not a data revision selector.
+Default on in both Quest VR and flat Android; desktop unchanged. Can reduce performance. Not a data revision selector.
 
 renderer.vr_geometry_revision [integer]
 Default: 1
 Internal VR geometry-default migration revision. Keep at 1 after choosing Safe or Normal.
+
+renderer.android_geometry_revision [integer]
+Default: 1
+Internal flat Android geometry-default migration revision. Keep at 1 after choosing Safe or Normal. VR uses vr_geometry_revision.
 
 network.address [string]
 Default: ""
@@ -769,7 +773,13 @@ vr.vehicle_steering [string]
 Default: "right"
 Driver steering: "right" (default), "left", "head", or "stick".
 Right/left use that physical controller, independent of weapon grip.
-Legacy "hand" means right. Gunners retain head aim. Left stick drives.
+Legacy "hand" means right. Gunners use vr.turret_aim. Left stick drives.
+
+vr.turret_aim [string]
+Default: "right"
+Mounted turret/gunner aim: "right" (default), "left", "head", or "stick".
+Controller choices use that physical hand independently of weapon grip.
+The selected controller losing tracking keeps native facing; head motion does not take over.
 
 vr.vehicle_all_up [real]
 Default: 0.0

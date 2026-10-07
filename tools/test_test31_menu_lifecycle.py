@@ -87,10 +87,9 @@ test = r'''
 int main(void) {
  char text[256],path[1024];size_t size;char *file;
  assert(config_default("renderer.safe_geometry",text,sizeof(text)));
+ assert(!strcmp(text,"true"));
 #ifdef HALO_VR
- assert(!strcmp(text,"true"));config_vr_vehicle_defaults();
-#else
- assert(!strcmp(text,"false"));
+ config_vr_vehicle_defaults();
 #endif
  assert(config_text("display.menus",text,sizeof(text))&&!strcmp(text,"pc"));
  config_path(path,sizeof(path));file=config_file_read(path,&size);assert(file);

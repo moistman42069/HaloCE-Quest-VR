@@ -1,6 +1,103 @@
-> **Current release candidate: v1.0.10 (test28, 2026-10-06).** Native System Link and the launcher's separate multiplayer/co-op browsers use OpenCE Build 138/network 20. The prior app's network 9–11 and CE01/CE02 paths are retired. Co-op lobby choices are 2–128; owner testing reports co-op works well, but maximum-size performance is not established. The detailed implementation notes below include earlier browser revisions; see [current OpenCE compatibility](OPENCE-COOP-COMPATIBILITY.md) for the active protocol.
+# Multiplayer and campaign co-op: current private builds
 
-# Current browser behavior (test19 candidate)
+Test32 retains the full **OpenCE Build 145 / network 22** menu and transport
+integration from Test31. Use matching network versions and compatible game files.
+Public v1.0.12 uses network 21 and is preserved separately. Test32 is a private
+candidate; see [player notes](TEST32-PLAYER-NOTES.md) for pending device checks.
+
+## In-game browser and hosting
+
+Choose **Play**, then **Multiplayer**. Create/select a profile if asked.
+
+| Task | In-game route |
+| --- | --- |
+| Public games (PvP and campaign) | Join Game > Server Browser |
+| Local network | Join Game > LAN |
+| Invite/private host | Join Game > Direct Link > PASTE LINK or ENTER LINK |
+| Host PvP | Create Game > Internet or LAN > MULTIPLAYER > map > gametype > Server Setup |
+| Host campaign co-op | Create Game > Internet or LAN > SINGLEPLAYER > mission > difficulty > Server Setup |
+
+The public browser uses OpenCE signed discovery, not the old launcher's HTTPS
+community catalog. Lists are ordered **most populated first**; use stick/D-pad
+navigation (MOVE on Android) to scroll the list. **REFRESH** requests current results.
+Select a row or **JOIN GAME**. Locked listings ask for the password and have a
+retry path. If an in-progress lobby preview appears, choose JOIN GAME there.
+
+**FILTERS** supports empty/full servers, game type including CO-OP, teamplay,
+password and known-map catalog. Select **APPLY** to save; DEFAULTS then APPLY
+resets filters. Known Maps is a catalog check, not a revision/fingerprint match.
+Ping is unavailable before connection. A listing is neither an exhaustive list
+of private games nor a guarantee of network reachability.
+
+For hosting, **Server Setup** chooses name, maximum players, PUBLIC/PRIVATE and
+an optional public-listing password. PvP exposes game/player/item/vehicle/
+indicator/team rules; co-op exposes friendly fire, extra enemies (per-player or
+multiplier) and player collisions. START GAME enters the lobby and START NOW
+begins. Internet hosting copies an invite when available; INVITE LINK copies
+it again. Private invites grant access without the public password. LAN games
+have no Internet invite. The 2-128 capacity option does not certify performance.
+
+**CO-OP CAMPAIGN** in the multiplayer menu is local split screen. It and ADD
+PLAYER are blocked on Quest because independent local headset views are not
+implemented. Use Create Game > Internet/LAN > SINGLEPLAYER for network co-op.
+Android retains local split-screen paths for separate controllers; device
+validation is still needed. The inherited multiplayer/network behavior is
+unchanged by Test32's launcher cleanup.
+
+## Launcher tools and older saved entries
+
+The launcher no longer exposes a second server browser or host-setup flow.
+**Multiplayer & co-op guide** gives the current in-game steps. Its **Saved
+invites** topic reads both prior launcher stores, displays entries and can copy
+an invite for Direct Link. It neither deletes/migrates preferences nor uploads
+invitations. Custom directory URLs remain stored but are not automatically
+imported into the in-game discovery service. Expired entries need fresh invites.
+Supported external invitation links still start the game through the existing
+app path.
+
+Ordinary Play archives stale one-shot `coop_host.txt`, `pvp_host.txt` and
+`join_link.txt` requests under the active set's `launcher-history` rather than
+silently executing an interrupted old command. Saved server preferences and
+maps/saves/settings are unchanged. Explicit external invites (including after
+data import) and the existing clipboard auto-join option remain available.
+
+Game-data imports/set selection, updates, input/device settings, geometry and
+network recovery settings (including the optional fixed UDP port), mods/restore,
+offline guides and logs remain in the launcher. Full instructions and controls
+are in [the current launcher guide](TEST32-LAUNCHER-GUIDE.md).
+
+## Compatibility and reports
+
+Match **network 22**, map resources and the server's content. Different ISO/
+revision files or modified maps can cause failures, but they are only one cause.
+The in-game browser does not automatically switch game sets or infer verified
+Original/Rev1/Rev2 requirements. Choose the correct imported set under **Game
+files & versions** before launch; use Game data & compatibility to compare file
+fingerprints. Retail Halo PC/Custom Edition, MCC and original Xbox are different
+network protocols.
+
+Carrier NAT, firewalls, isolated Wi-Fi and VPNs can block direct UDP even when a
+listing is visible. Check Internet Play in Settings > Network Setup; try normal
+Wi-Fi or LAN and a fresh invite. UPnP may help supported routers; no relay is
+included. Use launcher Versions & updates for reviewed port builds, not arbitrary
+upstream executable replacement.
+
+For crashes/desync/connection issues, collect both peers' Download/HaloCE logs,
+build/network versions, device and connection types, map/game-set details,
+host/join roles and reproduction steps. Report in [support Discord](https://discord.gg/S9uSCKxKx)
+or DM **@MeWhenINameMyself**. Review logs for private links before public posting.
+
+---
+
+## Historical implementation and research archive
+
+Everything below records earlier releases and investigations. Protocol numbers,
+System Link paths and launcher browser controls below are historical, not the
+current Test32 instructions. Preserve the evidence; use the current guide above.
+
+> **Historical release candidate: v1.0.10 (test28, 2026-10-06).** Native System Link and the launcher's separate multiplayer/co-op browsers use OpenCE Build 138/network 20. The prior app's network 9–11 and CE01/CE02 paths are retired. Co-op lobby choices are 2–128; owner testing reports co-op works well, but maximum-size performance is not established. The detailed implementation notes below include earlier browser revisions; see [current OpenCE compatibility](OPENCE-COOP-COMPATIBILITY.md) for the active protocol.
+
+## Historical browser behavior (test19 candidate)
 
 **In game: Multiplayer > System Link.** Signed OpenCE public discovery is
 integrated from upstream build 84. Up to 256 public games plus nine native LAN

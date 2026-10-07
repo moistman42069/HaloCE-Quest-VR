@@ -1,4 +1,35 @@
-# Controls and options - 1.0.10 VR / flat
+# Controls and options — Quest VR / flat Android
+
+## Test32 private candidate updates
+
+The accepted Android circular controls, saved layouts, gamepad behavior and
+optional drag-anywhere look are unchanged. Multiplayer and online co-op now
+start through OpenCE's in-game menus; the launcher's Multiplayer & co-op guide
+explains browsing, hosting, direct links and passwords.
+Create Game's category arrows now sit within larger clickable bounds; use
+left/right to switch Multiplayer/Singleplayer. Existing stick/D-pad behavior remains.
+
+**Geometry compatibility: Safe** is now the default on both Android and Quest.
+Normal remains an explicit launcher option; restart after changing it. This
+supersedes the historical Android Normal-default descriptions below.
+
+**VR Settings → Vehicles → TURRET AIM** selects **Right Hand** (default),
+**Left Hand**, **Head** or **Stick** for mounted gunner seats. This is independent
+of driver **STEERING**. Hand choices refer to physical controllers, regardless
+of the weapon hand. If that controller loses tracking, native facing is kept
+instead of unexpectedly switching to head aim. Vehicle entry/exit recenters;
+seated head translation uses a seat-local origin so leaning remains available
+in co-op. Third-person remains the default, and first-person remains optional.
+
+For the **HUD head gesture**, withdraw the gun hand from the temple, then bring
+it back and hold steadily for about **0.3 seconds**. A buzz confirms. Withdraw
+fully for a quarter second before repeating. Tracking loss, menus and recentering
+require a fresh withdrawal; keep using HUD → Shown/Hidden if desired. **Head Tap:
+Off** disables the gesture. The off-hand flashlight gesture is unchanged.
+
+Vehicle handle grabbing is deferred and is not part of this candidate. See
+[Test32 player notes](TEST32-PLAYER-NOTES.md) for the device checklist. Historical
+version headings below describe how existing features were introduced.
 
 **Test31 private candidate:** see [the current menu/input guide](TEST31-PLAYER-NOTES.md)
 for OpenCE's in-game screens, native text keyboard, Android direct touch and

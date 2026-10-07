@@ -328,9 +328,11 @@ static const struct config_setting config_settings[] =
 	{ "renderer.safe_geometry", _config_boolean, "false", "HALO_SAFE_GEOMETRY", _environment_value, _platform_all,
 		"Geometry compatibility mode (Android; restart required). Streams geometry\n"
 		"through the fenced stream ring with no persistent buffers/static mirrors, and CPU index rebasing.\n"
-		"Default on in VR, off in flat Android. Can reduce performance. Not a data revision selector." },
+		"Default on in both Quest VR and flat Android; desktop unchanged. Can reduce performance. Not a data revision selector." },
     { "renderer.vr_geometry_revision", _config_integer, "1", "HALO_VR_GEOMETRY_REVISION", _environment_value, _platform_vr,
         "Internal VR geometry-default migration revision. Keep at 1 after choosing Safe or Normal." },
+    { "renderer.android_geometry_revision", _config_integer, "1", "HALO_ANDROID_GEOMETRY_REVISION", _environment_value, _platform_android,
+        "Internal flat Android geometry-default migration revision. Keep at 1 after choosing Safe or Normal. VR uses vr_geometry_revision." },
 
 	{ "network.address", _config_string, "\"\"", "HALO_NET_ADDRESS", _environment_value, _platform_all,
 		"This machine's IPv4 address for system link, for a machine on several\n"
@@ -606,7 +608,17 @@ static const struct config_setting config_settings[] =
 	{ "vr.vehicle_steering", _config_string, "\"right\"", "HALO_VR_VEHICLE_STEERING", _environment_value, _platform_vr,
         "Driver steering: \"right\" (default), \"left\", \"head\", or \"stick\".\n"
         "Right/left use that physical controller, independent of weapon grip.\n"
+#ifdef HALO_VR
+        "Legacy \"hand\" means right. Gunners use vr.turret_aim. Left stick drives." },
+#else
         "Legacy \"hand\" means right. Gunners retain head aim. Left stick drives." },
+#endif
+#ifdef HALO_VR
+	{ "vr.turret_aim", _config_string, "\"right\"", "HALO_VR_TURRET_AIM", _environment_value, _platform_vr,
+		"Mounted turret/gunner aim: \"right\" (default), \"left\", \"head\", or \"stick\".\n"
+		"Controller choices use that physical hand independently of weapon grip.\n"
+		"The selected controller losing tracking keeps native facing; head motion does not take over." },
+#endif
 
 	{ "vr.vehicle_all_up", _config_real, "0.0", "HALO_VR_VEHICLE_ALL_UP", _environment_value, _platform_vr,
 		"First-person seat up offset in metres (-0.50 to 0.50), all. Global and matching vehicle offsets add; final axis is bounded to 0.50 m." },
@@ -1169,7 +1181,7 @@ static char *config_copy(const char *text, size_t length)
 
 static const char *config_default_value(const struct config_setting *setting)
 {
-#ifdef HALO_VR
+#if defined(HALO_ANDROID) || defined(HALO_VR)
     if (!strcmp(setting->name, "renderer.safe_geometry")) return "true";
 #endif
     return setting->default_value;
@@ -1467,9 +1479,16 @@ static void config_report_unknown_keys(toml_datum_t table)
 	}
 }
 
-#ifdef HALO_VR
+#if defined(HALO_ANDROID) || defined(HALO_VR)
 /* Work only on parsed, ordinary section/key lines; preserve all other text.
  * An unusual inline/dotted form is never rewritten by guessing a TOML span. */
+#ifdef HALO_VR
+#define GEOMETRY_REVISION_KEY "vr_geometry_revision"
+#define GEOMETRY_EDITION "VR"
+#else
+#define GEOMETRY_REVISION_KEY "android_geometry_revision"
+#define GEOMETRY_EDITION "Android"
+#endif
 static int config_line_key(const char *, const char *, const char *);
 static int config_line_section(const char *, const char *, char *, size_t);
 /* Preserve the previous config and replace atomically within its directory.
@@ -1486,7 +1505,20 @@ static int config_write_geometry_migration(const char *path, const char *complet
     snprintf(temporary, sizeof(temporary), "%s.safe-geometry.tmp", path);
     existing = fopen(backup, "rb");
     if (existing) fclose(existing);
-    else if (!config_write_file(backup, original)) return 0;
+    else {
+        /* Exclusive creation proves ownership: an unreadable existing backup
+         * must never be truncated or removed after a failed open. */
+        FILE *created = fopen(backup, "wbx");
+        int written, closed;
+        if (!created) return 0;
+        written = fwrite(original, 1, strlen(original), created) == strlen(original);
+        closed = fclose(created) == 0;
+        if (!written || !closed) {
+            /* Do not leave a partial new backup that retries would trust. */
+            remove(backup);
+            return 0;
+        }
+    }
     if (!config_write_file(temporary, completed)) { remove(temporary); return 0; }
     if (rename(temporary, path) != 0) { remove(temporary); return 0; }
     return 1;
@@ -1552,8 +1584,8 @@ static void config_load(void)
 		if (result.ok)
 		{
 			char *completed;
-#ifdef HALO_VR
-            toml_datum_t revision = toml_seek(result.toptab, "renderer.vr_geometry_revision");
+#if defined(HALO_ANDROID) || defined(HALO_VR)
+            toml_datum_t revision = toml_seek(result.toptab, "renderer." GEOMETRY_REVISION_KEY);
             int migrate = revision.type != TOML_INT64 || revision.u.int64 < 1;
             int can_write = 1;
             char *original = migrate ? strdup(text) : NULL;
@@ -1563,7 +1595,7 @@ static void config_load(void)
                 char *changed = config_replace_geometry_line(text, "safe_geometry", "true", &found);
                 can_write = changed && (found || safe.type == TOML_UNKNOWN);
                 if (can_write) {
-                    char *with_revision = config_replace_geometry_line(changed, "vr_geometry_revision", "1", &found);
+                    char *with_revision = config_replace_geometry_line(changed, GEOMETRY_REVISION_KEY, "1", &found);
                     free(changed);
                     if (with_revision) {
                         toml_result_t verified = toml_parse(with_revision, (int)strlen(with_revision));
@@ -1575,7 +1607,7 @@ static void config_load(void)
                         }
                     } else can_write = 0;
                 } else free(changed);
-                platform_log("settings: VR Safe geometry default migration%s; flat defaults unchanged",
+                platform_log("settings: " GEOMETRY_EDITION " Safe geometry default migration%s; later Safe/Normal choices preserved",
                     can_write ? " applied" : " in memory only (custom config syntax preserved)");
             }
 #endif
@@ -1584,14 +1616,14 @@ static void config_load(void)
 				config_set_from_file(&config_values[index], &config_settings[index], result.toptab);
 			config_report_unknown_keys(result.toptab);
 			platform_log("settings: %s", path);
-#ifdef HALO_VR
+#if defined(HALO_ANDROID) || defined(HALO_VR)
             if (migrate) config_values[config_setting_index("renderer.safe_geometry")].boolean = 1;
             completed = can_write ? config_add_missing(text, result.toptab) : NULL;
             if (migrate && can_write && !completed) completed = strdup(text);
 #else
             completed = config_add_missing(text, result.toptab);
 #endif
-#ifdef HALO_VR
+#if defined(HALO_ANDROID) || defined(HALO_VR)
             if (completed && !(migrate ? config_write_geometry_migration(path, completed, original) : config_write_file(path, completed)))
                 platform_log("settings: cannot write %s; Safe geometry migration will retry", path);
             free(original);

@@ -145,68 +145,74 @@ int main(void){
 ''')
 
 # --- 3. the HUD head tap: held by the temple, slowed, not in a holster; it shows the HUD again as it hid it
-tap = between(frame, '\t/* test26: the HUD tap:', '\n\t/* crouching:')
-hud_defines = ''.join(re.findall(r'#define HUD_TAP_\w+ [^\n]+\n', frame))
-assert hud_defines.count('#define') == 4
-run('hud_hold', r'''
-#include <assert.h>
-#include <math.h>
-#include <stdint.h>
-#include <stdio.h>
-#include "port/android/include/halo_android_abi.h"
-''' + hud_defines + r'''
-static struct { float hud_tap_distance, hud_tap_dwell, hand_speed[2]; struct halo_xr_frame frame; int hud_hidden, hud_tap_armed, in_holster; } vr;
-static int buzzes;
-static void vr_haptic(int h, float a, float s){ (void)h; (void)a; (void)s; buzzes++; }
-static void platform_log(const char *f, ...){ (void)f; }
-''' + fn(frame, 'rotate') + fn(frame, 'distance3') + r'''
-static void hud_tap(int w, float seconds)
-{
-''' + tap + r'''
-}
-static const float frame_seconds = 1.0f / 72.0f;
-/* the hand at a place, moving at a speed, for a time */
-static void hold(int w, float x, float y, float z, float speed, float seconds){
- for(float t=0;t<seconds;t+=frame_seconds){ vr.frame.grip[w].position[0]=x; vr.frame.grip[w].position[1]=y; vr.frame.grip[w].position[2]=z;
-  vr.hand_speed[w]=speed; hud_tap(w, frame_seconds); } }
-static void away(int w){ hold(w, 0.4f, 1.2f, -0.3f, 1.0f, 0.1f); }
-int main(void){
- const float tx = HUD_TAP_OUT, ty = 1.6f, tz = HUD_TAP_BACK;
- vr.hud_tap_distance=0.1f; vr.hud_tap_armed=1; vr.frame.hand_valid[0]=vr.frame.hand_valid[1]=3;
- vr.frame.head.position[1]=1.6f; vr.frame.head.orientation[3]=1;
- /* the report: hidden by a tap, then a tap again shows it */
- hold(1, tx, ty, tz, 0.2f, 0.3f); assert(vr.hud_hidden==1 && buzzes==1);
- hold(1, tx, ty, tz, 0.2f, 1.0f); assert(vr.hud_hidden==1 && buzzes==1);                  /* held on: once */
- away(1); hold(1, tx, ty, tz, 0.2f, 0.3f); assert(vr.hud_hidden==0 && buzzes==2);          /* shown again */
- /* the controller against the skin (the old point) and a little high or forward: still a tap */
- away(1); hold(1, 0.08f, 1.6f, 0.04f, 0.1f, 0.3f); assert(vr.hud_hidden==1 && buzzes==3);
- away(1); hold(1, 0.13f, 1.66f, -0.03f, 0.1f, 0.3f); assert(vr.hud_hidden==0 && buzzes==4);
- /* passing by (the reach for the right shoulder's holster): fast, or too brief, does nothing */
- away(1); hold(1, tx, ty, tz, 1.5f, 0.5f); assert(vr.hud_hidden==0);
- away(1); hold(1, tx, ty, tz, 0.3f, 0.1f); away(1); assert(vr.hud_hidden==0);
- /* in a holster (its zone reaches this far): nothing however long */
- vr.in_holster=1; hold(1, tx, ty, tz, 0.1f, 1.0f); vr.in_holster=0; assert(vr.hud_hidden==0);
- /* held at the right shoulder's holster, a gun at the cheek or held up to aim, the other temple: nothing */
- away(1); hold(1, 0.18f, 1.45f, 0.15f, 0.1f, 1.0f); hold(1, 0.06f, 1.42f, -0.12f, 0.1f, 1.0f);
- hold(1, 0.1f, 1.5f, -0.35f, 0.1f, 1.0f); hold(1, -tx, ty, tz, 0.1f, 1.0f); assert(vr.hud_hidden==0 && buzzes==4);
- /* the head turned 90 degrees left: the temple turns with it */
- { float s=sqrtf(0.5f), side[3]={tx,0,tz}, temple[3]; vr.frame.head.orientation[1]=s; vr.frame.head.orientation[3]=s;
-   rotate(vr.frame.head.orientation,side,temple);
-   away(1); hold(1, tx, ty, tz, 0.1f, 0.5f); assert(vr.hud_hidden==0);
-   hold(1, temple[0], 1.6f+temple[1], temple[2], 0.1f, 0.3f); assert(vr.hud_hidden==1); away(1);
-   hold(1, temple[0], 1.6f+temple[1], temple[2], 0.1f, 0.3f); assert(vr.hud_hidden==0); away(1);
-   vr.frame.head.orientation[1]=0; vr.frame.head.orientation[3]=1; }
- /* left-handed: the left hand at the left temple */
- hold(0, -tx, ty, tz, 0.1f, 0.3f); assert(vr.hud_hidden==1); away(0); hold(0, -tx, ty, tz, 0.1f, 0.3f); assert(vr.hud_hidden==0); away(0);
- /* off (HEAD TAP OFF) or untracked: never */
- vr.hud_tap_distance=0; hold(1, tx, ty, tz, 0.1f, 1.0f); assert(vr.hud_hidden==0 && vr.hud_tap_dwell==0);
- vr.hud_tap_distance=0.1f; vr.frame.hand_valid[1]=0; hold(1, tx, ty, tz, 0.1f, 1.0f); assert(vr.hud_hidden==0);
- puts("PASS: the HUD tap hides and shows again (the report), held by the temple for 0.15 s; a hand passing by fast or briefly, "
-      "in a holster, at the shoulder's holster, a gun at the cheek or held up, the other temple, off or untracked: nothing");
-}
-''')
-assert 'vr.hud_tap_dwell = 0.0f;' in fn(frame, 'vr_set_hud_hidden')
-assert 'vr.hud_hidden = hidden != 0;' in fn(frame, 'vr_set_hud_hidden') and 'config_write' not in fn(frame, 'vr_set_hud_hidden')
+if 'static void update_hud_tap(' in frame:
+    # Test32 replaces instant rearm/world-space speed with a dedicated helper.
+    # Execute that production helper and retained Test29 reach cases directly.
+    import sys
+    subprocess.run([sys.executable, str(ROOT / 'tools/test_test32_hud_gesture.py')], check=True)
+else:
+    tap = between(frame, '\t/* test26: the HUD tap:', '\n\t/* crouching:')
+    hud_defines = ''.join(re.findall(r'#define HUD_TAP_\w+ [^\n]+\n', frame))
+    assert hud_defines.count('#define') == 4
+    run('hud_hold', r'''
+    #include <assert.h>
+    #include <math.h>
+    #include <stdint.h>
+    #include <stdio.h>
+    #include "port/android/include/halo_android_abi.h"
+    ''' + hud_defines + r'''
+    static struct { float hud_tap_distance, hud_tap_dwell, hand_speed[2]; struct halo_xr_frame frame; int hud_hidden, hud_tap_armed, in_holster; } vr;
+    static int buzzes;
+    static void vr_haptic(int h, float a, float s){ (void)h; (void)a; (void)s; buzzes++; }
+    static void platform_log(const char *f, ...){ (void)f; }
+    ''' + fn(frame, 'rotate') + fn(frame, 'distance3') + r'''
+    static void hud_tap(int w, float seconds)
+    {
+    ''' + tap + r'''
+    }
+    static const float frame_seconds = 1.0f / 72.0f;
+    /* the hand at a place, moving at a speed, for a time */
+    static void hold(int w, float x, float y, float z, float speed, float seconds){
+     for(float t=0;t<seconds;t+=frame_seconds){ vr.frame.grip[w].position[0]=x; vr.frame.grip[w].position[1]=y; vr.frame.grip[w].position[2]=z;
+      vr.hand_speed[w]=speed; hud_tap(w, frame_seconds); } }
+    static void away(int w){ hold(w, 0.4f, 1.2f, -0.3f, 1.0f, 0.1f); }
+    int main(void){
+     const float tx = HUD_TAP_OUT, ty = 1.6f, tz = HUD_TAP_BACK;
+     vr.hud_tap_distance=0.1f; vr.hud_tap_armed=1; vr.frame.hand_valid[0]=vr.frame.hand_valid[1]=3;
+     vr.frame.head.position[1]=1.6f; vr.frame.head.orientation[3]=1;
+     /* the report: hidden by a tap, then a tap again shows it */
+     hold(1, tx, ty, tz, 0.2f, 0.3f); assert(vr.hud_hidden==1 && buzzes==1);
+     hold(1, tx, ty, tz, 0.2f, 1.0f); assert(vr.hud_hidden==1 && buzzes==1);                  /* held on: once */
+     away(1); hold(1, tx, ty, tz, 0.2f, 0.3f); assert(vr.hud_hidden==0 && buzzes==2);          /* shown again */
+     /* the controller against the skin (the old point) and a little high or forward: still a tap */
+     away(1); hold(1, 0.08f, 1.6f, 0.04f, 0.1f, 0.3f); assert(vr.hud_hidden==1 && buzzes==3);
+     away(1); hold(1, 0.13f, 1.66f, -0.03f, 0.1f, 0.3f); assert(vr.hud_hidden==0 && buzzes==4);
+     /* passing by (the reach for the right shoulder's holster): fast, or too brief, does nothing */
+     away(1); hold(1, tx, ty, tz, 1.5f, 0.5f); assert(vr.hud_hidden==0);
+     away(1); hold(1, tx, ty, tz, 0.3f, 0.1f); away(1); assert(vr.hud_hidden==0);
+     /* in a holster (its zone reaches this far): nothing however long */
+     vr.in_holster=1; hold(1, tx, ty, tz, 0.1f, 1.0f); vr.in_holster=0; assert(vr.hud_hidden==0);
+     /* held at the right shoulder's holster, a gun at the cheek or held up to aim, the other temple: nothing */
+     away(1); hold(1, 0.18f, 1.45f, 0.15f, 0.1f, 1.0f); hold(1, 0.06f, 1.42f, -0.12f, 0.1f, 1.0f);
+     hold(1, 0.1f, 1.5f, -0.35f, 0.1f, 1.0f); hold(1, -tx, ty, tz, 0.1f, 1.0f); assert(vr.hud_hidden==0 && buzzes==4);
+     /* the head turned 90 degrees left: the temple turns with it */
+     { float s=sqrtf(0.5f), side[3]={tx,0,tz}, temple[3]; vr.frame.head.orientation[1]=s; vr.frame.head.orientation[3]=s;
+       rotate(vr.frame.head.orientation,side,temple);
+       away(1); hold(1, tx, ty, tz, 0.1f, 0.5f); assert(vr.hud_hidden==0);
+       hold(1, temple[0], 1.6f+temple[1], temple[2], 0.1f, 0.3f); assert(vr.hud_hidden==1); away(1);
+       hold(1, temple[0], 1.6f+temple[1], temple[2], 0.1f, 0.3f); assert(vr.hud_hidden==0); away(1);
+       vr.frame.head.orientation[1]=0; vr.frame.head.orientation[3]=1; }
+     /* left-handed: the left hand at the left temple */
+     hold(0, -tx, ty, tz, 0.1f, 0.3f); assert(vr.hud_hidden==1); away(0); hold(0, -tx, ty, tz, 0.1f, 0.3f); assert(vr.hud_hidden==0); away(0);
+     /* off (HEAD TAP OFF) or untracked: never */
+     vr.hud_tap_distance=0; hold(1, tx, ty, tz, 0.1f, 1.0f); assert(vr.hud_hidden==0 && vr.hud_tap_dwell==0);
+     vr.hud_tap_distance=0.1f; vr.frame.hand_valid[1]=0; hold(1, tx, ty, tz, 0.1f, 1.0f); assert(vr.hud_hidden==0);
+     puts("PASS: the HUD tap hides and shows again (the report), held by the temple for 0.15 s; a hand passing by fast or briefly, "
+          "in a holster, at the shoulder's holster, a gun at the cheek or held up, the other temple, off or untracked: nothing");
+    }
+    ''')
+    assert 'vr.hud_tap_dwell = 0.0f;' in fn(frame, 'vr_set_hud_hidden')
+    assert 'vr.hud_hidden = hidden != 0;' in fn(frame, 'vr_set_hud_hidden') and 'config_write' not in fn(frame, 'vr_set_hud_hidden')
 
 # --- 4. the HUD page: HUD shown/hidden (the session's), the head tap, the wrist HUD's place and size
 hud_page = between(menu, 'static struct vr_menu_setting const vr_menu_hud[] =', '};')
