@@ -372,7 +372,7 @@ static char const *const port_function_names[] =
 	"player profile save changes",
 	/* (the server browser's password screen) */
 	"port password init", "port password edit", "port password join", "port password back",
-	"port direct link edit",
+	"port direct link edit", "port browser filters apply",
 };
 
 /* the PC version's game data functions that the Xbox's have not, from

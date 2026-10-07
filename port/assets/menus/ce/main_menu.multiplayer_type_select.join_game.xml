@@ -109,7 +109,6 @@
 		<child widget="main_menu/multiplayer_type_select/join_game/header_join_game" y="-21"/>
 		<child widget="main_menu/multiplayer_type_select/join_game/join_game_items_list"/>
 		<child widget="main_menu/multiplayer_type_select/join_game/gamespy_error_fullscreen"/>
-		<child widget="main_menu/multiplayer_type_select/join_game/filters/filters_screen"/>
 	</widget>
 	<widget name="main_menu/multiplayer_type_select/join_game/op_browser_mode" width="150" height="28" flags="pass_unhandled_to_focused_child" bitmap="bitmaps/option_bkds_sm2" color="#FF2896FF">
 		<child widget="main_menu/multiplayer_type_select/join_game/browser_mode_spinner" x="25" y="1"/>

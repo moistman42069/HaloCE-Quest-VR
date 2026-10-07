@@ -32,6 +32,24 @@ and length limit. Desktop builds retain upstream's inline physical-keyboard
 editing. These are source behavior and automated checks; device acceptance is
 still required for pointer placement and keyboard readability.
 
+### Server filters and ordering
+
+The in-game browser's **FILTERS** page controls empty/full servers, game type
+(including co-op), team or free-for-all games, password protection and known
+maps. **APPLY** saves changes for later launches; **Cancel** discards edits and
+**Defaults** prepares the default choices without saving until Apply.
+
+Public games retain the networking backend's existing population ordering;
+LAN and Direct Link lists also show the most players first. Live refreshes
+keep the selected host by its identifier when its position changes. A pending
+join continues to target that host regardless of listing order.
+
+**Known Maps** checks names in the active game-set catalog. It does not verify
+map bytes or revisions, and joining still performs the normal content checks.
+The signed directory does not supply a measured ping before connection, so
+there is no working preconnection latency filter. Protocol compatibility
+gates and password authentication are unchanged.
+
 ## Upstream menu format
 
 The game's menus are the PC version's (Halo Custom Edition's): its main menu
