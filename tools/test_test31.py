@@ -72,6 +72,52 @@ int main(void){
 assert 'CUSTOM_EDITION_TAG_CACHE_BYTES_UPGRADED' in fn(cache,'cache_file_tag_cache_contains')
 assert 'cache_file_tag_cache_contains' in read('source/hs/hs.c')
 
+run('map_preflight', r'''
+#include <assert.h>
+#include <stdio.h>
+#include <string.h>
+#include <strings.h>
+#include <wchar.h>
+typedef int boolean;
+typedef int HANDLE;
+#define TRUE 1
+#define FALSE 0
+#define INVALID_HANDLE_VALUE -1
+#define GENERIC_READ 1
+#define OPEN_EXISTING 1
+#define NUMBEROF(x) (sizeof(x)/sizeof((x)[0]))
+#define CUSTOM_EDITION_LEVEL_NAME_PREFIX "custom_maps\\"
+#define _strnicmp strncasecmp
+#define csstrlen strlen
+static int cached,stock,ce,legacy,opens,dialogs,strips;
+static wchar_t shown[512];
+static const char *tag_name_strip_path(const char *s){strips++;const char *n=strrchr(s,'\\');return n?n+1:s;}
+static int custom_edition_cache_present(const char *s,char *message,long size){snprintf(message,size,"CE unavailable: %.64s",s);return ce;}
+static int cache_files_precache_map_loaded(const char *s){return cached;}
+static const char *cache_files_map_directory(void){return "maps/";}
+static HANDLE CreateFileA(const char *s,int a,int b,void *c,int d,int e,void *f){opens++;return stock?2:-1;}
+static void CloseHandle(HANDLE f){assert(f==2);}
+static int custom_edition_map_file_present(const char *s){return legacy;}
+static void display_error_text_when_main_menu_loaded(const wchar_t *s){dialogs++;wcsncpy(shown,s,511);}
+void platform_log(const char *s,...){(void)s;}
+''' + fn(read('port/linux/game/custom_edition_cache.c'),'custom_edition_level_name') + fn(cache,'cache_files_map_present') + r'''
+int main(void){
+ assert(cache_files_map_present(0));assert(cache_files_map_present(""));assert(!strips && !opens && !dialogs);
+ for(cached=0;cached<2;cached++)for(stock=0;stock<2;stock++)for(ce=0;ce<2;ce++){
+  int before=opens;dialogs=0;
+  assert(cache_files_map_present("CuStOm_MaPs\\bloodgulch")==ce);
+  assert(opens==before && dialogs==!ce); /* same-basename Xbox map cannot satisfy CE namespace */
+ }
+ ce=0;cached=0;stock=1;assert(cache_files_map_present("levels\\a10\\a10"));
+ stock=0;cached=1;assert(cache_files_map_present("levels\\a10\\a10"));
+ cached=0;legacy=0;assert(!cache_files_map_present("levels\\a10\\a10"));
+ assert(wcsstr(shown,L"active game set"));
+ legacy=1;assert(!cache_files_map_present("levels\\a10\\a10"));
+ assert(wcsstr(shown,L"another version"));
+ puts("PASS: real map preflight: empty/pending map, CE namespace isolated from stock/cache, case handling, stock cache/file and actionable missing/legacy errors");
+}
+''')
+
 config=read('port/linux/src/port_config.c')
 assert '"vr.vehicle_warthog_hide_glass", _config_boolean, "true"' in config
 assert '"vr.vehicle_warthog_hide_glass", _vr_setting_boolean' in read('port/linux/game/vr_menu.c')
