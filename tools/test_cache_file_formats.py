@@ -11,6 +11,7 @@ When real maps are present (HALO_CUSTOM_EDITION_MAPS, or the gitignored
 assets/custom_edition), test_real_maps_* also check the results recorded in
 docs/custom_edition_caches.md.
 """
+import errno
 import os
 from pathlib import Path
 import random
@@ -73,6 +74,20 @@ def report_tool(tmp_path_factory):
                    f"-I{MODULE.parent}", str(MODULE), str(TOOL), "-o", str(output)]
         result = subprocess.run(command, capture_output=True, text=True)
         if result.returncode == 0:
+            try:
+                # WSL1 can compile ILP32 when multilib is installed but cannot
+                # execute it. This parser is width-independent; only ENOEXEC
+                # permits the native-width fallback. The separate compile test
+                # still checks the actual game's ILP32 compilation.
+                probe = subprocess.run([str(output)], capture_output=True, text=True)
+            except OSError as error:
+                if error.errno != errno.ENOEXEC:
+                    raise
+                print(f"cache report: {target} is not executable on this host; trying native width")
+                errors.append(f"{target}: {error}")
+                continue
+            assert probe.returncode == 2 and "usage: cache_file_report" in probe.stderr, (
+                "report tool execution probe failed", probe.returncode, probe.stdout, probe.stderr)
             return output
         errors.append(result.stdout + result.stderr)
     # a compile error is a failure, not a missing tool: report it

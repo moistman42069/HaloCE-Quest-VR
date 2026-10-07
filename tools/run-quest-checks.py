@@ -27,6 +27,8 @@ SUITES = [
     'test_test31_flat_pointer',
     'test_test31_menu_settings', 'test_test31_graphics',
     'test_test31_vr_local_players',
+    'test_test31_touch_lifecycle',
+    'test_test31_menu_startup',
 ]
 
 def main():
