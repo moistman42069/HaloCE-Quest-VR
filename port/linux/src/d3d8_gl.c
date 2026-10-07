@@ -4126,6 +4126,19 @@ int halo_vr_model_mirrored(void)
 	return vr_mirror_winding;
 }
 
+/* Transparent groups can draw recursively, after the first-person submission
+scope ended. Preserve both the model flag and its current part's parity. */
+int halo_vr_winding_state(void)
+{
+	return (vr_mirror_winding ? 1 : 0) | (vr_skinning_mirrored ? 2 : 0);
+}
+
+void halo_vr_restore_winding_state(int state)
+{
+	vr_mirror_winding = (state & 1) != 0;
+	vr_skinning_mirrored = (state & 2) != 0;
+}
+
 void halo_vr_skinning_mirrored(int mirrored)
 {
 	vr_skinning_mirrored = mirrored != 0;

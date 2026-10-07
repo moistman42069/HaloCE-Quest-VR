@@ -1013,7 +1013,11 @@ real_vector4d *offset_vector4d(
 	return result;
 }
 
+#ifdef HALO_VR
+static void rasterizer_transparent_geometry_group_draw_scoped(
+#else
 void rasterizer_transparent_geometry_group_draw(
+#endif
 	struct transparent_geometry_group *group,
 	boolean dirty)
 {
@@ -3560,3 +3564,20 @@ void rasterizer_transparent_geometry_group_draw(
 
 	return;
 }
+
+#ifdef HALO_VR
+/* A queued first-person part outlives the submitting model's mirror scope.
+Use its captured flag for every shader path, including recursive extra layers
+and active camouflage. The body can return early (e.g. a skipped camouflage pass);
+restoration still happens here, without changing the flat rendering path. */
+void rasterizer_transparent_geometry_group_draw(
+	struct transparent_geometry_group *group,
+	boolean dirty)
+{
+	int previous = halo_vr_winding_state();
+	halo_vr_mirror_winding(group &&
+		(group->geometry_flags & RASTERIZER_VR_MIRRORED_GEOMETRY_FLAG));
+	rasterizer_transparent_geometry_group_draw_scoped(group, dirty);
+	halo_vr_restore_winding_state(previous);
+}
+#endif

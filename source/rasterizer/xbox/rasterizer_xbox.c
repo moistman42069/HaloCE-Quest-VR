@@ -1235,6 +1235,14 @@ int halo_vr_model_mirrored(void);
 static signed char vr_node_winding[RASTERIZER_MAXIMUM_NODES_PER_MODEL];
 static short vr_node_winding_count;
 static boolean vr_root_mirrored;
+
+unsigned long rasterizer_vr_capture_geometry_flags(unsigned long flags, boolean first_person)
+{
+	flags &= ~RASTERIZER_VR_MIRRORED_GEOMETRY_FLAG;
+	if (first_person && halo_vr_model_mirrored())
+		flags |= RASTERIZER_VR_MIRRORED_GEOMETRY_FLAG;
+	return flags;
+}
 #endif
 
 void rasterizer_set_model_skinning(
