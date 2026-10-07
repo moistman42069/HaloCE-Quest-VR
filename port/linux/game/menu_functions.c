@@ -1364,10 +1364,11 @@ static boolean saved_game_delete(short controller)
 
 /* the settings' screens (tools/port_settings.py): every spinner of a
 setting in the screen */
-static void settings_each(struct widget_instance *widget, boolean (*visit)(struct widget_instance *spinner,
+static boolean settings_each(struct widget_instance *widget, boolean (*visit)(struct widget_instance *spinner,
 	struct pc_menu_setting *setting))
 {
 	struct widget_instance *child;
+	boolean success = TRUE;
 
 	for (child = widget->child; child; child = child->next)
 	{
@@ -1375,10 +1376,11 @@ static void settings_each(struct widget_instance *widget, boolean (*visit)(struc
 			pc_menu_setting_get(child->definition_tag_index) : NULL;
 
 		if (setting)
-			visit(child, setting);
+			success = visit(child, setting) && success;
 		else
-			settings_each(child, visit);
+			success = settings_each(child, visit) && success;
 	}
+	return success;
 }
 
 static struct widget_instance *screen_of(struct widget_instance *widget)
@@ -1402,6 +1404,19 @@ static boolean setting_changed_save(struct widget_instance *spinner, struct pc_m
 	}
 	platform_log("menus: %s = %s", setting->setting, setting->values[index]);
 	setting->loaded_index = index;
+	return TRUE;
+}
+
+/* A failed write must suppress the button's back=true event. Successful
+rows keep their loaded index, while failed rows remain available for retry. */
+static boolean settings_save(struct widget_instance *widget)
+{
+	if (!settings_each(screen_of(widget), setting_changed_save))
+	{
+		display_error_text_deferred(L"Some settings could not be saved.\r\nCheck available storage and try OK again.\r\nSee the launch log for the setting name.", NONE);
+		return campaign_fail();
+	}
+	platform_display_apply();
 	return TRUE;
 }
 
@@ -5551,8 +5566,7 @@ boolean pc_menu_event_function_invoke(
 		}
 		else if (!strcmp(name, "port settings save"))
 		{
-			settings_each(screen_of(widget), setting_changed_save);
-			platform_display_apply();
+			return settings_save(widget);
 		}
 		else if (!strcmp(name, "port settings defaults"))
 		{

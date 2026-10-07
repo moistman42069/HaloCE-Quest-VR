@@ -1,9 +1,9 @@
 # Test31 menu settings: runtime audit
 
 Source review on 2026-10-07 against pinned OpenCE Build 145,
-`4e8ed2f196e0edd1f2830a4de9841686aabbf466`. This is an implementation
-snapshot during integration, not device acceptance. Use the pinned Git object;
-the reference checkout working tree is older than Build 145.
+`4e8ed2f196e0edd1f2830a4de9841686aabbf466`. This records the integrated
+source and focused host checks, not device acceptance. Use the pinned Git
+object; the reference checkout working tree is older than Build 145.
 
 The complete screen inventory is in `TEST31-OPENCE-MENU-INVENTORY.md`.
 Imported XML and configuration keys alone do not establish working settings.
@@ -14,7 +14,7 @@ Imported XML and configuration keys alone do not establish working settings.
 | --- | --- |
 | Master volume | `dsound_sdl.c::audio_update_volume` now reads changes on the game thread and updates the existing mixer under its mutex. No configuration reads were added to the audio callback. Existing positive custom gains above 1 remain supported. |
 | Music/effects volume | `sound_manager.c::sound_manager_port_volume` now follows Build 145's class-gain multiplier. Music affects the music class; effects affects all other classes, including speech. Script class fades and scripted-dialog exemptions from nondialog attenuation remain intact. Defaults are **1.0**, not 100. |
-| Audio enabled | Existing device-start gate; requires restarting the game. Label/help must say so. |
+| Audio enabled | Existing device-start gate; explicitly labeled **SOUND (RESTART)** with restart help. |
 | Reverb | Implemented from OpenCE `8a8e7059` (MrBruh, based on Tyberious #44/#46), default **OFF**. ON enables room reflection/decay and high-frequency obstruction/occlusion filters. OFF preserves the accepted dry decoder, Catmull-Rom resampler, soft limiter, spatial gain and diagnostics. Unlike upstream, filtering also follows the toggle. DSP storage is static and bounded; quiet/OFF tails stop processing and clear history. Listener/source inputs are finite-clamped, environment changes fade for 85 ms, and master mute also silences stored tails. |
 
 `tools/test_test31_audio.py` compiles the production gain helpers with
@@ -38,17 +38,17 @@ Quest timing result.
 | Interpolation | Current `halo_interpolation_enabled` rereads configuration generation. Preserve accepted VR interpolation defaults. |
 | High-resolution HUD | `hud_hires_override_find` rereads configuration generation, including title-art high-resolution text selection. |
 | High-resolution text | Font enablement and the rasterizer font lookup now invalidate on configuration generation changes. This also clears cached disabled-font misses, so OFF and ON both apply live. Title art retains its existing live path. |
-| Anti-aliasing | **No app consumer for `display.anti_aliasing` found.** Build 145 adds renderer passes/targets for FXAA/SMAA/SSAA/MSAA. The app OpenXR swapchain has `sampleCount = 1`; legacy D3D multisample state wrappers are not evidence of a working MSAA pipeline. Do not expose the upstream AA choices as working until implemented. |
-| Shadow resolution | **No app consumer for `display.shadow_resolution` found.** Build 145 scales shadow targets and related render state. The app's existing `graphics.shadows` is an enable/preset control, not a substitute for shadow-map size. |
-| Per-pixel lighting | **No app consumer for `display.per_pixel_lighting` found.** Build 145 changes model-lighting shader selection and uniforms. Existing specular/dynamic-light toggles have different semantics. |
+| Anti-aliasing | Integrated target allocation/resolve and postprocess consumers in `d3d8_gl.c`, `xgpu_post.c` and `render.c`. Android exposes OFF, FXAA and MSAA 2x/4x; desktop retains SMAA/SSAA/8x. VR draws/resolve use private per-eye targets; the runtime swapchain stays single-sample. GPU limits and allocation failures fall back without ending VR. Default remains **OFF**. |
+| Shadow resolution | Integrated 128/256/512/1024 target sizes and normalized blur scaling in `d3d8_gl.c` / `rasterizer_xbox_shadows.c`. Size changes are applied at the frame boundary, with target-cache invalidation. The existing shadow enable/preset gate remains independent. Default remains **128**. |
+| Per-pixel lighting | Integrated actual model-program recognition, world position/normal capture, light uniforms and shader-key variants. Unrecognized or failed shaders retain the existing vertex-lighting path. Existing specular/dynamic-light settings keep their meanings. Default remains **OFF**. |
 | Player names and name scale | Actual generation-aware consumers in `source/interface/hud.c`; preserve all/allies/enemies/none and existing scale bounds. |
 | Scoreboard layout/background | Pinned full-screen scoreboard consumer integrated, including network ping rows, 128-player scrolling, team columns or score ordering, background color/enablement, quit-player filtering and co-op names/pings. Existing local split-screen keeps its compact rows. Hold score plus D-pad or right-stick vertical to page; keyboard Page Up/Down and mouse wheel also work. Input ownership expires on closure/map exit/focus loss; ordinary gameplay input remains unchanged outside the hold. |
 
 Quest already has real `vr.resolution_scale`, `vr.refresh_rate` and per-headset
 `graphics.preset`/effect switches. Keep these accessible through VR Settings,
 with their existing safe defaults and script-aware effect gating. They are
-useful platform controls, but do not satisfy the missing AA, shadow-resolution
-or per-pixel features by renaming them.
+platform controls alongside the separate AA, shadow-resolution and per-pixel
+lighting features.
 
 ## Input, network and lifecycle
 
@@ -63,13 +63,21 @@ or per-pixel features by renaming them.
   consumers. Friendly-fire/collision options flow through host game variants;
   their mere absence as literal strings in collision code is not a missing
   consumer (bipeds call `network_coop_player_collisions`).
-- `update.auto` comes from the desktop self-updater. The menu must route to
-  the app's validated APK updater or explain launcher ownership; it must not
-  enable blind desktop/upstream binary replacement on Android.
-- Default/Save/Cancel need checks per settings page. Hidden unsupported rows
-  must not accidentally be committed as default values to active VR settings.
-- Recheck the gaps above after root integration. They are identified work,
-  not permission to declare the full menu requirement complete.
+- Android's update row now says **USE LAUNCHER**, with the exact Versions &
+  compatible updates path. Its desktop `update.auto` spinner is excluded on
+  Android, so there is no inert switch or unsafe upstream binary replacement.
+- Defaults stages spinner values without writing configuration/profile data.
+  Cancel posts the ordinary Back action and does not save staged subpage values.
+  OK saves only changed selections. A failed write leaves the page open, names
+  the failed setting in the log and shows a storage/retry explanation. Successful
+  rows are not rewritten on retry; absent/unselected and spinner-item behavior
+  is preserved. This is not an all-or-nothing configuration transaction: rows
+  successfully saved before another row fails remain saved.
+- Saved gametype PC options keep their original extension/header/checksum
+  format. Compatible legacy normalization is followed by the existing engine
+  bounds validator. Invalid timer/vehicle fields cannot bypass that validator
+  with a correct checksum; missing/corrupt/invalid extensions use variant defaults.
+  The previous async writer finishes before new option storage is overwritten.
 
 ## Remaining device checks
 
@@ -81,36 +89,33 @@ OpenXR context resets. Flat: controller and touch navigation, V-sync behavior,
 and external keyboard/mouse where available. No APK has been packaged for
 this audit.
 
-## Exact pending renderer dependency patches
+## Integrated renderer provenance and validation
 
-These are feasible upstream integrations, not permanently unsupported options.
-Keep accepted defaults: shadow size 128, per-pixel lighting OFF, AA OFF.
+The previously identified dependency patches are now integrated. Accepted
+defaults remain shadow size 128, per-pixel lighting OFF and AA OFF. The following
+source boundaries explain their scope; appearance/performance remain device checks.
 
-- **Shadow resolution `1dc533fe`**: 168 additions / one deletion overall.
-  The 74-line renderer change identifies the game's 128x128 R5G6B5 shadow
-  targets, applies scales 1/2/4/8 and invalidates recent target lookup between
-  frames. The 86-line `rasterizer_xbox_shadows.c` change scales half-texel blur
-  constants and adds two blur passes per doubled scale. Merge the prototype
-  into source fixups. Preserve VR eye-target scaling and apply changes only
-  before either eye; test target identity, scale/cache switching, blur width,
-  and memory/performance at 1024. Existing shadow-effect OFF still wins.
-- **Per-pixel lighting `3dba558e`**: 444 additions / 36 deletions overall,
-  spanning `d3d8_gl.c`, `nv2a_vsh.c`, `nv2a_psh.c`, `xgpu.h`, the vertex-shader
-  initializer, fixup declaration and config. It recognizes actual model
-  lighting program instructions (9/10/17/27), captures skinned normal/world
-  position, adds a program-key variant and light uniforms, and falls back to
-  existing vertex lighting when recognition/compile/link fails. Preserve the
-  app's constant-serial and cull/mirror fixes. Verify OFF shader text/program
-  choice remains identical, lit and unlit cache keys differ, recognized/
-  rejected programs behave correctly, and left-hand mirrors/fog/transparency
-  keep their existing output. GPU cost/appearance still need device checks.
-- **Anti-aliasing `94882796`**: 2,434 additions / 51 deletions overall,
-  including a 524-line `xgpu_post.c`, SMAA source/tables/license, target
-  allocation/resolution changes, renderer finish hook and asset embedding.
-  It is a separate renderer integration, not a spinner-only patch. Android
-  choices are FXAA/MSAA 2x/4x; desktop also has SMAA/SSAA/MSAA 8x. Quest needs
-  per-eye target/postprocess ownership reviewed independently of desktop
-  back-buffer presentation. Keep OFF and preserve accepted safe geometry.
+- **Shadow resolution `1dc533fe`**: scales actual Xbox shadow targets, adjusts
+  blur half-texel constants and adds normalized passes for the larger targets.
+- **Per-pixel lighting `3dba558e`**: recognizes model lighting programs
+  9/10/17/27 and adds lit shader variants, preserving the existing constant
+  serial, mirrored culling, fog, transparency and fallback paths.
+- **Anti-aliasing `94882796`**: adds postprocessing/SMAA resources, multisample
+  target/resolve ownership and the scene-finish hook before HUD rendering.
+  App target recycling, crosshair capture, eye/scope targets and state
+  invalidation are retained. The Android menu follows upstream mobile choices.
+
+`tools/test_test31_graphics.py` passed against actual software Mesa GLES with
+GLSL 300 ES and 310 ES. It compares 67 OFF vertex-program outputs and 144 OFF
+pixel-key outputs byte-for-byte with pre-integration `d6100629`, compiles/links
+all four recognized lit programs, rejects mutated diffuse instructions, draws
+FXAA while preserving alpha/outside-viewport pixels, recycles three eye/scope
+scratch sizes through 100 cycles, and resolves actual 2x/4x MSAA color/depth.
+Injected texture/FBO/MSAA failures preserve the source and keep VR ownership.
+Production shadow configuration/blur helpers pass ASan/UBSan with frame-boundary
+updates and normalized tent weights. This proves software-GL behavior only;
+it establishes neither Quest frame rate nor headset visual acceptance, and
+Mesa's four-sample limit means no 8x device result is claimed.
 
 Reverb deliberately does not import unrelated upstream ADPCM 65-to-64 sample
 changes, windowed-sinc resampling, distance-law changes or replacement limiter.
@@ -124,3 +129,38 @@ parser saturation, paging debounce and release/expiry. The actual XDK header
 supplies pad constants. Reverb tests also derive E_INVALIDARG from the real
 project HRESULT header, preventing a mock-only declaration from hiding an
 unknown SDK constant. Audio enabled now explicitly says SOUND (RESTART).
+
+## Final handler and settings-save audit
+
+`tools/test_test31_menu_settings.py` compiles production settings/profile
+helpers and playlist extension/get/save helpers with ASan/UBSan. It exercises
+failed Save and retry, nested rows, unchanged/unselected rows, Defaults staging,
+profile inverse flags, serialized writer handoff, option roundtrips, legacy
+fallback, checksum/header corruption and valid-checksum invalid fields. The
+checksum primitive is mocked deterministically: these are framing/validation
+tests, not new cryptographic algorithm claims. Guest disk-header integer width
+and the real 28-byte option layout are asserted.
+
+All imported XML event/data names are checked against actual dispatch tables.
+At audit time there are **126 event names and 31 data names**, plus **49
+setting keys in 50 widgets**. Every setting has a config/profile table entry
+and matching display-label/value counts. Special handling:
+
+- Gametype init/set names use the shared prefix dispatch and option-table code.
+- Six inherited list/color disposal events are no-ops because the port owns
+  static list state and the widget engine frees per-widget memory.
+- The inherited spinner click event is served by the shared widget pointer and
+  controller navigation paths; it needs no duplicate per-screen handler.
+- Browser column headers are disabled and their sorting arrows hidden. The
+  working browser remains ordered by population, with functional filter controls.
+- The old Direct IP XML is unreachable from menu navigation. Direct Link opens
+  the real browser and uses its paste/edit-invite path instead.
+- Shared button-bar update is intentionally empty; native widget focus/input
+  and explicit button events own the behavior. Cancel emits controller Back.
+
+The separate pointer, lifecycle, presentation and input suites cover their
+owners. Passing host tests does not replace testing flat touch/controller input
+and Quest ray/controller navigation across every screen in the candidate.
+The old `test_test15_io.py` touch harness now includes `<stdatomic.h>` needed by
+its extracted production host code; its full suite passes without changing
+production touch behavior.

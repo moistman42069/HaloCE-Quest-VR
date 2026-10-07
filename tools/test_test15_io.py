@@ -21,6 +21,7 @@ run('touch',r'''
 #include <string.h>
 #include <stdio.h>
 #include <pthread.h>
+#include <stdatomic.h>
 #include "port/android/include/halo_touch.h"
 typedef void JNIEnv;typedef void* jclass;typedef int jint;typedef int jboolean;typedef float jfloat;typedef unsigned long long Uint64;
 #define JNIEXPORT
