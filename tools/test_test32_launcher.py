@@ -214,6 +214,8 @@ class GuideCheck { public static void main(String[] args) {
             assert 'System Link' not in page and '\ufffd' not in page
         for route in ['Multiplayer > Join Game > Server Browser', 'Multiplayer > Join Game > LAN', 'most populated games first', 'APPLY']:
             assert route in pages[0], route
+        assert 'list auto-scrolls as you move through rows' in pages[0]
+        assert 'scroll arrows' not in pages[0]
         for text in ['Create Game > Internet', 'SINGLEPLAYER', 'FRIENDLY FIRE', 'EXTRA ENEMIES', 'PLAYER COLLISIONS',
                      'START GAME', 'START NOW', '128', 'local split screen', 'blocked on Quest']:
             assert text in pages[2], text
