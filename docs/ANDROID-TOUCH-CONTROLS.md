@@ -1,4 +1,4 @@
-# Flat Android controls and HUD editor (Test31b / v1.0.13)
+# Flat Android controls and HUD editor (Test31c / v1.0.13 code41)
 
 Applies to the flat Android package `com.halo.decomp` (Android 9+ / ARM64). Quest
 uses tracked controllers and has no flat touch overlay.
@@ -26,19 +26,18 @@ The game's selected controller profile still determines button actions. MOVE + F
 
 ## Menus and fallback navigation
 
-Tap menu rows and native keyboard keys directly. Compact D-pad, **A/B/X/Y**
-and **Start** controls are available in menus as well, including the original
-stock menus if OpenCE menu loading fails. A confirms; B cancels; the other
-letters follow the action shown by the game. The separate **Back** control
-remains at the top right. A press uses either navigation buttons or the direct
-pointer, so it cannot select twice.
+The original circular controls keep their saved positions in menus and gameplay;
+there is no separate rectangular menu strip. MOVE or the arrows navigate,
+**A / Jump** confirms, **B / Melee** or **Back** cancels, **X / Use** and
+**Y / Swap** perform the game's displayed X/Y actions, and **Menu** sends Start.
+These controls also work with the original stock menus if OpenCE loading fails.
 
-Use **Hide controls** at the top left to uncover a menu item behind a navigation
-button; **Show controls** restores the buttons. New menu sessions restore them
-automatically. Controller auto-hide and Always hide do not remove this menu
-navigation. Returning to gameplay restores the normal HUD according to your
-saved visibility policy. A finger held through Resume must lift before it can
-operate a gameplay control. Menus and gameplay never share a held press.
+Tap native menu rows or keyboard keys directly in uncovered space. A contact
+belongs to either its circular control or the direct pointer, never both.
+The existing **Touch** button changes visibility; **HUD** opens the editor.
+Those recovery buttons remain reachable in menus when controls are hidden.
+Returning to gameplay follows the saved visibility/controller policy. A finger
+held through Resume must lift before it can operate a gameplay control.
 
 ## Customize during play
 
@@ -52,10 +51,15 @@ One full safe-area screen-width swipe turns 180 degrees at sensitivity 1. Start 
 
 ## Optional drag-anywhere camera look
 
-In gameplay, tap **HUD > OPTIONS**, enable **Drag anywhere to look (unused
-gameplay space)**, choose **Back to editor**, then **SAVE**. It is off by default.
+In gameplay, tap **HUD > OPTIONS**, enable **Drag anywhere to look (hide LOOK
+pad)**, choose **Back to editor**, then **SAVE**. It is off by default.
 The option appears in the existing Touch options dialog; it does not require a
 new menu or launcher screen.
+
+When enabled, only the **LOOK** joystick is hidden. Its former area joins the
+free-look space; MOVE, FIRE and the other controls retain their positions.
+LOOK stays visible in the editor and returns to its saved position when the
+option is disabled. In menus its uncovered area accepts direct menu taps.
 
 A finger that starts outside all controls can drag to turn the view. Its camera
 control lasts until it lifts, even when crossing over a button. MOVE and all

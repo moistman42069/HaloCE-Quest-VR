@@ -34,13 +34,7 @@ final class TouchControls extends View {
     private boolean menus, menuStream;
     private int touchMode=GamepadPolicy.AUTO, connectedPads;
     private final MenuTouchGesture menuGesture=new MenuTouchGesture();
-    private final RectF menuBack=new RectF();
-    private final RectF menuToggle=new RectF();
-    private final RectF[] menuButtons={new RectF(),new RectF(),new RectF(),new RectF(),new RectF(),new RectF(),new RectF(),new RectF(),new RectF()};
-    private static final int[] MENU_BITS={LEFT,UP,DOWN,RIGHT,X,Y,B,A,START};
-    private static final String[] MENU_LABELS={"<","^","v",">","X","Y","B","A","Start"};
-    private boolean menuControlsShown=true,menuButtonCancelled;
-    private int menuButtonPointer=-1,menuButton=-1;
+    private boolean menuControlStream;
     private final Control freeLook=new Control("",0,0,0,0,FREE_LOOK);
     /** The production view is exercised with a recording input endpoint in tests. */
     interface Input {
@@ -208,7 +202,7 @@ final class TouchControls extends View {
 
     void releaseAll() {
         contacts.clear();dragPointer=-1;menuGesture.cancel();
-        menuButtonPointer=-1;menuButton=-1;menuButtonCancelled=false;
+        menuControlStream=false;
         input.state(0, 0, 0, 0, 0, true);
         invalidate();
     }
@@ -220,49 +214,35 @@ final class TouchControls extends View {
     }
 
     private void applyVisibility() {
-        // Menu navigation must remain reachable even with stock-menu fallback,
-        // a hidden gameplay HUD or a controller that disconnects in a menu.
-        boolean show=menus || editing || GamepadPolicy.showTouch(touchMode,connectedPads);
+        boolean shown=GamepadPolicy.showTouch(touchMode,connectedPads);
+        if(controlsShown!=shown) {releaseAll();controlsShown=shown;invalidate();}
+        // The same Touch/HUD circles remain reachable in menus when the saved
+        // policy hides gameplay controls, so touch visibility can be restored.
+        boolean show=menus || editing || controlsShown;
         int visibility=show?VISIBLE:GONE;
         if(getVisibility()!=visibility) { releaseAll();setVisibility(visibility); }
     }
     private void refreshMenuMode() {
         boolean active=input.menus();
         if(active!=menus) {
-            releaseAll();menus=active;menuControlsShown=true;applyVisibility();gyroUpdate();invalidate();
-            RunLog.line("Touch mode: "+(menus?"menu (direct taps + navigation buttons)":"gameplay")+" policy="+touchMode+" controllers="+connectedPads);
+            releaseAll();menus=active;applyVisibility();gyroUpdate();invalidate();
+            RunLog.line("Touch mode: "+(menus?"menu (original controls + direct taps)":"gameplay")+" policy="+touchMode+" controllers="+connectedPads);
         }
     }
-    private void layoutMenuNavigation() {
-        float density=getResources().getDisplayMetrics().density;
-        float gap=8*density,height=40*density,width=76*density;
-        menuBack.set(getWidth()-insetRight-width-gap,insetTop+gap,
-            getWidth()-insetRight-gap,insetTop+gap+height);
-        menuToggle.set(insetLeft+gap,insetTop+gap,insetLeft+gap+100*density,insetTop+gap+height);
-        // Edge strips leave the menu's central rows available for direct taps.
-        // The Controls button can tuck the strips away without losing recovery.
-        float size=Math.min(44*density,(getWidth()-insetLeft-insetRight-11*gap)/8);
-        size=Math.max(1,size);
-        float y=getHeight()-insetBottom-gap-size;
-        for(int i=0;i<8;i++) {
-            float x=i<4?insetLeft+gap+i*(size+gap):getWidth()-insetRight-gap-4*size-3*gap+(i-4)*(size+gap);
-            menuButtons[i].set(x,y,x+size,y+size);
+    private boolean controlVisible(Control c) {
+        return editing || ((controlsShown || c.kind==TOGGLE || c.kind==EDIT) &&
+            !(layout.lookAnywhere && c.kind==LOOK));
+    }
+    private Control controlAt(float x,float y) {
+        for(int i=controls.length-1;i>=0;i--) {
+            Control c=controls[i];
+            if(controlVisible(c) && c.contains(x,y))return c;
         }
-        float center=(insetLeft+getWidth()-insetRight)/2f;
-        menuButtons[8].set(center-width/2,insetTop+gap,center+width/2,insetTop+gap+height);
-    }
-    private int menuButtonAt(float x,float y) {
-        if(menuToggle.contains(x,y))return menuButtons.length;
-        if(menuControlsShown) for(int i=0;i<menuButtons.length;i++)if(menuButtons[i].contains(x,y))return i;
-        return -1;
-    }
-    private void menuButtonState(boolean down) {
-        input.state(0,0,0,0,down && menuButton>=0 && menuButton<MENU_BITS.length?MENU_BITS[menuButton]:0,false);
-        invalidate();
+        return null;
     }
 
-    /** Activity-level routing works even when a controller hides the gameplay
-     * overlay. Coordinates are translated into the SDL surface's actual bounds.
+    /** Activity-level routing retains the original circular controls. Only a
+     * contact beginning in uncovered menu space may become a native pointer tap.
      * A stream begun in a menu is consumed through its final UP after Resume. */
     boolean dispatchMenuTouch(MotionEvent event,View surface) {
         if(!event.isFromSource(InputDevice.SOURCE_TOUCHSCREEN)) return false;
@@ -274,10 +254,24 @@ final class TouchControls extends View {
             if(action==MotionEvent.ACTION_UP || action==MotionEvent.ACTION_CANCEL) menuStream=false;
             return true;
         }
+        int[] overlayPos=new int[2];getLocationOnScreen(overlayPos);
+        float offsetX=event.getRawX()-event.getX()-overlayPos[0];
+        float offsetY=event.getRawY()-event.getY()-overlayPos[1];
         if(action==MotionEvent.ACTION_DOWN) {
             releaseAll();menuStream=true;
+            menuControlStream=controlAt(event.getX()+offsetX,event.getY()+offsetY)!=null;
         } else if(!menuStream) {
             // A gameplay contact already down when pause opened must lift first.
+            return true;
+        }
+        if(menuControlStream) {
+            MotionEvent local=MotionEvent.obtain(event);
+            local.offsetLocation(offsetX,offsetY);
+            handleControlTouch(local);
+            local.recycle();
+            if(action==MotionEvent.ACTION_UP || action==MotionEvent.ACTION_CANCEL) {
+                menuStream=false;menuControlStream=false;
+            }
             return true;
         }
         if(action==MotionEvent.ACTION_CANCEL || action==MotionEvent.ACTION_POINTER_DOWN) {
@@ -285,37 +279,22 @@ final class TouchControls extends View {
             if(action==MotionEvent.ACTION_CANCEL)menuStream=false;
             return true;
         }
-        int id=menuButtonPointer>=0?menuButtonPointer:menuGesture.pointer();
-        int index=action==MotionEvent.ACTION_DOWN?event.getActionIndex():event.findPointerIndex(id);
-        if(index>=0) {
-            int[] overlayPos=new int[2];getLocationOnScreen(overlayPos);
-            // Activity events are relative to its decor view, including system insets.
+        int index=action==MotionEvent.ACTION_DOWN?event.getActionIndex():event.findPointerIndex(menuGesture.pointer());
+        if(index>=0 && surface!=null && surface.getWidth()>0 && surface.getHeight()>0) {
             float rawX=event.getRawX()+event.getX(index)-event.getX();
             float rawY=event.getRawY()+event.getY(index)-event.getY();
-            float px=rawX-overlayPos[0],py=rawY-overlayPos[1];
-            layoutMenuNavigation();
-            int button=menuButtonAt(px,py);
-            if(action==MotionEvent.ACTION_DOWN && button>=0) {
-                menuButtonPointer=event.getPointerId(index);menuButton=button;
-                menuButtonState(true);
-            }
-            if(menuButtonPointer>=0) {
-                // A control press never also becomes a menu-pointer click.
-                if(button!=menuButton)menuButtonCancelled=true;
-                boolean up=action==MotionEvent.ACTION_UP || (action==MotionEvent.ACTION_POINTER_UP && event.getPointerId(event.getActionIndex())==menuButtonPointer);
-                if(up && !menuButtonCancelled && menuButton==menuButtons.length)menuControlsShown=!menuControlsShown;
-                menuButtonState(!up && !menuButtonCancelled);
-                if(up){menuButtonPointer=-1;menuButton=-1;}
-            } else if(surface!=null && surface.getWidth()>0 && surface.getHeight()>0) {
+            if(controlAt(rawX-overlayPos[0],rawY-overlayPos[1])!=null) {
+                // Crossing into a visible control does not click a row below it.
+                menuGesture.cancel();input.pointer(3,0,0);
+            } else {
                 int[] surfacePos=new int[2];surface.getLocationOnScreen(surfacePos);
                 float x=(rawX-surfacePos[0])/surface.getWidth(),y=(rawY-surfacePos[1])/surface.getHeight();
-                boolean back=menuBack.contains(px,py);
                 float slop=android.view.ViewConfiguration.get(getContext()).getScaledTouchSlop()*2f;
-                if(action==MotionEvent.ACTION_DOWN) menuGesture.begin(event.getPointerId(index),rawX,rawY,back);
+                if(action==MotionEvent.ACTION_DOWN) menuGesture.begin(event.getPointerId(index),rawX,rawY,false);
                 else menuGesture.move(rawX,rawY,slop);
-                if(!menuGesture.back())input.pointer(0,x,y);
+                input.pointer(0,x,y);
                 if(action==MotionEvent.ACTION_UP || (action==MotionEvent.ACTION_POINTER_UP && event.getPointerId(event.getActionIndex())==menuGesture.pointer())) {
-                    int tap=menuGesture.end(event.getPointerId(index),rawX,rawY,slop,back);
+                    int tap=menuGesture.end(event.getPointerId(index),rawX,rawY,slop,false);
                     if(tap!=0)input.pointer(tap,x,y);
                 }
             }
@@ -335,16 +314,20 @@ final class TouchControls extends View {
         // through SDL's touch-to-mouse emulation underneath the overlay.
         if (!event.isFromSource(InputDevice.SOURCE_TOUCHSCREEN)) return false;
         if(dispatchMenuTouch(event,this))return true;
+        if(event.getActionMasked()==MotionEvent.ACTION_DOWN)releaseAll();
+        return handleControlTouch(event);
+    }
+
+    private boolean handleControlTouch(MotionEvent event) {
         int action=event.getActionMasked(), index=event.getActionIndex();
         if (action == MotionEvent.ACTION_CANCEL) { releaseAll(); return true; }
         if(editing) return editTouch(event);
-        if (action == MotionEvent.ACTION_DOWN) releaseAll();
         if (action == MotionEvent.ACTION_DOWN || action == MotionEvent.ACTION_POINTER_DOWN) {
             float x=event.getX(index), y=event.getY(index);
             boolean claimed=false;
             for (int i=controls.length-1; i>=0; i--) {
                 Control c=controls[i];
-                if ((!controlsShown && c.kind != TOGGLE && c.kind != EDIT) || !c.contains(x, y)) continue;
+                if (!controlVisible(c) || !c.contains(x, y)) continue;
                 claimed=true;
                 if(owned(c))break; // An occupied button is never free camera space.
                 if(c.kind==EDIT) {
@@ -355,21 +338,22 @@ final class TouchControls extends View {
                     releaseAll();
                     new GamepadNavigation.Builder(getContext()).setTitle("Touch visibility")
                         .setSingleChoiceItems(new String[]{"Auto: hide with controller","Always show","Always hide (restore in launcher)"},GamepadSupport.mode(getContext()),(dialog,which)->{
-                            preferences().edit().putInt("controller_touch_mode",which).apply();dialog.dismiss();
+                            preferences().edit().putInt("controller_touch_mode",which).apply();
+                            controllerVisibility(which,connectedPads);dialog.dismiss();
                         }).setNegativeButton("Cancel",null).show();
                 } else {
                     contacts.put(event.getPointerId(index), new Contact(c, x, y));
                 }
                 break;
             }
-            if(!claimed && layout.lookAnywhere && !owned(freeLook))
+            if(!menus && !claimed && layout.lookAnywhere && !owned(freeLook))
                 contacts.put(event.getPointerId(index),new Contact(freeLook,x,y));
         }
         for (int i=0; i<event.getPointerCount(); i++) {
             Contact c=contacts.get(event.getPointerId(i));
             if (c != null) {
                 float x=event.getX(i),y=event.getY(i);
-                if(c.control.kind==FREE_LOOK || (layout.swipe && (c.control.kind==LOOK || c.control.kind==FIRE_LOOK))) {
+                if(!menus && (c.control.kind==FREE_LOOK || (layout.swipe && (c.control.kind==LOOK || c.control.kind==FIRE_LOOK)))) {
                     // Screen-fraction sensitivity: one safe-area width = 180 degrees.
                     float dx=(x-c.x)/Math.max(1,availableW)*(float)Math.PI*layout.sensitivityX;
                     float dy=(y-c.y)/Math.max(1,availableW)*(float)Math.PI*layout.sensitivityY;
@@ -389,8 +373,9 @@ final class TouchControls extends View {
         int lx=0, ly=0, rx=0, ry=0, buttons=0;
         for (int i=0; i<contacts.size(); i++) {
             Contact c=contacts.valueAt(i);
-            buttons |= c.control.bit;
-            if (c.control.kind == BUTTON || c.control.kind==FREE_LOOK || (layout.swipe && c.control.kind!=MOVE)) continue;
+            buttons |= menus && c.control.bit==BACK?B:c.control.bit;
+            if (c.control.kind == BUTTON || c.control.kind==FREE_LOOK ||
+                (menus && c.control.kind==FIRE_LOOK) || (!menus && layout.swipe && c.control.kind!=MOVE)) continue;
             float radius=c.control.kind == FIRE_LOOK ? c.control.radius*1.4f : c.control.radius;
             float dx=c.x-c.originX,dy=c.originY-c.y;
             float x=TouchLayout.axis(dx,dy,radius,layout.deadZone),y=TouchLayout.axis(dy,dx,radius,layout.deadZone);
@@ -404,16 +389,8 @@ final class TouchControls extends View {
 
     @Override protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        if(menus && !editing) {
-            layoutMenuNavigation();
-            drawMenuButton(canvas,menuBack,"Back",false);
-            drawMenuButton(canvas,menuToggle,menuControlsShown?"Hide controls":"Show controls",false);
-            if(menuControlsShown)for(int i=0;i<menuButtons.length;i++)
-                drawMenuButton(canvas,menuButtons[i],MENU_LABELS[i],menuButtonPointer>=0 && menuButton==i && !menuButtonCancelled);
-            return;
-        }
         for (Control c : controls) {
-            if (!editing && !controlsShown && c.kind != TOGGLE && c.kind != EDIT) continue;
+            if (!controlVisible(c)) continue;
             boolean pressed=owned(c);
             float opacity=c.kind==EDIT?1:layout.opacity*(c.id<TouchLayout.COUNT?layout.alpha[c.id]:1);
             if(editing)opacity=Math.max(.65f,opacity);
@@ -448,13 +425,6 @@ final class TouchControls extends View {
                 paint.setColor(0xffbce7ff);paint.setTextSize(16*getResources().getDisplayMetrics().scaledDensity);
                 canvas.drawText(names[i],toolbar[i].centerX(),toolbar[i].centerY()-(paint.ascent()+paint.descent())/2,paint);}
         }
-    }
-
-    private void drawMenuButton(Canvas canvas,RectF bounds,String label,boolean pressed) {
-        paint.setStyle(Paint.Style.FILL);paint.setColor(pressed?0xd041647a:0xb0102434);
-        canvas.drawRoundRect(bounds,8,8,paint);paint.setColor(Color.WHITE);
-        paint.setTextAlign(Paint.Align.CENTER);paint.setTextSize(14*getResources().getDisplayMetrics().scaledDensity);
-        canvas.drawText(label,bounds.centerX(),bounds.centerY()-(paint.ascent()+paint.descent())/2,paint);
     }
 
     private boolean editTouch(MotionEvent event) {
@@ -514,7 +484,7 @@ final class TouchControls extends View {
         slider(box,"Vertical sensitivity",layout.sensitivityY,.25f,3,v->layout.sensitivityY=v);
         slider(box,"Stick dead zone",layout.deadZone,0,.30f,v->layout.deadZone=v);
         check(box,"Swipe aim (off = hold stick to turn)",layout.swipe,v->layout.swipe=v);
-        check(box,"Drag anywhere to look (unused gameplay space)",layout.lookAnywhere,v->layout.lookAnywhere=v);
+        check(box,"Drag anywhere to look (hide LOOK pad)",layout.lookAnywhere,v->layout.lookAnywhere=v);
         check(box,"Floating movement origin",layout.floating,v->layout.floating=v);
         check(box,"Invert vertical aim",layout.invert,v->layout.invert=v);
         boolean hasGyro=GyroAim.available(getContext());
@@ -524,7 +494,7 @@ final class TouchControls extends View {
         slider(box,"Gyro horizontal sensitivity",layout.gyroX,.25f,4,v->layout.gyroX=v);
         slider(box,"Gyro vertical sensitivity",layout.gyroY,.25f,4,v->layout.gyroY=v);
         check(box,"Invert gyro vertical aim",layout.gyroInvert,v->layout.gyroInvert=v);
-        TextView help=new TextView(getContext());help.setText("Swipe on LOOK or drag FIRE while shooting. Optional drag-anywhere starts camera movement only on unused gameplay space; buttons and MOVE always keep priority. It uses swipe sensitivity even in held-stick mode. Lift to stop turning. Movement starts within MOVE; floating places its center under your finger. Dead zone applies to stick mode and movement. A screen-width swipe turns 180 degrees at sensitivity 1. Gyro aim turns the view as you turn the phone (sensitivity 1 = the phone's own turn) and works alongside swipes and a controller; 'only while a finger is on LOOK or FIRE' lets you lift to re-center, like lifting a mouse. Layout uses safe screen fractions and adapts around notches. Options stay temporary until SAVE.");box.addView(help);
+        TextView help=new TextView(getContext());help.setText("Swipe on LOOK or drag FIRE while shooting. Optional drag-anywhere hides the LOOK pad and uses unused gameplay space for camera movement; buttons and MOVE keep their positions and priority. The editor still shows LOOK so its saved placement can be adjusted. It uses swipe sensitivity even in held-stick mode. Lift to stop turning. Movement starts within MOVE; floating places its center under your finger. Dead zone applies to stick mode and movement. A screen-width swipe turns 180 degrees at sensitivity 1. Gyro aim turns the view as you turn the phone (sensitivity 1 = the phone's own turn) and works alongside swipes and a controller; 'only while a finger is on LOOK or FIRE' lets you lift to re-center, like lifting a mouse. Layout uses safe screen fractions and adapts around notches. Options stay temporary until SAVE.");box.addView(help);
         String[] colors={"CE blue","Cyan","White","Amber","Green"};int[] values={0xff69c9ff,0xff65eeee,0xffeeeeee,0xffffbd65,0xff8be298};
         Button color=new Button(getContext());color.setText("HUD color");box.addView(color);color.setOnClickListener(v->new GamepadNavigation.Builder(getContext()).setTitle("HUD color").setItems(colors,(d,i)->{layout.color=values[i];invalidate();}).show());
         ScrollView scroll=new ScrollView(getContext());scroll.addView(box);optionsDialog[0]=new GamepadNavigation.Builder(getContext()).setTitle("Touch options").setView(scroll).setPositiveButton("Back to editor",null).create();optionsDialog[0].show();

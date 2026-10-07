@@ -1,31 +1,29 @@
-# Test31b / 1.0.13 private testing guide (code 40)
+# Test31c / Android 1.0.13 code41 — original touch layout restored
 
-This candidate updates both Quest VR and flat Android. It is a private test
-build, not a published release or a device-accepted replacement for v1.0.12.
-The following changes take priority over the older public guide below. Install
-only the completed pair supplied with its matching delivery record and hashes.
+This is an Android-only private update. Keep the accepted Test31b Quest VR
+APK (1.0.13/code40); its VR settings and implementation are preserved.
 
-## Repairs to the rejected Test31 build
+Android now keeps the familiar circular controls and your saved layout in both
+menus and gameplay. It no longer switches to a rectangular menu strip. Direct
+menu taps remain available in space not occupied by a control. Use the original
+Touch button for visibility and HUD button for layout editing/options.
 
-This pair replaces the rejected code-39 candidate. It restores the Quest menu
-cleanup null check from the prior release, corrects the invalid menu label that
-prevented OpenCE menus loading, and keeps Android menu navigation available
-when the engine uses stock menus. Menu allocation failures roll back safely.
+**HUD > OPTIONS > Drag anywhere to look (hide LOOK pad)** stays OFF by
+default. When enabled, it hides only the LOOK joystick and lets you drag unused
+gameplay space to look. MOVE, FIRE and other buttons keep their positions and
+jobs. LOOK remains visible in the layout editor and returns to its saved
+position when this option is disabled. Save keeps the option; Cancel restores
+your previous layout and preferences. Free-looking does not rotate the camera
+while navigating menus.
 
-Android also adds **Drag anywhere to look (unused gameplay space)** in the
-in-game **HUD > OPTIONS** screen (**Touch options** dialog). It is OFF by default. When enabled,
-a drag beginning outside an existing control turns the camera. MOVE, action
-buttons and menu taps keep their normal jobs; this does not replace controller
-input or Quest tracked controls. Save the touch layout to retain your choice;
-Cancel restores the previous layout and preferences.
-
-The corrected startup/menu/input paths have stronger integration checks. Real
-Quest and phone startup, navigation and gameplay still require device testing.
+The prior startup/menu fixes and OpenCE features below remain in place. This
+private Android build still requires owner device testing before publication.
 
 ## Install
 
-Install the Quest APK on a Quest, or the Android APK on a phone/tablet, over
-the existing project app. Both APKs are 1.0.13/code40; the original project signing certificate is retained.
+Install the Android code41 APK over the existing Android app on the phone/tablet.
+Keep the existing Quest code40 APK. Both are version 1.0.13, network22; the
+original project signing certificate is retained.
 Do not uninstall or clear data. Keep a backup of saves and imported game files.
 Continue using the launcher to import/select your own game files and revisions;
 no maps, ISOs or game assets from your installation are included in these APKs.
@@ -45,12 +43,13 @@ APK updates and its existing browser/hosting shortcuts.
   mappings do not change gameplay bindings.
   VR Settings is available from the main menu, the profile Settings hub and
   pause/settings routes. Existing VR pages and choices remain available.
-- **Android touch:** tap menu items directly, including native keyboard keys.
-  Compact D-pad, A/B/X/Y and Start buttons also remain available, including
-  stock-menu fallback. Back stays at the top right. Hide controls / Show controls
-  at the top left tuck the navigation buttons away or restore them if they
-  cover a menu item. Gameplay restores your normal touch visibility policy;
-  controller disconnection restores the gameplay HUD in Auto mode.
+- **Android touch:** the original circular layout stays in place across menus
+  and gameplay. D-pad/MOVE navigate, A selects, B or Back cancels, X/Y perform
+  the displayed native menu actions, and Menu sends Start. You can also tap
+  native menu rows or keyboard keys directly in uncovered space. The original
+  Touch button manages visibility; HUD opens the existing editor. Controls own
+  their contacts, so pressing one does not also tap the menu behind it.
+  Controller visibility/reconnection and saved layout customization remain.
 - **Gamepad:** D-pad/sticks navigate, A selects and B backs out. Use the
   displayed action letters. An external mouse and keyboard also work; the
   keyboard/mouse controls page changes those devices, not tracked VR actions.

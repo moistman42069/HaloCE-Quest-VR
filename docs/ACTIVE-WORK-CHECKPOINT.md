@@ -1,5 +1,15 @@
 # Active work checkpoint — after v1.0.12 release (2026-10-07)
 
+## Current: preserve accepted Test31b VR; restore Android touch presentation
+
+Owner feedback on 2026-10-07: VR works great; its new VR settings are the
+preferred design going forward. Keep the exact Test31b Quest code40 artifact
+and VR/native implementation. Android's switch from circular controls to a
+rectangular menu strip is rejected. Retain the familiar circular controls,
+their saved placement and direct menu taps. Optional free-space look should
+hide only LOOK, keeping MOVE and action buttons. Branch `test31c-flat-ui`,
+Android 1.0.13/code41; see `TEST31C-PROGRESS.md`. No release/push/install.
+
 ## Active priority: repair rejected Test31
 
 The owner rejected Test31 on 2026-10-07: Quest startup crashes and Android

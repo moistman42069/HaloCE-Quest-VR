@@ -54,8 +54,9 @@ public void setTextSize(float s){}public void setTextAlign(Align a){}public void
 public float ascent(){return -10;}public float descent(){return 2;}}''',
 'android/graphics/Canvas.java': '''package android.graphics;
 public class Canvas {public final java.util.List<String> labels=new java.util.ArrayList<>();
-public void drawRoundRect(RectF r,float x,float y,Paint p){}public void drawCircle(float x,float y,float r,Paint p){}
-public void drawRect(RectF r,Paint p){}public void drawText(String s,float x,float y,Paint p){labels.add(s);}}''',
+public final java.util.Map<String,String> positions=new java.util.LinkedHashMap<>();public final java.util.List<String> circleGeometry=new java.util.ArrayList<>();public int circles,rounded;
+public void drawRoundRect(RectF r,float x,float y,Paint p){rounded++;}public void drawCircle(float x,float y,float r,Paint p){circles++;circleGeometry.add(x+","+y+","+r);}
+public void drawRect(RectF r,Paint p){}public void drawText(String s,float x,float y,Paint p){labels.add(s);positions.put(s,x+","+y);}}''',
 'android/util/SparseArray.java': '''package android.util;
 public class SparseArray<T> {private final java.util.TreeMap<Integer,T> values=new java.util.TreeMap<>();
 public void clear(){values.clear();}public int size(){return values.size();}public T valueAt(int i){return new java.util.ArrayList<T>(values.values()).get(i);}
@@ -76,6 +77,9 @@ public class MotionEvent {
  private float rawOffsetX,rawOffsetY;
  public MotionEvent(int a,int i,int source,int[] ids,float[] xs,float[] ys){action=a;index=i;this.source=source;this.ids=ids;this.xs=xs;this.ys=ys;}
  public MotionEvent offset(float x,float y){rawOffsetX=x;rawOffsetY=y;return this;}
+ public static MotionEvent obtain(MotionEvent e){MotionEvent copy=new MotionEvent(e.action,e.index,e.source,e.ids.clone(),e.xs.clone(),e.ys.clone());return copy.offset(e.rawOffsetX,e.rawOffsetY);}
+ public void offsetLocation(float x,float y){for(int i=0;i<xs.length;i++){xs[i]+=x;ys[i]+=y;}rawOffsetX-=x;rawOffsetY-=y;}
+ public void recycle(){}
  public boolean isFromSource(int s){return (source&s)==s;}public int getActionMasked(){return action;}public int getActionIndex(){return index;}
  public int getPointerCount(){return ids.length;}public int getPointerId(int i){return ids[i];}
  public int findPointerIndex(int id){for(int i=0;i<ids.length;i++)if(ids[i]==id)return i;return -1;}
@@ -120,11 +124,11 @@ public void setOnSeekBarChangeListener(OnSeekBarChangeListener l){}}''',
 public static Toast makeText(android.content.Context c,String s,int n){return new Toast();}public void show(){}}''',
 'android/app/AlertDialog.java': '''package android.app;
 public class AlertDialog implements android.content.DialogInterface {
- public static AlertDialog last;public android.view.View view;public android.content.DialogInterface.OnClickListener positive,negative;
+ public static AlertDialog last;public android.view.View view;public android.content.DialogInterface.OnClickListener positive,negative,choice;
  public String title;public void show(){last=this;}public void dismiss(){}
  public static class Builder {protected final AlertDialog dialog=new AlertDialog();public Builder(android.content.Context c){}
  public Builder setTitle(String s){dialog.title=s;return this;}public Builder setMessage(String s){return this;}public Builder setView(android.view.View v){dialog.view=v;return this;}
- public Builder setSingleChoiceItems(String[] a,int selected,android.content.DialogInterface.OnClickListener l){return this;}
+ public Builder setSingleChoiceItems(String[] a,int selected,android.content.DialogInterface.OnClickListener l){dialog.choice=l;return this;}
  public Builder setItems(String[] a,android.content.DialogInterface.OnClickListener l){return this;}
  public Builder setPositiveButton(String s,android.content.DialogInterface.OnClickListener l){dialog.positive=l;return this;}
  public Builder setNegativeButton(String s,android.content.DialogInterface.OnClickListener l){dialog.negative=l;return this;}
@@ -155,15 +159,16 @@ public class TouchLifecycleCheck {
   void clean(){pressed=clicks=backs=motions=0;yaw=pitch=0;}
  }
  static final class Rig {
-  final Context context=new Context();final Input input=new Input();final TouchControls view=new TouchControls(context,input);final View surface=new View(context);
-  Rig(){view.layout(0,0,1000,500);surface.layout(0,0,1000,500);view.controllerVisibility(GamepadPolicy.AUTO,0);}
+  final Context context;final Input input=new Input();final TouchControls view;final View surface;
+  Rig(){this(new Context());}
+  Rig(Context context){this.context=context;view=new TouchControls(context,input);surface=new View(context);view.layout(0,0,1000,500);surface.layout(0,0,1000,500);view.controllerVisibility(GamepadPolicy.AUTO,0);}
   void menu(boolean value){input.menus=value;view.controllerVisibility(GamepadPolicy.AUTO,0);}
   void event(int action,int index,int[] ids,float[] xs,float[] ys){MotionEvent e=new MotionEvent(action,index,InputDevice.SOURCE_TOUCHSCREEN,ids,xs,ys);
    if(!view.dispatchMenuTouch(e,surface)&&view.getVisibility()==View.VISIBLE)view.onTouchEvent(e);}
   void one(int action,float x,float y){event(action,0,new int[]{41},new float[]{x},new float[]{y});}
   void tap(float x,float y){one(MotionEvent.ACTION_DOWN,x,y);one(MotionEvent.ACTION_UP,x,y);}
   void two(int action,int index,float x0,float y0,float x1,float y1){event(action,index,new int[]{41,93},new float[]{x0,x1},new float[]{y0,y1});}
-  void button(int n)throws Exception{RectF b=((RectF[])field(view,"menuButtons"))[n];tap(b.centerX(),b.centerY());}
+  void button(int n)throws Exception{Object c=((Object[])field(view,"controls"))[n];tap((Float)field(c,"x"),(Float)field(c,"y"));}
   Canvas draw(){Canvas c=new Canvas();view.onDraw(c);return c;}
   CheckBox option(String prefix){return findCheck(AlertDialog.last.view,prefix);}
  }
@@ -176,33 +181,39 @@ public class TouchLifecycleCheck {
   r.tap(save?75:225,22);check(!(Boolean)get(r.view,"editing"),"editor closes");}
  static void empty(Rig r,String label){check(r.input.buttons==0&&r.input.lx==0&&r.input.ly==0&&r.input.rx==0&&r.input.ry==0,label);}
  public static void main(String[] args)throws Exception {
-  // The menu flag is intentionally backend-independent: both OpenCE and the
-  // stock fallback retain navigation even when pointer targets are unavailable.
+  // Both backends use the exact same original control geometry and draw path.
+  // The endpoint's menu flag changes event semantics, never the visible layout.
   for(String backend:new String[]{"OpenCE", "stock fallback"}) {
-   Rig r=new Rig();r.menu(true);Canvas c=r.draw();
-   check(c.labels.contains("A")&&c.labels.contains("B")&&c.labels.contains("^")&&c.labels.contains("Hide controls"),backend+" visible navigation");
-   for(int i=0;i<9;i++){r.input.clean();r.button(i);int[] bits={4096,1024,2048,8192,4,8,2,1,256};check((r.input.pressed&bits[i])!=0,backend+" button "+i);empty(r,"button released");check(r.input.clicks==0,"no duplicate pointer activation");}
+   Rig r=new Rig();Canvas before=r.draw();r.menu(true);Canvas c=r.draw();
+   check(c.labels.equals(before.labels)&&c.positions.equals(before.positions)&&c.circleGeometry.equals(before.circleGeometry),backend+" identical original circular layout");
+   check(c.rounded==0&&c.labels.contains("MOVE")&&c.labels.contains("LOOK")&&c.labels.contains("A / Jump")&&c.labels.contains("Touch")&&c.labels.contains("HUD"),backend+" no rectangular replacement UI");
+   int[] ids={3,4,5,6,12,13,14,15,16,17,9,10,11,7,8,2};
+   int[] bits={1,2,4,8,256,2,1024,2048,4096,8192,16384,32,16,64,128,32768};
+   for(int i=0;i<ids.length;i++){r.input.clean();r.button(ids[i]);check((r.input.pressed&bits[i])!=0,backend+" original button "+ids[i]);empty(r,"button released");check(r.input.clicks==0,"no duplicate pointer activation");}
    r.input.clean();r.tap(500,200);check(r.input.clicks==1,"direct menu click exactly once");near(r.input.px,.5f,"menu x");near(r.input.py,.4f,"menu y");
-   r.tap(950,28);check(r.input.backs==1,"persistent Back");
-   r.tap(50,28);check(!r.draw().labels.contains("A")&&r.draw().labels.contains("Show controls"),"tuck away overlapping controls");
-   r.tap(50,28);check(r.draw().labels.contains("A"),"recover controls");
-   r.one(MotionEvent.ACTION_DOWN,966,470);check(r.input.buttons==1,"hold A");r.one(MotionEvent.ACTION_MOVE,500,200);empty(r,"sliding off cancels button");
-   r.one(MotionEvent.ACTION_MOVE,966,470);empty(r,"cancelled button cannot reenter");r.one(MotionEvent.ACTION_UP,966,470);
+   r.input.clean();r.button(13);check(r.input.pressed==2,"original Back circle cancels menu");r.button(12);check((r.input.pressed&256)!=0,"original Menu circle emits Start");
+   r.one(MotionEvent.ACTION_DOWN,910,380);check(r.input.buttons==1,"hold original A");r.one(MotionEvent.ACTION_MOVE,500,200);check(r.input.buttons==1,"original button contact ownership retained when dragged");r.one(MotionEvent.ACTION_UP,500,200);empty(r,"dragged button releases");check(r.input.clicks==0,"button drag never taps through");
    r.input.clean();r.one(MotionEvent.ACTION_DOWN,500,200);r.one(MotionEvent.ACTION_MOVE,700,200);r.one(MotionEvent.ACTION_UP,500,200);check(r.input.clicks==0,"drag no accidental row click");
-   r.one(MotionEvent.ACTION_DOWN,966,470);r.two(MotionEvent.ACTION_POINTER_DOWN,1,966,470,500,200);empty(r,"second menu finger releases held button");r.two(MotionEvent.ACTION_POINTER_UP,1,966,470,500,200);r.one(MotionEvent.ACTION_UP,966,470);check(r.input.clicks==0,"multitouch cancelled pointer");
-   r.input.clean();r.one(MotionEvent.ACTION_DOWN,966,470);r.menu(false);empty(r,"menu to campaign releases confirm");
+   r.one(MotionEvent.ACTION_DOWN,870,380);r.one(MotionEvent.ACTION_UP,879,380);check(r.input.clicks==0&&r.input.pressed==0,"small drift onto control cancels underlying row click");
+   r.one(MotionEvent.ACTION_DOWN,500,200);r.two(MotionEvent.ACTION_POINTER_DOWN,1,500,200,910,380);r.two(MotionEvent.ACTION_POINTER_UP,1,500,200,910,380);r.one(MotionEvent.ACTION_UP,500,200);check(r.input.clicks==0&&r.input.pressed==0,"second finger cancels direct tap, cannot claim a button midstream");
+   r.one(MotionEvent.ACTION_DOWN,140,370);r.two(MotionEvent.ACTION_POINTER_DOWN,1,140,370,910,380);r.two(MotionEvent.ACTION_MOVE,0,195,370,910,380);check(r.input.lx>0&&r.input.buttons==1,"original MOVE plus A menu controls can coexist");near(r.input.yaw,0,"menu movement no camera turn");r.two(MotionEvent.ACTION_POINTER_UP,1,195,370,910,380);check(r.input.lx>0&&r.input.buttons==0,"menu control fingers release independently");r.one(MotionEvent.ACTION_UP,195,370);empty(r,"menu MOVE release");
+   r.input.clean();r.one(MotionEvent.ACTION_DOWN,670,375);r.one(MotionEvent.ACTION_MOVE,720,375);check(r.input.rx>0,"original LOOK can navigate as a menu stick");near(r.input.yaw,0,"menu LOOK suppresses relative camera look");r.one(MotionEvent.ACTION_CANCEL,0,0);empty(r,"menu cancellation");
+   r.input.clean();r.one(MotionEvent.ACTION_DOWN,910,380);r.menu(false);empty(r,"menu to campaign releases confirm");
    r.one(MotionEvent.ACTION_MOVE,910,380);r.one(MotionEvent.ACTION_UP,910,380);empty(r,"resume contact cannot become jump");
-   check(r.draw().labels.contains("MOVE")&&r.draw().labels.contains("FIRE")&&r.draw().labels.contains("HUD"),"gameplay HUD restored");
-   r.input.clean();r.tap(910,380);check((r.input.pressed&1)!=0,"new gameplay jump works");
+   check(r.draw().positions.equals(before.positions)&&r.draw().circleGeometry.equals(before.circleGeometry),"gameplay uses identical circle geometry after Resume");r.input.clean();r.tap(910,380);check((r.input.pressed&1)!=0,"new gameplay jump works");
+   r.menu(true);r.input.clean();r.button(19);check((Boolean)field(r.view,"editing"),"original HUD opens editor inside menu");r.tap(225,22);check(!(Boolean)field(r.view,"editing"),"menu HUD Cancel closes editor");check(r.input.clicks==0,"editor input does not reach menu below");
+   r.button(18);check("Touch visibility".equals(AlertDialog.last.title),"original Touch opens visibility dialog in menu");AlertDialog.last.choice.onClick(AlertDialog.last,GamepadPolicy.HIDE);
+   check(r.draw().labels.equals(java.util.Arrays.asList("Touch","HUD")),"manual hide leaves original recovery controls only");r.input.clean();r.tap(910,380);check(r.input.clicks==1&&r.input.pressed==0,"hidden action area available for direct menu taps");
+   r.button(18);AlertDialog.last.choice.onClick(AlertDialog.last,GamepadPolicy.SHOW);check(r.draw().positions.equals(before.positions),"Touch restores all saved positions");
   }
   Rig r=new Rig();r.one(MotionEvent.ACTION_DOWN,910,380);check(r.input.buttons==1,"gameplay A held");
   r.menu(true);empty(r,"opening pause releases gameplay");r.one(MotionEvent.ACTION_UP,910,380);check(r.input.clicks==0,"existing gameplay lift does not activate menu");
-  r.view.controllerVisibility(GamepadPolicy.HIDE,1);check(r.view.getVisibility()==View.VISIBLE,"menu usable with always-hide/controller");
+  r.view.controllerVisibility(GamepadPolicy.HIDE,1);check(r.view.getVisibility()==View.VISIBLE&&r.draw().labels.contains("Touch"),"menu visibility recovery remains available with always-hide/controller");
   r.input.menus=false;r.view.controllerVisibility(GamepadPolicy.AUTO,1);check(r.view.getVisibility()==View.GONE,"Auto hides with gamepad");
-  r.view.controllerVisibility(GamepadPolicy.AUTO,0);check(r.view.getVisibility()==View.VISIBLE,"disconnect restores touch");
+  r.view.controllerVisibility(GamepadPolicy.AUTO,0);check(r.view.getVisibility()==View.VISIBLE&&r.draw().labels.contains("MOVE"),"disconnect restores original touch controls");
   r.view.controllerVisibility(GamepadPolicy.SHOW,2);check(r.view.getVisibility()==View.VISIBLE,"always show with two gamepads");
   r.view.controllerVisibility(GamepadPolicy.HIDE,0);check(r.view.getVisibility()==View.GONE,"manual hide remains explicit gameplay preference");
-  r.input.menus=true;r.one(MotionEvent.ACTION_DOWN,500,200);check(r.view.getVisibility()==View.VISIBLE,"Activity-level menu event restores hidden overlay");r.one(MotionEvent.ACTION_UP,500,200);
+  r.input.menus=true;r.one(MotionEvent.ACTION_DOWN,500,200);check(r.view.getVisibility()==View.VISIBLE,"Activity-level menu event restores original recovery controls");r.one(MotionEvent.ACTION_UP,500,200);
   check(!r.view.dispatchMenuTouch(new MotionEvent(MotionEvent.ACTION_DOWN,0,InputDevice.SOURCE_MOUSE,new int[]{0},new float[]{500},new float[]{200}),r.surface),"external mouse passes to SDL");
   r=new Rig();r.one(MotionEvent.ACTION_DOWN,600,200);r.one(MotionEvent.ACTION_MOVE,650,220);r.one(MotionEvent.ACTION_UP,650,220);near(r.input.yaw,0,"anywhere off by default");
   setAnywhere(r,true,false);check(!r.context.getSharedPreferences("phone-controls",0).getBoolean("look_anywhere",false),"Cancel does not persist");
@@ -222,12 +233,31 @@ public class TouchLifecycleCheck {
   r.menu(true);near(r.input.yaw,0,"menu entry clears pending aim");r.one(MotionEvent.ACTION_UP,650,200);r.input.clean();r.tap(500,200);near(r.input.yaw,0,"menu gestures cannot turn camera");r.menu(false);
   r.one(MotionEvent.ACTION_DOWN,600,200);r.one(MotionEvent.ACTION_MOVE,650,200);r.view.releaseAll();empty(r,"activity pause/focus loss hook releases");near(r.input.yaw,0,"activity hook clears pending aim");r.one(MotionEvent.ACTION_MOVE,700,200);near(r.input.yaw,0,"cancelled contact cannot revive");r.one(MotionEvent.ACTION_UP,700,200);
   r.one(MotionEvent.ACTION_DOWN,600,200);r.view.layout(0,0,1200,500);r.one(MotionEvent.ACTION_MOVE,700,200);near(r.input.yaw,0,"resize clears contacts");r.one(MotionEvent.ACTION_UP,700,200);
-  r.view.layout(0,0,1000,500);r.view.dispatchApplyWindowInsets(new WindowInsets(24,8,16,10));r.menu(true);r.draw();RectF[] nav=(RectF[])field(r.view,"menuButtons");check(nav[0].left>=24&&nav[7].right<=984&&nav[0].bottom<=490,"menu navigation stays inside safe area");
+  r.view.layout(0,0,1000,500);r.view.dispatchApplyWindowInsets(new WindowInsets(24,8,16,10));Canvas insetGame=r.draw();r.menu(true);check(r.draw().positions.equals(insetGame.positions)&&r.draw().circleGeometry.equals(insetGame.circleGeometry),"safe-area circle geometry unchanged in menus");
+  for(Object control:(Object[])field(r.view,"controls")){float x=(Float)field(control,"x"),y=(Float)field(control,"y"),radius=(Float)field(control,"radius");check(x-radius>=24&&x+radius<=984&&y-radius>=8&&y+radius<=490,"original control clamped inside safe area");}
   r.view.onDetachedFromWindow();empty(r,"detach releases input");
+  // Enabling anywhere look removes only LOOK, including its old hit area;
+  // the editor always retains it, and disabling restores saved placement.
+  Context custom=new Context();custom.getSharedPreferences("phone-controls",0).edit().putFloat("x1",.58f).putFloat("y1",.54f).putFloat("size1",1.25f).putFloat("x3",.89f).putFloat("y3",.77f).apply();
+  r=new Rig(custom);Canvas saved=r.draw();setAnywhere(r,true,true);Canvas free=r.draw();
+  java.util.List<String> expectedLabels=new java.util.ArrayList<>(saved.labels);expectedLabels.remove("LOOK");check(free.labels.equals(expectedLabels),"only LOOK removed from original layout");
+  for(String label:free.labels)check(free.positions.get(label).equals(saved.positions.get(label)),"unchanged control position: "+label);
+  r.input.clean();r.one(MotionEvent.ACTION_DOWN,580,270);r.one(MotionEvent.ACTION_MOVE,630,270);near(r.input.yaw,-.05f*(float)Math.PI,"old LOOK area is unclaimed relative free space");check(r.input.rx==0,"hidden LOOK cannot emit joystick axis");r.one(MotionEvent.ACTION_UP,630,270);
+  r.menu(true);check(r.draw().labels.equals(free.labels)&&r.draw().positions.equals(free.positions)&&r.draw().circleGeometry.equals(free.circleGeometry),"anywhere has same custom circle geometry in menus");r.input.clean();r.tap(580,270);check(r.input.clicks==1&&r.input.rx==0,"hidden LOOK area directly taps menu");
+  editor(r);check(r.draw().labels.contains("LOOK"),"editor still displays hidden LOOK");check(r.draw().positions.get("LOOK").equals(saved.positions.get("LOOK")),"editor retains custom LOOK placement");r.tap(225,22);r.menu(false);
+  setAnywhere(r,false,true);check(r.draw().positions.equals(saved.positions)&&r.draw().circleGeometry.equals(saved.circleGeometry),"disabling anywhere restores complete saved circle geometry");
+  check(r.context.getSharedPreferences("phone-controls",0).getFloat("size1",0)==1.25f,"LOOK size preserved");
+  // Activity coordinates may include offsets from both overlay and SDL surface.
+  r=new Rig();r.view.layout(20,30,1020,530);r.surface.layout(10,20,1010,520);r.menu(true);r.input.clean();
+  MotionEvent down=new MotionEvent(MotionEvent.ACTION_DOWN,0,InputDevice.SOURCE_TOUCHSCREEN,new int[]{41},new float[]{910},new float[]{380}).offset(20,30);
+  r.view.dispatchMenuTouch(down,r.surface);check(r.input.buttons==1,"menu controls use overlay local position");near(down.getX(),910,"original Activity event not mutated");
+  MotionEvent up=new MotionEvent(MotionEvent.ACTION_UP,0,InputDevice.SOURCE_TOUCHSCREEN,new int[]{41},new float[]{910},new float[]{380}).offset(20,30);r.view.dispatchMenuTouch(up,r.surface);empty(r,"offset control released");
+  down=new MotionEvent(MotionEvent.ACTION_DOWN,0,InputDevice.SOURCE_TOUCHSCREEN,new int[]{41},new float[]{500},new float[]{200}).offset(20,30);up=new MotionEvent(MotionEvent.ACTION_UP,0,InputDevice.SOURCE_TOUCHSCREEN,new int[]{41},new float[]{500},new float[]{200}).offset(20,30);
+  r.view.dispatchMenuTouch(down,r.surface);r.view.dispatchMenuTouch(up,r.surface);near(r.input.px,.51f,"direct tap uses SDL surface origin");near(r.input.py,.42f,"direct tap uses SDL surface y origin");
   // Follow the real Reset dialog action and Save to restore default preferences.
   r=new Rig();setAnywhere(r,true,true);editor(r);r.tap(525,22);check("Reset touch layout?".equals(AlertDialog.last.title),"Reset confirmation");AlertDialog.last.positive.onClick(AlertDialog.last,0);r.tap(75,22);
   check(!r.context.getSharedPreferences("phone-controls",0).getBoolean("look_anywhere",true),"Reset + Save disables optional look");
-  System.out.println("touch view lifecycle: "+checks+" checks passed (full production view, dialogs, pointer streams, menus/fallback, gameplay, controller and persistence)");
+  System.out.println("touch view lifecycle: "+checks+" checks passed (full production view, dialogs, pointer streams, original UI across menus/fallback, gameplay, controller, hidden LOOK and persistence)");
  }
 }
 '''

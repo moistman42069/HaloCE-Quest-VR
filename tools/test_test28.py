@@ -91,7 +91,8 @@ assert 'vr) flags=(--vr --release) ;;' in build and 'flat) flags=(--release) ;;'
 print('PASS: the APKs build with --release (HALO_RELEASE), as OpenCE ships its builds')
 
 # --- version, identity, package markers
-assert int(re.search(r'versionCode Math\.max\((\d+), buildNumber\)', gradle).group(1)) >= 36
+version_codes = re.search(r'versionCode Math\.max\((?:haloVr \? (\d+) : )?(\d+), buildNumber\)', gradle)
+assert version_codes and all(int(code) >= 36 for code in version_codes.groups() if code)
 assert int(re.search(r': "1\.0\.(\d+)"', gradle).group(1)) >= 10
 assert ('HaloCE Quest test28 candidate 1.0.10' in frame or 'test28: co-op games entered in progress' in frame) and \
     'co-op hosted for 2 to 128 players' in frame and 'gyro aim on phones' in frame

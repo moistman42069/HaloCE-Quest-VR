@@ -1,5 +1,16 @@
 # Agent and contributor continuation
 
+## Active Android-only correction and accepted VR preference (2026-10-07)
+
+The owner reports **Test31b Quest VR works great** and explicitly prefers its
+new VR settings. Preserve that implementation and the exact Quest code40 APK.
+Android Test31b's rectangular menu control strip is rejected: keep the original
+circular layout/positions across menu and gameplay, retain direct menu taps,
+and have optional drag-anywhere look hide only the LOOK joystick. MOVE and
+action controls remain. Follow `docs/TEST31C-PROGRESS.md` on `test31c-flat-ui`.
+Target Android 1.0.13/code41 only; do not rebuild VR or publish. The later
+interaction scope remains queued. This supersedes the pending-results text below.
+
 ## Active repair: Test31 rejected (2026-10-07)
 
 Read `docs/TEST31B-PROGRESS.md` first. The owner reports Quest startup crashes

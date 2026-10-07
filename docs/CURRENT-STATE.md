@@ -1,5 +1,21 @@
 # Current development state
 
+## Private device result: Test31b VR accepted; Android UI correction pending
+
+On 2026-10-07 the owner reported that Test31b **VR works great**, and specifically
+requested that its **new VR settings design be preserved as a standing preference**.
+Accepted Quest artifact: `HaloCE-Quest-test31b.apk`, 1.0.13/code40, runtime
+`3399023ae8b7d0ec57e8c42c68c40ab6c33346af`, SHA-256
+`d391f40a9bce4d127d5f91ceb34c84c96011ba5366db4cb99224d80c274de020`.
+This is the owner's reported acceptance, not a claim that every feature was
+individually tested. Preserve this APK and VR implementation.
+
+The same candidate's Android UI is **not accepted**: its menu transition
+replaced the familiar circular touch controls with a rectangular strip.
+`test31c-flat-ui` restores that presentation while retaining direct menu taps
+and making optional free look hide only LOOK. See `TEST31C-PROGRESS.md`.
+Public GitHub v1.0.12 remains unchanged.
+
 ## Current GitHub latest release: v1.0.12 (test30 APKs)
 
 **Published as Latest on 2026-10-07** from `D:\HaloQuest\builds\test30-20261007-v1.0.12`. Version **1.0.12 / code 38**, OpenCE Build 144/network 21. This incremental release fixes Quest face-button behavior in VR menus and adds an optional remembered name for campaign co-op hosts; prior release features remain. See [`RELEASE-1.0.12.md`](RELEASE-1.0.12.md), [`RELEASE-PROVENANCE-1.0.12.md`](RELEASE-PROVENANCE-1.0.12.md), and [`TEST30-DELIVERY.md`](TEST30-DELIVERY.md). Previous releases remain intact; the GitHub About description was not changed.

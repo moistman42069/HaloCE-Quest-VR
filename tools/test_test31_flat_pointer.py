@@ -132,7 +132,7 @@ public class MenuTouchCheck {
     assert desktop.get('setting')=='update.auto' and android.get('setting') is None
     assert android.get('text')=='USE LAUNCHER' and android.get('strings') is None
     assert 'if(!menus && !menuStream) return false;' in touch and 'if(!event.isFromSource(InputDevice.SOURCE_TOUCHSCREEN)) return false;' in touch
-    assert 'menus || editing || GamepadPolicy.showTouch' in touch
+    assert 'boolean shown=GamepadPolicy.showTouch(touchMode,connectedPads);' in touch and 'boolean show=menus || editing || controlsShown;' in touch
     assert 'input.pointer(3,0,0)' in touch
     for symbol in ['host_touch_menu','host_touch_pointer_read','host_sdl_window_size']:
         assert symbol in (ROOT/'port/android/host_imports.list').read_text().splitlines()
