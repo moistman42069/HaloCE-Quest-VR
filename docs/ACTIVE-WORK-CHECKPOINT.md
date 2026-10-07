@@ -1,18 +1,23 @@
-# Active work checkpoint — after v1.0.12 release (2026-10-07)
+# Active work checkpoint — Test33 private candidate (2026-10-07)
 
-## Current: Test32 launcher guidance and VR vehicle refinements
+Read [TEST33-PROGRESS.md](TEST33-PROGRESS.md) and
+[TEST33-DELIVERY.md](TEST33-DELIVERY.md). The current pair is 1.0.14/code43,
+OpenCE Build145/network22, runtime `e522f34c04969daaa87bfa952bb0256b222be590`.
+The supplied Test32 log shows a stale native client after a local-host session:
+public P2P connections opened, but the joined client could not resume game
+advertisement discovery. Browser entry now starts a fresh search for clients
+that are no longer searching. All 56 regression suites passed for each flavor;
+both APKs passed native build, signing, payload, network-parity, and alignment
+checks. This is not headset acceptance. Ask the owner to test the local-host,
+return-to-menu, public-browser, join sequence and report fresh logs if it still
+fails. Do not publish or push. Preserve accepted Test31b VR settings and
+Test31c Android touch/gameplay. Network protocol and upstream networking source
+remain unchanged.
 
-Read [TEST32-PROGRESS.md](TEST32-PROGRESS.md). The owner now accepts Test31c
-mobile gameplay/touch and asks that it remain as-is. Simplify launcher duplicates
-with accurate OpenCE menu guidance; fix passenger positional tracking and add
-entry/exit recentering, selectable turret aim (right-hand default), and reliable
-HUD head gestures. Vehicle handle grabbing is now explicitly deferred; finish
-the remaining items, validate and package both APKs. Upstream was
-checked first: latest/main/tag still Build145/network22 on 2026-10-07.
-Work on `test32-launcher-vehicles`. Preserve Test31c artifacts, accepted VR menu
-design and queued later interaction scope. No publish/push/install/launch.
-Latest owner addition: make Safe geometry the default in BOTH APKs; test flat
-upgrade migration and manual opt-out persistence. Mobile controls stay unchanged.
+Earlier Test31/Test32 task notes below are historical; Test32 vehicle features
+are already incorporated in the candidate and documented in
+[TEST32-PROGRESS.md](TEST32-PROGRESS.md). The queued later interaction backlog
+is still tracked in [VR-INTERACTION-REQUIREMENTS.md](VR-INTERACTION-REQUIREMENTS.md).
 
 ## Historical Test31c task (mobile now accepted above)
 

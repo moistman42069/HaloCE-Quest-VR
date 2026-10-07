@@ -44,7 +44,17 @@ build archives.
 
 Target: version **1.0.14 / code 43**, paired Quest VR and flat Android APKs,
 OpenCE Build 145 / network 22. The lifecycle repair is shared native code, so
-both APKs must be rebuilt. Automated and APK checks will be recorded in
-[TEST33-DELIVERY.md](TEST33-DELIVERY.md). A successful build cannot prove the
-remote join works on a headset; the specific local-host-then-public-browser
-path remains the owner's acceptance test.
+both APKs were rebuilt from runtime commit
+`e522f34c04969daaa87bfa952bb0256b222be590`. Each edition passed all 56
+registered host regression suites, native compilation, APK assembly, original
+project-certificate signature verification, payload-preservation checks, and
+16 KB alignment. The paired APK checks confirmed matching application classes
+and network paths. Exact hashes, metadata, candidate packaging and the device
+test request are in [TEST33-DELIVERY.md](TEST33-DELIVERY.md).
+
+The first build attempt caught obsolete local prototypes conflicting with the
+pinned OpenCE header; those redundant declarations were removed before the
+successful rebuild. Upstream `source/networking` and `source/bungie_net` remain
+unchanged from the accepted Test31b runtime. This establishes a corrected
+candidate, not proof the public server join now succeeds on a headset. The
+owner's local-host-then-public-browser flow remains the acceptance test.

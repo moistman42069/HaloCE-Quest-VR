@@ -1,6 +1,24 @@
 # Current development state
 
-## Latest private result: Test31c Android accepted; Test32 in progress
+## Current private candidate: Test33 browser lifecycle fix (2026-10-07)
+
+Test33 is the current **unaccepted** test pair: version 1.0.14/code43, OpenCE
+Build 145/network22, runtime commit
+`e522f34c04969daaa87bfa952bb0256b222be590`. It resets a client already in
+joining/pregame/game/postgame state before entering the public browser, fixing
+the stale client left behind by the local-host flow seen in the supplied log.
+All 56 host suites and both package checks passed. The exact artifacts and
+owner headset acceptance steps are in [TEST33-DELIVERY.md](TEST33-DELIVERY.md);
+evidence and diagnosis are in [TEST33-PROGRESS.md](TEST33-PROGRESS.md). Do not
+call multiplayer fixed until the owner retests public joining.
+
+The owner-confirmed references remain Test31b Quest VR (accepted VR settings)
+and Test31c flat Android (accepted touch/gameplay). Test33 preserves the flat
+input implementation. Upstream networking and transport sources are unchanged
+from Test31b; the defect found here was browser-client lifecycle, not a
+network-version or wire-protocol change. Public GitHub latest remains v1.0.12.
+
+## Latest owner-accepted private result: Test31c Android; Test31b VR
 
 On 2026-10-07 the owner reports the mobile port works great and requests leaving
 its gameplay/touch implementation as-is. This applies to Test31c/code41,

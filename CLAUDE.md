@@ -1,16 +1,19 @@
 # Agent and contributor continuation
 
-## Current: Test32 launcher/VR vehicles (2026-10-07)
+## Current: Test33 multiplayer browser recovery (2026-10-07)
 
-Read `docs/TEST32-PROGRESS.md` and the latest checkpoint first. The owner accepts
-Test31c mobile controls/gameplay: preserve them. Simplify launcher multiplayer
-duplicates with accurate in-game guidance; refine passenger 6DOF, entry/exit
-recenter, turret aim (right-hand default) and HUD gesture. Handle grabbing is
-explicitly deferred by the owner; finish everything else and package both APKs.
-Keep the accepted VR settings design and other working behavior. Upstream
-rechecked before starting: latest/main remain Build145/network22. Branch
-`test32-launcher-vehicles`; prepare private candidates only. Older active-work
-paragraphs below are historical. Later interaction backlog remains queued.
+Read `docs/ACTIVE-WORK-CHECKPOINT.md`, `docs/CURRENT-STATE.md`,
+`docs/TEST33-PROGRESS.md`, and `docs/TEST33-DELIVERY.md` first. The private
+1.0.14/code43 pair builds from `e522f34c04969daaa87bfa952bb0256b222be590`;
+all 56 host suites and both package checks pass. Test the exact local-host →
+main-menu → public-browser → join flow on a Quest before claiming the issue is
+resolved. If the owner reports a failure, inspect that new log and compare
+against Test33; do not guess at protocol incompatibility. Preserve accepted
+Test31b VR settings and Test31c Android touch/gameplay. OpenCE Build145/network22
+and upstream networking sources are unchanged in this lifecycle fix. Do not
+publish or push without a separate request. Older Test31/Test32 active-work
+paragraphs below are historical; the remaining interaction backlog is still
+tracked in `docs/VR-INTERACTION-REQUIREMENTS.md`.
 
 ## Active touch/glass correction and accepted VR preference (2026-10-07)
 
