@@ -1016,6 +1016,33 @@ short vr_render_windows(
 			vr_render.reticle_time = vr_pose_time();
 		}
 	}
+	/* Test31: mounted weapons fire along their actual muzzle/aimed ray,
+	not the headset-centred HUD plane. This is independent of input layout. */
+	if (!vr_render.cinematic_view && vr_render.seat.seated &&
+		(vr_render.seat.gunner || vr_render.seat.driver))
+	{
+		long player_index = local_player_get_player_index(player.local_player_index);
+		long unit_index = player_index != NONE ? player_get(player_index)->unit_index : NONE;
+		long aiming = unit_index != NONE ? unit_get_aiming_unit_index(unit_index) : NONE;
+		struct unit_datum *unit = aiming != NONE ? unit_try_and_get(aiming) : NULL;
+		long weapon = unit ? unit_inventory_get_weapon(aiming, unit->unit.current_weapon_index) : NONE;
+		real_point3d origin, hit;
+		real_vector3d direction, vector;
+		struct collision_result collision;
+		real distance = 128.0f;
+		if (unit && aiming != unit_index && weapon != NONE &&
+			weapon_vr_preview_primary_ray(weapon, player_index, &origin, &direction))
+		{
+			scale_vector3d(&direction, distance, &vector);
+			if (collision_test_vector(_collision_test_for_projectiles_flags, &origin, &vector, aiming, &collision))
+				distance *= collision.t;
+			point_from_line3d(&origin, &direction, distance, &hit);
+			vr_set_reticle_world(vr_render.game_camera_position.n, hit.n);
+			vr_render.reticle_origin = origin;
+			vr_render.reticle_direction = direction;
+			vr_render.reticle_time = vr_pose_time();
+		}
+	}
 	vr_render.stereo = TRUE;
     if (!vr_render.cinematic_view && !vr_body_setting() && network_vr_pose_wanted()) {
         long p = local_player_get_player_index(player.local_player_index);

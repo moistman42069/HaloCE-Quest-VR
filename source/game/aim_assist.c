@@ -583,10 +583,11 @@ static void aim_assist_collision_direction(
 	return;
 }
 
-long player_aim_projectile(
+static long player_aim_projectile_internal(
 	long player_index,
 	real_point3d const *position,
-	real_vector3d *direction)
+	real_vector3d *direction,
+	boolean record_target)
 {
 	long target_object_index= NONE;
 	struct player_datum *player= player_get(player_index);
@@ -652,11 +653,29 @@ long player_aim_projectile(
 		global_current_collision_user_depth > 1);
 	--global_current_collision_user_depth;
 
-	player->aim_assist_unit_index= target_object_index;
-	player->aim_assist_timestamp= game_time_get();
+	if (record_target)
+	{
+		player->aim_assist_unit_index= target_object_index;
+		player->aim_assist_timestamp= game_time_get();
+	}
 
 	return target_object_index;
 }
+
+long player_aim_projectile(long player_index, real_point3d const *position, real_vector3d *direction)
+{
+	return player_aim_projectile_internal(player_index, position, direction, TRUE);
+}
+
+#ifdef HALO_VR
+/* The mounted-weapon sight uses the very same aim/convergence calculation,
+without recording a fictitious shot's target or timestamp on the player. */
+void vr_preview_player_projectile(long player_index, real_point3d const *position, real_vector3d *direction)
+{
+	player_aim_projectile_internal(player_index, position, direction, FALSE);
+}
+#endif
+
 
 #ifdef HALO_VR
 /* test21: the VR reticle's aim. A player's shot from `position` along

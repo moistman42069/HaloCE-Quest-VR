@@ -4172,7 +4172,8 @@ int vr_present(unsigned int source, unsigned int texture, int width, int height)
 		{
 			static const float xr_forward[3] = { 0.0f, 0.0f, -1.0f };
 			float direction[3];
-			float distance = vr.hand_aiming ? vr.reticle_distance : vr.hud_distance;
+			int world_reticle = vr.reticle_distance > 0.0f && (vr.hand_aiming || vr.seated);
+			float distance = world_reticle ? vr.reticle_distance : vr.hud_distance;
 			const struct halo_xr_pose *pose = vr.hand_aiming ? &vr.aim_pose : &vr.frame.head;
 			int axis;
 
@@ -4180,7 +4181,7 @@ int vr_present(unsigned int source, unsigned int texture, int width, int height)
 			 * the authored crosshair and angular size; head aim keeps its HUD plane. */
 			rotate(pose->orientation, xr_forward, direction);
 			for (axis = 0; axis < 3; axis++)
-				layers.reticle_pose.position[axis] = vr.hand_aiming ? vr.reticle_position[axis] :
+				layers.reticle_pose.position[axis] = world_reticle ? vr.reticle_position[axis] :
 					pose->position[axis] + direction[axis] * distance;
 			memcpy(layers.reticle_pose.orientation, vr.frame.head.orientation, sizeof(layers.reticle_pose.orientation));
 			layers.reticle_size[0] = layers.reticle_size[1] =

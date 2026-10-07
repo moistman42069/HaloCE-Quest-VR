@@ -69,6 +69,83 @@ int main(void){
 }
 ''')
 
+weapons=read('source/items/weapons.c')
+aim=read('source/game/aim_assist.c')
+preview=fn(weapons,'weapon_vr_preview_primary_ray')
+assert 'player_aim_projectile_internal(player_index, position, direction, TRUE)' in fn(aim,'player_aim_projectile')
+assert 'player_aim_projectile_internal(player_index, position, direction, FALSE)' in fn(aim,'vr_preview_player_projectile')
+assert 'if (record_target)' in fn(aim,'player_aim_projectile_internal')
+render=fn(read('port/linux/game/vr_render.c'),'vr_render_windows')
+assert 'weapon_vr_preview_primary_ray(weapon, player_index, &origin, &direction)' in render
+assert 'aiming != unit_index' in render
+assert 'world_reticle = vr.reticle_distance > 0.0f && (vr.hand_aiming || vr.seated)' in frame
+run('turret_ray', r'''
+#include <assert.h>
+#include <math.h>
+#include <stdio.h>
+typedef int boolean; typedef float real;
+#define NONE (-1)
+#define TRUE 1
+#define FALSE 0
+#define TEST_FLAG(v,b) ((v)&(1u<<(b)))
+#define MAXIMUM_MARKERS_PER_OBJECT 16
+enum {_object_dead_bit=0,_weapon_trigger_projectiles_cannot_be_aimed_bit=1,
+ _unit_fires_from_camera_bit=2,_weapon_trigger_uses_weapon_origin_bit=3};
+typedef struct {float x,y,z;} real_point3d;
+typedef struct {float i,j,k;} real_vector3d;
+struct object_marker {struct {real_point3d position;real_vector3d forward;} matrix;};
+struct weapon_trigger_definition {unsigned flags;real_point3d first_person_weapon_offset;};
+struct block {int count; struct weapon_trigger_definition *address;};
+struct weapon_definition {struct {struct block triggers;} weapon;};
+struct weapon_datum {long definition_index;};
+struct unit_datum {long definition_index;struct{unsigned damage_flags;}object;struct{long gunner_object_index;}unit;};
+struct unit_definition {struct{unsigned flags;}unit;};
+static struct weapon_datum gun;
+static struct unit_datum body;
+static struct unit_definition bodydef;
+static struct weapon_trigger_definition trigger;
+static struct weapon_definition def;
+static real_vector3d up={0,0,1},left={0,1,0};
+static real_vector3d *global_up3d=&up,*global_left3d=&left;
+static int marker_present=1,assist_calls,adjust_calls,adjusted_origin,used_aim;
+#define TAG_BLOCK_GET_ELEMENT(b,i,t) ((b)->address+(i))
+static struct weapon_datum *weapon_get(long w){assert(w==7);return &gun;}
+static struct weapon_definition *weapon_definition_get(long d){return &def;}
+static long weapon_get_owner_object_index(long w){return 5;}
+static long weapon_get_effect_object_index(long w){return 6;}
+static struct unit_datum *unit_try_and_get(long u){assert(u==5);return &body;}
+static struct unit_definition *unit_definition_get(long u){return &bodydef;}
+static int object_get_marker_by_name(long w,const char *name,struct object_marker *m,int count){
+ assert(w==6);m[0].matrix.position=(real_point3d){1,2,3};m[0].matrix.forward=(real_vector3d){0,1,0};return marker_present;}
+static void unit_adjust_projectile_ray(long u,real_point3d *o,real_vector3d *f,real *v,int a,int b){
+ assert(u==5);adjust_calls++;adjusted_origin=a!=0;used_aim=b!=0;if(a)o->z+=10;if(b)*f=(real_vector3d){1,0,0};}
+static void cross_product3d(const real_vector3d *a,const real_vector3d *b,real_vector3d *c){
+ *c=(real_vector3d){a->j*b->k-a->k*b->j,a->k*b->i-a->i*b->k,a->i*b->j-a->j*b->i};}
+static float normalize3d(real_vector3d *v){float l=sqrtf(v->i*v->i+v->j*v->j+v->k*v->k);if(l>0){v->i/=l;v->j/=l;v->k/=l;}return l;}
+static void point_from_line3d(const real_point3d *p,const real_vector3d *d,real a,real_point3d *o){
+ *o=(real_point3d){p->x+d->i*a,p->y+d->j*a,p->z+d->k*a};}
+static void vr_preview_player_projectile(long p,const real_point3d *o,real_vector3d *d){assert(p==9);assist_calls++;}
+''' + preview + r'''
+int main(void){
+ real_point3d o;real_vector3d f;def.weapon.triggers=(struct block){1,&trigger};
+ trigger.first_person_weapon_offset=(real_point3d){1,2,3};body.unit.gunner_object_index=8;
+ assert(weapon_vr_preview_primary_ray(7,9,&o,&f));
+ assert(!used_aim && !adjusted_origin && assist_calls==1);
+ assert(o.x==-1 && o.y==3 && o.z==6 && f.i==0 && f.j==1);
+ body.unit.gunner_object_index=NONE;bodydef.unit.flags=1u<<_unit_fires_from_camera_bit;
+ assert(weapon_vr_preview_primary_ray(7,9,&o,&f));assert(used_aim && adjusted_origin);
+ assert(o.x==2 && o.y==4 && o.z==16 && f.i==1 && f.j==0);
+ trigger.flags=1u<<_weapon_trigger_uses_weapon_origin_bit;
+ assert(weapon_vr_preview_primary_ray(7,9,&o,&f));assert(o.x==1 && o.y==2 && o.z==3);
+ trigger.flags=1u<<_weapon_trigger_projectiles_cannot_be_aimed_bit;int calls=assist_calls;
+ assert(weapon_vr_preview_primary_ray(7,9,&o,&f));assert(assist_calls==calls && f.i==0 && f.j==1);
+ marker_present=0;assert(!weapon_vr_preview_primary_ray(7,9,&o,&f));
+ marker_present=1;body.object.damage_flags=1;assert(!weapon_vr_preview_primary_ray(7,9,&o,&f));
+ body.object.damage_flags=0;def.weapon.triggers.count=0;assert(!weapon_vr_preview_primary_ray(7,9,&o,&f));
+ puts("PASS: real turret ray helper: gunner muzzle, driver aim, native offsets/origin flags, missing marker/dead/absent trigger guards");
+}
+''')
+
 # The real update_peers/prediction code sends through a deterministic NAT
 # model. Crypto is outside this simulation: delivery is an already authenticated
 # peer packet, as peer_heard receives after the unchanged tunnel receive checks.
