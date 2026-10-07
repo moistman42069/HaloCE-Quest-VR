@@ -662,7 +662,7 @@ static boolean custom_edition_cache_identify(
 	struct custom_edition_file file;
 	boolean identified = FALSE;
 
-	if (!halo_custom_edition_tag_cache() ||
+	if (!map_name || !*map_name || !halo_custom_edition_tag_cache() ||
 		!custom_edition_map_path(map_name, path) ||
 		!custom_edition_file_open(&file, path))
 	{
@@ -849,6 +849,15 @@ boolean custom_edition_cache_multiplayer(
 
 	return custom_edition_cache_identify(map_name, &identity) &&
 		identity.scenario_type == _scenario_type_multiplayer;
+}
+
+boolean custom_edition_cache_campaign(
+	char const *map_name)
+{
+	struct cache_file_identity identity;
+
+	return custom_edition_cache_identify(map_name, &identity) &&
+		identity.scenario_type == _scenario_type_solo;
 }
 
 struct cache_file_tag_header *custom_edition_cache_tags_load(

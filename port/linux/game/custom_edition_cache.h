@@ -54,6 +54,10 @@ boolean custom_edition_cache_playable(
 custom_edition_maps.c). */
 boolean custom_edition_cache_multiplayer(
 	char const *map_name);
+/* Header classification for the in-game custom campaign list. This does
+not promise that a map's custom scripts or resources are supported. */
+boolean custom_edition_cache_campaign(
+	char const *map_name);
 
 /* Loads the Custom Edition map `map_name` names into its tag cache and
 converts its tags for this build, copying its cache header to `header`
