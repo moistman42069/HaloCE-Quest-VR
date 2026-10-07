@@ -177,6 +177,7 @@ void vr_body_geometry_dispose(void);
 /* the text of the widget with that definition, if it is one of the menu's */
 boolean vr_menu_setting_text(long definition_tag_index, wchar_t *text, long size);
 boolean vr_menu_is_setting(long definition_tag_index);
+boolean vr_menu_is_screen(long definition_tag_index);
 /* steps the widget's setting by `step` values, if it is one of the menu's */
 boolean vr_menu_setting_change(long definition_tag_index, long step);
 /* 1 while the head aims: no magnetism dragging the view */

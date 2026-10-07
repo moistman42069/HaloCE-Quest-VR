@@ -816,7 +816,7 @@ static long vr_menu_native(char *name, char const *label, short type,
     strncpy(widget->name, label, sizeof(widget->name) - 1);
     widget->bounds.x1 = width;
     widget->bounds.y1 = height;
-    widget->flags = type == 3 ? (1 | (1 << 5)) : type == 0 ? 1 : 0;
+    widget->flags = type == 3 ? (1 | (1 << 5)) : type == 0 ? (1 | (1 << 1)) : 0;
     vr_menu_reference(&widget->background_bitmap, NONE);
     widget->background_bitmap.group_tag = 'bitm';
     vr_menu_reference(&widget->text_label_string_list, NONE);
@@ -1105,8 +1105,9 @@ void vr_menu_tags_loaded(void)
     pause_index = vr_menu_native(vr_menu_name("vr\\menu\\screen_template", 0, 0),
         "vr_screen", 0, 640, 480, &widget);
     if (pause_index == NONE) return;
-    /* The caller's solo pause owns the clock. These screens never pause a
-     * co-op/PvP host/client, regardless of the time the map was loaded. */
+    /* A new root replaces and deletes its caller; every VR screen must own
+     * its solo pause. ui_widget.c suppresses this flag for network sessions
+     * and the main menu when the screen is instantiated, not at map load. */
     index = tag_loaded('bitm', "pc\\bitmaps/gradient");
     if (index != NONE) {
         vr_menu_reference(&widget->background_bitmap, index);
@@ -1284,6 +1285,24 @@ static int vr_menu_widget_kind(
 		}
 	}
 	return _vr_menu_none;
+}
+
+/* Only generated root screens own the solo pause, including NEXT targets.
+ * Do not infer ownership from a tag name supplied by a map. */
+boolean vr_menu_is_screen(long definition_tag_index)
+{
+    long index;
+    if (definition_tag_index == NONE || !vr_menu.loaded) return FALSE;
+    if (definition_tag_index == vr_menu.categories_tag_index) return TRUE;
+    for (index = 0; index < VR_MENU_PAGE_COUNT; ++index)
+        if (definition_tag_index == vr_menu.page_tag_indices[index]) return TRUE;
+    for (index = 0; index < vr_menu.navigation_count; ++index) {
+        struct vr_menu_widget *button = vr_menu_widget_get(vr_menu.navigation[index].tag);
+        struct vr_menu_event_handler *handler = button ? button->event_handlers.address : NULL;
+        if (handler && button->event_handlers.count == 1 &&
+            definition_tag_index == handler->widget_tag.index) return TRUE;
+    }
+    return FALSE;
 }
 
 boolean vr_menu_is_setting(long definition_tag_index)

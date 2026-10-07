@@ -11,6 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 source = (ROOT / 'port/linux/game/vr_menu.c').read_text()
 header = (ROOT / 'port/linux/include/halo_vr.h').read_text()
 ui = (ROOT / 'source/interface/ui_widget_game_data_input_functions.c').read_text()
+widgets = (ROOT / 'source/interface/ui_widget.c').read_text()
 assert 'void vr_menu_tags_unloaded(void);' in header
 assert 'focused_child->type == _ui_widget_type_column_list' in ui
 assert 'VR_MENU_GAME_DATA_FUNCTION' in ui and 'vr_menu_setting_text(' in ui
@@ -18,6 +19,33 @@ assert 'child_widgets.count != 5' not in source
 assert 'child_widgets.count != 4' not in source
 assert 'static short const hints_x = 328, right_column_x = 328 - 72;' in source
 assert 'VR_MENU_BUTTON_WIDTH 250' in source
+assert 'boolean vr_menu_is_screen(long definition_tag_index);' in header
+
+def block(text, start):
+    begin = text.index('{', start)
+    end, depth = begin + 1, 1
+    while depth:
+        depth += (text[end] == '{') - (text[end] == '}')
+        end += 1
+    return text[start:end]
+
+# Execute the production pause assignment and ownership acquire/release blocks.
+# Native launch opens parent=NULL and deletes the prior root before initialize;
+# history stores its tag, not a live paused widget.
+def widget_function(name):
+    match = re.search(r'^(?:static )?struct widget_instance \*' + name + r'\([^;{]*\)\s*\{', widgets, re.M)
+    assert match, name
+    return block(widgets, match.start())
+
+launch = widget_function('ui_widget_launch_widget')
+assert re.search(r'ui_widget_load_by_name_or_tag\(\s*NULL,\s*new_widget_tag_index,\s*NULL,', launch)
+loader = widget_function('ui_widget_load_by_name_or_tag')
+assert loader.index('ui_widget_delete(widget_globals.active_widgets[widget_stack])') < loader.index('widget_instance_initialize(')
+init = widgets.index('widget->pause_game_time = TEST_FLAG(definition->flags, _widget_pause_game_time_bit)')
+pause_assignment = widgets[init:widgets.index('\n\twidget->creation_time', init)]
+assert 'vr_menu_is_screen(tag_index)' in pause_assignment
+pause_acquire = block(widgets, widgets.index('if (widget->pause_game_time == TRUE)', init))
+pause_release = block(widgets, widgets.index('if (widget->pause_game_time == TRUE)'))
 
 def struct(name):
     start = source.index('struct ' + name + '\n{')
@@ -95,6 +123,65 @@ start=source.index('struct vr_menu_navigation {')
 end=source.index('boolean vr_menu_setting_change(')
 builder=source[start:end]
 checks=r"""
+enum { _game_connection_local, _game_connection_network_client, _game_connection_network_server, _game_connection_film_playback };
+enum { _widget_pause_game_time_bit = 1 };
+#define TEST_FLAG(value,bit) (((value)&(1L<<(bit)))!=0)
+#define match_vassert(file,line,condition,message) assert(condition)
+static int connection, coop, paused, audio_paused, we_are_at_the_main_menu, main_resets;
+static struct {int pause_game_time_count,sound_paused;} widget_globals;
+struct pause_widget {int pause_game_time;};
+static int game_connection(void){return connection;}
+static int network_coop_active(void){return coop;}
+static int game_time_get_paused(void){return paused;}
+static void game_time_set_paused(int state){paused=state;}
+static void sound_pause(int state){audio_paused=state;}
+static void main_menu_ensure_player_queues_exist(void){main_resets++;}
+static void game_time_dispose_from_old_map(void){}
+static void game_time_initialize_for_new_map(void){}
+static void game_time_start(void){}
+static void pause_delete(struct pause_widget *widget){
+PAUSE_RELEASE
+ widget->pause_game_time=FALSE;
+}
+static void pause_open(struct pause_widget *widget,struct vr_menu_widget *definition,long tag_index){
+PAUSE_ASSIGNMENT
+PAUSE_ACQUIRE
+}
+static void replace_root(struct pause_widget *widget,long tag){
+ pause_delete(widget);pause_open(widget,vr_menu_widget_get(tag),tag);
+}
+static void pause_lifecycle(void){
+ struct vr_menu_widget stock={0};stock.flags=2;
+ for(int session=0;session<7;session++){
+  /* Local campaign, main menu, co-op client/server, PvP client/server,
+   * and a co-op transition whose connection still reports local. */
+  connection=session==2||session==4?_game_connection_network_client:session==3||session==5?_game_connection_network_server:_game_connection_local;
+  coop=session==2||session==3||session==6;we_are_at_the_main_menu=session==1;
+  paused=audio_paused=main_resets=0;memset(&widget_globals,0,sizeof(widget_globals));
+  struct pause_widget active={0};int expected=session==0;
+  if(expected)pause_open(&active,&stock,NONE);
+  replace_root(&active,vr_menu.categories_tag_index);
+  assert(paused==expected&&audio_paused==expected&&widget_globals.pause_game_time_count==expected);
+  for(long page=0;page<VR_MENU_PAGE_COUNT;page++){
+   replace_root(&active,vr_menu.page_tag_indices[page]);
+   assert(paused==expected&&widget_globals.pause_game_time_count==expected);
+  }
+  for(long i=0;i<vr_menu.navigation_count;i++){
+   struct vr_menu_event_handler *handler=vr_menu_widget_get(vr_menu.navigation[i].tag)->event_handlers.address;
+   assert(vr_menu_is_screen(handler->widget_tag.index));replace_root(&active,handler->widget_tag.index);
+   assert(paused==expected&&widget_globals.pause_game_time_count==expected);
+  }
+  /* B reconstructs previous pages/categories, Start deletes the last root. */
+  replace_root(&active,vr_menu.page_tag_indices[0]);replace_root(&active,vr_menu.categories_tag_index);
+  assert(paused==expected&&widget_globals.pause_game_time_count==expected);
+  pause_delete(&active);assert(!paused&&!audio_paused&&!widget_globals.pause_game_time_count&&!main_resets);
+ }
+ /* Gating belongs to generated roots; local non-VR film widgets preserve
+  * their existing pause semantics. Child rows never own pause. */
+ connection=_game_connection_film_playback;coop=we_are_at_the_main_menu=0;
+ struct pause_widget stock_active={0};pause_open(&stock_active,&stock,NONE);assert(paused);pause_delete(&stock_active);
+ assert(!vr_menu_is_screen(vr_menu.button_tag_index)&&!vr_menu_is_screen(vr_menu.title_tag_index)&&!vr_menu_is_screen(NONE));
+}
 static struct vr_menu_widget *widget(const char *name,short type,short x,short y,short w,short h,long *tag){
  struct vr_menu_widget *p=owned(sizeof(*p));p->type=type;p->controller_index=4;
  p->bounds=(rectangle2d){y,x,y+h,x+w};p->text_font.index=NONE;p->background_bitmap.index=NONE;
@@ -137,7 +224,7 @@ static void teardown(void){
  for(int i=0;i<fixture_count;i++)free(fixture[i]);fixture_count=0;tag_count=0;
 }
 static void bounds(long tag,long x,long y){
- struct vr_menu_widget *p=vr_menu_widget_get(tag);assert(p);assert(!(p->flags&2));
+ struct vr_menu_widget *p=vr_menu_widget_get(tag);assert(p);assert(!!(p->flags&2)==!!vr_menu_is_screen(tag));
  assert(x+p->bounds.x0>=0&&y+p->bounds.y0>=0&&x+p->bounds.x1<=640&&y+p->bounds.y1<=480);
  for(long i=0;i<p->child_widgets.count;i++){
   struct vr_menu_child *c=(struct vr_menu_child*)p->child_widgets.address+i;
@@ -152,6 +239,7 @@ static void verify(void){
  assert(vr_menu_setting_text(vr_menu.hints_tag_index,text,128)&&wcsstr(text,L"B: BACK"));
  assert(!vr_menu_is_setting(vr_menu.title_tag_index)&&!vr_menu_is_setting(vr_menu.hints_tag_index));
  bounds(vr_menu.categories_tag_index,0,0);
+ pause_lifecycle();
  for(long page=0;page<VR_MENU_PAGE_COUNT;page++){
   bounds(vr_menu.page_tag_indices[page],0,0);
   for(long i=0;i<vr_menu_pages[page].count;i++){
@@ -202,11 +290,12 @@ int main(void){
   if(vr_menu.button_tag_index==NONE){assert(vr_menu_widget_get(main_tag)->child_widgets.count==5);assert(vr_menu_widget_get(settings_tag)->child_widgets.count==10);}
   teardown();
  }
- assert(logs);puts("PASS: native VR main/settings/solo/MP routes, safe columns/paging, callbacks, reload/idempotence and allocation failures");
+ assert(logs);puts("PASS: native VR main/settings/solo/MP routes, solo pause ownership and online/main-menu no-pause, safe columns/paging, callbacks, reload/idempotence and allocation failures");
 }
 """
+checks = checks.replace('PAUSE_RELEASE', pause_release).replace('PAUSE_ASSIGNMENT', pause_assignment).replace('PAUSE_ACQUIRE', pause_acquire)
 out=ROOT/'build/test31-vr-menu';out.mkdir(parents=True,exist_ok=True)
 cfile=out/'vr_menu.c';exe=out/'vr_menu'
 cfile.write_text(shim+structs+constants+settings_enum+settings_struct+stubs+builder+checks)
-subprocess.run(['clang','-std=gnu11','-Wno-multichar','-O1','-fsanitize=address,undefined',str(cfile),'-o',str(exe)],check=True)
+subprocess.run(['clang','-std=gnu11','-DHALO_VR','-Wno-multichar','-O1','-fsanitize=address,undefined',str(cfile),'-o',str(exe)],check=True)
 subprocess.run([str(exe)],check=True)

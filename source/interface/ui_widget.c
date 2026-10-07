@@ -3750,6 +3750,14 @@ static void widget_instance_initialize(
 	screen, which would) */
 	widget->pause_game_time = TEST_FLAG(definition->flags, _widget_pause_game_time_bit) &&
 		!network_coop_active();
+#ifdef HALO_VR
+	/* Opening another root deletes the caller, including its pause ownership.
+	 * VR screens retain solo pause across categories/pages; online play and
+	 * the main-menu scene must continue normally. Evaluate at opening time. */
+	if (vr_menu_is_screen(tag_index))
+		widget->pause_game_time = widget->pause_game_time &&
+			!we_are_at_the_main_menu && game_connection() == _game_connection_local;
+#endif
 	widget->creation_time = widget_globals.current_system_milliseconds;
 	widget->milliseconds_to_auto_close = MAX(definition->milliseconds_to_auto_close, 0);
 	widget->auto_close_fade_time = MAX(definition->auto_close_fade_time, 0);
