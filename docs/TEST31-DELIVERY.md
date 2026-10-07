@@ -57,10 +57,15 @@ The same notes are included at the top of the launcher's bundled player guide.
   signing verification and 16 KB APK alignment pass for each.
 - Delivery gates check version/package/API/ABI, exact guest payloads, embedded
   menus and guides, networking parity, source privacy, ZIP integrity and hashes.
+  Networking text is compared in allocated ELF sections, including dynamic
+  imports. Local split-screen symbols removed by VR optimization exist only in
+  the flat symbol table; metadata differences do not imply a protocol change.
+  Artifact tests reject changed runtime networking/import text and malformed ELF.
 
 Runtime source: `585a564373f6bb31370ebca6fa7648f62a9e3865` on
 `test31-network-menus-vehicles`. Later source-snapshot changes are delivery
-documentation only; the manifest records both source commits. Both editions
+documentation and artifact-verification tooling only; the manifest records
+both source commits. Both editions
 were built serially from the same clean runtime commit. Installed clang 18
 does not match the upstream clang 22 PGO profiles, so these builds use no PGO;
 no Quest performance acceptance is inferred.
