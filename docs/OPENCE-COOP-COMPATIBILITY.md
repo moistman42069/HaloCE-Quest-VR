@@ -67,6 +67,24 @@ Network versions 12–20 changed the wire format for every game, multiplayer inc
 - **Release builds, as OpenCE ships.** A failed upstream check is written to the game log as `EXCEPTION … (release build)` and play goes on, as on OpenCE. Before, it halted with the blue screen.
 - **Co-op hosts of 2 to 128 players**, the sizes OpenCE's Server Setup offers.
 
+## What changed in 1.0.11 (test29)
+
+- **OpenCE build 144, network 21.** OpenCE moved to network 21 in build 141 (the co-op garbage throttle). On 2026-10-07 the directory's co-op games were on 21, which 1.0.10 refuses. This build plays 21 exactly.
+  - Its co-op, lobby and message files are build 144's byte for byte (`network_coop.c` differs only by test28's camera fix).
+  - The rest of the netcode is build 144's plus this app's earlier additions.
+  - Run against the live directory that day: 4 of 4 co-op games and 10 multiplayer games joinable.
+- **Taken from builds 140–144:**
+  - bodies at rest sent three times;
+  - killing blows to every client;
+  - the host's BSP crossing and gates bring the team along;
+  - respawns behind a teammate;
+  - multiplayer scores zeroed for players joining in progress;
+  - the hardening rounds.
+- **Not taken (display or loader only):**
+  - the PC scoreboard;
+  - desktop-GL renderer changes;
+  - map tag validation.
+
 ## Automated evidence
 
 - `tools/test_test27.py`:

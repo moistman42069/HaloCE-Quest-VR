@@ -338,6 +338,22 @@ debug.network_loss [real]
 Default: 0.0
 Percent of datagrams received that are dropped, for the same; 0 none.
 
+debug.network_corrupt [real]
+Default: 0.0
+Percent of the datagrams received that are damaged at random, to test
+that nothing a machine sends can crash the game; 0 none.
+
+debug.network_corrupt_stream [real]
+Default: 0.0
+Percent of the reads of streams that are damaged at random, for the
+same (a damaged stream is closed, so a little goes a long way); 0 none.
+
+debug.network_corrupt_after [real]
+Default: 0.0
+Seconds after the start before anything is damaged, so that a game can
+be set up and started first (a host's messages to its own client are
+damaged too).
+
 debug.test_input [string]
 Default: ""
 "bot:<seed>" plays controller 1 with a scripted pattern (automated
@@ -432,9 +448,29 @@ vr.resolution_scale [real]
 Default: 0.0
 The game's picture in the headset as a fraction of the runtime's
 recommended eye resolution (about 1680x1760 on the Quest 3, 1728x1728 on
-the Steam Frame), 0.5 to 1.5; 0 chooses for the headset: 1.0 on the
+the Steam Frame), 0.5 to 2.0; 0 chooses for the headset: 1.0 on the
 Quest 3, 3S and Pro, 0.85 on the Quest 2, 0.7 on the first Quest. 1.5
-holds 72 frames a second on the Steam Frame.
+holds 72 frames a second on the Steam Frame. The eye images the
+compositor gets are this size too, so above 1.0 the extra detail
+reaches the display; 1.25 is about the Quest 3's own panels
+(2064x2208), above that supersampling.
+
+vr.fov_mode [string]
+Default: "full"
+How much of the view the game draws: "full" (all the headset shows)
+or "glasses" (a window of vr.glasses_fov_h by vr.glasses_fov_v
+degrees ahead of each eye, black round it), which previews the field
+of view of upcoming VR glasses. The window draws far fewer pixels
+(about 40% as many on the Quest 3) and fewer objects, which leaves
+room for a higher frame rate or vr.resolution_scale.
+
+vr.glasses_fov_h [real]
+Default: 70.0
+The glasses window's width, in degrees (vr.fov_mode), 20 to 160.
+
+vr.glasses_fov_v [real]
+Default: 66.0
+The glasses window's height, in degrees (vr.fov_mode), 20 to 160.
 
 vr.screen_distance [real]
 Default: 2.5
@@ -696,14 +732,32 @@ turns the flashlight on or off; 0 turns the gesture off (0.10 to 0.30 in the men
 
 vr.hud_tap_distance [real]
 Default: 0.1
-The weapon hand brought this close (metres) to its own side of the head (the right temple
-for a right hand) shows or hides the HUD for the session; menus, prompts, messages and the
-reticle stay. 0 turns the gesture off.
+The weapon hand held for a moment this close (metres) beside its own side of the head (the
+right temple for a right hand) shows or hides the HUD for the session; menus, prompts,
+messages and the reticle stay. 0 turns the gesture off. VR SETTINGS > HUD also shows or
+hides it, and every start shows it.
 
 vr.wrist_hud [boolean]
 Default: false
 Shield and health, ammunition and grenades, and the motion tracker on a panel on the off
 hand's wrist (shown while you look at it), and left out of the HUD ahead. Off by default.
+
+vr.wrist_hud_along [real]
+Default: 0
+Moves the wrist HUD along the forearm from its place on the wrist (metres, -0.2 to 0.2;
+positive toward the elbow).
+
+vr.wrist_hud_across [real]
+Default: 0
+Moves the wrist HUD across the wrist (metres, -0.2 to 0.2; positive toward the thumb).
+
+vr.wrist_hud_out [real]
+Default: 0
+Raises the wrist HUD off the wrist (metres, -0.2 to 0.2; negative lowers it).
+
+vr.wrist_hud_size [real]
+Default: 1
+The wrist HUD's size (0.5 to 2; 1 is 11 cm across).
 
 vr.controls_reticle_applied [boolean]
 Default: false

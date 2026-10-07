@@ -40,7 +40,7 @@ Physical weapons is the local default. A gun supplied on load/pickup stays suppo
 
 - Crouch compares height against the last recenter; default 35 cm, zero disables physical crouch.
 - Flashlight gesture: off hand within 20 cm of the head by default. **Head Gestures → Flashlight** sets the reach (10–30 cm) or Off (the old Button choice).
-- HUD tap (1.0.8): the gun hand within 10 cm of its own temple (the right temple for a right-handed player) shows or hides the HUD. **Head Gestures → HUD Tap** sets the reach (6–15 cm) or Off.
+- HUD tap (1.0.8; held since 1.0.11): the gun hand held for a moment beside its own temple (the right temple for a right-handed player) shows or hides the HUD. **HUD → Head Tap** or **Head Gestures → HUD Tap** sets the reach (6–15 cm) or Off; **HUD → HUD** shows or hides it from the menu.
 - Shoulder/hip holsters: default region size 20 cm, with entry haptics. Locked and Physical modes use them differently as above.
 - Arm Run defaults off. Pumping or two-hand weapon bob supplies forward movement with a neutral stick. A lower Arm Run number (Easy 0.3) makes activation easier. Strong offline effort can reach 1.5x speed; network speed stays stock. Stick input wins.
 - Impact melee sweeps the hand/weapon; Swing requests native melee. Default threshold 2 m/s, zero disables motion melee. The button still works. Network clients use Swing.
@@ -61,11 +61,11 @@ Test20d gives each decision one row. Rows that only mattered together with anoth
 | Body | Body Arms + Hands / Full / Legs + Arms / Hands Only; **Hands** Body IK / Floating / Float + Arms / Animated / Gun Only; Fingers Off / Tracked; Room-scale Off / On; Crouch Depth Off or 5–40 cm; **Arm Run** Off or effort 0.3–1.2; **Melee** Impact / Swing / Impact + Online / Swing + Online; Melee Speed Off or 1.0–3.6 m/s |
 | Hands + Gun | Hand Pitch / Yaw / Roll (both hands, left mirrored; default −70 / 0 / 0); Reset Hands; Gun Pitch / Yaw / Roll (default 0); Reset Gun; Gun Forward / Up / Out ±20 cm; Gun Grip Anchored / Classic |
 | Gameplay | Haptics 0–100%; Scope Off / On; Cutscenes Immersive / 3D Screen / Flat; Close Contact Off / On |
-| HUD + Reticle (1.0.8) | Crosshair Native / Off; Crosshair Size 25–300%; Opacity (crosshair) 0–100%; Wrist HUD Off (default) / On |
+| HUD + Reticle (1.0.8) | **HUD** Shown / Hidden (1.0.11; this session); **Head Tap** Off or 6–15 cm (10 default; 1.0.11); Crosshair Native / Off; Crosshair Size 25–300%; Opacity (crosshair) 0–100%; Wrist HUD Off (default) / On; **Wrist Along / Across / Height** ±20 cm, **Wrist Size** 50–200%, **Reset Wrist** (1.0.11) |
 | Head Gestures (1.0.8) | Flashlight Off or 10–30 cm (20 default); HUD Tap Off or 6–15 cm (10 default) |
 | Buttons | Jump, Use / Reload, Melee, Crouch, Next Weapon, Grenade, Next Grenade, Reticle (below); Reset Buttons |
 | Vehicles | Third Person (default) / First Person; Horizon Level (default) / Half / Vehicle (first person, driver); Steering Right Hand (default) / Left Hand / Head / Stick; global and Warthog/Ghost/Banshee/Scorpion/Pelican Up/Fwd/Right seat offsets ±50 cm; Reset Offsets |
-| Graphics | Preset Auto / Low / Medium / High / Max; Resolution Auto / 60 / 70 / 80 / 90 / 100 / 110 / **125% Q3 Native** / 140 / 160 / 180 / 200%; **FOV** Full (default) / Glasses 70×66; Shadows, Lights, Specular, Reflections, Bump Maps, Grass, Fog Layers: Auto / On / Off |
+| Graphics | Preset Auto / Low / Medium / High / Max; Resolution Auto / 60 / 70 / 80 / 90 / 100 / 110 / **125% Q3** (the Quest 3's own panels) / 140 / 160 / 180 / 200%; **FOV** Full (default) / Glasses 70×66; Shadows, Lights, Specular, Reflections, Bump Maps, Grass, Fog Layers: Auto / On / Off |
 | Display | Decals, Particles, Contrails, Weather, Lens Flares, Camo: Auto / On / Off; Refresh 72 / 80 / 90 / 120 Hz |
 | Controller Left / Right | Advanced tracking correction for hand and gun together (see below) |
 
@@ -73,7 +73,7 @@ Important defaults: right-handed with Mirror Controls Auto; body `legs`; Hands B
 
 Close Contact reduces only the offline local VR capsule radius: up to 15%, at most 5 cm, never below 18 cm. Solid collision and height remain. Physical + MP concerns weapon holding/drop behavior, not visual avatar sharing; peers may not reproduce physical drops/pickups correctly.
 
-Auto graphics effects follow the preset. Resolution is relative to the runtime's recommended eye size (1680×1760 on the Quest 3), and the eye images handed to the compositor follow it, so steps above 100% reach the display: **125% Q3 Native** is about the Quest 3's panels (2064×2208 per eye), higher steps supersample. Refresh requests a supported rate; it does not guarantee frame timing. The simulation remains 30 Hz with interpolated rendering.
+Auto graphics effects follow the preset. Resolution is relative to the runtime's recommended eye size (1680×1760 on the Quest 3), and above 100% (or with FOV Glasses) the eye images handed to the compositor follow it, so the extra detail reaches the display; Auto and every step to 100% keep the recommended images, as in 1.0.10. **125% Q3** is about the Quest 3's panels (2064×2208 per eye), higher steps supersample. Refresh requests a supported rate; it does not guarantee frame timing. The simulation remains 30 Hz with interpolated rendering.
 
 **FOV Glasses 70×66** draws only a 70° × 66° window ahead of each eye (black around it), simulating the field of view of upcoming VR glasses so players can get an idea of it. Because only that window is drawn, at the same sharpness, it renders about 40% of the pixels on a Quest 3 (60% fewer, at every Resolution step; the Quest 3's own view is about 94° × 99° per eye) and fewer objects, which leaves room for a higher frame rate or a higher Resolution step. HUD and menus are unaffected; the window size is `vr.glasses_fov_h` / `vr.glasses_fov_v` in `config.toml`.
 
@@ -111,6 +111,17 @@ Quit before external edits. In `[vr]`, `body = "legs"` explicitly selects the de
 - **Horn:** a driver's horn is Halo's crouch control. While seated, either stick click sounds it (even with the off-hand trigger held), whatever the throttle (the game used to pass the left stick click only below 98% throttle, and the Warthog's throttle is that stick). Clicking both sticks still recentres. A lowered head no longer counts as crouching while seated.
 
 - **Upside-down hands or guns** (reported on Quest OS v78): use **Controller Left/Right → Flip Roll 180** for the affected controller; it turns hand, gun and two-hand aim together. Hand Roll turns only the visible hand and Gun Roll only the gun; since test21 Gun Roll also holds in two-hand grip (it used to flip back).
+
+## HUD tap, HUD and wrist settings, two-hand movement, graphics (test29, 1.0.11)
+
+- **HUD tap fixed:** hold your **gun hand by the side of your head** (beside the temple, as if touching it with the controller) **for a moment**. A short buzz confirms. Do the same again to bring the HUD back. A hand passing by quickly no longer counts, nor does a hand inside a holster, so reaching for the shoulder holster no longer hides the HUD by accident.
+- **HUD page:** **HUD: Shown / Hidden** switches it from the menu at any time, and every start shows it. **Head Tap** turns the gesture off (Off) or sets its reach (6–15 cm, 10 by default). It is the same setting as Head Gestures → HUD Tap.
+- **Wrist HUD:** now sits on top of the wrist rather than on the back of the hand. **Wrist Along** (toward the elbow), **Wrist Across** (toward the thumb) and **Wrist Height** move it in 1 cm steps. **Wrist Size** scales it (50–200%), and **Reset Wrist** restores the defaults.
+- **Moving with a hand (Controls → Move With: Left or Right Hand):** while both hands hold the gun, movement follows the gun instead of that controller. A hand holding the front grip is turned to hold it, which made forward slowly become a strafe. Move With: Head (the default) is unchanged.
+- **Graphics (pull request #1):**
+  - **FOV: Glasses 70×66** draws only a 70° × 66° window per eye, previewing VR glasses with fewer pixels to draw. Full is the default.
+  - **Resolution** steps up to 200%. Above 100% the extra detail now reaches the headset; 125% Q3 is about the Quest 3's own panels.
+  - Auto and every step up to 100% look exactly as in 1.0.10.
 
 ## HUD, reticle, head gestures, melee and fingers (test26, 1.0.8)
 

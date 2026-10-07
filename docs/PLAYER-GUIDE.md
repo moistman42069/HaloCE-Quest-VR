@@ -9,6 +9,15 @@
 | Android phone/tablet — flat, touch or gamepad | **[HaloCE-Android-1.0.10.apk](https://github.com/moistman42069/HaloCE-Quest-VR/releases/download/v1.0.10/HaloCE-Android-1.0.10.apk)** |
 | Meta Quest — immersive standalone VR | **[HaloCE-Quest-1.0.10.apk](https://github.com/moistman42069/HaloCE-Quest-VR/releases/download/v1.0.10/HaloCE-Quest-1.0.10.apk)** |
 
+**Test candidate 1.0.11 (code 37, not a release):**
+
+- **OpenCE build 144 (network 21).** OpenCE's current co-op and multiplayer games are on network 21, which 1.0.10 cannot join.
+- **HUD head tap:** hold your gun hand by the side of your head for a moment. A hand passing by no longer hides the HUD.
+- **HUD settings:** VR Settings → HUD now has a HUD Shown/Hidden toggle and a Head Tap on/off.
+- **Wrist HUD:** sits on the wrist, with settings to move and resize it.
+- **Two-hand movement:** moving with a hand no longer strafes while both hands hold the gun.
+- **Graphics:** a glasses field-of-view option, and resolution steps up to 200% (contributed in pull request #1).
+
 1. **Install the appropriate APK.** On Quest, enable developer mode and sideload with SideQuest or your existing installer; open it from **Unknown Sources**. On Android, open the downloaded APK and allow installation from that source when prompted. Both require ARM64, Android 9/API 28 or newer and compatible graphics. **Quest 3 is the reference headset**; other devices are not equally verified.
 2. **Updating this project? Install over it.** Both APKs retain their package IDs and signing certificate. Do not uninstall or clear app data. Optional ADB command: `adb install -r <apk-file>`. Back up your maps, saves and settings first. Another fork using the same package ID but a different key cannot update in place.
 3. **Supply your own legally obtained Xbox Halo: Combat Evolved data.** No game maps are included. Copy your `.iso`/`.xiso` or extracted game folder to the device. MCC and retail PC installation files are not substitutes for the supported Xbox base data.
@@ -17,7 +26,7 @@
 
 The launcher includes an offline **Field guide** with controls, settings and credits. Existing Quest data under `/sdcard/Documents/HaloCE/maps` is recognized when `ui.map` is present; otherwise each app uses its own external-files storage. VR and flat can coexist and have separate app data.
 
-**Updating:** install this APK over the existing app. Do not uninstall or clear data; back up maps, saves and settings first. All players must use matching network version 20 for multiplayer and co-op.
+**Updating:** install this APK over the existing app. Do not uninstall or clear data; back up maps, saves and settings first. All players must use the same network version for multiplayer and co-op (1.0.10: 20; the 1.0.11 candidate: 21, current OpenCE).
 
 ## 2. New Features / Major Changes
 
@@ -53,7 +62,7 @@ Use **Controls = VR** and the standard native controller profile. Right is the d
 | Right stick held down | Crouch by default (since 1.0.8; ducking also crouches) |
 | Right stick click | Native melee |
 | Both stick clicks together | Recenter during gameplay |
-| Gun hand to its own temple | Show or hide the HUD (Head Gestures → HUD Tap) |
+| Gun hand held by its own temple for a moment | Show or hide the HUD (also VR Settings → HUD → HUD; HUD → Head Tap or Head Gestures → HUD Tap turns the gesture off) |
 | Left menu button | Pause/menu; online co-op continues running |
 | Weapon pointer + trigger | Select menu item; right B returns |
 
@@ -123,11 +132,11 @@ The launcher browser reads the ChupathingyCE native-port directory and can merge
 
 **Host multiplayer** offers installed map, game type, name, score/time, friendly fire, radar, team balance, vehicle respawn, loadout/grenade options and **2–128 PvP slots**. Public listing is opt-in; private invites are available. Start with modest limits: 128 is protocol capacity, not a verified Quest-host performance target. Network settings expose Internet/LAN, UPnP, clipboard invites and tunnel port.
 
-Since 1.0.9 this build plays **OpenCE's netcode, network 20** (OpenCE build 138), and joins hosts of exactly that version, as every OpenCE build does, subject to content and connectivity. OpenCE's Windows/macOS/Linux/Android builds of the same version cross-play. **Retail Halo PC/Custom Edition, original Xbox and MCC use different network protocols.** Hosts on another network version (this app 1.0.8 and older on 11, older or newer OpenCE builds) are refused by name.
+Since 1.0.9 this build plays **OpenCE's netcode**: network 20 (OpenCE build 138) in 1.0.9 and 1.0.10, **network 21 (OpenCE build 144) since 1.0.11**. It joins hosts of exactly its version, as every OpenCE build does, subject to content and connectivity. OpenCE's Windows/macOS/Linux/Android builds of the same version cross-play. **Retail Halo PC/Custom Edition, original Xbox and MCC use different network protocols.** Hosts on another network version (this app 1.0.8 and older on 11, older or newer OpenCE builds) are refused by name.
 
 ### Campaign co-op and avatars
 
-Co-op is OpenCE's native campaign mode on network 20. Host sizes are 2, 4, 8, 12, 16, 24, 32, 48, 64, 96 and 128 players (4 by default). Players can join an active mission; the host runs scripts, AI, checkpoints and level changes. A dead player spectates a teammate and returns when safe. Everyone needs compatible campaign maps. Previous network 9–11 and CE01/CE02 sessions cannot join.
+Co-op is OpenCE's native campaign mode on the same network version (21 since 1.0.11). Host sizes are 2, 4, 8, 12, 16, 24, 32, 48, 64, 96 and 128 players (4 by default). Players can join an active mission; the host runs scripts, AI, checkpoints and level changes. A dead player spectates a teammate and returns when safe. Everyone needs compatible campaign maps. Previous network 9–11 and CE01/CE02 sessions cannot join.
 
 Step-by-step instructions are in the launcher: **How to join co-op & find servers** (also first in the Field guide).
 

@@ -8,6 +8,18 @@ The owner reports campaign co-op works well. Exact device pairing, mission and l
 
 The prior public release is v1.0.6. Historical progress and older release notes below are retained as records, not current compatibility guidance.
 
+## Next candidate: test29 (1.0.11 / code 37)
+
+**Next candidate (private, not released): test29, version 1.0.11 / code 37**, branch `test29-opence-144`, built on the published v1.0.10:
+- OpenCE build 144 netcode (network 21). Current OpenCE co-op and multiplayer games are on 21, which 1.0.10 cannot join.
+- The HUD head tap must now be held by the temple for a moment, so a hand passing by no longer hides the HUD.
+- New HUD rows: HUD Shown/Hidden and Head Tap.
+- The wrist HUD sits on the wrist and can be moved and resized.
+- MOVE WITH a hand follows the gun while both hands hold it.
+- Pull request #1 adds a glasses FOV option and resolution steps up to 200%; defaults are as in 1.0.10.
+
+See [TEST29-PROGRESS.md](TEST29-PROGRESS.md) and [TEST29-DELIVERY.md](TEST29-DELIVERY.md).
+
 ## Historical progress
 
 The following entries preserve the state before test28. First-person vehicles remain experimental and opt-in. Test27 (1.0.9) introduced OpenCE Build 138's netcode and co-op at network 20; test26 and earlier records document the retired project-owned protocol. See [`TEST28-PROGRESS.md`](TEST28-PROGRESS.md), [`OPENCE-COOP-COMPATIBILITY.md`](OPENCE-COOP-COMPATIBILITY.md), and [`COOP-PLAYER-COUNT.md`](COOP-PLAYER-COUNT.md) for current details. The older OpenCE network 16 / project network 11 comparison below is historical and superseded.

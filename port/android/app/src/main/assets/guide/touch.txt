@@ -1,6 +1,7 @@
-# Flat Android controls and HUD editor
+# Flat Android controls and HUD editor (v1.0.10)
 
-Test15 candidate, `com.halo.decomp`, Android 9+ / ARM64. Quest has no touch overlay.
+Applies to the flat Android package `com.halo.decomp` (Android 9+ / ARM64). Quest
+uses tracked controllers and has no flat touch overlay.
 
 ## Play with the defaults
 
@@ -56,17 +57,17 @@ Usability references: Activision's [Warzone Mobile control customization guide](
 
 Gyro aim math and wiring: `tools/test_test28.py` (display rotations, tilt, sensitivity, invert, still phone, bad samples).
 
-Device checks: simultaneous move/fire/aim/jump, menus and controller profiles, cancel/focus/rotation, save/reopen/cancel/reset, controls under toolbar, notches, gamepad coexistence and Quest overlay absence. Test15 is awaiting owner results.
+Device checks to collect: simultaneous move/fire/aim/jump, menus and controller profiles, cancel/focus/rotation, save/reopen/cancel/reset, controls under toolbar and notches, gamepad coexistence, and confirmation that Quest has no touch overlay. Automated checks do not establish physical-device acceptance.
 
 Additional native-port reference: id Software's public [DOOM iOS HUD editor](https://github.com/id-Software/DOOM-iOS/blob/master/code/iphone/hud.c), reviewed for drag ownership, screen-edge clamping and saved-control lifecycle. This was design comparison only; none of its GPL code/art was copied into this implementation.
 
 Controller & touch settings in the launcher controls automatic hiding and recovery. Auto is the default; only a fully mapped SDL gamepad hides the HUD. Always hide is an explicit override; restore visibility in the launcher. See [controller support](ANDROID-GAMEPAD.md).
 
 
-# Android controllers (1.0)
+# Android controller guide (v1.0.10)
 
-The flat ARM64 Android APK uses Android's input system and bundled SDL3 to
-translate common USB/Bluetooth gamepads into Halo's Xbox controller state.
+For the flat ARM64 Android APK in v1.0.10, Android's input system and bundled
+SDL3 translate common USB/Bluetooth gamepads into Halo's Xbox controller state.
 Xbox-style controllers are the primary target. There is no Windows XInput DLL
 to install. Pair in Android settings or connect USB, then launch the game.
 The launcher has **Controller & touch settings** and **Controller input check**.

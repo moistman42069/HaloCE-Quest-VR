@@ -2,6 +2,18 @@
 
 The latest public release is [v1.0.10](https://github.com/moistman42069/HaloCE-Quest-VR/releases/tag/v1.0.10), built from test28. Preserve v1.0.6 and all earlier releases. Release APK hashes and validation are in [RELEASE-PROVENANCE-1.0.10.md](RELEASE-PROVENANCE-1.0.10.md). The repository About description was not changed.
 
+## Next candidate (test29, 2026-10-07)
+
+**Next candidate (private, not released): test29, version 1.0.11 / code 37**, branch `test29-opence-144`, built on the published v1.0.10:
+- OpenCE build 144 netcode (network 21). Current OpenCE co-op and multiplayer games are on 21, which 1.0.10 cannot join.
+- The HUD head tap must now be held by the temple for a moment, so a hand passing by no longer hides the HUD.
+- New HUD rows: HUD Shown/Hidden and Head Tap.
+- The wrist HUD sits on the wrist and can be moved and resized.
+- MOVE WITH a hand follows the gun while both hands hold it.
+- Pull request #1 adds a glasses FOV option and resolution steps up to 200%; defaults are as in 1.0.10.
+
+See [TEST29-PROGRESS.md](TEST29-PROGRESS.md) and [TEST29-DELIVERY.md](TEST29-DELIVERY.md).
+
 ## Owner confirmation and follow-up
 
 The owner reports that co-op works well after test28's OpenCE network integration and join-in-progress camera fix. The tested pairing, mission and player count were not specified, so don't infer 128-player or whole-campaign acceptance. Test28 also adds Android gyro aim, off by default; phone testing details were not provided. Follow up on gyro options and performance at large co-op sizes if the owner supplies results.
