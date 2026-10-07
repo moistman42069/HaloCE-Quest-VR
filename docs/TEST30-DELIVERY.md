@@ -34,8 +34,13 @@ uninstalling. The network is unchanged: OpenCE network 21 (build 144).
 
 | File | Bytes | SHA-256 |
 | --- | ---: | --- |
-| `HaloCE-Quest-test30.apk` | (filled in after the build) | |
-| `HaloCE-Android-test30.apk` | (filled in after the build) | |
+| `HaloCE-Quest-test30.apk` | 28,347,011 | `dcbce7fed5d02161a22441b7d18cdfc9ded59250b181e83b21ffc1c9e9b27f22` |
+| `HaloCE-Android-test30.apk` | 26,270,260 | `63af9c7ac012c3d68d4036af9c432ef7134e274f11a0c69b5f56b9c09151fcf1` |
+
+Runtime source `688a63e3` on branch `test30-profiles-coopname`; later commits
+change only documentation. Certificate SHA-256
+`53d416f7e123cc62b749940983209bc9a400002e033fd5f50900d4ffad8e2aa4`. Built
+serially from a clean tree; payload, signing and 16 KB alignment verified.
 
 ## Checks performed
 
