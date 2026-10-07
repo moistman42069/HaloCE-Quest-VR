@@ -242,10 +242,13 @@ def main():
                         if marker not in guest:
                             raise SystemExit("Test31 VR marker missing: " + repr(marker))
             if candidate_at_least(args.label, 33):
-                for marker in [b"test33 candidate 1.0.14 code43",
-                               b"menus: resetting network client in state"]:
-                    if marker not in guest:
-                        raise SystemExit("Test33 browser recovery marker missing: " + repr(marker))
+                if b"menus: resetting network client in state" not in guest:
+                    raise SystemExit("Test33 browser recovery marker missing")
+                # The candidate identity banner is emitted by the VR startup
+                # logger in vr_frame.c; flat Android shares the recovery code
+                # but has no VR frame startup path.
+                if vr and b"test33 candidate 1.0.14 code43" not in guest:
+                    raise SystemExit("Test33 VR candidate identity marker missing")
             if candidate_at_least(args.label, 28):
                 # a release build (HALO_RELEASE, as OpenCE's): checks logged, play goes on
                 if b"(release build)" not in guest:
