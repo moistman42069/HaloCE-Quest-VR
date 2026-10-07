@@ -55,11 +55,13 @@ are being rechecked; raw logs and media remain private and outside the repo.
 
 ## Status
 
-Implementation is complete. The final registered regression run completed
-with all 55 suites passing and no failed suites, including the Test32 launcher,
-HUD gesture, vehicle, geometry migration, and all-region menu-arrow suites.
-No Test32 APK has yet been accepted on a headset. The current code41 pair
-remains preserved as the comparison.
+Implementation and paired builds are complete. The final registered regression
+run completed with all 55 suites passing and no failed suites, including the
+Test32 launcher, HUD gesture, vehicle, geometry migration, and all-region
+menu-arrow suites. Both APK build commands reran that suite and completed
+compilation, signing and alignment. No Test32 APK has yet been accepted on a
+headset. The current code41 pair remains preserved as the comparison. Exact
+APK hashes and candidate checks are recorded in [TEST32-DELIVERY.md](TEST32-DELIVERY.md).
 
 ## Source findings and implemented corrections
 
@@ -101,6 +103,6 @@ neither has `pytest` installed. This does not reproduce the reported passenger
 incident on a headset. Vehicle comfort and co-op passenger behavior still
 require owner testing of the candidate.
 
-Packaging is now the remaining step. Vehicle handle grabbing remains deferred
-by the owner's instruction. No publication, push, installation or game launch
-is part of this candidate delivery.
+Vehicle handle grabbing remains deferred by the owner's instruction. The
+private candidate pair and source/build ZIPs are packaged for user testing. No
+publication, push, installation or game launch is part of this delivery.
