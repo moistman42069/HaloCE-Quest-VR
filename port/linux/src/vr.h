@@ -258,6 +258,8 @@ float vr_vehicle_tilt(void);
 reticle by its button (vr.button_reticle): the session's, both start
 shown; menus, prompts and messages always show */
 int vr_hud_hidden(void);
+/* test29: the HUD page's HUD row */
+void vr_set_hud_hidden(int hidden);
 int vr_reticle_hidden(void);
 void vr_set_gun_class(int kind);
 int vr_gun_class(void);

@@ -163,6 +163,11 @@ enum
 	(the 1.0.8 default; crouch on the turning stick held down) or crouches,
 	as before 1.0.8 (values "reticle", "crouch"; vr_menu_button_set) */
 	_vr_setting_crouch_click,
+	/* test29: the HUD shown or hidden now (vr_set_hud_hidden: the session's,
+	as the head tap's; values "true" shown), and the wrist HUD's place and
+	size back to their defaults */
+	_vr_setting_hud_shown,
+	_vr_setting_reset_wrist,
 };
 
 #define VR_MENU_MAXIMUM_VALUES 12
@@ -238,13 +243,22 @@ static struct vr_menu_setting const vr_menu_vr[] =
 };
 
 /* test26: what the HUD shows and where: the crosshair (formerly on
-GAMEPLAY; its button is on BUTTONS) and the wrist HUD */
+GAMEPLAY; its button is on BUTTONS) and the wrist HUD. test29: the HUD
+itself shown or hidden (as the head tap does) and the head tap's reach or
+off (as on HEAD GESTURES), first; the wrist HUD's place and size */
 static struct vr_menu_setting const vr_menu_hud[] =
 {
+	{ "HUD", "hud", _vr_setting_hud_shown, 2, { { "SHOWN", "true" }, { "HIDDEN", "false" } } },
+	{ "HEAD TAP", "vr.hud_tap_distance", _vr_setting_real, 6, { { "OFF", "0" }, { "6 CM", "0.06" }, { "8 CM", "0.08" }, { "10 CM", "0.1" }, { "12 CM", "0.12" }, { "15 CM", "0.15" } } },
 	{ "CROSSHAIR", "vr.crosshair", _vr_setting_string, 2, { { "NATIVE", "native" }, { "OFF", "off" } } },
 	{ "CROSSHAIR SIZE", "vr.crosshair_size", _vr_setting_real, 8, { { "25%", "0.25" }, { "50%", "0.5" }, { "75%", "0.75" }, { "100%", "1" }, { "125%", "1.25" }, { "150%", "1.5" }, { "200%", "2" }, { "300%", "3" } } },
 	{ "OPACITY", "vr.crosshair_opacity", _vr_setting_real, 11, { { "0%", "0" }, { "10%", "0.1" }, { "20%", "0.2" }, { "30%", "0.3" }, { "40%", "0.4" }, { "50%", "0.5" }, { "60%", "0.6" }, { "70%", "0.7" }, { "80%", "0.8" }, { "90%", "0.9" }, { "100%", "1" } } },
 	{ "WRIST HUD", "vr.wrist_hud", _vr_setting_boolean, 2, { { "OFF", "false" }, { "ON", "true" } } },
+	{ "WRIST ALONG", "vr.wrist_hud_along", _vr_setting_centimetres, 0, { { NULL, NULL } } },
+	{ "WRIST ACROSS", "vr.wrist_hud_across", _vr_setting_centimetres, 0, { { NULL, NULL } } },
+	{ "WRIST HEIGHT", "vr.wrist_hud_out", _vr_setting_centimetres, 0, { { NULL, NULL } } },
+	{ "WRIST SIZE", "vr.wrist_hud_size", _vr_setting_real, 7, { { "50%", "0.5" }, { "75%", "0.75" }, { "100%", "1" }, { "125%", "1.25" }, { "150%", "1.5" }, { "175%", "1.75" }, { "200%", "2" } } },
+	{ "RESET WRIST", "wrist", _vr_setting_reset_wrist, 0, { { NULL, NULL } } },
 };
 
 /* test26: the head taps, each with its reach or off (the flashlight's
@@ -596,6 +610,10 @@ static long vr_menu_value_index(
 		case _vr_setting_crouch_click:
 			if (vr_menu_button_source(!strcmp(value, "crouch") ? VR_BUTTON_ACTION_CROUCH : VR_BUTTON_ACTION_RETICLE) ==
 				VR_BUTTON_SOURCE_LEFT_STICK)
+				return index;
+			break;
+		case _vr_setting_hud_shown:
+			if (!vr_hud_hidden() == !strcmp(value, "true"))
 				return index;
 			break;
 		}
@@ -1083,7 +1101,7 @@ boolean vr_menu_setting_text(
         } else if(setting->type == _vr_setting_reset_alignment || setting->type == _vr_setting_flip_alignment ||
             setting->type == _vr_setting_reset_hand || setting->type == _vr_setting_reset_weapon ||
             setting->type == _vr_setting_reset_scopes || setting->type == _vr_setting_reset_buttons ||
-            setting->type == _vr_setting_reset_vehicle_offsets)
+            setting->type == _vr_setting_reset_vehicle_offsets || setting->type == _vr_setting_reset_wrist)
             snprintf(line,sizeof(line),"%s: APPLY",setting->label);
         else
 		snprintf(line, sizeof(line), setting->type == _vr_setting_real || setting->type == _vr_setting_snap_angle ?
@@ -1127,6 +1145,19 @@ boolean vr_menu_setting_change(
             snprintf(key,sizeof(key),"vr.scope_%s_%s",kinds[kind],parts[part]);
             written=config_write_real(key,config_default_real(key))&&written; }
         vr_reload_settings(); platform_log("vr: reset scope places and sizes%s",written?"":" (save failed)");
+        return TRUE;
+    }
+    if(setting->type == _vr_setting_hud_shown) {
+        /* (the session's, as the head tap's: nothing written) */
+        vr_set_hud_hidden(!vr_hud_hidden());
+        return TRUE;
+    }
+    if(setting->type == _vr_setting_reset_wrist) {
+        static const char *const keys[]={"vr.wrist_hud_along","vr.wrist_hud_across","vr.wrist_hud_out","vr.wrist_hud_size"};
+        int key;
+        written=TRUE;
+        for(key=0;key<(int)NUMBEROF(keys);key++) written=config_write_real(keys[key],config_default_real(keys[key]))&&written;
+        vr_reload_settings(); platform_log("vr: reset the wrist HUD's place and size%s",written?"":" (save failed)");
         return TRUE;
     }
     if(setting->type == _vr_setting_reset_vehicle_offsets) {

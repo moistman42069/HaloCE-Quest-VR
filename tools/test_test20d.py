@@ -272,6 +272,7 @@ static struct cfg *find(const char *n){for(size_t i=0;i<NUMBEROF(cfg);i++)if(!st
 static int config_boolean(const char*n){return !strcmp(find(n)->text,"true");}
 static double config_real(const char*n){return atof(find(n)->text);}
 static const char *config_string(const char*n){return find(n)->text;}
+static int hud_hidden_stub; static int vr_hud_hidden(void){return hud_hidden_stub;} static void vr_set_hud_hidden(int h){hud_hidden_stub=h;}
 static int config_matches(const char*n,const char*t){struct cfg*c=find(n);switch(c->type){case 0:return config_boolean(n)==!strcmp(t,"true");
  case 2:return fabs(atof(c->text)-atof(t))<0.001;default:return !strcmp(c->text,t);}}
 static int config_write_text(const char*n,const char*t){struct cfg*c=find(n);if(c->type==1)return 0;snprintf(c->text,64,"%s",t);return 1;}

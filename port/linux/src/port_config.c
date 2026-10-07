@@ -532,12 +532,22 @@ static const struct config_setting config_settings[] =
 		"The off hand brought this close (metres) to the middle of the head\n"
 		"turns the flashlight on or off; 0 turns the gesture off (0.10 to 0.30 in the menu)." },
 	{ "vr.hud_tap_distance", _config_real, "0.1", "HALO_VR_HUD_TAP_DISTANCE", _environment_value, _platform_vr,
-		"The weapon hand brought this close (metres) to its own side of the head (the right temple\n"
-		"for a right hand) shows or hides the HUD for the session; menus, prompts, messages and the\n"
-		"reticle stay. 0 turns the gesture off." },
+		"The weapon hand held for a moment this close (metres) beside its own side of the head (the\n"
+		"right temple for a right hand) shows or hides the HUD for the session; menus, prompts,\n"
+		"messages and the reticle stay. 0 turns the gesture off. VR SETTINGS > HUD also shows or\n"
+		"hides it, and every start shows it." },
 	{ "vr.wrist_hud", _config_boolean, "false", "HALO_VR_WRIST_HUD", _environment_value, _platform_vr,
 		"Shield and health, ammunition and grenades, and the motion tracker on a panel on the off\n"
 		"hand's wrist (shown while you look at it), and left out of the HUD ahead. Off by default." },
+	{ "vr.wrist_hud_along", _config_real, "0", "HALO_VR_WRIST_HUD_ALONG", _environment_value, _platform_vr,
+		"Moves the wrist HUD along the forearm from its place on the wrist (metres, -0.2 to 0.2;\n"
+		"positive toward the elbow)." },
+	{ "vr.wrist_hud_across", _config_real, "0", "HALO_VR_WRIST_HUD_ACROSS", _environment_value, _platform_vr,
+		"Moves the wrist HUD across the wrist (metres, -0.2 to 0.2; positive toward the thumb)." },
+	{ "vr.wrist_hud_out", _config_real, "0", "HALO_VR_WRIST_HUD_OUT", _environment_value, _platform_vr,
+		"Raises the wrist HUD off the wrist (metres, -0.2 to 0.2; negative lowers it)." },
+	{ "vr.wrist_hud_size", _config_real, "1", "HALO_VR_WRIST_HUD_SIZE", _environment_value, _platform_vr,
+		"The wrist HUD's size (0.5 to 2; 1 is 11 cm across)." },
 	{ "vr.controls_reticle_applied", _config_boolean, "false", "HALO_VR_CONTROLS_RETICLE_APPLIED", _environment_value, _platform_vr,
 		"Internal one-time move of crouch off the left stick's click (now the reticle toggle's)." },
 	{ "vr.crouch_height", _config_real, "0.35", "HALO_VR_CROUCH_HEIGHT", _environment_value, _platform_vr,

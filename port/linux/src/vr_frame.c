@@ -205,6 +205,11 @@ static struct
 	float hud_tap_distance;
 	int hud_tap_armed, hud_hidden, reticle_hidden, reticle_press, reticle_cancelled, turn_stick_down;
 	int wrist_hud, menus_active;
+	/* test29: how long the weapon hand has been held still by its temple
+	(the HUD tap); the wrist HUD's place adjusted from its default
+	(vr.wrist_hud_along/_across/_out, metres) and its size */
+	float hud_tap_dwell;
+	float wrist_along, wrist_across, wrist_out, wrist_size;
 	/* the aim's smoothing by zoom level (vr_set_zoom_level), as the PC mod
 	HaloCEVR's: its direction, eased toward the hand's */
 	int zoom_level, smoothed_valid;
@@ -672,10 +677,24 @@ void vr_reload_settings(void)
 	if (!(vr.hud_tap_distance >= 0.0f)) vr.hud_tap_distance = 0.0f;
 	if (vr.hud_tap_distance > 0.3f) vr.hud_tap_distance = 0.3f;
 	vr.wrist_hud = config_boolean("vr.wrist_hud");
-	platform_log("vr: head taps: flashlight %s, HUD %s; wrist HUD %s",
+	/* test29: the wrist HUD's place and size, bounded */
+	vr.wrist_along = (float)config_real("vr.wrist_hud_along");
+	vr.wrist_across = (float)config_real("vr.wrist_hud_across");
+	vr.wrist_out = (float)config_real("vr.wrist_hud_out");
+	vr.wrist_size = (float)config_real("vr.wrist_hud_size");
+	if (!isfinite(vr.wrist_along)) vr.wrist_along = 0.0f;
+	if (!isfinite(vr.wrist_across)) vr.wrist_across = 0.0f;
+	if (!isfinite(vr.wrist_out)) vr.wrist_out = 0.0f;
+	if (!isfinite(vr.wrist_size)) vr.wrist_size = 1.0f;
+	vr.wrist_along = fminf(0.2f, fmaxf(-0.2f, vr.wrist_along));
+	vr.wrist_across = fminf(0.2f, fmaxf(-0.2f, vr.wrist_across));
+	vr.wrist_out = fminf(0.2f, fmaxf(-0.2f, vr.wrist_out));
+	vr.wrist_size = fminf(2.0f, fmaxf(0.5f, vr.wrist_size));
+	platform_log("vr: head taps: flashlight %s, HUD %s; wrist HUD %s (moved %.0f/%.0f/%.0f cm along/across/out, size %.0f%%)",
 		vr.flashlight_distance > 0.0f ? "the off hand to the head" : "off (its button)",
-		vr.hud_tap_distance > 0.0f ? "the weapon hand to its temple" : "off",
-		vr.wrist_hud ? "on (the off hand's wrist)" : "off");
+		vr.hud_tap_distance > 0.0f ? "the weapon hand held by its temple" : "off",
+		vr.wrist_hud ? "on (the off hand's wrist)" : "off",
+		vr.wrist_along * 100.0f, vr.wrist_across * 100.0f, vr.wrist_out * 100.0f, vr.wrist_size * 100.0f);
 	vr.crouch_height = (float)config_real("vr.crouch_height");
 	vr.holsters = config_boolean("vr.holsters");
 	vr.holster_size = (float)config_real("vr.holster_size");
@@ -730,7 +749,8 @@ void vr_reload_settings(void)
 	/* the settings in force, for the log */
 	platform_log("vr: settings: aim %s, weapons %s, body %s, arms %s, fingers %s, melee %s at %.1f m/s, arm run "
 		"%s (%.2f m/s), room-scale %s, crouch %.2f m, turn %s, holsters %s (%.2f m), controls %s, cutscenes %s, "
-		"resolution %.2f, refresh %.0f Hz, close contact %s, two hands %s, gesture sprint offline up to 1.50x",
+		"resolution %.2f, refresh %.0f Hz, close contact %s, two hands %s, gesture sprint offline up to 1.50x, "
+		"move with %s",
 		vr.hand_aim ? "hand" : "head", config_string("vr.weapons"),
 		config_string("vr.body"), config_string("vr.arms"), vr.fingers ? "on" : "off",
 		vr.melee_impact ? "impact" : "swing", vr.melee_speed, vr.arm_run ? "on" : "off", vr.arm_run_speed,
@@ -738,7 +758,8 @@ void vr_reload_settings(void)
 		vr.snap_turn > 0.0f ? "snap" : "smooth", vr.holsters ? "on" : "off", vr.holster_size,
 		vr.layout_vr ? "vr" : "pad", config_string("vr.cutscenes"),
 		config_real("vr.resolution_scale"), config_real("vr.refresh_rate"),
-		config_boolean("vr.close_contact") ? "offline on" : "off", config_string("vr.two_handed"));
+		config_boolean("vr.close_contact") ? "offline on" : "off", config_string("vr.two_handed"),
+		vr.move_relative == 1 ? "the left hand" : vr.move_relative == 2 ? "the right hand" : "the head");
 }
 
 int vr_settings_generation(void)
@@ -1410,6 +1431,14 @@ static void heading_point(const float offset[3], float out[3])
 	out[2] = vr.frame.head.position[2] - offset[0] * s + offset[2] * c;
 }
 
+/* test29: the HUD tap's point beside the head (metres out from between the
+eyes, and back), the most a hand held there may move (metres a second, its
+recent peak: vr_hand_speed) and how long it is held */
+#define HUD_TAP_OUT 0.11f
+#define HUD_TAP_BACK 0.03f
+#define HUD_TAP_SLOW 0.6f
+#define HUD_TAP_HOLD_SECONDS 0.15f
+
 static void update_gestures(void)
 {
 	static const float melee_rearm_seconds = 0.4f;
@@ -1568,15 +1597,20 @@ static void update_gestures(void)
 		}
 	}
 
-	/* test26: the HUD tap: the weapon hand brought to its own side of the
-	head (its temple: 8 cm out from between the eyes, 4 cm back; the right
-	one for a right hand), once each time, shows or hides the HUD
-	(vr_hud_hidden; menus, prompts, messages and the reticle stay). The
-	right shoulder's holster is about 24 cm from there, a gun held to the
-	cheek about 20 */
+	/* test26: the HUD tap: the weapon hand by its own side of the head (its
+	temple; the right one for a right hand), once each time, shows or hides
+	the HUD (vr_hud_hidden; menus, prompts, messages and the reticle stay;
+	the HUD page's HUD row does the same). test29: a hand on its way to the
+	right shoulder's holster passed close enough to hide the HUD, and a tap
+	meant to bring it back missed (the point was at the skin, 8 cm out, but
+	a controller's middle is some way off the head with the hand against
+	it). The point is now where that middle is (11 cm out from between the
+	eyes, 3 cm back), and the hand must be held there, slowed, for
+	HUD_TAP_HOLD_SECONDS and not in a holster: a hand passing by does
+	nothing. A gun held to the cheek is about 22 cm from there */
 	if (vr.hud_tap_distance > 0.0f && (vr.frame.hand_valid[w] & 1))
 	{
-		const float side[3] = { w ? 0.08f : -0.08f, 0.0f, 0.04f };
+		const float side[3] = { w ? HUD_TAP_OUT : -HUD_TAP_OUT, 0.0f, HUD_TAP_BACK };
 		float temple[3], distance;
 
 		rotate(vr.frame.head.orientation, side, temple);
@@ -1584,17 +1618,29 @@ static void update_gestures(void)
 		temple[1] += vr.frame.head.position[1];
 		temple[2] += vr.frame.head.position[2];
 		distance = distance3(vr.frame.grip[w].position, temple);
-		if (distance < vr.hud_tap_distance && vr.hud_tap_armed)
+		if (distance < vr.hud_tap_distance && vr.hud_tap_armed && !vr.in_holster &&
+			vr.hand_speed[w] < HUD_TAP_SLOW && seconds > 0.0f)
 		{
-			vr.hud_hidden = !vr.hud_hidden;
-			vr.hud_tap_armed = 0;
-			vr_haptic(w, 0.4f, 0.04f);
-			platform_log("vr: HUD %s (head tap)", vr.hud_hidden ? "hidden" : "shown");
+			vr.hud_tap_dwell += seconds;
+			if (vr.hud_tap_dwell >= HUD_TAP_HOLD_SECONDS)
+			{
+				vr.hud_hidden = !vr.hud_hidden;
+				vr.hud_tap_armed = 0;
+				vr.hud_tap_dwell = 0.0f;
+				vr_haptic(w, 0.4f, 0.04f);
+				platform_log("vr: HUD %s (head tap)", vr.hud_hidden ? "hidden" : "shown");
+			}
 		}
-		else if (distance > vr.hud_tap_distance + 0.05f)
+		else
 		{
-			vr.hud_tap_armed = 1;
+			vr.hud_tap_dwell = 0.0f;
+			if (distance > vr.hud_tap_distance + 0.05f)
+				vr.hud_tap_armed = 1;
 		}
+	}
+	else
+	{
+		vr.hud_tap_dwell = 0.0f;
 	}
 
 	/* crouching: the head lower than standing (its height at the last
@@ -1909,6 +1955,8 @@ int vr_weapon_hand(void)
 /* the direction the left stick moves the player in (vr.move_relative), as
 a yaw at heading 0: the head's, or a hand's turned in by 20 degrees as
 controllers are held */
+static int hand_forward(float out[3]);
+
 static float move_yaw(void)
 {
 	static const float xr_forward[3] = { 0.0f, 0.0f, -1.0f };
@@ -1917,6 +1965,13 @@ static float move_yaw(void)
 
 	if (hand < 0 || !(vr.frame.hand_valid[hand] & 2))
 		return vr.head_yaw;
+	/* test29: both hands on the gun, the gun's line stands for the hand. A
+	hand on a gun's front grip is turned to hold it, not pointed where the
+	player walks: moving with the left hand, the stick's forward turned
+	into a strafe while the gun was held in both hands, until let go (a
+	player's report). The head's mode is unchanged */
+	if (vr.two_handed && hand_forward(forward))
+		return atan2f(forward[1], forward[0]);
 	rotate(vr.frame.aim[hand].orientation, xr_forward, local);
 	to_halo(local, 1.0f, 0.0f, forward);
 	return atan2f(forward[1], forward[0]) + (hand ? 0.349f : -0.349f);
@@ -2900,6 +2955,15 @@ int vr_hud_hidden(void)
 	return vr.active && vr.hud_hidden;
 }
 
+/* test29: the HUD page's HUD row (vr_menu.c): shows or hides the HUD as the
+head tap does, for the session (every start shows it) */
+void vr_set_hud_hidden(int hidden)
+{
+	vr.hud_hidden = hidden != 0;
+	vr.hud_tap_dwell = 0.0f;
+	platform_log("vr: HUD %s (VR settings)", vr.hud_hidden ? "hidden" : "shown");
+}
+
 int vr_reticle_hidden(void)
 {
 	return vr.active && vr.reticle_hidden;
@@ -3408,6 +3472,11 @@ static int copy_wrist(GLuint texture)
 	return 1;
 }
 
+/* test29: the wrist HUD's default place: behind the grip (along the arm)
+and out of the back of the wrist (metres) */
+#define WRIST_HUD_BACK 0.10f
+#define WRIST_HUD_OUT 0.045f
+
 /* test26: where the wrist HUD's panel goes: on the back of the off hand's
 wrist (7.5 cm behind the grip, as the gun's wrist is, and 4 cm out of the
 back of the hand), facing out of it, as a watch is read: its long side
@@ -3416,7 +3485,12 @@ across the body). Shown while it faces the eyes, not while the hand holds
 the gun or steers, and 11 by 8 cm. 0 when not shown */
 static int place_wrist(struct halo_xr_layers *layers)
 {
-	static const float back[3] = { 0.0f, 0.0f, 0.075f }, grip_down[3] = { 0.0f, -1.0f, 0.0f };
+	static const float grip_down[3] = { 0.0f, -1.0f, 0.0f };
+	/* test29: on the wrist itself (WRIST_HUD_BACK behind the grip; it was
+	7.5 cm, on the back of the hand) and WRIST_HUD_OUT out of it, then as
+	the HUD page moves it: along the arm (+ toward the elbow), across it
+	(+ the thumb's side) and out */
+	const float back[3] = { 0.0f, vr.wrist_across, WRIST_HUD_BACK + vr.wrist_along };
 	int o = 1 - vr.weapon_hand, axis;
 	const struct halo_xr_pose *grip = &vr.frame.grip[o];
 	float offset[3], centre[3], outward[3], up[3], forward[3], to_eyes[3], length;
@@ -3431,7 +3505,7 @@ static int place_wrist(struct halo_xr_layers *layers)
 	rotate(grip->orientation, grip_down, up);
 	for (axis = 0; axis < 3; axis++)
 	{
-		centre[axis] = grip->position[axis] + offset[axis] + outward[axis] * 0.04f;
+		centre[axis] = grip->position[axis] + offset[axis] + outward[axis] * (WRIST_HUD_OUT + vr.wrist_out);
 		to_eyes[axis] = vr.frame.head.position[axis] - centre[axis];
 		forward[axis] = -outward[axis];
 	}
@@ -3440,8 +3514,8 @@ static int place_wrist(struct halo_xr_layers *layers)
 		return 0;
 	memcpy(layers->wrist_pose.position, centre, sizeof(centre));
 	look_rotation(forward, up, layers->wrist_pose.orientation);
-	layers->wrist_size[0] = 0.11f;
-	layers->wrist_size[1] = 0.11f * (float)vr.info.height[HALO_XR_SWAPCHAIN_WRIST] /
+	layers->wrist_size[0] = 0.11f * vr.wrist_size;
+	layers->wrist_size[1] = 0.11f * vr.wrist_size * (float)vr.info.height[HALO_XR_SWAPCHAIN_WRIST] /
 		(float)(vr.info.width[HALO_XR_SWAPCHAIN_WRIST] ? vr.info.width[HALO_XR_SWAPCHAIN_WRIST] : 1);
 	return 1;
 }
