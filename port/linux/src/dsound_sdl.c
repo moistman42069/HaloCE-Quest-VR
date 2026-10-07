@@ -116,6 +116,24 @@ static struct
 
 static float master_volume = 1.0f;
 
+/* Menu changes are read on the game thread, never in the audio callback.
+The mixer reads master_volume under the same lock. Keep the existing device
+lifecycle and gain ramp; enabled/disabled audio still takes effect at startup. */
+static void audio_update_volume(void)
+{
+	static unsigned long read_at = (unsigned long)-1;
+	if (read_at != config_changes())
+	{
+		float volume = (float)config_real("audio.volume");
+		read_at = config_changes();
+		if (!isfinite(volume)) volume = 1.0f;
+		if (volume < 0.0f) volume = 0.0f;
+		pthread_mutex_lock(&mixer_lock);
+		master_volume = volume;
+		pthread_mutex_unlock(&mixer_lock);
+	}
+}
+
 static float gain_from_millibels(LONG millibels)
 {
 	if (millibels <= DSBVOLUME_MIN)
@@ -611,7 +629,7 @@ static void audio_start(void)
 	if (audio_started)
 		return;
 	audio_started = TRUE;
-	master_volume = (float)config_real("audio.volume");
+	audio_update_volume();
 
 	if (config_boolean("audio.enabled") && platform_sdl_initialize())
 	{
@@ -866,6 +884,7 @@ VOID WINAPI DirectSoundDoWork(void)
 {
 	double now = audio_now_ms();
 
+	audio_update_volume();
 	if (audio_statistics.last_work_ms > 0.0 && now - audio_statistics.last_work_ms > audio_statistics.work_gap_max_ms)
 		audio_statistics.work_gap_max_ms = now - audio_statistics.last_work_ms;
 	audio_statistics.last_work_ms = now;
