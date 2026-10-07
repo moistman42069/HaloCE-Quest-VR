@@ -31,8 +31,8 @@ The final delivery manifest records the exact runtime/source commits, original
 signing certificate, package/version/API/ABI and APK hashes. SHA256SUMS covers
 the APKs and matching source/build archives. Both variants must be built
 serially from the same clean runtime source and pass the complete checks before
-delivery. This document is prepared before those final build gates; their
-completed results are recorded below when the artifacts exist.
+delivery. Completed build results follow; final packaging also verifies the delivered
+artifacts against these records.
 
 No connected Quest or Android device was available during this repair.
 Host integration tests exercise real production paths with map/renderer/OS
@@ -56,3 +56,36 @@ If a problem occurs, retain the launch log from Download/HaloCE and include
 device/OS, content/revision, map, settings and reproduction steps. Both peers'
 logs help with network reports. Support: [project server](https://discord.gg/S9uSCKxKx),
 [Flat2VR](https://discord.gg/flat2vr), or **@MeWhenINameMyself**.
+
+## Completed build checks
+
+- All **49 regression suites passed before each edition's build**.
+- Cache-format tests: **127 passed, 4 skipped** (optional real-map fixtures).
+- Actual ILP32 menu layouts, production debug allocator/CRC and the real
+  parser/tag builder constructed all **50 XML assets**. UI, multiplayer client
+  and host fixtures passed **134 first/last allocation-callsite fault cases**,
+  rollback and recovery. This is not exhaustive injection at every allocation.
+- The original invalid XML and NULL-free defects are negative controls: each
+  reproduces its failure under the new tests. Corrected paths pass.
+- The preserved final Quest ELF was disassembled: `vr_menu_tags_loaded` has
+  the `cbz w0` guard at `0x882a8b20`, skipping `debug_free` at `0x882a8b30`
+  when the allocation array is NULL. This verifies the fix in the compiled
+  payload, not only in source. These addresses identify this candidate only.
+- Android's production touch view passed **142 lifecycle/event/dialog checks**,
+  including controller visibility, pointer ownership, cancellation and
+  touch-anywhere Save/Cancel. Android framework/renderer boundaries are fixtures.
+- Both native release-mode variants compiled and linked, and both APKs retained
+  the original certificate. APK compaction verified unchanged non-signature
+  payloads, signing and 16 KB alignment.
+- Build145/network22 is retained. No game data, private logs or signing keys are
+  included. The mismatched upstream PGO profile remains disabled; these checks
+  do not claim Quest performance or device acceptance.
+
+Runtime source: `3399023ae8b7d0ec57e8c42c68c40ab6c33346af` on `test31b-startup-touch`. Both builds use this exact
+clean commit; subsequent source-snapshot differences are delivery documents
+only. The packaging manifest records both commits.
+
+| APK | Bytes | SHA-256 |
+| --- | ---: | --- |
+| `HaloCE-Android-test31b.apk` | 32,438,836 | `c705b113b913c232e0d212ff19499a3b548f5302989cae20343406833dac9904` |
+| `HaloCE-Quest-test31b.apk` | 34,527,875 | `d391f40a9bce4d127d5f91ceb34c84c96011ba5366db4cb99224d80c274de020` |

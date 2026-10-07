@@ -5,7 +5,8 @@
 Read `docs/TEST31B-PROGRESS.md` first. The owner reports Quest startup crashes
 and unusable Android touch input in Test31. Branch `test31b-startup-touch`
 repairs those regressions and adds optional in-game touch-anywhere look.
-Target 1.0.13/code40. Do not use Test31's prior passing host checks as device
+Target 1.0.13/code40. The private pair is built from `3399023ae8b7d0ec57e8c42c68c40ab6c33346af`; read
+`docs/TEST31B-DELIVERY.md` for checks/hashes and await owner device results. Do not use Test31's prior passing host checks as device
 acceptance. Prepare a corrected private pair; keep larger interaction work queued.
 
 ## Historical Test31 delivery / retained scope (superseded by repair above)

@@ -58,3 +58,14 @@ No host check can establish headset or phone runtime acceptance. Record the
 exact validation performed; do not repeat the previous inference that isolated
 helper tests cover the full startup/input path. The larger M1–M29 and W1–W66
 interaction scope remains queued behind this repair.
+
+## Repair delivery checkpoint
+
+The corrections are committed and both private 1.0.13/code40 variants build
+from `3399023ae8b7d0ec57e8c42c68c40ab6c33346af`. All 49 regression suites passed before each edition; cache
+formats passed 127 with four optional real-map skips. See
+[TEST31B-DELIVERY.md](TEST31B-DELIVERY.md) for the precise coverage and hashes.
+The complete menu test uses actual ILP32 layouts and production allocation,
+with synthetic stock-tag metadata and renderer/OS fixtures. No connected
+device was available. Await owner startup/input and gameplay results before
+advancing to the queued interaction work. Public v1.0.12 remains untouched.

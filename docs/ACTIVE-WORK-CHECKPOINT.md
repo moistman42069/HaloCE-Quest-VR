@@ -7,7 +7,9 @@ loses usable touch navigation. Follow `TEST31B-PROGRESS.md` on branch
 `test31b-startup-touch`, targeting 1.0.13/code40. Fix the reported paths,
 add optional touch-anywhere look in the in-game touch customization, and
 deliver both corrected private APKs after strengthened integration checks.
-The Test31 delivery record below is historical evidence, not acceptance.
+The corrected pair is built from `3399023ae8b7d0ec57e8c42c68c40ab6c33346af`; see `TEST31B-DELIVERY.md` for
+checks/hashes. Await owner device results. The Test31 delivery record below
+is historical evidence, not acceptance.
 
 ## Historical Test31 delivery and retained scope (superseded above)
 
