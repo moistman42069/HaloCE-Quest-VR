@@ -23,7 +23,7 @@ for acceptance, but are not a reason to skip the remaining pre-package work.
 | CE namespace / missing-map preflight | Implemented, compiled and regression checked | Device missing-map dialog and CE/PAL/.yelo regression checks |
 | Portable script/tag/resource bounds | Integrated selected upstream fixes; range helper tested with sanitizers | Broad tag validator and desktop CE loader explicitly deferred in upstream decisions |
 | LTE / VPN traversal | Bounded standard pings, current IP+port STUN classification and failure guidance implemented | Real LTE/VPN tests; random/unadvertised endpoints remain unsupported without relay design |
-| OpenCE menus | Proposal written; owner scope question pending | Required explicit scope go-ahead, implementation and full input/navigation checks |
+| OpenCE menus | Owner now requires full OpenCE in-game menu setup | Inventory every screen/option; import and adapt all applicable functionality; full input/navigation checks |
 | First-person Warthog glass | Persisted setting; prior hidden default; relevant view only | Headset visibility checks for Warthog variants and other views |
 | Left-hand AR display | Per-part winding uses actual vertex influences; bounded CPU work | Headset visibility/orientation/counter updates, right-hand and other-weapon checks |
 | Seated VR trigger | Physical empty-hand suppression no longer blocks seated fire | Actual mounted/stationary turrets and primary/secondary input checks |
@@ -71,7 +71,7 @@ final APK builds remain held by the owner's all-tasks packaging gate.
 ## Test31 completion order
 
 - Complete independent source review of current fixes and resolve its findings.
-- Menu implementation awaits the owner's scope decision; see TEST31-MENU-PLAN.md.
+- Implement the approved full OpenCE in-game menu scope; see TEST31-MENU-PLAN.md.
 - Finish approved menu scope, focused regressions, full checks and guides.
 - Work through both added interaction prompts before packaging, then finalize
   version identity, signing/hash verification and the combined device checklist.

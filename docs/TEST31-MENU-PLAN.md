@@ -1,6 +1,24 @@
 # Test31 in-game menu proposal
 
-Status: awaiting the owner's menu-scope decision. No menu implementation yet.
+Status: owner superseded the earlier narrow approval on 2026-10-07:
+**EVERYTHING from OpenCE's in-game menu setup must reach this build.**
+Import/adapt the full in-game setup, not launcher-only equivalents. The launcher
+may be adjusted as needed. APK packaging remains held until all three task
+prompts are worked through.
+
+## Current implementation scope
+
+Inventory all upstream screens, controls and option families from pinned
+build 145. Import its in-game menu system, retaining useful current launcher
+flows and access to VR Settings. Adapt navigation and text entry for Quest
+laser/buttons, Android touch and gamepads. Account for desktop-only options
+explicitly with applicable Android/VR equivalents or clear platform limits;
+do not ship inert settings or silently omit functionality. Check campaign,
+profiles, pause/settings, browser filters, password/direct connection, host
+setup, co-op options, editing and saved settings together.
+
+The alternatives below are historical planning context. The full scope above
+is now the owner's instruction and does not require another scope approval.
 
 ## Recommended: browser and Server Setup first
 

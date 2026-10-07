@@ -13,7 +13,9 @@ Read [TEST31-PROGRESS.md](TEST31-PROGRESS.md),
 [TEST31-UPSTREAM-DECISIONS.md](TEST31-UPSTREAM-DECISIONS.md),
 [TEST31-MENU-PLAN.md](TEST31-MENU-PLAN.md), and the complete indexed follow-on
 checklist [VR-INTERACTION-REQUIREMENTS.md](VR-INTERACTION-REQUIREMENTS.md).
-The menu scope question remains awaiting the owner's required go-ahead.
+The owner now requires the full OpenCE in-game menu setup, superseding the
+earlier browser + Server Setup-only approval. Adapt it for all app inputs;
+launcher equivalents alone do not satisfy this scope.
 Work through the subsystems sequentially; acknowledgment alone is not completion.
 Public/accepted build pointers below remain unchanged.
 
