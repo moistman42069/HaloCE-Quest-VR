@@ -1,15 +1,16 @@
-# OpenCE co-op and browser compatibility (test29, v1.0.11)
+# OpenCE co-op and browser compatibility (test30, v1.0.12)
 
-## Current status: v1.0.11 / OpenCE Build 144 / network 21
+## Current status: v1.0.12 / OpenCE Build 144 / network 21
 
-The current release uses network 21. It requires an exact network-21 match;
-v1.0.10 / Build 138 uses network 20 and cannot join it. Build 141 and later
-use network 21, but matching protocol alone does not guarantee compatible maps,
-content, NAT traversal or a successful campaign session. Automated live-list
-checks on 2026-10-07 found four co-op and ten multiplayer listings compatible
-by version. No device session on this exact v1.0.11 APK pair was recorded
-before publication. The sections below preserve historical test28/test27
-evidence; use [current release notes](RELEASE-1.0.11.md) for user guidance.
+The current release, v1.0.12, retains network 21 from v1.0.11. It requires an
+exact network-21 match; v1.0.10 / Build 138 uses network 20 and cannot join it.
+Build 141 and later use network 21, but matching protocol alone does not
+guarantee compatible maps, content, NAT traversal or a successful campaign
+session. Automated live-list checks on 2026-10-07 found four co-op and ten
+multiplayer listings compatible by version. No device session on the exact
+v1.0.12 APK pair was recorded before publication. The sections below preserve
+historical test28/test27 evidence; use [current release notes](RELEASE-1.0.12.md)
+for user guidance.
 
 Updated 2026-10-06 for **v1.0.10 / code 36**, based on OpenCE Build 138,
 network version 20.

@@ -1,27 +1,16 @@
-# Active work checkpoint — after v1.0.11 release (2026-10-07)
+# Active work checkpoint — after v1.0.12 release (2026-10-07)
 
-The latest public release is [v1.0.11](https://github.com/moistman42069/HaloCE-Quest-VR/releases/tag/v1.0.11), built from test29. Preserve v1.0.10, v1.0.6 and all earlier releases. Release APK hashes and validation are in [RELEASE-PROVENANCE-1.0.11.md](RELEASE-PROVENANCE-1.0.11.md). The repository About description was not changed.
+The latest public release is [v1.0.12](https://github.com/moistman42069/HaloCE-Quest-VR/releases/tag/v1.0.12), built from test30. Preserve v1.0.11 and all earlier releases. Provenance and APK hashes are in [RELEASE-PROVENANCE-1.0.12.md](RELEASE-PROVENANCE-1.0.12.md). The repository About description was not changed.
 
-## Next candidate (test30, 2026-10-07)
+## Current release: test30
 
-**Next candidate (private, not released): test30, version 1.0.12 / code 38**, branch `test30-profiles-coopname`, on the published v1.0.11. The owner confirmed 1.0.11 ("everything here is great") and reported that X did nothing in the VR main menu when deleting a profile. In menus the Quest's face buttons now act as the Xbox's of the same letter (X deletes a profile, B goes back once). The launcher's Host campaign also gains an optional server name. See [TEST30-PROGRESS.md](TEST30-PROGRESS.md), [TEST30-DELIVERY.md](TEST30-DELIVERY.md).
+Version **1.0.12 / code 38**, branch `test30-profiles-coopname`, on v1.0.11. It fixes Quest face-button actions in VR menus (A/X/Y match the displayed Xbox labels; X deletes the selected profile; B backs out once) and adds an optional remembered campaign co-op server name up to 15 printable ASCII characters. Gameplay mappings are unchanged; X still throws grenades during play. OpenCE Build 144/network 21 is unchanged, so v1.0.11 peers remain compatible.
 
-## Current release (test29, 2026-10-07)
+No device session on the exact v1.0.12 APK pair was recorded before publication. The next step is owner validation using [TEST30-DELIVERY.md](TEST30-DELIVERY.md): test profile deletion/back/select, gameplay controls, named/unnamed co-op hosting and joining, then basic Android and Quest play. Keep logs for any failure. The automated test and build results in the delivery notes do not replace device acceptance.
 
-**Published as v1.0.11 / code 37**, branch `test29-opence-144`, built on v1.0.10:
-- OpenCE build 144 netcode (network 21). Current OpenCE co-op and multiplayer games are on 21, which 1.0.10 cannot join.
-- The HUD head tap must now be held by the temple for a moment, so a hand passing by no longer hides the HUD.
-- New HUD rows: HUD Shown/Hidden and Head Tap.
-- The wrist HUD sits on the wrist and can be moved and resized.
-- MOVE WITH a hand follows the gun while both hands hold it.
-- [Willem Horak's PR #1](https://github.com/moistman42069/HaloCE-Quest-VR/pull/1) contributes the glasses FOV option and resolution steps up to 200%; defaults are as in 1.0.10.
+## Previous release: test29 (v1.0.11)
 
-See [TEST29-PROGRESS.md](TEST29-PROGRESS.md), [TEST29-DELIVERY.md](TEST29-DELIVERY.md), and [RELEASE-PROVENANCE-1.0.11.md](RELEASE-PROVENANCE-1.0.11.md). The exact pair still needs owner device validation; do not infer a v1.0.11 co-op acceptance from the earlier v1.0.10 report.
-
-## Owner confirmation and follow-up
-
-The owner reports that co-op works well after test28's OpenCE network integration and join-in-progress camera fix. The tested pairing, mission and player count were not specified, so don't infer 128-player or whole-campaign acceptance. Test28 also adds Android gyro aim, off by default; phone testing details were not provided. Follow up on gyro options and performance at large co-op sizes if the owner supplies results.
-
+Test29 added OpenCE Build 144/network 21, the held HUD tap fix, HUD and wrist-HUD settings, two-hand movement alignment, glasses FOV and higher resolution options. The exact pair had no recorded device session at publication. See [TEST29-DELIVERY.md](TEST29-DELIVERY.md) and [RELEASE-PROVENANCE-1.0.11.md](RELEASE-PROVENANCE-1.0.11.md).
 ## Release details
 
 Published test28 (**1.0.10 / code 36**, branch `test27-opence-netcode`) builds on test27:
@@ -31,7 +20,7 @@ Published test28 (**1.0.10 / code 36**, branch `test27-opence-netcode`) builds o
 
 Details: [TEST28-PROGRESS.md](TEST28-PROGRESS.md); delivery: [TEST28-DELIVERY.md](TEST28-DELIVERY.md).
 
-The prior checkpoint starts below; historical hand/IK tasks were carried forward and should only be reopened if new evidence points to a regression.
+The older checkpoint starts below; its dated priorities are historical. Use the current device-validation list above unless new evidence points to a regression.
 
 ## Earlier progress (test27, 2026-10-06)
 
@@ -67,10 +56,10 @@ Private candidate **test21b** (1.0.2 / code 27, replacing test21 code 26, branch
 
 ## Historical hand and IK report (2026-10-04)
 
-- At the time, the latest public release was [`v1.0.2`](https://github.com/moistman42069/HaloCE-Quest-VR/releases/tag/v1.0.2), the exact test20e APK pair, Android version code 25. This is historical; the current release is v1.0.11 above.
+- At the time, the latest public release was [`v1.0.2`](https://github.com/moistman42069/HaloCE-Quest-VR/releases/tag/v1.0.2), the exact test20e APK pair, Android version code 25. This is historical; the current release is v1.0.12 above.
 - The original report concerned a Quest/VR rendering regression: cut-off/floating hands and arm IK not following body turns. Keep the evidence below for reference; reopen only if new reports point to a regression.
 - Do not assume the public v1.0.2 binary caused the symptoms. The supplied logs include both a test20d-labelled runtime and a test20e-labelled runtime. Match APK hashes/version codes and source revisions before calling this a public-release regression.
-- The owner later authorized test29 as v1.0.11. The exact v1.0.11 pair still needs device validation; see the current release section above and `TEST29-DELIVERY.md`.
+- The owner later authorized test29 as v1.0.11 and test30 as v1.0.12. The exact v1.0.12 pair still needs device validation; see the current release section above and `TEST30-DELIVERY.md`.
 
 ## Evidence available in Git
 
@@ -93,7 +82,7 @@ Related community evidence is summarized in [`FUTURE-RELEASE-FOLLOWUPS.md`](FUTU
 4. Compare test20d (code 24, runtime source `346b0c074f5ed9ae2627de7bb8dfd19019eb7610`) to the accepted test20e release (code 25, runtime source `4e7e1e4a415727fdefdfe91ad3d1eb61d6968c68`). Confirm byte identity of the installed test20e APK to the public release before attributing the issue to it. Test for a saved-config/migration interaction: the log's `arms=ik` plus `hand_tracking=floating` may be a deliberate selected mode or a bad default/migration.
 5. Preserve the v1.0.2 defaults and already accepted behavior unless direct evidence requires a narrow change: Legs + Arms/full-body representation, room-scale legs, fingers, hand and weapon alignment, two-hand grip locking only after grip, native reload/grenade/melee action handoff, Safe VR geometry, and multiplayer-visible body/avatar replication. Keep failures isolated and log feature-local fallback.
 6. Add regression coverage for stationary and turning body yaw, both hands, yaw wraparound, recenter/tracking loss, floor/wrist bounds, all supported hand/body modes, config migration, weapons/two-hand grip, and action-animation ownership. Build affected Quest and flat variants serially when changes are shared; automated checks do not replace Quest headset verification.
-7. Keep raw logs/video, personal paths, game assets and private data out of Git. Update this checkpoint, current-state pointer, player notes and candidate provenance as work progresses. Do not advance the accepted-release pointer or publish until the owner tests and explicitly authorizes it.
+7. Keep raw logs/video, personal paths, game assets and private data out of Git. Update this checkpoint, current-state pointer, player notes and release provenance as work progresses. The owner explicitly authorized v1.0.12 publication; record device acceptance separately. For future releases, preserve older releases and publish only when explicitly authorized.
 
 ## Other open work
 

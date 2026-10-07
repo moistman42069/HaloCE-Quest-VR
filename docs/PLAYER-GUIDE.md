@@ -1,25 +1,28 @@
-# Halo CE Quest VR + Android 1.0.11
+# Halo CE Quest VR + Android 1.0.12
 
 ## 1. Installation
 
-**Current release: 1.0.11 / version code 37.** It uses OpenCE Build 144 network v21 for multiplayer and campaign co-op. It adds the held HUD-tap fix and HUD menu rows, wrist HUD placement/size controls, two-hand movement alignment, glasses FOV and resolution options through 200%. The user confirmed co-op on v1.0.10; no physical-device session on this exact v1.0.11 pair was recorded before publication. The established signing certificate permits in-place updates; v1.0.10/network-20 peers cannot join v1.0.11 sessions.
+**Current release: 1.0.12 / version code 38.** This incremental update retains v1.0.11 and adds corrected Quest face-button behavior in VR menus and an optional campaign co-op server name. It uses OpenCE Build 144/network 21; v1.0.11 peers remain compatible and v1.0.10/network-20 peers cannot join. No physical-device session on this exact pair was recorded before publication. The established signing certificate permits in-place updates.
 
 | Your device | Download |
 | --- | --- |
-| Android phone/tablet — flat, touch or gamepad | **[HaloCE-Android-1.0.11.apk](https://github.com/moistman42069/HaloCE-Quest-VR/releases/download/v1.0.11/HaloCE-Android-1.0.11.apk)** |
-| Meta Quest — immersive standalone VR | **[HaloCE-Quest-1.0.11.apk](https://github.com/moistman42069/HaloCE-Quest-VR/releases/download/v1.0.11/HaloCE-Quest-1.0.11.apk)** |
+| Android phone/tablet — flat, touch or gamepad | **[HaloCE-Android-1.0.12.apk](https://github.com/moistman42069/HaloCE-Quest-VR/releases/download/v1.0.12/HaloCE-Android-1.0.12.apk)** |
+| Meta Quest — immersive standalone VR | **[HaloCE-Quest-1.0.12.apk](https://github.com/moistman42069/HaloCE-Quest-VR/releases/download/v1.0.12/HaloCE-Quest-1.0.12.apk)** |
 
-**What's new in v1.0.11:**
+**What's new in v1.0.12:**
 
+**Incremental additions in v1.0.12:**
+- **VR menus:** Quest A/X/Y now match the on-screen button labels; X deletes the selected profile, A selects, and B backs out once. Gameplay bindings are unchanged.
+- **Campaign hosting:** Host campaign can set a remembered server name of up to 15 printable ASCII characters; blank uses the device name. It appears in lobbies and server browsers.
+- The network remains OpenCE Build 144/network 21; v1.0.11 peers remain compatible. This exact APK pair has no recorded device-session result yet.
+
+**Carried forward from v1.0.11:**
 - **OpenCE build 144 (network 21).** OpenCE's current co-op and multiplayer games are on network 21; v1.0.10/network 20 cannot join them.
 - **HUD head tap:** hold your gun hand by the side of your head for a moment. A hand passing by no longer hides the HUD.
 - **HUD settings:** VR Settings → HUD now has a HUD Shown/Hidden toggle and a Head Tap on/off.
 - **Wrist HUD:** sits on the wrist, with settings to move and resize it.
 - **Two-hand movement:** moving with a hand no longer strafes while both hands hold the gun.
 - **Graphics:** a glasses field-of-view option, and resolution steps up to 200% (contributed in pull request #1).
-- This version uses network 21. The new APKs have no recorded device-session acceptance yet; see release notes for the verification scope and compatibility details.
-
-**Test candidate 1.0.12 (code 38, not a release):** in VR menus the Quest's A, X and Y act as the on-screen A, X and Y (X deletes a profile; B goes back), and Host campaign can name your server.
 
 1. **Install the appropriate APK.** On Quest, enable developer mode and sideload with SideQuest or your existing installer; open it from **Unknown Sources**. On Android, open the downloaded APK and allow installation from that source when prompted. Both require ARM64, Android 9/API 28 or newer and compatible graphics. **Quest 3 is the reference headset**; other devices are not equally verified.
 2. **Updating this project? Install over it.** Both APKs retain their package IDs and signing certificate. Do not uninstall or clear app data. Optional ADB command: `adb install -r <apk-file>`. Back up your maps, saves and settings first. Another fork using the same package ID but a different key cannot update in place.
@@ -29,7 +32,7 @@
 
 The launcher includes an offline **Field guide** with controls, settings and credits. Existing Quest data under `/sdcard/Documents/HaloCE/maps` is recognized when `ui.map` is present; otherwise each app uses its own external-files storage. VR and flat can coexist and have separate app data.
 
-**Updating:** install this APK over the existing app. Do not uninstall or clear data; back up maps, saves and settings first. All players must use the same network version for multiplayer and co-op (v1.0.10: 20; v1.0.11: 21).
+**Updating:** install this APK over the existing app. Do not uninstall or clear data; back up maps, saves and settings first. All players must use the same network version for multiplayer and co-op (v1.0.10: 20; v1.0.11 and v1.0.12: 21).
 
 ## 2. New Features / Major Changes
 
@@ -135,11 +138,11 @@ The launcher browser reads the ChupathingyCE native-port directory and can merge
 
 **Host multiplayer** offers installed map, game type, name, score/time, friendly fire, radar, team balance, vehicle respawn, loadout/grenade options and **2–128 PvP slots**. Public listing is opt-in; private invites are available. Start with modest limits: 128 is protocol capacity, not a verified Quest-host performance target. Network settings expose Internet/LAN, UPnP, clipboard invites and tunnel port.
 
-Since 1.0.9 this project has followed OpenCE's native netcode. **v1.0.11 uses network 21 (Build 144)** and requires an exact match; v1.0.10 uses network 20. OpenCE Windows/macOS/Linux/Android builds at network 21 can cross-play when game data and connectivity are compatible. **Retail Halo PC/Custom Edition, original Xbox and MCC use different network protocols.** Other network versions are refused by name.
+Since 1.0.9 this project has followed OpenCE's native netcode. **v1.0.12 uses network 21 (Build 144)** and requires an exact match; v1.0.10 uses network 20. OpenCE Windows/macOS/Linux/Android builds at network 21 can cross-play when game data and connectivity are compatible. **Retail Halo PC/Custom Edition, original Xbox and MCC use different network protocols.** Other network versions are refused by name.
 
 ### Campaign co-op and avatars
 
-Co-op is OpenCE's native campaign mode on the same network version (21 since 1.0.11). Host sizes are 2, 4, 8, 12, 16, 24, 32, 48, 64, 96 and 128 players (4 by default). Players can join an active mission; the host runs scripts, AI, checkpoints and level changes. A dead player spectates a teammate and returns when safe. Everyone needs compatible campaign maps. Previous network 9–11 and CE01/CE02 sessions cannot join.
+Co-op is OpenCE's native campaign mode on the same network version (21 since 1.0.12). Host sizes are 2, 4, 8, 12, 16, 24, 32, 48, 64, 96 and 128 players (4 by default). Players can join an active mission; the host runs scripts, AI, checkpoints and level changes. A dead player spectates a teammate and returns when safe. Everyone needs compatible campaign maps. Previous network 9–11 and CE01/CE02 sessions cannot join.
 
 Step-by-step instructions are in the launcher: **How to join co-op & find servers** (also first in the Field guide).
 
@@ -183,7 +186,7 @@ Use **Game files & versions** to import/switch, or place images/extracted roots 
 
 ## 9. Additional Technical Details / Credits
 
-Both release APKs are ARM64, **version 1.0.11 / code 37**, using package IDs `com.halo.decomp` and `com.halo.decomp.vr` and the established signing certificate. GitHub provides tagged source archives; compatibility.json is the updater metadata asset. Earlier releases are preserved.
+Both release APKs are ARM64, **version 1.0.12 / code 38**, using package IDs `com.halo.decomp` and `com.halo.decomp.vr` and the established signing certificate. GitHub provides tagged source archives; compatibility.json is the updater metadata asset. Earlier releases are preserved.
 
 Validation includes both flavor builds, signatures/versions, 16 KB ZIP alignment, payload integrity, targeted regressions and synthetic cache/import checks. These checks do not substitute for testing the test20e join diagnostics and crosshair on a phone/headset or a full campaign playthrough. Performance recovery was confirmed on device with test20b; test20e networking still needs device checks. See [1.0.2 provenance](RELEASE-PROVENANCE-1.0.2.md), [withdrawn 1.0.1 record](RELEASE-PROVENANCE-1.0.1.md), [test20 investigation](TEST20-PROGRESS.md) and [test20e delivery](TEST20E-DELIVERY.md).
 

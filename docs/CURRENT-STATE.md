@@ -1,20 +1,20 @@
 # Current development state
 
-## Current GitHub latest release: v1.0.11 (test29 APKs)
+## Current GitHub latest release: v1.0.12 (test30 APKs)
 
-**Published as Latest on 2026-10-07** from `D:\HaloQuest\builds\test29-20261007-v1.0.11`. Version **1.0.11 / code 37**, OpenCE Build 144/network 21. The release includes the upstream network/co-op update, held HUD head-tap fix, HUD and wrist-HUD settings, two-hand movement fix, and graphics FOV/resolution options. See [`RELEASE-1.0.11.md`](RELEASE-1.0.11.md), [`RELEASE-PROVENANCE-1.0.11.md`](RELEASE-PROVENANCE-1.0.11.md), and [`TEST29-DELIVERY.md`](TEST29-DELIVERY.md). Previous releases remain intact; the GitHub About description was not changed.
+**Published as Latest on 2026-10-07** from `D:\HaloQuest\builds\test30-20261007-v1.0.12`. Version **1.0.12 / code 38**, OpenCE Build 144/network 21. This incremental release fixes Quest face-button behavior in VR menus and adds an optional remembered name for campaign co-op hosts; prior release features remain. See [`RELEASE-1.0.12.md`](RELEASE-1.0.12.md), [`RELEASE-PROVENANCE-1.0.12.md`](RELEASE-PROVENANCE-1.0.12.md), and [`TEST30-DELIVERY.md`](TEST30-DELIVERY.md). Previous releases remain intact; the GitHub About description was not changed.
 
-The owner confirmed co-op on v1.0.10/network 20. No device-session result for the v1.0.11/network-21 APK pair was supplied before publication. Automated tests, release hashes and live-directory version checks are recorded in test29 docs; they do not substitute for device acceptance. The 128-player capacity and resolution above 100% are not performance-certified.
+No device-session result for the exact v1.0.12 APK pair was supplied before publication. Automated tests and release hashes are recorded in test30 docs; they do not substitute for device acceptance. Network version remains 21, so v1.0.11 peers remain compatible. The 128-player capacity and resolution above 100% are not performance-certified.
 
-The prior public release is v1.0.10. Historical progress and older release notes below are retained as records, not current compatibility guidance.
+The prior public release is v1.0.11. Historical progress and older release notes below are retained as records, not current compatibility guidance.
 
-## Next candidate: test30 (1.0.12 / code 38)
+## Current release: test30 (1.0.12 / code 38)
 
-**Next candidate (private, not released): test30, version 1.0.12 / code 38**, branch `test30-profiles-coopname`, on the published v1.0.11. The owner confirmed 1.0.11 ("everything here is great") and reported that X did nothing in the VR main menu when deleting a profile. In menus the Quest's face buttons now act as the Xbox's of the same letter (X deletes a profile, B goes back once). The launcher's Host campaign also gains an optional server name. See [TEST30-PROGRESS.md](TEST30-PROGRESS.md), [TEST30-DELIVERY.md](TEST30-DELIVERY.md).
+**Published as Latest:** test30, version 1.0.12 / code 38, branch `test30-profiles-coopname`, on v1.0.11. The owner confirmed the prior build was in good shape and reported that X did nothing in the VR main menu when deleting a profile. Menus now map Quest A/X/Y to the on-screen labels, while B goes back once; gameplay bindings are unchanged. Campaign hosting has an optional remembered server name. See [TEST30-PROGRESS.md](TEST30-PROGRESS.md), [TEST30-DELIVERY.md](TEST30-DELIVERY.md), and [RELEASE-PROVENANCE-1.0.12.md](RELEASE-PROVENANCE-1.0.12.md). No device session on this exact pair is recorded yet.
 
-## Post-release validation: test29
+## Post-release validation: test30
 
-Collect Quest and Android reports for network-21 PvP/co-op, updated co-op synchronization and transitions, HUD tap, wrist placement/adjustments, Move With under two-hand grip, and FOV/resolution choices. Preserve logs from each peer for connection/desync/crash reports. See [TEST29-DELIVERY.md](TEST29-DELIVERY.md).
+Validate VR menu profile deletion and navigation, ensure gameplay controls are unchanged, test named and unnamed co-op hosts and browser display, and check Android/Quest gameplay. Preserve logs from each peer for connection/desync/crash reports. See [TEST30-DELIVERY.md](TEST30-DELIVERY.md).
 
 ## Historical progress
 

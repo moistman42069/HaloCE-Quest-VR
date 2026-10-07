@@ -1,8 +1,8 @@
 {
     "schema":  1,
     "project":  "moistman42069/HaloCE-Quest-VR",
-    "tag":  "v1.0.11",
-    "source_commit":  "e9ea658180dd1da7026742eb5761c4162329b61e",
+    "tag":  "v1.0.12",
+    "source_commit":  "688a63e3635efc97b93caeb62b5a07a0db1f6325",
     "minimum_app_code":  15,
     "save_policy":  "preserve",
     "config_policy":  "preserve",
@@ -12,17 +12,17 @@
     "coop":  "opence-native",
     "editions":  {
                      "com.halo.decomp.vr":  {
-                                                "apk":  "HaloCE-Quest-1.0.11.apk",
-                                                "sha256":  "ba6b3e807ff9f09c9547be048b9d21ef3d2b51a97b9a89de85c968032b30ec60",
+                                                "apk":  "HaloCE-Quest-1.0.12.apk",
+                                                "sha256":  "dcbce7fed5d02161a22441b7d18cdfc9ded59250b181e83b21ffc1c9e9b27f22",
                                                 "bytes":  28347011,
-                                                "version_code":  37,
+                                                "version_code":  38,
                                                 "min_sdk":  28
                                             },
                      "com.halo.decomp":  {
-                                             "apk":  "HaloCE-Android-1.0.11.apk",
-                                             "sha256":  "3f5c385fa35ad8dbf8d327b9d427199b71d74d7d1fff1daf8350a5c2a267cefd",
-                                             "bytes":  26266164,
-                                             "version_code":  37,
+                                             "apk":  "HaloCE-Android-1.0.12.apk",
+                                             "sha256":  "63af9c7ac012c3d68d4036af9c432ef7134e274f11a0c69b5f56b9c09151fcf1",
+                                             "bytes":  26270260,
+                                             "version_code":  38,
                                              "min_sdk":  28
                                          }
                  }

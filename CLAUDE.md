@@ -1,8 +1,8 @@
 # Agent and contributor continuation
 
-## Current GitHub latest release: v1.0.11 (test29 APKs)
+## Current GitHub latest release: v1.0.12 (test30 APKs)
 
-**Next candidate (private, not released): test30, version 1.0.12 / code 38**, branch `test30-profiles-coopname`, on the published v1.0.11. The owner confirmed 1.0.11 ("everything here is great") and reported that X did nothing in the VR main menu when deleting a profile. In menus the Quest's face buttons now act as the Xbox's of the same letter (X deletes a profile, B goes back once). The launcher's Host campaign also gains an optional server name. See [TEST30-PROGRESS.md](docs/TEST30-PROGRESS.md), [TEST30-DELIVERY.md](docs/TEST30-DELIVERY.md).
+**Published release: test30 (version 1.0.12 / code 38),** branch `test30-profiles-coopname`, on v1.0.11. Quest A/X/Y now match the button labels in VR menus (X deletes a profile; B backs out once), with gameplay mappings unchanged. Campaign hosting accepts an optional remembered server name. The network remains OpenCE Build 144 / version 21. The exact APK pair has no recorded device session at publication. See `docs/RELEASE-1.0.12.md`, `docs/RELEASE-PROVENANCE-1.0.12.md`, `docs/TEST30-PROGRESS.md` and `docs/TEST30-DELIVERY.md`.
 
 **Published release: test29 (version 1.0.11 / code 37).** OpenCE Build 144/network 21, HUD tap and wrist-HUD refinements, two-hand movement alignment, glasses FOV and higher resolution options. The exact v1.0.11 APK pair had no owner device-session validation at publication; the owner-confirmed co-op result applies to v1.0.10/network 20. Preserve all prior releases and do not alter the repository About description. See `docs/RELEASE-1.0.11.md`, `docs/RELEASE-PROVENANCE-1.0.11.md`, `docs/TEST29-PROGRESS.md`, and `docs/OPENCE-COOP-COMPATIBILITY.md`.
 

@@ -1,8 +1,9 @@
 # Test30 checkpoint: profiles deleted in VR, co-op server name
 
-Updated 2026-10-07. Private candidate **test30, version 1.0.12 / code 38**,
-branch `test30-profiles-coopname`, on top of the published v1.0.11. Not
-released.
+Updated 2026-10-07. **Published as test30, version 1.0.12 / code 38**,
+branch `test30-profiles-coopname`, on top of v1.0.11. No device session on
+this exact APK pair was recorded before publication; use the delivery checklist
+to verify it.
 
 ## Owner's report and requests
 

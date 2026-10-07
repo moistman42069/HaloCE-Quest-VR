@@ -1,12 +1,11 @@
-# Test30 — 1.0.12 candidate (private): delete profiles in VR, co-op server name
+# Test30 — 1.0.12 release delivery: VR profile controls and co-op server name
 
-Not a release. GitHub's Latest is v1.0.11. Do not publish without explicit
-owner approval. Details: [TEST30-PROGRESS.md](TEST30-PROGRESS.md).
+Published as Latest at [v1.0.12](https://github.com/moistman42069/HaloCE-Quest-VR/releases/tag/v1.0.12). Details: [release notes](RELEASE-1.0.12.md) and [TEST30-PROGRESS.md](TEST30-PROGRESS.md). No device session on this exact pair was recorded before publication.
 
 ## Installation
 
-- Quest/VR: `HaloCE-Quest-test30.apk` (package `com.halo.decomp.vr`)
-- Android/flat: `HaloCE-Android-test30.apk` (package `com.halo.decomp`)
+- Android/flat: `HaloCE-Android-1.0.12.apk` (package `com.halo.decomp`)
+- Quest/VR: `HaloCE-Quest-1.0.12.apk` (package `com.halo.decomp.vr`)
 
 Both are **version 1.0.12 / code 38**, ARM64, API 28+, signed with the same
 certificate as every release since v1.0.2. They install over v1.0.11 without
@@ -34,8 +33,8 @@ uninstalling. The network is unchanged: OpenCE network 21 (build 144).
 
 | File | Bytes | SHA-256 |
 | --- | ---: | --- |
-| `HaloCE-Quest-test30.apk` | 28,347,011 | `dcbce7fed5d02161a22441b7d18cdfc9ded59250b181e83b21ffc1c9e9b27f22` |
-| `HaloCE-Android-test30.apk` | 26,270,260 | `63af9c7ac012c3d68d4036af9c432ef7134e274f11a0c69b5f56b9c09151fcf1` |
+| `HaloCE-Android-1.0.12.apk` | 26,270,260 | `63af9c7ac012c3d68d4036af9c432ef7134e274f11a0c69b5f56b9c09151fcf1` |
+| `HaloCE-Quest-1.0.12.apk` | 28,347,011 | `dcbce7fed5d02161a22441b7d18cdfc9ded59250b181e83b21ffc1c9e9b27f22` |
 
 Runtime source `688a63e3` on branch `test30-profiles-coopname`; later commits
 change only documentation. Certificate SHA-256
