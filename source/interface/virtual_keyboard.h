@@ -28,6 +28,16 @@ boolean virtual_keyboard_launch(
 	wchar_t *text_buffer,
 	word buffer_size,
 	short caption_index);
+/* Port menu fields: independent of profile/file-name validation. Size is
+   bytes, including the terminator; bounded to 128 UTF-16 characters. */
+boolean virtual_keyboard_launch_text(
+	wchar_t *text_buffer,
+	word buffer_size,
+	wchar_t const *caption,
+	boolean masked);
+/* A pointer in the game's 640x480 menu space; selection uses the same keys
+   as controller navigation. The caller supplies its already-consumed input. */
+void virtual_keyboard_pointer(short x, short y, boolean select, boolean cancel);
 boolean virtual_keyboard_active(
 	void);
 void virtual_keyboard_close(

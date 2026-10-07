@@ -280,6 +280,7 @@ static void virtual_keyboard_render_internal(
 	void);
 static boolean virtual_keyboard_select(
 	void);
+
 static void virtual_keyboard_process_internal(
 	void);
 
@@ -345,6 +346,17 @@ static rectangle2d keyboard_rect[NUMBER_OF_VIRTUAL_KEYS] =
 };
 
 static struct virtual_keyboard_globals virtual_keyboard_globals= {0};
+/* Keep the original globals/layout and profile-name path unchanged. Generic
+   server fields have their own full-length cancel backup and caption. */
+#define PORT_KEYBOARD_CHARACTERS 128
+static struct
+{
+	boolean generic;
+	boolean masked;
+	long display_start;
+	wchar_t caption[64];
+	wchar_t saved_text[PORT_KEYBOARD_CHARACTERS];
+} port_keyboard;
 
 /* ---------- public code */
 
@@ -352,6 +364,7 @@ boolean virtual_keyboard_initialize(
 	void)
 {
 	long keyboard_index;
+	csmemset(&port_keyboard, 0, sizeof(port_keyboard));
 
 	virtual_keyboard_globals.active = FALSE;
 	virtual_keyboard_globals.shift_active = FALSE;
@@ -398,6 +411,7 @@ boolean virtual_keyboard_initialize(
 void virtual_keyboard_dispose(
 	void)
 {
+	csmemset(&port_keyboard, 0, sizeof(port_keyboard));
 	virtual_keyboard_globals.active = FALSE;
 	virtual_keyboard_globals.shift_active = FALSE;
 	virtual_keyboard_globals.caps_active = FALSE;
@@ -418,10 +432,12 @@ void virtual_keyboard_dispose(
 	return;
 }
 
-boolean virtual_keyboard_launch(
+static boolean virtual_keyboard_launch_internal(
 	wchar_t *text_buffer,
 	word buffer_size,
-	short caption_index)
+	short caption_index,
+	wchar_t const *caption,
+	boolean masked)
 {
 	boolean result = FALSE;
 
@@ -432,10 +448,20 @@ boolean virtual_keyboard_launch(
 	match_assert(
 		"c:\\halo\\SOURCE\\interface\\virtual_keyboard.c",
 		419,
-		(caption_index>=FIRST_VIRTUAL_KEYBOARD_CAPTION_STRING_INDEX) && (caption_index<NUMBER_OF_VIRTUAL_KEYBOARD_STRINGS));
+		caption || ((caption_index>=FIRST_VIRTUAL_KEYBOARD_CAPTION_STRING_INDEX) && (caption_index<NUMBER_OF_VIRTUAL_KEYBOARD_STRINGS)));
 
 	if (!virtual_keyboard_globals.active && virtual_keyboard_globals.keyboard)
 	{
+		csmemset(&port_keyboard, 0, sizeof(port_keyboard));
+		port_keyboard.generic = caption != NULL;
+		port_keyboard.masked = caption && masked;
+		if (caption)
+		{
+			ustrncpy(port_keyboard.caption, caption, NUMBEROF(port_keyboard.caption) - 1);
+			buffer_size = (word)MIN(buffer_size, sizeof(port_keyboard.saved_text));
+			text_buffer[buffer_size / sizeof(wchar_t) - 1] = 0;
+			ustrncpy(port_keyboard.saved_text, text_buffer, NUMBEROF(port_keyboard.saved_text) - 1);
+		}
 		event_manager_flush();
 		virtual_keyboard_globals.row = 0;
 		virtual_keyboard_globals.column = 0;
@@ -443,7 +469,7 @@ boolean virtual_keyboard_launch(
 		virtual_keyboard_globals.text_buffer = text_buffer;
 		virtual_keyboard_globals.cursor = text_buffer + ustrlen(text_buffer);
 		virtual_keyboard_globals.buffer_size = buffer_size;
-		if (virtual_keyboard_globals.buffer_size >= MAXIMUM_VIRTUAL_KEYBOARD_BUFFER_SIZE)
+		if (!caption && virtual_keyboard_globals.buffer_size >= MAXIMUM_VIRTUAL_KEYBOARD_BUFFER_SIZE)
 			virtual_keyboard_globals.buffer_size = MAXIMUM_VIRTUAL_KEYBOARD_BUFFER_SIZE;
 		virtual_keyboard_globals.last_event = NONE;
 		virtual_keyboard_globals.time_of_last_event = system_milliseconds();
@@ -463,6 +489,19 @@ boolean virtual_keyboard_launch(
 	}
 
 	return result;
+}
+
+boolean virtual_keyboard_launch(wchar_t *text_buffer, word buffer_size, short caption_index)
+{
+	return virtual_keyboard_launch_internal(text_buffer, buffer_size, caption_index, NULL, FALSE);
+}
+
+boolean virtual_keyboard_launch_text(wchar_t *text_buffer, word buffer_size, wchar_t const *caption, boolean masked)
+{
+	if (!text_buffer || buffer_size < sizeof(wchar_t) || buffer_size % sizeof(wchar_t) || !caption ||
+		virtual_keyboard_globals.active)
+		return FALSE;
+	return virtual_keyboard_launch_internal(text_buffer, buffer_size, NONE, caption, masked);
 }
 
 boolean virtual_keyboard_active(
@@ -557,7 +596,7 @@ static boolean virtual_keyboard_cancel(
 	{
 		ustrncpy(
 			virtual_keyboard_globals.text_buffer,
-			virtual_keyboard_globals.saved_text,
+			port_keyboard.generic ? port_keyboard.saved_text : virtual_keyboard_globals.saved_text,
 			virtual_keyboard_globals.buffer_size / sizeof(wchar_t));
 		virtual_keyboard_globals.text_buffer[
 			virtual_keyboard_globals.buffer_size / sizeof(wchar_t) - 1] = L'\0';
@@ -565,6 +604,7 @@ static boolean virtual_keyboard_cancel(
 
 	virtual_keyboard_globals.text_buffer = NULL;
 	virtual_keyboard_globals.saved_text[0] = L'\0';
+	csmemset(&port_keyboard, 0, sizeof(port_keyboard));
 	virtual_keyboard_globals.last_exit_saved_text = FALSE;
 	ui_play_audio_feedback_sound(_ui_audio_feedback_back);
 
@@ -624,12 +664,33 @@ static wchar_t virtual_keyboard_get_current_character(
 		virtual_keyboard_globals.row][virtual_keyboard_globals.column]);
 }
 
+static wchar_t *virtual_keyboard_display_text(wchar_t *masked_text, long capacity)
+{
+	wchar_t *text = virtual_keyboard_globals.text_buffer;
+	long index, cursor;
+	port_keyboard.display_start = 0;
+	if (!port_keyboard.generic)
+		return text;
+	/* The native profile box was made for short names. Keep the caret in
+	   view while reviewing a full invite, without altering its actual text. */
+	cursor = (long)(virtual_keyboard_globals.cursor - text);
+	if (cursor > 26)
+		port_keyboard.display_start = cursor - 26;
+	text += port_keyboard.display_start;
+	for (index = 0; text[index] && index < MIN(capacity - 1, 28); index++)
+		masked_text[index] = port_keyboard.masked ? L'*' : text[index];
+	masked_text[index] = 0;
+	return masked_text;
+}
+
 static void virtual_keyboard_render_internal(
 	void)
 {
 	real_argb_color caption_color;
 	real_argb_color text_color;
 	struct font_header *keyboard_font_header;
+	wchar_t masked_text[PORT_KEYBOARD_CHARACTERS];
+	wchar_t *shown_text = virtual_keyboard_display_text(masked_text, NUMBEROF(masked_text));
 
 	text_color.alpha = 1.0f;
 	text_color.red = 0.9f;
@@ -665,10 +726,10 @@ static void virtual_keyboard_render_internal(
 	}
 
 	draw_string_set_draw_mode(virtual_keyboard_globals.keyboard->font_tag.index, NONE, 0, 0, &caption_color);
-	if (virtual_keyboard_globals.keyboard->special_key_labels_string_list_tag.index != NONE)
+	if (port_keyboard.generic || virtual_keyboard_globals.keyboard->special_key_labels_string_list_tag.index != NONE)
 	{
 		rectangle2d bounds;
-		wchar_t *caption = unicode_string_list_get_string(
+		wchar_t *caption = port_keyboard.generic ? port_keyboard.caption : unicode_string_list_get_string(
 			virtual_keyboard_globals.keyboard->special_key_labels_string_list_tag.index,
 			virtual_keyboard_globals.caption_index);
 
@@ -687,6 +748,11 @@ static void virtual_keyboard_render_internal(
 		bounds.x0 = 220;
 		bounds.y1 = 143;
 		bounds.x1 = 420;
+		if (port_keyboard.generic)
+		{
+			bounds.x0 = 100;
+			bounds.x1 = 540;
+		}
 		if (virtual_keyboard_globals.first_key_replaces_buffer == TRUE)
 		{
 			struct bitmap_data *bitmap = bitmap_group_get_bitmap_from_sequence(virtual_keyboard_globals.caret_bitmap_index, 0, 0);
@@ -696,20 +762,20 @@ static void virtual_keyboard_render_internal(
 				rectangle2d text_bounds;
 				rectangle2d cursor_bounds;
 
-				draw_unicode_string_compute_bounds(&bounds, virtual_keyboard_globals.text_buffer, &text_bounds, &cursor_bounds);
+				draw_unicode_string_compute_bounds(&bounds, shown_text, &text_bounds, &cursor_bounds);
 				text_bounds.x0 -= 2;
 				text_bounds.x1 += 2;
 				draw_bitmap_in_rect(bitmap, &text_bounds, &bounds, NULL, 0x7f7f7f7f, NULL, FALSE);
 			}
 		}
-		rasterizer_draw_unicode_string(&bounds, &bounds, NULL, 0, virtual_keyboard_globals.text_buffer);
+		rasterizer_draw_unicode_string(&bounds, &bounds, NULL, 0, shown_text);
 	}
 
 	if (!virtual_keyboard_globals.first_key_replaces_buffer &&
 		virtual_keyboard_globals.caret_bitmap_index != NONE &&
 		(system_milliseconds() / 1000) & 1)
 	{
-		wchar_t *character = virtual_keyboard_globals.text_buffer;
+		wchar_t *character = shown_text;
 		short height = keyboard_font_header->descending_height + keyboard_font_header->ascending_height;
 		short cursor_offset = 0;
 		short width = 0;
@@ -725,7 +791,8 @@ static void virtual_keyboard_render_internal(
 
 				if (!font_character)
 					break;
-				if (character < virtual_keyboard_globals.cursor)
+				if (character - shown_text + port_keyboard.display_start <
+					virtual_keyboard_globals.cursor - virtual_keyboard_globals.text_buffer)
 					cursor_offset += font_character->character_width;
 				width += font_character->character_width;
 				character++;
@@ -972,7 +1039,13 @@ static boolean virtual_keyboard_select(
 	switch (keycode)
 	{
 	case _vkey_done:
-		if (ustrcmp(virtual_keyboard_globals.saved_text, virtual_keyboard_globals.text_buffer) != 0)
+		if (port_keyboard.generic)
+		{
+			/* Empty passwords clear protection; other field policies belong
+			   to the callback. Never query or modify profile files here. */
+			virtual_keyboard_globals.last_exit_saved_text = TRUE;
+		}
+		else if (ustrcmp(virtual_keyboard_globals.saved_text, virtual_keyboard_globals.text_buffer) != 0)
 		{
 			if (virtual_keyboard_globals.text_buffer[0])
 			{
@@ -1104,7 +1177,7 @@ static boolean virtual_keyboard_select(
 					virtual_keyboard_globals.cursor,
 					move_size);
 				*virtual_keyboard_globals.cursor++ = virtual_keyboard_get_current_character();
-				if (ustrcmp(virtual_keyboard_globals.text_buffer, L".fortune") == 0)
+				if (!port_keyboard.generic && ustrcmp(virtual_keyboard_globals.text_buffer, L".fortune") == 0)
 				{
 					unsigned long fortune_index = system_milliseconds() % NUMBER_OF_VIRTUAL_KEYBOARD_FORTUNES;
 					fortune_index = MIN(fortune_index, NUMBER_OF_VIRTUAL_KEYBOARD_FORTUNES - 1);
@@ -1140,6 +1213,41 @@ static boolean virtual_keyboard_select(
 
 	return TRUE;
 }
+
+void virtual_keyboard_pointer(short x, short y, boolean select, boolean cancel)
+{
+	short key, row, column;
+	if (!virtual_keyboard_globals.active)
+		return;
+	if (cancel)
+	{
+		virtual_keyboard_cancel();
+		return;
+	}
+	for (key = 0; key < NUMBER_OF_VIRTUAL_KEYS; key++)
+	{
+		rectangle2d const *bounds = &keyboard_rect[key];
+		if (x < bounds->x0 || x >= bounds->x1 || y < bounds->y0 || y >= bounds->y1)
+			continue;
+		for (row = 0; row < VIRTUAL_KEYBOARD_ROW_COUNT; row++)
+		{
+			for (column = 0; column < VIRTUAL_KEYBOARD_COLUMN_COUNT; column++)
+			{
+				if (virtual_keyboard_layout_table[row][column] != key)
+					continue;
+				virtual_keyboard_globals.row = row;
+				virtual_keyboard_globals.column = column;
+				if (select)
+				{
+					virtual_keyboard_globals.last_event = _event_key_select;
+					virtual_keyboard_select();
+				}
+				return;
+			}
+		}
+	}
+}
+
 
 static void virtual_keyboard_process_internal(
 	void)

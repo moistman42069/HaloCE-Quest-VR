@@ -16,6 +16,22 @@ feature checklist. See its note and the test31 menu integration documentation.
 Quest and Android input adaptation and device acceptance are tracked separately
 from importing the upstream screens.
 
+### Quest / Android text fields
+
+Server names, browser passwords and the Android Direct Link **ENTER LINK**
+button open the game's on-screen keyboard. Select keys with the pointer or
+controller; **Done** accepts the edit and **B / Back** cancels it. For a
+password-protected server, select **JOIN GAME** after entering the password.
+The existing **PASTE LINK** action remains available where clipboard access is
+supported. A long invite scrolls within the text box as its cursor moves;
+the complete text is retained. Blank host passwords remove the password.
+
+This uses a generic text mode with separate caption, cancellation backup and
+password masking. Original profile-name entry keeps its own filename checks
+and length limit. Desktop builds retain upstream's inline physical-keyboard
+editing. These are source behavior and automated checks; device acceptance is
+still required for pointer placement and keyboard readability.
+
 ## Upstream menu format
 
 The game's menus are the PC version's (Halo Custom Edition's): its main menu

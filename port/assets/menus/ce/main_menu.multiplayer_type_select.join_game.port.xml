@@ -48,13 +48,18 @@
 	</strings>
 	<strings name="main_menu/multiplayer_type_select/join_game/password/help_strings">
 		<string text=""/>
-		<string text="This game has a password. Type it, then press\nEnter to join."/>
+		<string text="This game has a password. Enter it, then select\nJOIN GAME."/>
 		<string text="That is not the game's password. Try again."/>
 		<string text="Could not join the game."/>
 	</strings>
 	<widget name="main_menu/multiplayer_type_select/join_game/header_server_browser" controller="1" left="35" top="11" width="363" height="59" bitmap="main_menu/multiplayer_type_select/join_game/header_server_browser">
 	</widget>
 	<widget name="main_menu/multiplayer_type_select/join_game/header_direct_link" controller="1" left="35" top="11" width="363" height="59" bitmap="main_menu/multiplayer_type_select/join_game/header_direct_link">
+	</widget>
+	<widget name="main_menu/multiplayer_type_select/join_game/button_edit_link" type="text" width="128" height="24" bitmap="bitmaps/text_button_background" text="ENTER LINK" font="ui\small_ui" color="#FFFFFFFF" align="center" text_y="2" platform="android">
+		<on event="a" run="port direct link edit"/>
+		<on event="start" run="port direct link edit"/>
+		<on event="left_mouse" run="mouse emit accept event"/>
 	</widget>
 	<widget name="main_menu/multiplayer_type_select/join_game/button_clipboard" type="text" width="128" height="24" bitmap="bitmaps/text_button_background" text="PASTE LINK" font="ui\small_ui" color="#FFFFFFFF" align="center" text_y="2">
 		<on event="a" run="direct ip connect go"/>

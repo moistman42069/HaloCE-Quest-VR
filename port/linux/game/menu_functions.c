@@ -69,6 +69,7 @@ their handlers open opens.
 #include "interface/event_manager.h"
 #include "interface/player_ui.h"
 #include "interface/ui_widget.h"
+#include "interface/virtual_keyboard.h"
 #include "main/main.h"
 #include "networking/network_game_manager.h"
 #include "saved games/player_profile.h"
@@ -2100,6 +2101,7 @@ Xbox's networking, run by the engine's port entry points
 #define BROWSER_ROWS 15
 #define LOBBY_ROWS 11
 #define TEXT_FIELD_LENGTH 128
+typedef char verify_menu_invite_fits_text_field[TEXT_FIELD_LENGTH >= P2P_LISTING_INVITE_SIZE ? 1 : -1];
 #define PLAYLIST_READ_ONLY_BIT 0x40000000UL
 /* (a key stroke's modifier, as input_xbox.c has them: shift, control) */
 #define KEY_MODIFIER_CONTROL_BIT 1
@@ -2255,6 +2257,8 @@ static struct
 	void (*done)(char const *text);
 	/* a password's: shown as stars (text_field_begin_masked) */
 	boolean masked;
+	boolean native_keyboard;
+	wchar_t keyboard_text[TEXT_FIELD_LENGTH];
 } text_field;
 
 /* when the field was last shown (a field not shown for a while is let go
@@ -2266,42 +2270,98 @@ static boolean text_field_editing(struct widget_instance *row)
 	return text_field.row && (!row || text_field.row == row);
 }
 
-static void text_field_begin(struct widget_instance *row, char const *text, short maximum,
-	void (*done)(char const *text))
+static void text_field_begin_internal(struct widget_instance *row, char const *text, short maximum,
+	void (*done)(char const *text), wchar_t const *caption, boolean masked)
 {
 	struct key_stroke key;
+	short index;
+	if (text_field.row || virtual_keyboard_active())
+		return;
 
 	text_field.row = row;
 	snprintf(text_field.text, sizeof(text_field.text), "%s", text);
 	snprintf(text_field.before, sizeof(text_field.before), "%s", text);
 	text_field.maximum = (short)MIN(maximum, TEXT_FIELD_LENGTH - 1);
 	text_field.done = done;
-	text_field.masked = FALSE;
+	text_field.masked = masked;
 	text_field_shown_time = system_milliseconds();
 	while (input_get_key(&key))
 		;
+#ifdef HALO_ANDROID
+	for (index = 0; text[index] && index < text_field.maximum; index++)
+		text_field.keyboard_text[index] = (wchar_t)(unsigned char)text[index];
+	text_field.keyboard_text[index] = 0;
+	text_field.native_keyboard = virtual_keyboard_launch_text(text_field.keyboard_text,
+		(word)((text_field.maximum + 1) * sizeof(wchar_t)), caption, masked);
+	if (!text_field.native_keyboard)
+	{
+		platform_log("menus: on-screen text keyboard unavailable; field left unchanged");
+		text_field.row = NULL;
+		text_field.done = NULL;
+		ui_play_audio_feedback_sound(SOUND_ERROR);
+	}
+#else
 	platform_text_field(TRUE);
+#endif
+}
+
+static void text_field_begin(struct widget_instance *row, char const *text, short maximum,
+	void (*done)(char const *text))
+{
+	text_field_begin_internal(row, text, maximum, done, L"SERVER NAME", FALSE);
 }
 
 /* a password's field: as text_field_begin, its text shown as stars */
 static void text_field_begin_masked(struct widget_instance *row, char const *text, short maximum,
 	void (*done)(char const *text))
 {
-	text_field_begin(row, text, maximum, done);
-	text_field.masked = TRUE;
+	text_field_begin_internal(row, text, maximum, done, L"PASSWORD", TRUE);
 }
 
 static void text_field_end(boolean keep)
 {
 	void (*done)(char const *text) = text_field.done;
+	if (text_field.native_keyboard && virtual_keyboard_active())
+	{
+		virtual_keyboard_close();
+		keep = FALSE;
+	}
 
 	platform_text_field(FALSE);
 	text_field.row = NULL;
 	text_field.done = NULL;
+	text_field.native_keyboard = FALSE;
 	if (!keep)
 		snprintf(text_field.text, sizeof(text_field.text), "%s", text_field.before);
 	else if (done)
 		done(text_field.text);
+	csmemset(text_field.keyboard_text, 0, sizeof(text_field.keyboard_text));
+}
+
+/* Called on widget/map teardown before the row's storage can be freed. */
+void pc_menu_text_input_reset(void)
+{
+	text_field_end(FALSE);
+	csmemset(&text_field, 0, sizeof(text_field));
+}
+
+void pc_menu_text_input_update(void)
+{
+	short index;
+	if (!text_field.native_keyboard || virtual_keyboard_active())
+		return;
+	if (virtual_keyboard_last_exit_saved_text())
+	{
+		for (index = 0; text_field.keyboard_text[index] && index < text_field.maximum; index++)
+		{
+			wchar_t character = text_field.keyboard_text[index];
+			text_field.text[index] = character >= ' ' && character <= '~' ? (char)character : '?';
+		}
+		text_field.text[index] = 0;
+		text_field_end(TRUE);
+	}
+	else
+		text_field_end(FALSE);
 }
 
 static void text_field_insert(char const *text)
@@ -2324,7 +2384,7 @@ static void text_field_show(struct widget_instance *value, char const *text, boo
 	wchar_t shown[TEXT_FIELD_LENGTH + 2];
 	short index;
 
-	if (editing)
+	if (editing && !text_field.native_keyboard)
 	{
 		text_field_shown_time = system_milliseconds();
 		struct key_stroke key;
@@ -3180,6 +3240,7 @@ static boolean browser_initialize(struct widget_instance *screen, struct event_r
 	for (index = 0; index < NUMBEROF(unused); index++)
 		visible_set(named(screen, unused[index], 0), FALSE);
 	visible_set(named(screen, "button_clipboard", 0), multiplayer.mode == _multiplayer_mode_direct_link);
+	visible_set(named(screen, "button_edit_link", 0), multiplayer.mode == _multiplayer_mode_direct_link);
 	visible_set(named(screen, "join_game_button_refresh", 0), multiplayer.mode == _multiplayer_mode_server_browser);
 	{
 		struct widget_instance *list = named(screen, "join_game_items_list", 0);
@@ -3885,6 +3946,21 @@ static boolean direct_link_from_clipboard(void)
 		platform_log("menus: the clipboard has no invite link");
 		return campaign_fail();
 	}
+	return TRUE;
+}
+
+static void direct_link_done(char const *text)
+{
+	if (!*text || !p2p_join_invite(text))
+	{
+		platform_log("menus: entered text is not a supported invite link");
+		ui_play_audio_feedback_sound(SOUND_ERROR);
+	}
+}
+
+static boolean direct_link_edit(struct widget_instance *row)
+{
+	text_field_begin_internal(row, "", P2P_LISTING_INVITE_SIZE - 1, direct_link_done, L"INVITE LINK", FALSE);
 	return TRUE;
 }
 
@@ -5253,6 +5329,10 @@ boolean pc_menu_event_function_invoke(
 		{
 			return direct_link_from_clipboard();
 		}
+		else if (!strcmp(name, "port direct link edit"))
+		{
+			return direct_link_edit(widget);
+		}
 		else if (!strcmp(name, "join controller to mp game"))
 		{
 			return multiplayer_host(widget, event, controller, widget_deleted);
@@ -5470,8 +5550,11 @@ void pc_menu_game_data_function_invoke(
 
 	if (!name)
 		return;
+	/* Completing a modal keyboard may take minutes: handle its result
+	   before the vanished-row timeout, which protects only inline fields. */
+	pc_menu_text_input_update();
 	/* (a text field whose screen has gone: let go of) */
-	if (text_field.row && system_milliseconds() - text_field_shown_time > 500)
+	if (text_field.row && !text_field.native_keyboard && system_milliseconds() - text_field_shown_time > 500)
 		text_field_end(FALSE);
 	if (!strcmp(name, "solo map list update"))
 		level_list_update(widget);
