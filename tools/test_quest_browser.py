@@ -104,23 +104,32 @@ public class BrowserCheck {
         System.out.println("PASS: directory kinds (multiplayer, co-op on engine 0 + a campaign map, this app's retired CE co-op),"
             + " 12-column rows with rosters and future columns, browser placement and joinability at network 20 only"
             + " (co-op from the co-op browser, CE01/CE02 never, pasted invites left to the game)");
-        if (args.length > 0) {
-            var live = ServerListing.parse(Files.readString(Path.of(args[0])).replace("\ufeff", ""));
+        // test29: this build's own network version (the header's, as build.gradle gives the launcher), and the
+        // downloaded directory judged at it
+        int net = Integer.parseInt(args[0]);
+        check(ServerListing.joinable(true, O, net, net, net) && !ServerListing.joinable(false, O, net, net, net));
+        check(!ServerListing.joinable(true, O, net - 1, net, net) && !ServerListing.joinable(true, O, net + 1, net, net));
+        check(ServerListing.joinable(false, M, net, net, net) && !ServerListing.joinable(false, M, net - 1, net, net));
+        System.out.println("PASS: at this build's network version " + net + ": its co-op and multiplayer joinable, "
+            + (net - 1) + " and " + (net + 1) + " not");
+        if (args.length > 1) {
+            var live = ServerListing.parse(Files.readString(Path.of(args[1])).replace("\ufeff", ""));
             check(!live.isEmpty());
             int players = live.stream().mapToInt(s -> s.players).sum();
             long coop = live.stream().filter(s -> s.kind == O).count(), coopJoinable = live.stream()
-                .filter(s -> s.kind == O && ServerListing.joinable(true, O, s.version, lo, hi)).count();
-            long joinable = live.stream().filter(s -> s.kind == M && ServerListing.joinable(false, M, s.version, lo, hi)).count();
+                .filter(s -> s.kind == O && ServerListing.joinable(true, O, s.version, net, net)).count();
+            long joinable = live.stream().filter(s -> s.kind == M && ServerListing.joinable(false, M, s.version, net, net)).count();
             System.out.println("PASS: downloaded directory: " + live.size() + " servers, " + players + " reported players; "
-                + coop + " co-op (" + coopJoinable + " joinable at network " + lo + "), " + joinable
-                + " multiplayer joinable at network " + lo);
+                + coop + " co-op (" + coopJoinable + " joinable at network " + net + "), " + joinable
+                + " multiplayer joinable at network " + net);
         }
         System.out.println("PASS: native invites, TSV listings, malformed/duplicate/bounded inputs");
     }
 }
 ''')
 subprocess.run(["javac", "-d", str(OUT), str(JAVA / "ServerInvite.java"), str(JAVA / "ServerListing.java"), str(harness)], check=True)
-subprocess.run(["java", "-cp", str(OUT), "com.halo.decomp.BrowserCheck", *sys.argv[1:]], check=True)
+NETWORK = re.search(r"^#define HALO_PORT_NETWORK_VERSION (\d+)$", (ROOT / "port/linux/include/halo_port_limits.h").read_text(), re.M).group(1)
+subprocess.run(["java", "-cp", str(OUT), "com.halo.decomp.BrowserCheck", NETWORK, *sys.argv[1:]], check=True)
 
 source = (ROOT / "source/networking/network_client_manager.c").read_text()
 start = source.index("boolean network_game_client_advertised_game_compatible(")
@@ -163,7 +172,7 @@ int main(void) {
     }
     assert(!network_game_client_advertised_game_compatible(NULL, NULL, 0));
     assert(!network_game_client_advertised_game_compatible(&client, &client.available_games[4], 0));
-    puts("PASS: 112 native compatibility cases: network 20 only (OpenCE's, in progress or not), the retired CE01/CE02 refused, absent client and out-of-range slot");
+    printf("PASS: 112 native compatibility cases: network %d only (OpenCE's, in progress or not), the retired CE01/CE02 refused, absent client and out-of-range slot\n", HALO_PORT_NETWORK_VERSION);
 }
 ''')
 subprocess.run(["clang", "-fsanitize=address,undefined", str(c), "-o", str(OUT / "compatibility")], check=True)
