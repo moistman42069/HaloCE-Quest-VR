@@ -3,17 +3,18 @@
 Target: private test candidate, version 1.0.13 / code 42, Quest VR and flat
 Android. OpenCE Build 145 / network 22. Public v1.0.12 is unchanged.
 
-Runtime source: `a5e17680d873a354d4a5df9aad60082e34972217` on
+Runtime source: `0f4b4078d56b1246d8f794a258a10f4d6fbf9511` on
 `test32-launcher-vehicles`. The VR and flat APKs were built from this exact
-commit. Subsequent documentation and package-metadata updates do not change
-either APK.
+commit, including the corrected bundled Server Browser instructions for
+stick/D-pad or Android MOVE auto-scrolling. Subsequent documentation and
+package-metadata updates do not change either APK.
 
 ## APKs
 
 | Build | File | Size | SHA-256 |
 |---|---|---:|---|
-| Android / flat | `HaloCE-Android-test32.apk` | 31 MiB | `ccdb02f6489cb3f15ad43565112b04f1fa48f1d8e595c14cf3ac12a1ae70f439` |
-| Quest / VR | `HaloCE-Quest-test32.apk` | 33 MiB | `e67dee1df4a9475011f0871e7c0cceecceb07ef00f2436086fe9da6d63e2c98e` |
+| Android / flat | `HaloCE-Android-test32.apk` | 31 MiB | `7db357b412c98d571de367a134c97e7c0b9ddaa92ca88655bd40e25d25bdb7e7` |
+| Quest / VR | `HaloCE-Quest-test32.apk` | 33 MiB | `d51516a7ccf1126f99f12a1109e910b1a5d216806c9b83dfc5d83ca5b4e3d68d` |
 
 Both packages use the previously accepted signing certificate, version code
 42, Android API 28 minimum, and 16 KB-aligned native libraries. Package-level
