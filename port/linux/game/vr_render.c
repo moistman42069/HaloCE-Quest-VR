@@ -116,6 +116,8 @@ enum
 	_vr_steering_left,
 };
 
+static char const *vr_vehicle_profile(char const *name);
+
 static boolean vr_first_person_vehicles(
 	void)
 {
@@ -309,6 +311,10 @@ boolean vr_render_seat_transparent(long object_index, short shader_type, short g
 		"chicago", "water", "glass", "meter", "plasma" };
 	static long logged_vehicle = NONE;
 	static unsigned long logged_types;
+	static int generation = -1;
+	static boolean hide_warthog_glass = TRUE;
+	boolean hide_glass;
+	char const *profile;
 
 	if (object_index == NONE || !vr_render.seat.seated || vr_render.seat.vehicle_index == NONE ||
 		!vr_first_person_vehicles() || !object_try_and_get(object_index) ||
@@ -318,6 +324,16 @@ boolean vr_render_seat_transparent(long object_index, short shader_type, short g
 	{
 		return FALSE;
 	}
+	if (generation != vr_settings_generation())
+	{
+		generation = vr_settings_generation();
+		hide_warthog_glass = config_boolean("vr.vehicle_warthog_hide_glass");
+		logged_vehicle = NONE;
+	}
+	profile = vr_vehicle_profile(tag_get_name(object_get(vr_render.seat.vehicle_index)->definition_index));
+	/* Test25 already hid seated glass. This option changes only Warthogs,
+	including variants using that tag name, in the occupied first-person view. */
+	hide_glass = !profile || strcmp(profile, "warthog") || hide_warthog_glass;
 	if (logged_vehicle != vr_render.seat.vehicle_index)
 	{
 		logged_vehicle = vr_render.seat.vehicle_index;
@@ -328,9 +344,9 @@ boolean vr_render_seat_transparent(long object_index, short shader_type, short g
 		logged_types |= 1ul << shader_type;
 		platform_log("vr: first-person seat: the vehicle draws see-through %s parts%s",
 			shader_type < (short)NUMBEROF(names) ? names[shader_type] : "other",
-			shader_type == glass_type ? " (its glass is hidden from the seat)" : "");
+			shader_type == glass_type && hide_glass ? " (its glass is hidden from the seat)" : "");
 	}
-	return shader_type == glass_type;
+	return shader_type == glass_type && hide_glass;
 }
 
 /* test25: vr.vehicle_tilt: a first-person driver's view tilted with the

@@ -472,6 +472,8 @@ static const struct config_setting config_settings[] =
 		"First-person seat forward offset in metres (-0.50 to 0.50), all. Global and matching vehicle offsets add; final axis is bounded to 0.50 m." },
 	{ "vr.vehicle_all_right", _config_real, "0.0", "HALO_VR_VEHICLE_ALL_RIGHT", _environment_value, _platform_vr,
 		"First-person seat right offset in metres (-0.50 to 0.50), all. Global and matching vehicle offsets add; final axis is bounded to 0.50 m." },
+	{ "vr.vehicle_warthog_hide_glass", _config_boolean, "true", "HALO_VR_VEHICLE_WARTHOG_HIDE_GLASS", _environment_value, _platform_vr,
+		"Hide the occupied Warthog's glass in first-person view. Other vehicles, third-person views and collision are unchanged. On preserves test25 behavior." },
 	{ "vr.vehicle_warthog_up", _config_real, "0.0", "HALO_VR_VEHICLE_WARTHOG_UP", _environment_value, _platform_vr,
 		"First-person seat up offset in metres (-0.50 to 0.50), warthog. Global and matching vehicle offsets add; final axis is bounded to 0.50 m." },
 	{ "vr.vehicle_warthog_forward", _config_real, "0.0", "HALO_VR_VEHICLE_WARTHOG_FORWARD", _environment_value, _platform_vr,

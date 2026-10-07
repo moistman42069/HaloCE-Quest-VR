@@ -30,3 +30,12 @@ assert 'cache_files_precache_map_loaded(map_name)' in fn(cache,'cache_files_map_
 assert 'return custom_edition_cache_playable(map_name);' in fn(read('source/cache/cache_files_windows.c'),'cache_files_precache_map_loaded')
 assert 'ui_widget_port_text_wrap' in read('source/interface/ui_widget.c')
 print('PASS: network 22 exact; %d networking files identical to pinned OpenCE build 145; map namespace/preflight, PAL and legacy loader retained' % len(UPSTREAM_145))
+
+config=read('port/linux/src/port_config.c')
+assert '"vr.vehicle_warthog_hide_glass", _config_boolean, "true"' in config
+assert '"vr.vehicle_warthog_hide_glass", _vr_setting_boolean' in read('port/linux/game/vr_menu.c')
+glass=fn(read('port/linux/game/vr_render.c'),'vr_render_seat_transparent')
+for guard in ('!vr_first_person_vehicles()', '!vr_seat_view()', 'object_get_ultimate_parent(object_index)', 'vr_settings_generation()', 'strcmp(profile, "warthog") || hide_warthog_glass'):
+    assert guard in glass,guard
+assert 'return shader_type == glass_type && hide_glass;' in glass
+print('PASS: Warthog glass defaults to prior hidden behavior; persisted VR setting and own first-person seat scope')
