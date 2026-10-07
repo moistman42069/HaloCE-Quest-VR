@@ -1718,7 +1718,6 @@ static int config_write_typed(const char *name, enum config_type type, const cha
 	/* (the file read first, as the other settings are) */
 	config_value(name, type);
 	pthread_mutex_lock(&config_lock);
-	config_set_from_text(&config_values[index], type, value);
 	snprintf(section, sizeof(section), "%.*s", (int)(dot - name), name);
 	snprintf(key, sizeof(key), "%s", dot + 1);
 	snprintf(line_text, sizeof(line_text), "%s = %s\n", key, written_value);
@@ -1773,7 +1772,12 @@ static int config_write_typed(const char *name, enum config_type type, const cha
 	}
 	succeeded = out.buffer && config_write_file(path, out.buffer);
 	if (succeeded)
+	{
+		/* Publish the value and its generation together only after persistence
+		succeeds. Failed menu saves must leave all live consumers on the old value. */
+		config_set_from_text(&config_values[index], type, value);
 		config_change_count++;
+	}
 	pthread_mutex_unlock(&config_lock);
 	free(out.buffer);
 	free(text);

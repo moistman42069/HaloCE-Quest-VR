@@ -164,3 +164,22 @@ and Quest ray/controller navigation across every screen in the candidate.
 The old `test_test15_io.py` touch harness now includes `<stdatomic.h>` needed by
 its extracted production host code; its full suite passes without changing
 production touch behavior.
+
+## Configuration write failure boundary
+
+`config_write_typed` now publishes a changed cached value and its generation
+only after the file writer returns success. Previously a failed write changed
+the cached value without advancing the generation, leaving cached and direct
+consumers inconsistent. The settings suite compiles the complete production
+configuration implementation for both flat Android and VR; injected ENOSPC
+before writing verifies real/integer/boolean/string values and generation stay
+unchanged, then verifies a successful retry publishes both.
+
+**Pre-existing disk limitation:** Android's low-level config writer opens the
+current file with `wb`. Failure after opening or during write/close can therefore
+truncate or partially replace the file; this cache fix does not make that disk
+operation atomic. A later isolated change should use a flushed temporary file
+and atomic replacement, with write/close/rename fault coverage. Likewise,
+multiple setting rows are saved individually, so one failing row does not roll
+back earlier successful rows. Neither transactional disk writes nor whole-page
+rollback is claimed by this baseline's Save behavior.

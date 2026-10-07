@@ -3,8 +3,10 @@
 No device, graphics context, real profile or game data is opened.
 """
 from pathlib import Path
+import os
 import re
 import subprocess
+import tempfile
 import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -22,12 +24,14 @@ def fn(text, name):
     return text[match.start():end] + '\n'
 
 
-def run(name, text):
+def run(name, text, extra=(), env=None):
     path = OUT / (name + '.c')
     path.write_text(text)
     subprocess.run(['clang', '-std=gnu11', '-fsanitize=address,undefined',
-                    '-fno-sanitize-recover=all', '-g', str(path), '-lm', '-o', str(OUT/name)], check=True)
-    subprocess.run([str(OUT/name)], check=True)
+                    '-fno-sanitize-recover=all', '-g', '-I', str(ROOT/'port/linux/src'),
+                    '-I', str(ROOT/'port/third_party/tomlc17'), str(path), *extra,
+                    '-pthread', '-lm', '-o', str(OUT/name)], check=True)
+    subprocess.run([str(OUT/name)], env=env, check=True)
 
 
 menu = (ROOT/'port/linux/game/menu_functions.c').read_text()
@@ -112,6 +116,54 @@ int main(void){
  puts("PASS: production settings nested traversal, failed save/retry, defaults staging, unchanged/skipped rows, profile inversion");
 }
 ''')
+
+# Full production config code, changing only its external platform logger and
+# a write primitive wrapper so ENOSPC can be injected before any actual write.
+# This tests cache/generation publication; it does not claim atomic disk saves.
+config_source = (ROOT/'port/linux/src/port_config.c').read_text()
+writer = fn(config_source, 'config_write_file')
+config_source = config_source.replace(writer.rstrip(), writer.replace('config_write_file(', 'config_write_file_actual(', 1) + r'''
+static int config_test_fail_write, config_test_attempts;
+static int config_write_file(const char *path, const char *text)
+{
+ config_test_attempts++;
+ if(config_test_fail_write){errno=ENOSPC;return 0;}
+ return config_write_file_actual(path,text);
+}
+''', 1).replace('#include "platform.h"', 'static void platform_log(const char *text, ...) {(void)text;}').replace('#include <SDL3/SDL.h>', '')
+config_test = r'''
+#include <assert.h>
+static void reject_and_retry(const char *name,const char *changed,const char *expected)
+{
+ char value[200],path[1024];size_t before_size,after_size;
+ unsigned long generation=config_changes();int attempts=config_test_attempts;
+ config_path(path,sizeof(path));char *before=config_file_read(path,&before_size);assert(before);
+ config_test_fail_write=1;assert(!config_write(name,changed));
+ assert(config_test_attempts==attempts+1&&config_changes()==generation);
+ assert(config_text(name,value,sizeof(value))&&!strcmp(value,expected));
+ char *after=config_file_read(path,&after_size);assert(after&&after_size==before_size&&!memcmp(before,after,before_size));
+ free(before);free(after);
+ config_test_fail_write=0;assert(config_write(name,changed));
+ assert(config_changes()==generation+1&&config_text(name,value,sizeof(value))&&!strcmp(value,changed));
+}
+int main(void)
+{
+ assert(config_write("audio.music_volume","0.375"));
+ assert(config_write("browser.engine","2"));
+ assert(config_write("browser.show_empty","true"));
+ assert(config_write("browser.teams","any"));
+ reject_and_retry("audio.music_volume","0.5","0.375");assert(config_real("audio.music_volume")==0.5);
+ reject_and_retry("browser.engine","5","2");assert(config_integer("browser.engine")==5);
+ reject_and_retry("browser.show_empty","false","true");assert(!config_boolean("browser.show_empty"));
+ reject_and_retry("browser.teams","teams","any");assert(!strcmp(config_string("browser.teams"),"teams"));
+ puts("PASS: production config failed writes retain live values/generation for real/integer/boolean/string; successful retry publishes both");
+}
+'''
+for vr in (False, True):
+    with tempfile.TemporaryDirectory(dir=OUT) as folder:
+        run('config-failure-vr' if vr else 'config-failure-flat',
+            '#define HALO_ANDROID 1\n' + ('#define HALO_VR 1\n' if vr else '') + config_source + config_test,
+            [str(ROOT/'port/third_party/tomlc17/tomlc17.c')], dict(os.environ, HALO_DATA_ROOT=folder))
 
 # Generated page Cancel/back handlers must never write their staged values.
 pages = 0
