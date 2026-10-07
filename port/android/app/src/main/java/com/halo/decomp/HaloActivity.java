@@ -4,6 +4,7 @@ import android.content.Context;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.view.Display;
+import android.view.MotionEvent;
 import android.view.WindowManager;
 import android.view.ViewGroup;
 
@@ -53,6 +54,12 @@ public class HaloActivity extends SDLActivity {
         acquireMulticastLock();
         // a new version looked for while the game starts
         Updater.start(this);
+    }
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent event) {
+        if(touchControls!=null && touchControls.dispatchMenuTouch(event,mSurface)) return true;
+        return super.dispatchTouchEvent(event);
     }
 
     @Override

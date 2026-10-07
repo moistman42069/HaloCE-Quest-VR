@@ -61,9 +61,10 @@
 	</widget>
 	<widget name="main_menu/settings_select/player_setup/player_profile_edit/network_setup/auto_label" type="text" controller="1" width="300" height="22" string_list="main_menu/settings_select/player_setup/player_profile_edit/network_setup/labels" string_index="3" font="ui\large_ui" color="#FF2896FF" text_x="13" text_y="4">
 	</widget>
-	<widget name="main_menu/settings_select/player_setup/player_profile_edit/network_setup/auto_spinner" type="spinner" left="3" top="2" width="147" height="20" flags="pass_unhandled_to_focused_child left_right_tabs_items" strings="ON|OFF" setting="update.auto" values="true|false" font="ui\large_ui" color="#FF2896FF" align="center" text_y="1" header_bitmap="bitmaps/arrow_sm_left" footer_bitmap="bitmaps/arrow_sm_right" header_bounds="7 -6 19 0" footer_bounds="7 150 19 156">
+	<widget name="main_menu/settings_select/player_setup/player_profile_edit/network_setup/auto_spinner" platform="desktop" type="spinner" left="3" top="2" width="147" height="20" flags="pass_unhandled_to_focused_child left_right_tabs_items" strings="ON|OFF" setting="update.auto" values="true|false" font="ui\large_ui" color="#FF2896FF" align="center" text_y="1" header_bitmap="bitmaps/arrow_sm_left" footer_bitmap="bitmaps/arrow_sm_right" header_bounds="7 -6 19 0" footer_bounds="7 150 19 156">
 		<on event="created" run="port setting load"/>
 	</widget>
+	<widget name="main_menu/settings_select/player_setup/player_profile_edit/network_setup/auto_spinner" platform="android" type="text" controller="1" left="3" top="2" width="170" height="20" strings="USE LAUNCHER" font="ui\large_ui" color="#FF2896FF" align="center" text_y="1"/>
 	<widget name="main_menu/settings_select/player_setup/player_profile_edit/network_setup/op_player_names" width="512" height="28" flags="pass_unhandled_to_focused_child" bitmap="bitmaps/option_bkds" color="#FF2896FF">
 		<child widget="main_menu/settings_select/player_setup/player_profile_edit/network_setup/player_names_label"/>
 		<child widget="main_menu/settings_select/player_setup/player_profile_edit/network_setup/player_names_spinner" x="320" y="1"/>
@@ -120,12 +121,23 @@
 		<string text="SCOREBOARD LAYOUT:"/>
 		<string text="SCOREBOARD PANEL:"/>
 	</strings>
-	<strings name="main_menu/settings_select/player_setup/player_profile_edit/network_setup/help_strings">
+	<strings platform="desktop" name="main_menu/settings_select/player_setup/player_profile_edit/network_setup/help_strings">
 		<string text=""/>
 		<string text="Host and join games over the internet by invite\nlinks; off keeps to the local network."/>
 		<string text="Let internet play ask the router to forward its\nport, for networks that stop connections."/>
 		<string text="Join the game of an invite link copied before\nswitching to the game."/>
 		<string text="Look for a new version when the game starts."/>
+		<string text="In multiplayer, whose names are drawn above their\nheads."/>
+		<string text="How large the players' names are drawn."/>
+		<string text="A team game's scoreboard: a column for each team,\nor every player in order of score."/>
+		<string text="Draw a panel behind the scoreboard, for clearer\ntext."/>
+	</strings>
+	<strings platform="android" name="main_menu/settings_select/player_setup/player_profile_edit/network_setup/help_strings">
+		<string text=""/>
+		<string text="Host and join games over the internet by invite\nlinks; off keeps to the local network."/>
+		<string text="Let internet play ask the router to forward its\nport, for networks that stop connections."/>
+		<string text="Join the game of an invite link copied before\nswitching to the game."/>
+		<string text="Return to the launcher, then open Versions &amp;\ncompatible updates. Updates preserve maps/saves."/>
 		<string text="In multiplayer, whose names are drawn above their\nheads."/>
 		<string text="How large the players' names are drawn."/>
 		<string text="A team game's scoreboard: a column for each team,\nor every player in order of score."/>

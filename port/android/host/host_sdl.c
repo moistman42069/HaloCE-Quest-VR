@@ -51,6 +51,33 @@ static pthread_mutex_t touch_lock = PTHREAD_MUTEX_INITIALIZER;
 static struct halo_touch_state touch_state;
 static unsigned int touch_pressed;
 static Uint64 touch_look_time;
+static atomic_int touch_menus;
+static struct halo_touch_pointer touch_pointer;
+
+JNIEXPORT jboolean JNICALL Java_com_halo_decomp_TouchControls_nativeMenus(JNIEnv *env, jclass type)
+{
+    (void)env; (void)type;
+    return atomic_load(&touch_menus) != 0;
+}
+
+/* 0 move, 1 tap, 2 Back, 3 cancel. No synthesized SDL mouse event is used. */
+JNIEXPORT void JNICALL Java_com_halo_decomp_TouchControls_nativePointer(
+    JNIEnv *env, jclass type, jint action, jfloat x, jfloat y)
+{
+    (void)env; (void)type;
+    pthread_mutex_lock(&touch_lock);
+    if (action == 3)
+        memset(&touch_pointer, 0, sizeof(touch_pointer));
+    else if (atomic_load(&touch_menus) && isfinite(x) && isfinite(y) &&
+        x >= 0.f && x <= 1.f && y >= 0.f && y <= 1.f)
+    {
+        touch_pointer.x = x; touch_pointer.y = y;
+        touch_pointer.moved = 1;
+        if (action == 1) touch_pointer.click = 1;
+        if (action == 2) touch_pointer.back = 1;
+    }
+    pthread_mutex_unlock(&touch_lock);
+}
 
 static int touch_axis(int value)
 {
@@ -69,6 +96,7 @@ JNIEXPORT void JNICALL Java_com_halo_decomp_TouchControls_nativeState(
 		memset(&touch_state, 0, sizeof(touch_state));
 		touch_state.generation = generation;
 		touch_pressed = 0;
+        memset(&touch_pointer, 0, sizeof(touch_pointer));
 	}
 	else
 	{
@@ -94,6 +122,39 @@ JNIEXPORT void JNICALL Java_com_halo_decomp_TouchControls_nativeLook(
     pthread_mutex_unlock(&touch_lock);
 }
 #endif
+
+void host_touch_menu(int active)
+{
+#ifndef HALO_VR
+    pthread_mutex_lock(&touch_lock);
+    active = active != 0;
+    if (active != atomic_load(&touch_menus))
+    {
+        unsigned int generation = touch_state.generation + 1;
+        memset(&touch_state, 0, sizeof(touch_state));
+        touch_state.generation = generation;
+        touch_pressed = 0;
+        memset(&touch_pointer, 0, sizeof(touch_pointer));
+        atomic_store(&touch_menus, active);
+    }
+    pthread_mutex_unlock(&touch_lock);
+#else
+    (void)active;
+#endif
+}
+
+void host_touch_pointer_read(void *buffer)
+{
+    struct halo_touch_pointer *pointer = buffer;
+#ifndef HALO_VR
+    pthread_mutex_lock(&touch_lock);
+    *pointer = touch_pointer;
+    memset(&touch_pointer, 0, sizeof(touch_pointer));
+    pthread_mutex_unlock(&touch_lock);
+#else
+    memset(pointer, 0, sizeof(*pointer));
+#endif
+}
 
 void host_touch_read(void *buffer)
 {
@@ -212,6 +273,13 @@ int64_t host_sdl_thread_id(void)
 uint32_t host_sdl_create_window(const char *title, int width, int height, int64_t flags)
 {
 	return handle_new(_handle_window, SDL_CreateWindow(title, width, height, (SDL_WindowFlags)flags));
+}
+
+void host_sdl_window_size(uint32_t window, int *width, int *height)
+{
+    SDL_Window *object = handle_get(window, _handle_window);
+    *width = *height = 0;
+    if (object) SDL_GetWindowSize(object, width, height);
 }
 
 void host_sdl_window_size_in_pixels(uint32_t window, int *width, int *height)

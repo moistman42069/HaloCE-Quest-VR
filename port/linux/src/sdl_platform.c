@@ -16,6 +16,10 @@ and the debug keyboard that the game's console reads.
 #include "port_config.h"
 #include "p2p.h"
 #include "xiso.h"
+#if defined(HALO_ANDROID) && !defined(HALO_VR)
+#include "guest_host.h"
+#include "halo_touch.h"
+#endif
 
 #include <SDL3/SDL.h>
 #include <stdio.h>
@@ -36,11 +40,9 @@ static struct platform_input_state input_state;
 reads still counts as a press (input injected on Android, or a slow frame) */
 static unsigned char keys_pressed[SDL_SCANCODE_COUNT];
 static unsigned char mouse_buttons_pressed[PLATFORM_MOUSE_BUTTON_COUNT];
-#ifndef HALO_ANDROID
 /* the menus' pointer (platform_ui_pointer_set_active), under input_lock */
 static struct platform_ui_pointer ui_pointer;
 static float ui_pointer_wheel;
-#endif
 static pthread_mutex_t input_lock = PTHREAD_MUTEX_INITIALIZER;
 
 /* Scoreboard input expires if a level exits without closing it. */
@@ -1026,7 +1028,6 @@ void platform_pump_events(void)
 #endif
 			break;
 		case SDL_EVENT_MOUSE_MOTION:
-#ifndef HALO_ANDROID
 			/* in the menus the mouse moves the pointer, not the view */
 			if (input_state.ui_pointer)
 			{
@@ -1035,13 +1036,11 @@ void platform_pump_events(void)
 				ui_pointer.moved = TRUE;
 				break;
 			}
-#endif
 			input_state.mouse_dx += event.motion.xrel;
 			input_state.mouse_dy += event.motion.yrel;
 			break;
 		case SDL_EVENT_MOUSE_BUTTON_DOWN:
 		case SDL_EVENT_MOUSE_BUTTON_UP:
-#ifndef HALO_ANDROID
 			/* clicks in the menus go to the pointer; a button held down
 			when the menu closes stays up until pressed again, so the click
 			that resumes the game does not also fire */
@@ -1059,7 +1058,6 @@ void platform_pump_events(void)
 				}
 				break;
 			}
-#endif
 			if (event.button.button < PLATFORM_MOUSE_BUTTON_COUNT)
 			{
 				input_state.mouse_buttons[event.button.button] = event.button.down;
@@ -1075,7 +1073,6 @@ void platform_pump_events(void)
 				while (scoreboard_wheel <= -1.0f) { scoreboard_notches--; scoreboard_wheel += 1.0f; }
 				break;
 			}
-#ifndef HALO_ANDROID
 			if (input_state.ui_pointer)
 			{
 				/* whole notches: smooth-scrolling wheels send fractions */
@@ -1092,10 +1089,11 @@ void platform_pump_events(void)
 				}
 				break;
 			}
-#endif
 			input_state.mouse_wheel += event.wheel.y;
 			break;
 		case SDL_EVENT_WINDOW_FOCUS_LOST:
+            memset(&ui_pointer, 0, sizeof(ui_pointer));
+            ui_pointer_wheel = 0.f;
 			memset(input_state.keys, 0, sizeof(input_state.keys));
 			memset(input_state.mouse_buttons, 0, sizeof(input_state.mouse_buttons));
 			mouse_buttons_down = 0;
@@ -1122,7 +1120,6 @@ void platform_pump_events(void)
 	platform_invite_clipboard(look_at_clipboard);
 }
 
-#ifndef HALO_ANDROID
 /* ---------- the menus' pointer */
 
 /* While a menu is up the mouse is released, its pointer shows (centered when
@@ -1134,6 +1131,9 @@ void platform_ui_pointer_set_active(BOOL active)
 		return;
 	pthread_mutex_lock(&input_lock);
 	input_state.ui_pointer = active;
+#if defined(HALO_ANDROID) && !defined(HALO_VR)
+    host_touch_menu(active != FALSE);
+#endif
 	memset(&ui_pointer, 0, sizeof(ui_pointer));
 	ui_pointer_wheel = 0.0f;
 	input_state.mouse_dx = 0.0f;
@@ -1148,7 +1148,9 @@ void platform_ui_pointer_set_active(BOOL active)
 		int width, height;
 
 		SDL_GetWindowSize(platform_window, &width, &height);
-		SDL_WarpMouseInWindow(platform_window, width * 0.5f, height * 0.5f);
+#ifndef HALO_ANDROID
+        SDL_WarpMouseInWindow(platform_window, width * 0.5f, height * 0.5f);
+#endif
 		pthread_mutex_lock(&input_lock);
 		ui_pointer.x = width * 0.5f;
 		ui_pointer.y = height * 0.5f;
@@ -1164,6 +1166,32 @@ BOOL platform_ui_pointer_read(struct platform_ui_pointer *pointer)
 	pthread_mutex_lock(&input_lock);
 	active = input_state.ui_pointer;
 	*pointer = ui_pointer;
+#if defined(HALO_ANDROID) && !defined(HALO_VR)
+    {
+        struct halo_touch_pointer touch;
+        host_touch_pointer_read(&touch);
+        if (active && input_state.focused && (touch.moved || touch.click || touch.back))
+        {
+            int width, height;
+            SDL_GetWindowSize(platform_window, &width, &height);
+            if (width > 0 && height > 0)
+            {
+                pointer->x = touch.x * width;
+                pointer->y = touch.y * height;
+                pointer->moved = TRUE;
+                if (touch.click)
+                {
+                    pointer->click_x = pointer->x;
+                    pointer->click_y = pointer->y;
+                    pointer->left_clicks = 1;
+                }
+                if (touch.back) pointer->right_clicks = 1;
+                ui_pointer.x = pointer->x;
+                ui_pointer.y = pointer->y;
+            }
+        }
+    }
+#endif
 	ui_pointer.moved = FALSE;
 	ui_pointer.left_clicks = 0;
 	ui_pointer.right_clicks = 0;
@@ -1177,7 +1205,6 @@ void platform_video_window_size(int *width, int *height)
 	SDL_GetWindowSize(platform_window, width, height);
 }
 
-#endif
 void platform_input_read(struct platform_input_state *state, BOOL consume_motion)
 {
 	pthread_mutex_lock(&input_lock);

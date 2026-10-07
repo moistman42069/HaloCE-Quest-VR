@@ -98,6 +98,15 @@ SDL_Window *SDL_CreateWindow(const char *title, int width, int height, SDL_Windo
 	return (SDL_Window *)host_sdl_create_window(title, width, height, (long long)flags);
 }
 
+bool SDL_GetWindowSize(SDL_Window *window, int *width, int *height)
+{
+    int w = 0, h = 0;
+    host_sdl_window_size((unsigned int)window, &w, &h);
+    if (width) *width = w;
+    if (height) *height = h;
+    return w > 0 && h > 0;
+}
+
 bool SDL_GetWindowSizeInPixels(SDL_Window *window, int *width, int *height)
 {
 	int w = 0, h = 0;

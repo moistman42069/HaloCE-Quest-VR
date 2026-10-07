@@ -31,6 +31,12 @@ final class TouchControls extends View {
     private float textSize;
     private TouchLayout layout=new TouchLayout();
     private boolean editing;
+    private boolean menus, menuStream;
+    private int touchMode=GamepadPolicy.AUTO, connectedPads;
+    private final MenuTouchGesture menuGesture=new MenuTouchGesture();
+    private final RectF menuBack=new RectF();
+    private static native boolean nativeMenus();
+    private static native void nativePointer(int action,float x,float y);
     private int selected=-1,dragPointer=-1;
     private float dragOffsetX,dragOffsetY;
     private float unit=1,availableW,availableH;
@@ -68,7 +74,7 @@ final class TouchControls extends View {
     float gyroY() { return layout.gyroY; }
     boolean gyroInvert() { return layout.gyroInvert; }
     boolean gyroAiming() {
-        if(editing||layout.gyroMode==GyroPolicy.OFF) return false;
+        if(editing||menus||layout.gyroMode==GyroPolicy.OFF) return false;
         if(layout.gyroMode==GyroPolicy.ALWAYS) return true;
         if(getVisibility()!=VISIBLE) return false;
         for(int i=0;i<contacts.size();i++) { int kind=contacts.valueAt(i).control.kind; if(kind==LOOK||kind==FIRE_LOOK) return true; }
@@ -174,15 +180,81 @@ final class TouchControls extends View {
     }
 
     void releaseAll() {
-        contacts.clear();dragPointer=-1;
+        contacts.clear();dragPointer=-1;menuGesture.cancel();
         nativeState(0, 0, 0, 0, 0, true);
         invalidate();
     }
 
     void controllerVisibility(int mode,int connected) {
-        boolean show=editing || GamepadPolicy.showTouch(mode,connected);
+        touchMode=mode;connectedPads=connected;
+        refreshMenuMode();
+        applyVisibility();
+    }
+
+    private void applyVisibility() {
+        // Only a small Back control replaces the gameplay HUD in menus.
+        boolean show=menus || editing || GamepadPolicy.showTouch(touchMode,connectedPads);
         int visibility=show?VISIBLE:GONE;
         if(getVisibility()!=visibility) { releaseAll();setVisibility(visibility); }
+    }
+    private void refreshMenuMode() {
+        boolean active=nativeMenus();
+        if(active!=menus) {
+            releaseAll();menus=active;applyVisibility();gyroUpdate();invalidate();
+        }
+    }
+    private void layoutMenuBack() {
+        float density=getResources().getDisplayMetrics().density;
+        float width=76*density,height=40*density,gap=8*density;
+        menuBack.set(getWidth()-insetRight-width-gap,insetTop+gap,
+            getWidth()-insetRight-gap,insetTop+gap+height);
+    }
+
+    /** Activity-level routing works even when a controller hides the gameplay
+     * overlay. Coordinates are translated into the SDL surface's actual bounds.
+     * A stream begun in a menu is consumed through its final UP after Resume. */
+    boolean dispatchMenuTouch(MotionEvent event,View surface) {
+        if(!event.isFromSource(InputDevice.SOURCE_TOUCHSCREEN)) return false;
+        refreshMenuMode();
+        int action=event.getActionMasked();
+        if(!menus && !menuStream) return false;
+        if(editing) return false;
+        if(!menus) {
+            if(action==MotionEvent.ACTION_UP || action==MotionEvent.ACTION_CANCEL) menuStream=false;
+            return true;
+        }
+        if(action==MotionEvent.ACTION_DOWN) {
+            releaseAll();menuStream=true;
+        } else if(!menuStream) {
+            // A gameplay contact already down when pause opened must lift first.
+            return true;
+        }
+        if(action==MotionEvent.ACTION_CANCEL || action==MotionEvent.ACTION_POINTER_DOWN) {
+            menuGesture.cancel();nativePointer(3,0,0);
+            if(action==MotionEvent.ACTION_CANCEL)menuStream=false;
+            return true;
+        }
+        int index=action==MotionEvent.ACTION_DOWN?event.getActionIndex():event.findPointerIndex(menuGesture.pointer());
+        if(index>=0 && surface!=null && surface.getWidth()>0 && surface.getHeight()>0) {
+            int[] surfacePos=new int[2],overlayPos=new int[2];
+            surface.getLocationOnScreen(surfacePos);getLocationOnScreen(overlayPos);
+            // Activity events are relative to its decor view, including system insets.
+            float rawX=event.getRawX()+event.getX(index)-event.getX();
+            float rawY=event.getRawY()+event.getY(index)-event.getY();
+            float x=(rawX-surfacePos[0])/surface.getWidth(),y=(rawY-surfacePos[1])/surface.getHeight();
+            float px=rawX-overlayPos[0],py=rawY-overlayPos[1];
+            layoutMenuBack();boolean back=menuBack.contains(px,py);
+            float slop=android.view.ViewConfiguration.get(getContext()).getScaledTouchSlop()*2f;
+            if(action==MotionEvent.ACTION_DOWN) menuGesture.begin(event.getPointerId(index),rawX,rawY,back);
+            else menuGesture.move(rawX,rawY,slop);
+            if(!menuGesture.back())nativePointer(0,x,y);
+            if(action==MotionEvent.ACTION_UP || (action==MotionEvent.ACTION_POINTER_UP && event.getPointerId(event.getActionIndex())==menuGesture.pointer())) {
+                int tap=menuGesture.end(event.getPointerId(index),rawX,rawY,slop,back);
+                if(tap!=0)nativePointer(tap,x,y);
+            }
+        }
+        if(action==MotionEvent.ACTION_UP) {menuStream=false;menuGesture.cancel();}
+        return true;
     }
 
     private boolean owned(Control c) {
@@ -259,6 +331,13 @@ final class TouchControls extends View {
 
     @Override protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
+        if(menus && !editing) {
+            layoutMenuBack();paint.setStyle(Paint.Style.FILL);paint.setColor(0xb0102434);
+            canvas.drawRoundRect(menuBack,8,8,paint);paint.setColor(Color.WHITE);
+            paint.setTextAlign(Paint.Align.CENTER);paint.setTextSize(16*getResources().getDisplayMetrics().scaledDensity);
+            canvas.drawText("Back",menuBack.centerX(),menuBack.centerY()-(paint.ascent()+paint.descent())/2,paint);
+            return;
+        }
         for (Control c : controls) {
             if (!editing && !controlsShown && c.kind != TOGGLE && c.kind != EDIT) continue;
             boolean pressed=owned(c);

@@ -75,7 +75,6 @@ void platform_scoreboard_scroll(int open, long *notches, long *pages);
 void platform_scoreboard_gamepad(unsigned short *buttons, short *right_y);
 /* a snapshot of the input state; consume_motion resets the mouse deltas */
 void platform_input_read(struct platform_input_state *state, BOOL consume_motion);
-#ifndef HALO_ANDROID
 /* the pointer in the menus (d3d8_gl.c, halo_ui_pointer_update) */
 struct platform_ui_pointer
 {
@@ -89,7 +88,6 @@ struct platform_ui_pointer
 void platform_ui_pointer_set_active(BOOL active);
 BOOL platform_ui_pointer_read(struct platform_ui_pointer *pointer);
 void platform_video_window_size(int *width, int *height);
-#endif
 BOOL platform_next_keystroke(struct platform_keystroke *keystroke);
 
 #endif

@@ -55,11 +55,14 @@ handles on this side. */
 int host_sdl_init(unsigned int flags);
 /* halo_touch_state from halo_touch.h; flat Android player-one snapshot. */
 void host_touch_read(void *buffer);
+void host_touch_menu(int active);
+void host_touch_pointer_read(void *buffer);
 int host_sdl_set_hint(const char *name, const char *value);
 void host_sdl_get_error(char *buffer, unsigned int size);
 long long host_sdl_ticks(void);
 long long host_sdl_thread_id(void);
 unsigned int host_sdl_create_window(const char *title, int width, int height, long long flags);
+void host_sdl_window_size(unsigned int window, int *width, int *height);
 void host_sdl_window_size_in_pixels(unsigned int window, int *width, int *height);
 int host_sdl_set_relative_mouse(unsigned int window, int enabled);
 int host_sdl_gl_set_attribute(int attribute, int value);

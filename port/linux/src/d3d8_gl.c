@@ -1321,17 +1321,11 @@ HRESULT WINAPI Direct3D_CreateDevice(UINT adapter, D3DDEVTYPE device_type, void 
 
 /* ---------- the menus' pointer */
 
-#ifdef HALO_ANDROID
+#if defined(HALO_ANDROID) && defined(HALO_VR)
 int halo_ui_pointer_update(int menus_active, struct halo_ui_pointer *pointer)
 {
-#ifdef HALO_VR
-	/* in the headset, the hand's laser pointer */
-	return vr_ui_pointer(menus_active, pointer);
-#else
-	(void)menus_active;
-	(void)pointer;
-	return 0;
-#endif
+    platform_menus_set_active(menus_active != 0);
+    return vr_ui_pointer(menus_active, pointer);
 }
 #else
 /* a point in the window, as SDL reports it, in the menus' coordinates: the
@@ -1348,7 +1342,9 @@ static void ui_point_from_window(float window_x, float window_y, short *x, short
 		return;
 	platform_video_window_size(&window_width, &window_height);
 	platform_video_drawable_size(&pixel_width, &pixel_height);
-	if (window_width <= 0 || window_height <= 0)
+	if (window_width <= 0 || window_height <= 0 || pixel_width <= 0 || pixel_height <= 0 ||
+        back_buffer->target.gl_width <= 0 || back_buffer->target.gl_height <= 0 ||
+        !isfinite(window_x) || !isfinite(window_y))
 		return;
 	width = pixel_width;
 	height = (int)((long)pixel_width * back_buffer->target.gl_height / back_buffer->target.gl_width);
@@ -1357,10 +1353,12 @@ static void ui_point_from_window(float window_x, float window_y, short *x, short
 		height = pixel_height;
 		width = (int)((long)pixel_height * back_buffer->target.gl_width / back_buffer->target.gl_height);
 	}
+	if (width <= 0 || height <= 0) return;
 	left = (pixel_width - width) / 2;
 	top = (pixel_height - height) / 2;
 	screen_x = (window_x * pixel_width / window_width - left) * (float)back_buffer->target.width / (float)width;
 	screen_y = (window_y * pixel_height / window_height - top) * (float)back_buffer->target.height / (float)height;
+	if (screen_x < -16384.f || screen_x > 16384.f || screen_y < -16384.f || screen_y > 16384.f) return;
 	*x = (short)floorf(screen_x - (float)(halo_screen_width() - 640) / 2.0f);
 	*y = (short)floorf(screen_y);
 }
@@ -1369,6 +1367,7 @@ int halo_ui_pointer_update(int menus_active, struct halo_ui_pointer *pointer)
 {
 	struct platform_ui_pointer state;
 
+	platform_menus_set_active(menus_active != 0);
 	platform_ui_pointer_set_active(menus_active != 0);
 	if (!menus_active || !device.gl_ready || !platform_ui_pointer_read(&state))
 		return 0;

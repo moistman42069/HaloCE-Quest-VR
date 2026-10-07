@@ -12,6 +12,14 @@ struct halo_touch_state
 	unsigned int generation; /* cancellation clears already-polled motion */
 };
 
+/* Separate menu pointer: normalized SDL surface coordinates, never gameplay
+ * buttons. Values are fixed-width on the ARM64 host and ARM32 guest. */
+struct halo_touch_pointer
+{
+    float x, y;
+    unsigned int moved, click, back;
+};
+
 #define HALO_TOUCH_A        (1u << 0)
 #define HALO_TOUCH_B        (1u << 1)
 #define HALO_TOUCH_X        (1u << 2)

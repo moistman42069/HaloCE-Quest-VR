@@ -191,7 +191,7 @@ assert activity.count('if (gyro != null) gyro.pause();') == 2  # paused and dest
 assert 'touch.gyroMode()!=GyroPolicy.OFF' in aim and 'sensors.unregisterListener(this);' in aim
 assert 'SENSOR_DELAY_GAME' in aim and 'if(!touch.gyroAiming()) return;' in aim
 assert 'static void look(float yaw,float pitch) { nativeLook(yaw,pitch); }' in touch
-assert 'if(editing||layout.gyroMode==GyroPolicy.OFF) return false;' in touch
+assert 'if(editing||menus||layout.gyroMode==GyroPolicy.OFF) return false;' in touch
 for key in ['"gyroMode"', '"gyroX"', '"gyroY"', '"gyroInvert"']:
     assert touch.count(key) == 2 and key in pads, key  # read and saved in game; saved by the launcher
 assert '<uses-feature android:name="android.hardware.sensor.gyroscope" android:required="false" />' in manifest

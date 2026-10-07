@@ -223,3 +223,20 @@ map=...>`), else a placeholder, placed where the PC version's picture is in
 its frame (`--pictures`: only where, not the picture, is read);
 `NON_HANDDRAWN.md` lists both. It needs `rsvg-convert`, Pillow, NumPy and
 SciPy.
+
+
+## Android input and app updates (Test31 adaptation)
+
+Flat Android taps menu items and native keyboard keys directly. A tap is
+consumed only once; cancellation, additional fingers and long drags do not
+activate a row. The gameplay touch HUD is suppressed in menus, leaving a small
+Back button, even when a connected controller hides gameplay touch controls.
+The gamepad still navigates with its native buttons; external mouse coordinates
+use the real SDL surface and the renderer's letterbox conversion. SDL touch-to-
+mouse synthesis stays disabled. Leaving a menu clears pending gameplay input;
+the menu's last finger must lift before another gameplay contact begins.
+
+The Android update row deliberately reads **USE LAUNCHER**. Open launcher
+**Versions & compatible updates** for the existing validated APK update path;
+its package, signing, checksum and compatibility checks remain unchanged. The
+desktop `update.auto` setting remains exclusive to the desktop menu variant.
