@@ -1798,12 +1798,29 @@ Multiplayer go back to one player (main_menu_initialize,
 multiplayer_type_menu_initialize).
 With one gamepad, it is player 2's (pc_menu_split_players) */
 
+/* The Quest compositor and tracked input have one local player owner.
+ * A second local player creates three render windows, which cannot enter
+ * vr_render_windows' single-player stereo path. Network co-op is separate. */
+static boolean local_split_screen_allowed(void)
+{
+#ifdef HALO_VR
+    display_error_text_deferred(L"Quest supports one local VR player.\r\n"
+        L"For network co-op choose Multiplayer,\r\n"
+        L"CREATE GAME > INTERNET or LAN,\r\nthen SINGLEPLAYER.", NONE);
+    return FALSE;
+#else
+    return TRUE;
+#endif
+}
+
 /* "port coop begin": two players, player 1 on its profile (campaign_profile)
 and the controller that chose co-op */
 static boolean coop_begin(short controller)
 {
 	struct player_profile profile;
 
+    if (!local_split_screen_allowed())
+        return FALSE;
 	player_spawn_count = 1;
 	player_ui_reset_single_player_local_player_controllers();
 	if (!campaign_profile(controller, &profile))
@@ -4290,6 +4307,8 @@ static boolean lobby_join_reset(void)
 joins (one gamepad leaves the keyboard's controller for its own) */
 static boolean lobby_add_player(void)
 {
+    if (!local_split_screen_allowed())
+        return FALSE;
 	if (lobby_local_player_count() >= MAXIMUM_LOCAL_PLAYERS)
 		return campaign_fail();
 	lobby_join.adding = TRUE;
@@ -4310,6 +4329,8 @@ static boolean lobby_join_start(struct widget_instance *widget, short controller
 		ui_widget_port_dispatch_event(focused_leaf(widget), BUTTON_START, controller, widget_deleted);
 		return FALSE;
 	}
+    if (!local_split_screen_allowed())
+        return FALSE;
 	if (!game || network_game_client_get_state(client, &state_data) != _client_state_pregame)
 		return campaign_fail();
 	if (lobby_player_count >= game->maximum_players)
