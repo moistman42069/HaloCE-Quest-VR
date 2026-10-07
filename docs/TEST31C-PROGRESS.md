@@ -67,3 +67,14 @@ taps, multitouch cancellation, gameplay/menu transitions, saved layout, touch
 visibility and free-look hide/restore. Run the full existing regression suite,
 build the Android APK with the original signing identity, and compare native
 payload hashes with Test31b. Record actual results and device-test limits.
+
+## Paired build checkpoint
+
+Both 1.0.13/code41 APKs built from `173708ec068993a7256c7f0431b5d001ba46f8e6`. All 50 regression suites
+passed before each build; cache tests passed 127 with four optional skips.
+The original circular Android layout passes 276 view checks; glass passes 62
+production-route checks and the wrong-field negative control. Flat native
+payloads match Test31b byte-for-byte. The accepted Quest artifact is preserved.
+See [TEST31C-DELIVERY.md](TEST31C-DELIVERY.md) for hashes and the exact scope.
+Await owner testing of both corrected editions before publication or later
+interaction work. No universal device/ISO acceptance is claimed.

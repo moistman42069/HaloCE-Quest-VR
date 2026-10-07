@@ -36,8 +36,8 @@ field, all three seats, toggle changes, third-person/outside views, attached and
 unrelated objects, non-glass shaders and stale state.
 
 Object storage, Android framework and GPU boundaries in those host tests are
-fixtures. They do not establish headset appearance or phone gameplay. Final
-build/artifact results and hashes will be appended after both builds complete.
+fixtures. They do not establish headset appearance or phone gameplay. Completed build results and hashes are recorded below. Both editions still
+require owner device testing; no runtime acceptance is inferred from these checks.
 
 ## Owner checks
 
@@ -55,3 +55,38 @@ build/artifact results and hashes will be appended after both builds complete.
 Logs remain in Download/HaloCE. Include device/OS, content/revision, vehicle,
 seat/view, settings and reproduction steps. Support: [project server](https://discord.gg/S9uSCKxKx),
 [Flat2VR](https://discord.gg/flat2vr), or **@MeWhenINameMyself**.
+
+## Completed build and provenance
+
+- All **50 regression suites passed before each edition's build**.
+- **276** production Android view/event/draw checks preserve original geometry
+  and verify direct taps, free look, touch ownership and saved customization.
+- **62** glass checks cover the real model-owner/queue/consumer path; the old
+  effect-owner field fails the negative control. Structural checks establish
+  that the callback covers ordinary pass zero and precedes the full glass
+  shader block. Available Warthog tags already identify the windshield as glass.
+- Disassembly of the preserved final Quest ELF confirms the callback now
+  loads the rendered-object field at group offset4 instead of the effect-owner
+  field at offset8. The glass shader argument remains type8; this verifies the
+  correction in the actual compiled payload as well as in the source tests.
+- The complete menu startup and production debug-allocator checks still pass,
+  including 134 menu allocation-failure cases and the prior startup negatives.
+- Cache-format tests: **127 passed, 4 skipped** (optional real-map fixtures).
+- Both native release-mode editions compiled and linked. Original certificate,
+  non-signature payload preservation and **16 KB alignment** pass.
+- **All flat native ELF/shared libraries are byte-identical to Test31b**.
+  The accepted Quest code40 APK remains unchanged as the comparison baseline.
+  New Quest native changes are the reviewed glass path and candidate identity;
+  VR settings layout/defaults and networking source were not changed.
+- Final packaging verifies version/package/API/ABI, native payloads, exact
+  embedded menus/guides, networking consistency, source privacy and checksums.
+
+Runtime source: `173708ec068993a7256c7f0431b5d001ba46f8e6` on `test31c-flat-ui`. Both APKs were built serially
+from that same clean source. Later source-snapshot differences are delivery
+documents only; the manifest records both exact commits. No device/game was
+launched or installed, and no release was published.
+
+| APK | Bytes | SHA-256 |
+| --- | ---: | --- |
+| `HaloCE-Android-test31c.apk` | 32,438,836 | `530bd5e656a0a17071bcc5c26423baae50ad9dc443972490f29c7bd3069f5e6d` |
+| `HaloCE-Quest-test31c.apk` | 34,527,875 | `801d04bb98f8995deafcb0cbff99815809d7bf44b060f358be4b3e44ce81cc1a` |
