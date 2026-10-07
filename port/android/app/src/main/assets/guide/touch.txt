@@ -1,4 +1,4 @@
-# Flat Android controls and HUD editor (v1.0.10)
+# Flat Android controls and HUD editor (Test31b / v1.0.13)
 
 Applies to the flat Android package `com.halo.decomp` (Android 9+ / ARM64). Quest
 uses tracked controllers and has no flat touch overlay.
@@ -24,15 +24,48 @@ uses tracked controllers and has no flat touch overlay.
 
 The game's selected controller profile still determines button actions. MOVE + FIRE/drag permits movement, aim and fire with two fingers. More fingers can operate other controls. Physical gamepads remain player one; stronger analog input wins and buttons merge. External mouse events pass through to SDL.
 
+## Menus and fallback navigation
+
+Tap menu rows and native keyboard keys directly. Compact D-pad, **A/B/X/Y**
+and **Start** controls are available in menus as well, including the original
+stock menus if OpenCE menu loading fails. A confirms; B cancels; the other
+letters follow the action shown by the game. The separate **Back** control
+remains at the top right. A press uses either navigation buttons or the direct
+pointer, so it cannot select twice.
+
+Use **Hide controls** at the top left to uncover a menu item behind a navigation
+button; **Show controls** restores the buttons. New menu sessions restore them
+automatically. Controller auto-hide and Always hide do not remove this menu
+navigation. Returning to gameplay restores the normal HUD according to your
+saved visibility policy. A finger held through Resume must lift before it can
+operate a gameplay control. Menus and gameplay never share a held press.
+
 ## Customize during play
 
 Tap **HUD** in the upper-left safe area. Held inputs are released. Drag any of the 19 controls. Selected controls turn amber. **Options** adjusts the selected control's horizontal/vertical position, size (65-160%) and opacity (15-100%). Its **Select a control** list can recover a control hidden under another control or the toolbar.
 
-Global options include scale (65-150%), opacity, independent horizontal/vertical sensitivity (0.25-3), radial dead zone (0-30%), floating movement origin, invert vertical aim, swipe versus held-stick aiming, and blue/cyan/white/amber/green colors. Individual and global opacity multiply. Labels retain a minimum readability level.
+Global options include scale (65-150%), opacity, independent horizontal/vertical sensitivity (0.25-3), radial dead zone (0-30%), floating movement origin, invert vertical aim, swipe versus held-stick aiming, optional drag-anywhere camera look, and blue/cyan/white/amber/green colors. Individual and global opacity multiply. Labels retain a minimum readability level.
 
 **Save** commits the layout and all options to private app preferences. **Cancel** restores the last saved settings. **Reset** restores defaults in the working editor; Save commits that reset, Cancel undoes it. Editing and options suppress gameplay input, but an online match continues; find somewhere safe first. Editing does not pause the server.
 
 One full safe-area screen-width swipe turns 180 degrees at sensitivity 1. Start inside LOOK or FIRE, then drag beyond its circle if needed. Floating movement starts within MOVE and places the stick origin under that initial touch. Dead zone affects MOVE and held-stick look, not swipe look. Positions are normalized to the usable display and clamped to keep circles clear of edges and display cutouts. Resizing does not permanently rewrite saved positions.
+
+## Optional drag-anywhere camera look
+
+In gameplay, tap **HUD > OPTIONS**, enable **Drag anywhere to look (unused
+gameplay space)**, choose **Back to editor**, then **SAVE**. It is off by default.
+The option appears in the existing Touch options dialog; it does not require a
+new menu or launcher screen.
+
+A finger that starts outside all controls can drag to turn the view. Its camera
+control lasts until it lifts, even when crossing over a button. MOVE and all
+buttons have priority when a touch starts inside them, including a button held
+by another finger. One free-space finger can aim alongside movement and other
+buttons. It uses the existing horizontal/vertical sensitivity and invert
+settings, always as a relative swipe even when the dedicated LOOK control uses
+held-stick mode. It does not operate in menus or the HUD editor, does not change
+physical gamepad mappings, and is absent from Quest VR. **Cancel** restores the
+saved choice; **Reset + Save** disables it again.
 
 ## Gyro aim (1.0.10, an option)
 
@@ -50,6 +83,14 @@ Gyro aim works together with swipes, sticks and a controller. It uses the gravit
 Contacts own their initial control by pointer ID until release; sliding across another control does not press it. Quick button taps survive between native polls. Cancel, pause, focus loss, hide, resize, editor entry and detachment clear held input and pending edges. Relative aim is accumulated in radians and consumed once, independent of the game's stick turn rate; motion older than 250 ms is discarded. Cancellation generations clear already-polled motion. The host/guest record is 32 bytes, with four axes, a button mask, relative yaw/pitch and generation. VR compiles out the writer/merge.
 
 ## Validation and references
+
+`tools/test_test31_touch_lifecycle.py` compiles the complete production
+`TouchControls` view with deterministic Android framework doubles. It executes
+real touch streams, menu/fallback navigation, menu-to-game transitions,
+controller hide/disconnect, editing dialogs, Save/Cancel/Reset, free-space look
+and multi-touch ownership. It does not prove Android rendering or device
+acceptance. `tools/test_test31_flat_pointer.py` additionally checks the actual
+JNI snapshot and native pointer bridge.
 
 `tools/test_test15_io.py` executes the production JNI snapshot functions with mocked time, and checks pure touch layout math over 16:9, 20:9, 4:3 and portrait dimensions. Tests cover taps, cancellation, stale motion, NaN, clamps and diagonal analog movement. Android Java and both native flavors must compile. These checks do not constitute phone gameplay acceptance.
 
