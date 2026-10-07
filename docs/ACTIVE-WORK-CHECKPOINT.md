@@ -1,13 +1,15 @@
 # Active work checkpoint — after v1.0.12 release (2026-10-07)
 
-## Current private work and packaging hold (2026-10-07)
+## Current private work and delivery gate (2026-10-07)
 
 Branch `test31-network-menus-vehicles`, based on test30 `fe725aff`. Target
-1.0.13/code 39 remains unbuilt as an APK. The owner now explicitly requires
-**all three attached prompts** to be worked through before any packaging:
-test31 network/menu/vehicle fixes, manual reload/finger/palm interaction, and
-world objects/NPC grabbing, ragdolls, recovery and impact damage. A test31-only
-delivery is no longer authorized. Do not publish, push, tag, install or launch.
+1.0.13/code 39 has no completed, verified APK delivery recorded yet.
+**Latest owner override:** finish the
+full OpenCE in-game menus, turret/window fixes and current upstream/network
+upgrade, validate them, then package BOTH APKs for testing before moving to
+manual reload/hand contact and world/NPC interactions. This supersedes the
+earlier all-three-prompts packaging hold. All later tasks remain on the checklist.
+Do not publish, push, tag, install or launch.
 
 Read [TEST31-PROGRESS.md](TEST31-PROGRESS.md),
 [TEST31-UPSTREAM-DECISIONS.md](TEST31-UPSTREAM-DECISIONS.md),
@@ -21,28 +23,52 @@ Public/accepted build pointers below remain unchanged.
 
 The latest public release is [v1.0.12](https://github.com/moistman42069/HaloCE-Quest-VR/releases/tag/v1.0.12), built from test30. Preserve v1.0.11 and all earlier releases. Provenance and APK hashes are in [RELEASE-PROVENANCE-1.0.12.md](RELEASE-PROVENANCE-1.0.12.md). The repository About description was not changed.
 
-## Queued future work (owner, 2026-10-07; not started)
+## Current Test31 implementation status
 
-1. **Phones joining on mobile data, not only Wi-Fi.**
-   - **Evidence:**
-     - A phone on mobile data with a VPN (strict NAT, a new port per destination, two public addresses) and a Quest on home Wi-Fi (lenient NAT, no UPnP) both reached join stage 2/3, then exchanged no packets.
-     - The same phone on Wi-Fi worked.
-     - OpenCE's `p2p.c`: "There is no relay".
-   - **Options:**
-     - port prediction or many-port punching for strict NATs;
-     - clearer guidance (VPN off, forward `network.tunnel_port`);
-     - a relay, which needs a hosted server and helps only between this app's devices.
-2. **OpenCE's in-game menus, and anything else not yet taken.**
-   - **Code:** the PC-style menu system, `port/linux/game/menu_functions.c` (about 5,500 lines) and `menu_tags.c` (about 1,900), plus the XML screen layouts (55 files in `port/assets/menus/ce`) and SVG artwork.
-   - **Screens:** server browser with filters, Server Setup (co-op settings), direct IP, settings and controls.
-   - **Constraint:** it is built for mouse and keyboard, so it must work with the VR pointer and touch.
-   - **Also re-check:**
-     - the PC scoreboard (co-op included);
-     - map tag validation;
-     - OpenCE's own Custom Edition map support (from `f823a18d`), compared with this app's.
-3. **Upstream and network update, as usual.**
-   - OpenCE `main` moved to **network 22** at `4e8ed2f1` (2026-10-07, untagged); build 144 is still network 21, as were the live games then.
-   - Fetch, check the live directory's versions, and merge as test29 did (scripts in `work/test29`).
+The initial mobile-data/menu/upstream queue has been worked through in source.
+It is no longer an unstarted future list:
+
+1. **Mobile-data / VPN joins:** bounded nearby-port authenticated probes and
+   current STUN IP+port classification are implemented, with clearer failure
+   guidance. The motivating phone+VPN and Quest session reached signalling
+   stage 2/3 but exchanged no game packets; the same phone worked on Wi-Fi.
+   These changes still need device/network retests. They cannot guarantee
+   randomized destination-dependent mappings or discover unadvertised public
+   IPs. OpenCE has no relay, and this candidate does not add one.
+2. **OpenCE menus:** the complete pinned Build 145 menu payload is imported
+   (50 XML files, plus embedded art), with campaign/profiles, Server Setup,
+   public/LAN/direct-link browsing, persisted filters, password/invite entry,
+   native keyboard, saved gametype options, VR Settings entry points, direct
+   Android touch and mouse support. The scoreboard and real audio/graphics
+   setting consumers are integrated. Desktop-only choices are filtered or
+   explained for Android. See the current menu plan and settings audit.
+3. **Upstream/network:** Build 145 `4e8ed2f1` / exact network 22 is integrated.
+   The earlier untagged-main warning is superseded by the fetched Build 145
+   tag. Version-21 peers, including v1.0.12, do not match this protocol.
+   Namespaced CE maps and missing-map preflight are adapted to the existing
+   Android game-set loader. The broader desktop CE loader and full schema
+   validator remain explicitly deferred; see upstream decisions.
+4. **VR source fixes:** seated trigger ownership, mounted native reticle,
+   first-person Warthog glass setting and per-part left-hand display winding
+   are implemented. Existing body, grip, hand/action animation, Safe geometry
+   and gameplay control defaults are preserved.
+
+The combined checks passed 46 suites plus 127 cache-format tests (4 skipped).
+Both signed APK builds, source/checksum packaging and owner device testing
+remain distinct gates. Source and automated results do
+not establish cross-play, headset comfort or performance acceptance. The
+current checklist is [TEST31-PLAYER-NOTES.md](TEST31-PLAYER-NOTES.md).
+
+## Subsequent work retained for the next phase
+
+After the baseline pair is delivered for testing, continue the indexed manual
+reload / hand-contact requirements **M1–M29**, then world/object/NPC requirements
+**W1–W66**, in their documented dependency order. These are acknowledged and
+queued, not implemented in Test31. Preserve their opt-in defaults, native
+fallbacks, synchronization constraints, resource budgets and required device
+checks in [VR-INTERACTION-REQUIREMENTS.md](VR-INTERACTION-REQUIREMENTS.md).
+No publication, upload, installation or game launch follows automatically
+from preparing this private pair.
 
 ## Current release: test30
 

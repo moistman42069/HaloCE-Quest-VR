@@ -1,26 +1,47 @@
-# Test31 in-game menu proposal
+# Test31 in-game menu scope and implementation
 
 Status: owner superseded the earlier narrow approval on 2026-10-07:
 **EVERYTHING from OpenCE's in-game menu setup must reach this build.**
 Import/adapt the full in-game setup, not launcher-only equivalents. The launcher
-may be adjusted as needed. APK packaging remains held until all three task
-prompts are worked through.
+may be adjusted as needed. The owner's latest instruction allows packaging
+after this full menu work, turret/window fixes and upstream/network integration
+are complete and validated, before the later interaction workstreams.
 
-## Current implementation scope
+## Current implementation
 
-Inventory all upstream screens, controls and option families from pinned
-build 145. Import its in-game menu system, retaining useful current launcher
-flows and access to VR Settings. Adapt navigation and text entry for Quest
-laser/buttons, Android touch and gamepads. Account for desktop-only options
-explicitly with applicable Android/VR equivalents or clear platform limits;
-do not ship inert settings or silently omit functionality. Check campaign,
-profiles, pause/settings, browser filters, password/direct connection, host
-setup, co-op options, editing and saved settings together.
+Pinned Build 145's menu modules, 50 XML files, bitmap assets and Expat parser
+are integrated. App adapters connect campaign/profiles, map selection,
+Server Setup, saved gametype options, browser filters and exact protocol gates,
+settings persistence and real audio/graphics/scoreboard consumers. Quest laser
+and buttons, physical gamepads, Android direct touch/mouse and native keyboard
+entry share the menu actions; current launcher flows and VR Settings remain.
+
+The standalone legacy Direct IP XML remains a compatibility asset; the actual
+multiplayer join choices are SERVER BROWSER, LAN and DIRECT LINK (PASTE LINK or
+Android/Quest ENTER LINK). The known-map filter uses the cached catalog, while
+join preflight checks the actual required map. No per-frame directory scan or
+fabricated public-server ping was added.
+
+Android's inert desktop update toggle is replaced by USE LAUNCHER guidance to
+the validated APK updater. Desktop display modes/resizing are excluded from
+Android; VR synchronization remains OpenXR-owned. Full schema validation and
+the desktop CE loader are separate deferred engine changes, not hidden menu
+settings. See [TEST31-MENU-SETTINGS-AUDIT.md](TEST31-MENU-SETTINGS-AUDIT.md) for
+consumer coverage and [TEST31-UPSTREAM-DECISIONS.md](TEST31-UPSTREAM-DECISIONS.md)
+for the retained loader/platform boundaries.
+
+The final combined run passed all 46 suites plus 127 cache-format tests
+(4 skipped). This includes parser/assets, source map catalog, text-entry
+lifecycle, filters/sort/selection, configuration/profile persistence, pointer
+coordinates, graphics fallback and tag teardown. Final build/artifact
+checks remain before delivery; real navigation and cross-play acceptance need
+the owner's device sessions. No packaged or accepted Test31 pair is recorded by
+this document.
 
 The alternatives below are historical planning context. The full scope above
 is now the owner's instruction and does not require another scope approval.
 
-## Recommended: browser and Server Setup first
+## Historical option A: browser and Server Setup first (superseded)
 
 Expose OpenCE's useful multiplayer controls inside the existing game UI:
 server filters, refresh and join; campaign/PvP hosting; campaign player limit,
@@ -40,7 +61,7 @@ desktop display-mode and keyboard/mouse-only pages are outside this choice.
 If the dependency boundary cannot preserve the existing controls, revise the
 proposal before replacing working menus.
 
-## Alternative: full OpenCE menu replacement
+## Historical option B: full OpenCE menu replacement (selected)
 
 Import the complete XML menu system and adapt campaign/profile/settings and
 multiplayer screens for VR pointer, phone touch and gamepads. This exposes a
