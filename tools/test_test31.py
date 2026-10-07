@@ -5,6 +5,11 @@ from pathlib import Path
 import hashlib, re, subprocess
 ROOT = Path(__file__).resolve().parents[1]
 def read(p): return (ROOT/p).read_text()
+def run(name, source):
+    out=ROOT/'build/test31'; out.mkdir(parents=True,exist_ok=True)
+    p=out/(name+'.c'); p.write_text(source)
+    subprocess.run(['clang','-std=gnu11','-O1','-fsanitize=address,undefined',str(p),'-lm','-o',str(out/name)],check=True)
+    subprocess.run([str(out/name)],check=True)
 def fn(text, name):
     m = re.search(r'^(?:static )?(?:inline )?[\w *]+\b' + re.escape(name) + r'\s*\([^;{]*\)\s*\{', text, re.M)
     assert m, name
@@ -39,3 +44,27 @@ for guard in ('!vr_first_person_vehicles()', '!vr_seat_view()', 'object_get_ulti
     assert guard in glass,guard
 assert 'return shader_type == glass_type && hide_glass;' in glass
 print('PASS: Warthog glass defaults to prior hidden behavior; persisted VR setting and own first-person seat scope')
+
+frame=read('port/linux/src/vr_frame.c')
+layout=fn(frame,'layout_controls')
+fire=layout[layout.index('\tvr.pad_trigger[1] ='):layout.rindex('}')]
+run('seated_fire', r'''
+#include <assert.h>
+#include <stdio.h>
+#define HAND_EMPTY 0
+static struct { int seated, hand_state, weapon_hand; float pad_trigger[2]; struct {float trigger[2];} frame; } vr;
+static int physical; static int physical_weapons(void){return physical;}
+static void fire(void){
+''' + fire + r'''
+}
+int main(void){
+ for(int seat=0;seat<2;seat++) for(int empty=0;empty<2;empty++)
+ for(physical=0;physical<2;physical++) for(int hand=0;hand<2;hand++){
+  vr.seated=seat; vr.hand_state=empty?HAND_EMPTY:1; vr.weapon_hand=hand;
+  vr.frame.trigger[hand]=0.65f; vr.pad_trigger[0]=0.4f; fire();
+  assert(vr.pad_trigger[1]==(!seat && physical && empty ? 0.0f:0.65f));
+  assert(vr.pad_trigger[0]==0.4f);
+ }
+ puts("PASS: real trigger path: both hands, seated/foot, physical/classic, empty/held; secondary untouched");
+}
+''')

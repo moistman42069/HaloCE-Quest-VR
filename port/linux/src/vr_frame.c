@@ -1563,7 +1563,9 @@ static void layout_controls(void)
 	/* the trigger fires the gun in the hand, gripped or not; an empty hand
 (physical weapons: a gun put away or let fall) has nothing to fire */
 	vr.pad_trigger[1] = vr.frame.trigger[vr.weapon_hand];
-	if (physical_weapons() && vr.hand_state == HAND_EMPTY)
+	/* A vehicle weapon is independent of the holstered handheld weapon.
+	Seated triggers still pass through the native primary/secondary mapping. */
+	if (!vr.seated && physical_weapons() && vr.hand_state == HAND_EMPTY)
 		vr.pad_trigger[1] = 0.0f;
 }
 
