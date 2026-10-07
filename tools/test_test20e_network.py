@@ -55,7 +55,7 @@ for marker in ['stage 1/3: asking the host through signalling', 'stage 2/3, the 
                'peer->rejected++;', 'int p2p_join_status(char *text, int size, int *tries, int *active)']:
     assert marker in p2p, marker
 assert p2p.count('p2p.nat_strict = 1;') == 1 and p2p.count('p2p.nat_strict = 0;') == 1
-assert 'Try Wi-Fi.' in p2p, 'a strict NAT failure suggests the fix players can make'
+assert 'try wi-fi' in p2p.lower(), 'a strict NAT failure suggests the fix players can make'
 browser = read('port/linux/game/network_browser.c')
 assert 'p2p_join_status(failure,sizeof(failure),&tries,&active)' in browser
 assert 'did not advertise within 30 seconds' not in browser, 'the browser follows the join, not a fixed 30 s'

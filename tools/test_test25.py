@@ -246,6 +246,14 @@ typedef int boolean;
 #define NUMBEROF(a) (sizeof(a)/sizeof((a)[0]))
 static struct { struct { boolean seated; long vehicle_index; } seat; } vr_render;
 static boolean first_person = TRUE, seat_view = TRUE; static int logs; static char last[200];
+static int generation, hide_glass=1; static const char *vehicle_name="warthog";
+static int vr_settings_generation(void){return generation;}
+static int config_boolean(const char *key){assert(!strcmp(key,"vr.vehicle_warthog_hide_glass"));return hide_glass;}
+static const char *tag_get_name(long d){return vehicle_name;}
+static const char *vr_vehicle_profile(const char *name){return name;}
+static struct {long definition_index;} object;
+static void *unused_object;
+static typeof(object) *object_get(long i){return &object;}
 static boolean vr_first_person_vehicles(void){ return first_person; }
 static boolean vr_seat_view(void){ return seat_view; }
 static void *object_try_and_get(long i){ static int any; return i >= 0 ? &any : NULL; }
@@ -265,6 +273,11 @@ int main(void){
  seat_view = FALSE; assert(!vr_render_seat_transparent(7, glass, glass)); seat_view = TRUE;
  vr_render.seat.seated = FALSE; assert(!vr_render_seat_transparent(7, glass, glass)); vr_render.seat.seated = TRUE;
  vr_render.seat.vehicle_index = 3; assert(vr_render_seat_transparent(3, glass, glass) && logs == 3); /* a new vehicle: said again */
+ hide_glass=0;generation++;
+ assert(!vr_render_seat_transparent(3,glass,glass));
+ vehicle_name="ghost";assert(vr_render_seat_transparent(3,glass,glass));
+ vehicle_name="warthog";hide_glass=1;generation++;
+ assert(vr_render_seat_transparent(3,glass,glass));
  puts("PASS: from a first-person seat only the seated vehicle's own glass (and its parts') is hidden, each kind said once a "
       "vehicle; other objects, third person and on foot draw as ever");
 }

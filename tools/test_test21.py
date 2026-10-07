@@ -427,7 +427,7 @@ print('PASS: a client says once, 10 s in, when its host offers no VR avatars (an
 # line hits, within the weapon's deviation cone; the reticle now shares that
 # code (aim_assist_collision_direction) through vr_aim_assist_converge.
 aim = (ROOT / 'source/game/aim_assist.c').read_text(encoding='latin-1')
-project = fn(aim, 'player_aim_projectile')
+project = fn(aim, 'player_aim_projectile_internal' if 'player_aim_projectile_internal(' in aim else 'player_aim_projectile')
 assert ('aim_assist_collision_direction(player->unit_index, aiming_unit_index, camera_position, camera_direction,\n'
         '\t\t\tposition, direction, &collision_direction);') in project
 assert 'collision_test_vector' not in project, 'the camera trace lives only in the shared helper'
