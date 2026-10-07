@@ -21,7 +21,7 @@ Both packages are ARM64, min SDK 28, version name 1.0.14/code 43, and use the
 same project signing certificate. The VR APK carries the OpenXR loader; shared
 networking code, packaged native networking strings and app classes were
 verified equivalent between editions. The APKs and matching source/build ZIPs
-are under `D:\HaloQuest\builds\test33-20261007-v1.0.14-final`.
+are under `D:\HaloQuest\builds\test33-20261007-v1.0.14-final-validated`.
 
 ## Checks completed
 
@@ -31,6 +31,8 @@ are under `D:\HaloQuest\builds\test33-20261007-v1.0.14-final`.
   signing-certificate and 16 KB alignment checks passed.
 - Candidate packaging verified APK metadata, guide assets, source privacy,
   bundled licenses, native payload identity, and checksums.
+- The final marker gate checks the VR-only startup identity in the VR guest and
+  the shared browser-recovery log marker in both guests.
 - Both APKs contain the Test33 recovery log marker. Existing Test31c Android
   controls/gameplay implementation is retained; this pass changes the shared
   browser-client lifecycle only.
