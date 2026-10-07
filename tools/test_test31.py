@@ -36,6 +36,42 @@ assert 'return custom_edition_cache_playable(map_name);' in fn(read('source/cach
 assert 'ui_widget_port_text_wrap' in read('source/interface/ui_widget.c')
 print('PASS: network 22 exact; %d networking files identical to pinned OpenCE build 145; map namespace/preflight, PAL and legacy loader retained' % len(UPSTREAM_145))
 
+# Exercise the production range helpers against both allocation layouts.
+run('cache_bounds', r'''
+#include <assert.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <limits.h>
+typedef int boolean;
+#define TRUE 1
+#define TAG_CACHE_SIZE 4096
+#define CUSTOM_EDITION_TAG_CACHE_BYTES_UPGRADED 8192
+static int custom, missing;
+static unsigned char storage[16384];
+static void *physical_memory_get_tag_cache_base_address(void){return missing?0:storage;}
+static void *halo_custom_edition_tag_cache(void){return missing?0:storage;}
+static int custom_edition_cache_tags_loaded(void){return custom;}
+''' + fn(cache,'cache_file_region_contains') + fn(cache,'cache_file_tag_cache_contains') + r'''
+int main(void){
+ for(custom=0;custom<2;custom++){
+  int size=custom?CUSTOM_EDITION_TAG_CACHE_BYTES_UPGRADED:TAG_CACHE_SIZE;
+  assert(cache_file_tag_cache_contains(storage,size));
+  assert(cache_file_tag_cache_contains(storage+size-1,1));
+  assert(!cache_file_tag_cache_contains(storage+size,1));
+  assert(!cache_file_tag_cache_contains(storage,size+1));
+  assert(!cache_file_tag_cache_contains(storage,0));
+  assert(!cache_file_tag_cache_contains(storage,-1));
+  assert(!cache_file_tag_cache_contains(storage,LONG_MAX));
+  assert(!cache_file_tag_cache_contains((void *)((uintptr_t)storage-1),1));
+  assert(!cache_file_tag_cache_contains((void *)UINTPTR_MAX,1));
+  missing=1;assert(!cache_file_tag_cache_contains(storage,1));missing=0;
+ }
+ puts("PASS: production tag-cache bounds, both layouts: edges, missing allocation, zero/negative/overflow lengths and out-of-region addresses");
+}
+''')
+assert 'CUSTOM_EDITION_TAG_CACHE_BYTES_UPGRADED' in fn(cache,'cache_file_tag_cache_contains')
+assert 'cache_file_tag_cache_contains' in read('source/hs/hs.c')
+
 config=read('port/linux/src/port_config.c')
 assert '"vr.vehicle_warthog_hide_glass", _config_boolean, "true"' in config
 assert '"vr.vehicle_warthog_hide_glass", _vr_setting_boolean' in read('port/linux/game/vr_menu.c')

@@ -134,6 +134,7 @@ symbols in this file:
 #include "interface/ui_widget.h"
 #include "scenario/scenario_definitions.h"
 #include "sound/sound_manager.h"
+#include "cache_file_formats.h"
 #include "custom_edition_cache.h"
 
 /* ---------- constants */
@@ -351,6 +352,22 @@ static boolean cache_file_region_contains(
 		(unsigned long)address >= (unsigned long)region &&
 		offset <= region_size &&
 		(unsigned long)count <= (region_size - offset) / (unsigned long)element_size;
+}
+
+boolean cache_file_tag_cache_contains(
+	void const *address,
+	long size)
+{
+	void const *tag_cache = physical_memory_get_tag_cache_base_address();
+	unsigned long tag_cache_size = TAG_CACHE_SIZE;
+
+	if (custom_edition_cache_tags_loaded())
+	{
+		tag_cache = halo_custom_edition_tag_cache();
+		tag_cache_size = CUSTOM_EDITION_TAG_CACHE_BYTES_UPGRADED;
+	}
+
+	return tag_cache && size > 0 && cache_file_region_contains(tag_cache, tag_cache_size, address, 1, size);
 }
 
 /* port: whether the tag header of the tags just read (tag_data_size bytes
