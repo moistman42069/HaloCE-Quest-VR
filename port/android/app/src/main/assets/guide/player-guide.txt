@@ -79,10 +79,13 @@ direct-connect options remain available.
 
 The engine offers co-op limits from 2 through 128 (16 initially in in-game
 Server Setup). This is not proof that a Quest can host 128 players smoothly.
-Begin with a small group. The separate **CO-OP CAMPAIGN** item asks for a
-second local profile and starts the upstream local split-screen route; use
-**CREATE GAME > INTERNET/LAN** for co-op across devices. Local split-screen
-does not create multiple independently tracked VR views on one Quest.
+Begin with a small group. On flat Android, the separate **CO-OP CAMPAIGN**
+item asks for a second local profile and starts the upstream local split-screen
+route. Quest supports **one local VR player per headset**: that item and local
+**ADD PLAYER** show instructions for network co-op instead of opening a second
+local view. Use **CREATE GAME > INTERNET/LAN**, then **SINGLEPLAYER**, for co-op
+across devices. Remote players and the configured network player limit remain
+available.
 
 ## Network and game compatibility
 
