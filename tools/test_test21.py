@@ -274,13 +274,17 @@ assert ('if (TEST_FLAG(trigger_definition->flags, _weapon_trigger_uses_weapon_or
 assert 'vr_hand_shot' not in flat_fire
 # the hand origin exists only in a local game (online shots are unchanged)
 assert 'game_connection() != _game_connection_local' in fn(render, 'vr_render_hand_origin')
-# shots, reticle and scope follow the shot pose; the drawn gun and the scope's
-# quad keep the gun's own aim
+# shots, reticle and scope view/layer direction follow shot_pose; the drawn
+# gun and the scope's physical center keep the gun's own aim
 assert 'rotate(vr.shot_pose.orientation, xr_forward, local);' in fn(frame, 'hand_forward')
 assert 'hand_view(&vr.shot_pose, NULL' in fn(frame, 'vr_hand_ray')
 assert 'hand_view(&vr.shot_pose, NULL' in fn(frame, 'vr_scope_view')
 assert 'pose = vr.aim_pose;' in fn(frame, 'vr_weapon_view') and 'shot_pose' not in fn(frame, 'vr_weapon_view')
-assert 'shot_pose' not in fn(frame, 'place_scope') and 'shot_pose' not in fn(frame, 'compute_aim_pose')
+scope_layer = fn(frame, 'place_scope')
+assert 'tracked_hand_origin(&vr.aim_pose, origin);' in scope_layer
+assert 'rotate(vr.aim_pose.orientation, local, turned);' in scope_layer
+assert 'memcpy(layers->scope_pose.orientation, vr.shot_pose.orientation' in scope_layer
+assert 'shot_pose' not in fn(frame, 'compute_aim_pose')
 assert re.search(r'compute_aim_pose\(\);\n\tsteady_aim\(\);\n\tupdate_shot_pose\(\);', fn(frame, 'update_aim_pose'))
 assert 'vr_set_gun_class(kind);' in fn(render, 'vr_render_actions')
 reticle = fn(render, 'vr_render_windows')

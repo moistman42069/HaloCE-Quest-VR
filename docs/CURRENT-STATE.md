@@ -1,24 +1,23 @@
 # Current development state
 
-## Current private candidate: Test33 browser lifecycle fix (2026-10-07)
+## Current private candidate: Test34 OpenCE Build 147 (2026-10-07)
 
-Test33 is the current **unaccepted** test pair: version 1.0.14/code43, OpenCE
-Build 145/network22, runtime commit
-`e522f34c04969daaa87bfa952bb0256b222be590`. It resets a client already in
-joining/pregame/game/postgame state before entering the public browser, fixing
-the stale client left behind by the local-host flow seen in the supplied log.
-All 56 host suites and both package checks passed. The exact artifacts and
-owner headset acceptance steps are in [TEST33-DELIVERY.md](TEST33-DELIVERY.md);
-evidence and diagnosis are in [TEST33-PROGRESS.md](TEST33-PROGRESS.md). Do not
-call multiplayer fixed until the owner retests public joining.
+Test34 is an in-progress, unaccepted candidate for version 1.0.15/code44,
+targeting the official OpenCE Build 147 release/network23. It adds server-row
+pointer hover and ports the applicable Build145→147 behavior. The integration
+includes CE map-header identity, upstream tag schemas adapted to the app's
+34.5 MiB cache, retail and CE tag validation, BSP validation before geometry
+conversion, capacity/co-op/camera updates, and app-specific safety paths. The
+source audit found and fixed an incorrect physical-file-length range and a
+missing BSP-validator call. See [TEST34-PROGRESS.md](TEST34-PROGRESS.md),
+[TEST34-UPSTREAM-INTEGRATION.md](TEST34-UPSTREAM-INTEGRATION.md), and
+[TEST34-DELIVERY.md](TEST34-DELIVERY.md). Complete automated suites and both
+release-mode APK builds before delivering the private candidates. No physical
+device acceptance is recorded, and no release/push/install/game launch is
+authorized.
 
-The owner-confirmed references remain Test31b Quest VR (accepted VR settings)
-and Test31c flat Android (accepted touch/gameplay). Test33 preserves the flat
-input implementation. Upstream networking and transport sources are unchanged
-from Test31b. Its browser handler already reused any existing client without
-checking state, so this was a latent host-local-then-public-browser lifecycle
-case rather than a newly introduced wire/protocol regression. Public GitHub
-latest remains v1.0.12.
+Preserve the owner-confirmed baselines: Test31b Quest VR settings and Test31c
+flat Android touch/gameplay. The public v1.0.12 remains unchanged at network21.
 
 ## Latest owner-accepted private result: Test31c Android; Test31b VR
 

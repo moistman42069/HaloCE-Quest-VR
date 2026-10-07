@@ -1,13 +1,17 @@
 # Halo CE Quest VR + Android player guide
 
-## Current private build: Test32
+## Current private build: Test34
 
-The current development build uses **OpenCE Build 145 / exact network 22** and
-its full in-game menus. The public v1.0.12 downloads documented below use the
-older network 21 and are preserved; they are not the Test32 private APKs.
-Use [Test32 player notes](TEST32-PLAYER-NOTES.md) for the current candidate,
-vehicle/HUD changes and device checklist. The owner accepted Test31c Android
-gameplay/touch; this pass preserves it. Test32 itself still needs device testing.
+The current private candidate is aligned to the official **OpenCE Build 147 /
+network 23 release**, including the shared tag-schema validator adapted to this port's
+larger Quest cache. The [direct Build 147 release page](https://github.com/OpenCommunityEdition/OpenCE/releases/tag/build-147)
+marks it Latest; the general releases listing has shown stale Build 145
+metadata. The public v1.0.12 downloads documented below use
+network 21 and are preserved; they are not the Test34 APKs. Use
+[Test34 player notes](TEST34-PLAYER-NOTES.md) for cursor behavior, network-23
+compatibility and device checklist. The owner accepted the Test31c Android
+gameplay/touch behavior and prefers the Test31b VR settings design; Test34
+preserves both baselines and still needs device testing.
 
 ### Where multiplayer and co-op moved
 
@@ -219,11 +223,11 @@ The launcher browser reads the ChupathingyCE native-port directory and can merge
 
 **Host multiplayer** offers installed map, game type, name, score/time, friendly fire, radar, team balance, vehicle respawn, loadout/grenade options and **2–128 PvP slots**. Public listing is opt-in; private invites are available. Start with modest limits: 128 is protocol capacity, not a verified Quest-host performance target. Network settings expose Internet/LAN, UPnP, clipboard invites and tunnel port.
 
-Since 1.0.9 this project has followed OpenCE's native netcode. **v1.0.12 uses network 21 (Build 144)** and requires an exact match; v1.0.10 uses network 20. OpenCE Windows/macOS/Linux/Android builds at network 21 can cross-play when game data and connectivity are compatible. **Retail Halo PC/Custom Edition, original Xbox and MCC use different network protocols.** Other network versions are refused by name.
+This project's public v1.0.12 APKs use OpenCE network 21 (Build 144). The private Test34 candidate targets network 23 (Build 147) and cannot connect to network-21/22 peers. Matching network versions are required; compatible OpenCE desktop and Android builds may cross-play when their content and connectivity also match. Retail Halo PC/Custom Edition, original Xbox and MCC use different protocols. The Build 147 Custom Edition map checksum check compares namespaced CE map headers; it does not identify Xbox ISO/XISO disc revisions.
 
 ### Campaign co-op and avatars
 
-Co-op is OpenCE's native campaign mode on the same network version (21 since 1.0.12). Host sizes are 2, 4, 8, 12, 16, 24, 32, 48, 64, 96 and 128 players (4 by default). Players can join an active mission; the host runs scripts, AI, checkpoints and level changes. A dead player spectates a teammate and returns when safe. Everyone needs compatible campaign maps. Previous network 9–11 and CE01/CE02 sessions cannot join.
+Co-op is OpenCE's native campaign mode. The published v1.0.12 uses network 21; Test34 uses network 23. Host sizes are 2, 4, 8, 12, 16, 24, 32, 48, 64, 96 and 128 players (4 by default). Players can join an active mission; the host runs scripts, AI, checkpoints and level changes. A dead player spectates a teammate and returns when safe. Everyone needs compatible campaign maps. Network versions must match exactly.
 
 Step-by-step instructions are in the launcher: **How to join co-op & find servers** (also first in the Field guide).
 

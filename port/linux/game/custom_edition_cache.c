@@ -37,6 +37,7 @@ instead of converting again; a file left incomplete is converted afresh.
 #include "scenario/scenario_definitions.h"
 #include "cache_file_formats.h"
 #include "custom_edition_cache.h"
+#include "tag_schema.h"
 #include "../src/audio_codecs.h"
 
 #include <stdlib.h>
@@ -63,6 +64,9 @@ the kernel fails a read into such memory instead of faulting. Reads for the
 game therefore land here first and are copied, as the platform's own file
 layer does (port/linux/src/xbox_files.c, read_at). */
 #define READ_STAGING_BYTES 0x10000
+
+typedef char verify_custom_edition_validator_cache_size[
+	CUSTOM_EDITION_TAG_CACHE_BYTES_UPGRADED <= TAG_VALIDATE_MAXIMUM_TAG_CACHE_SIZE ? 1 : -1];
 
 /* the converted sounds' file (<map>.audio): its header, of these 32-bit
 words, then the samples, then the index */
@@ -125,6 +129,8 @@ struct custom_edition_cache_globals
 	/* the tag cache and the bytes of it the loaded tags use */
 	uint8_t *tag_cache;
 	uint32_t loaded_bytes;
+	uint32_t tag_cache_bytes;
+	uint32_t file_length;
 	struct custom_edition_file map;
 	char map_path[MAP_PATH_SIZE];
 	/* the map's converted sounds, and the file the game reads them from */
@@ -568,9 +574,60 @@ static boolean custom_edition_cache_models_convert(
 			report,
 			model_data);
 	}
-	free(model_data);
+	/* (the game's free, debug_free, does not take NULL) */
+	if (model_data)
+		free(model_data);
 
 	return success;
+}
+
+/* Validates the loaded CE tag graph using OpenCE's shared schemas. The map,
+transcoded audio cache and resource maps occupy distinct ranges in the
+combined offsets the converted tags use. */
+static boolean custom_edition_cache_tags_validate(
+	uint8_t *tag_cache,
+	struct custom_edition_load_report const *report)
+{
+	struct custom_edition_cache_globals *globals = &custom_edition_cache_globals;
+	struct tag_validate_file_range ranges[MAXIMUM_TAG_VALIDATE_FILE_RANGES];
+	short range_count = 0;
+
+	ranges[range_count].offset = 0;
+	/* Do not let a tag's file-data reference escape the declared cache length
+	into unvalidated trailing bytes in the physical file. */
+	ranges[range_count++].size = report->identity.file_length;
+	if (globals->audio_file.stream)
+	{
+		ranges[range_count].offset = COMBINED_AUDIO_OFFSET;
+		ranges[range_count++].size = globals->audio_file.source.size;
+	}
+	if (globals->resource_files[_resource_map_bitmaps].stream)
+	{
+		ranges[range_count].offset = COMBINED_BITMAPS_OFFSET;
+		ranges[range_count++].size = globals->resource_files[_resource_map_bitmaps].source.size;
+	}
+	if (globals->resource_files[_resource_map_sounds].stream)
+	{
+		ranges[range_count].offset = COMBINED_SOUNDS_OFFSET;
+		ranges[range_count++].size = globals->resource_files[_resource_map_sounds].source.size;
+	}
+	if (!tag_validate_custom_edition_tags(
+		tag_cache,
+		(long)(report->tag_data_bytes + report->resource_tag_bytes),
+		report->tag_cache_bytes,
+		ranges,
+		range_count,
+		report->identity.name))
+	{
+		return FALSE;
+	}
+	if (tag_validate_corrections())
+	{
+		error(_error_silent, "custom edition: the map's tags needed %ld corrections (above)",
+			tag_validate_corrections());
+	}
+
+	return TRUE;
 }
 
 /* Makes the tags custom_edition_cache_load loaded into `tag_cache` this
@@ -645,7 +702,8 @@ static boolean custom_edition_cache_tags_convert(
 		error(_error_silent, "custom edition: the multiplayer score hint names the BACK button where Halo PC names a key");
 	}
 
-	return custom_edition_bitmaps_verify(tag_cache, loaded_bytes) &&
+	return custom_edition_cache_tags_validate(tag_cache, report) &&
+		custom_edition_bitmaps_verify(tag_cache, loaded_bytes) &&
 		custom_edition_reordered_bitmaps_find(tag_cache, loaded_bytes) &&
 		custom_edition_scripts_convert(tag_cache, loaded_bytes) &&
 		custom_edition_cache_models_convert(tag_cache, report);
@@ -775,8 +833,32 @@ boolean custom_edition_map_file_present(
 	return custom_edition_map_path(map_name, path);
 }
 
+/* The header checksum distinguishes different builds of the same named CE
+map for OpenCE's network_game_map.version field. */
+unsigned long custom_edition_map_checksum(
+	char const *level_name)
+{
+	char path[MAP_PATH_SIZE];
+	struct custom_edition_file file;
+	struct cache_file_identity identity;
+	unsigned long checksum = 0;
+
+	if (custom_edition_map_path(level_name, path) && custom_edition_file_open(&file, path))
+	{
+		if (cache_file_identify(&file.source, &identity) == _cache_file_status_ok &&
+			identity.format == _cache_file_format_custom_edition_cache)
+		{
+			checksum = identity.checksum;
+		}
+		custom_edition_file_close(&file);
+	}
+
+	return checksum;
+}
+
 boolean custom_edition_cache_present(
 	char const *level_name,
+	unsigned long checksum,
 	char *message,
 	long message_size)
 {
@@ -812,6 +894,16 @@ boolean custom_edition_cache_present(
 			status != _cache_file_status_ok ? cache_file_status_describe(status) :
 			"it is not a Halo Custom Edition cache");
 		snprintf(message, message_size, "Your %.64s.map can't be played (the launch log says why).", name);
+		return FALSE;
+	}
+	/* CE maps with the same name can contain different tags and networked
+	objects. Refuse a checksum mismatch before the game starts loading it. */
+	if (checksum && identity.checksum != checksum)
+	{
+		error(_error_silent, "custom edition: '%s' is another version of the host's map (checksum %08lX, the host's %08lX)",
+			path, (unsigned long)identity.checksum, checksum);
+		snprintf(message, message_size,
+			"Your %.64s.map is a different version from the host's. Copy the host's into custom_maps.", name);
 		return FALSE;
 	}
 	/* (the resource maps every Custom Edition map's tags are read from) */
@@ -958,6 +1050,8 @@ struct cache_file_tag_header *custom_edition_cache_tags_load(
 	}
 	globals->tag_cache = tag_cache;
 	globals->loaded_bytes = report.tag_data_bytes + report.resource_tag_bytes;
+	globals->tag_cache_bytes = report.tag_cache_bytes;
+	globals->file_length = report.identity.file_length;
 	globals->tags_loaded = TRUE;
 
 	return (struct cache_file_tag_header *)tag_cache;
@@ -967,6 +1061,33 @@ boolean custom_edition_cache_tags_loaded(
 	void)
 {
 	return custom_edition_cache_globals.tags_loaded;
+}
+
+boolean custom_edition_structure_bsp_reference_valid(
+	struct scenario_structure_bsp_reference const *reference)
+{
+	struct custom_edition_cache_globals *globals = &custom_edition_cache_globals;
+	unsigned long address = (unsigned long)reference->base_address;
+	unsigned long top = CUSTOM_EDITION_TAG_CACHE_ADDRESS + globals->tag_cache_bytes;
+
+	/* The CE loader has already checked that this reference names a BSP in
+	the map; here ensure its runtime destination is above the loaded tags and
+	inside the selected 23 MiB or upgraded 34.5 MiB CE cache. */
+	if (!globals->tags_loaded ||
+		reference->file_offset < CACHE_FILE_HEADER_BYTES ||
+		reference->file_size < 0x18 ||
+		(unsigned long)reference->file_offset > globals->file_length ||
+		(unsigned long)reference->file_size > globals->file_length - (unsigned long)reference->file_offset ||
+		address < CUSTOM_EDITION_TAG_CACHE_ADDRESS + globals->loaded_bytes ||
+		address > top ||
+		(unsigned long)reference->file_size > top - address)
+	{
+		error(_error_silent, "custom edition: a structure bsp's %08lx bytes at %08lx would load to %08lx, outside its tag cache",
+			(unsigned long)reference->file_size, (unsigned long)reference->file_offset, address);
+		return FALSE;
+	}
+
+	return TRUE;
 }
 
 void custom_edition_cache_tags_unload(
@@ -981,6 +1102,8 @@ void custom_edition_cache_tags_unload(
 	custom_edition_cache_globals.tags_loaded = FALSE;
 	custom_edition_cache_globals.tag_cache = NULL;
 	custom_edition_cache_globals.loaded_bytes = 0;
+	custom_edition_cache_globals.tag_cache_bytes = 0;
+	custom_edition_cache_globals.file_length = 0;
 
 	return;
 }

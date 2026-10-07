@@ -132,6 +132,7 @@ enum
 	_vr_setting_string,
 	_vr_setting_degrees,
 	_vr_setting_centimetres,
+	_vr_setting_scope_centimetres,
 	_vr_setting_vehicle_centimetres,
 	_vr_setting_reset_alignment,
 	_vr_setting_flip_alignment,
@@ -377,13 +378,13 @@ static struct vr_menu_setting const vr_menu_comfort[] =
 rifle's apart (vr.scope_pistol_*, vr.scope_sniper_*: 0 and 100%, the usual) */
 static struct vr_menu_setting const vr_menu_scopes[] =
 {
-    { "PISTOL FWD", "vr.scope_pistol_forward", _vr_setting_centimetres, 0, { { NULL,NULL } } },
-    { "PISTOL UP", "vr.scope_pistol_up", _vr_setting_centimetres, 0, { { NULL,NULL } } },
-    { "PISTOL RIGHT", "vr.scope_pistol_right", _vr_setting_centimetres, 0, { { NULL,NULL } } },
+    { "PISTOL FWD", "vr.scope_pistol_forward", _vr_setting_scope_centimetres, 0, { { NULL,NULL } } },
+    { "PISTOL UP", "vr.scope_pistol_up", _vr_setting_scope_centimetres, 0, { { NULL,NULL } } },
+    { "PISTOL RIGHT", "vr.scope_pistol_right", _vr_setting_scope_centimetres, 0, { { NULL,NULL } } },
     { "PISTOL SIZE", "vr.scope_pistol_scale", _vr_setting_real, 7, { { "50%", "0.5" }, { "75%", "0.75" }, { "100%", "1" }, { "125%", "1.25" }, { "150%", "1.5" }, { "175%", "1.75" }, { "200%", "2" } } },
-    { "SNIPER FWD", "vr.scope_sniper_forward", _vr_setting_centimetres, 0, { { NULL,NULL } } },
-    { "SNIPER UP", "vr.scope_sniper_up", _vr_setting_centimetres, 0, { { NULL,NULL } } },
-    { "SNIPER RIGHT", "vr.scope_sniper_right", _vr_setting_centimetres, 0, { { NULL,NULL } } },
+    { "SNIPER FWD", "vr.scope_sniper_forward", _vr_setting_scope_centimetres, 0, { { NULL,NULL } } },
+    { "SNIPER UP", "vr.scope_sniper_up", _vr_setting_scope_centimetres, 0, { { NULL,NULL } } },
+    { "SNIPER RIGHT", "vr.scope_sniper_right", _vr_setting_scope_centimetres, 0, { { NULL,NULL } } },
     { "SNIPER SIZE", "vr.scope_sniper_scale", _vr_setting_real, 7, { { "50%", "0.5" }, { "75%", "0.75" }, { "100%", "1" }, { "125%", "1.25" }, { "150%", "1.5" }, { "175%", "1.75" }, { "200%", "2" } } },
     { "RESET SCOPES", "scopes", _vr_setting_reset_scopes, 0, { { NULL,NULL } } },
 };
@@ -1359,7 +1360,8 @@ boolean vr_menu_setting_text(
         }
         else if(setting->type == _vr_setting_hand_degrees)
             snprintf(line,sizeof(line),"%s: < %.0f DEG >",setting->label,vr_menu_hand_angle(setting->key));
-        else if(setting->type == _vr_setting_degrees || setting->type == _vr_setting_centimetres || setting->type == _vr_setting_vehicle_centimetres) {
+		else if(setting->type == _vr_setting_degrees || setting->type == _vr_setting_centimetres ||
+			setting->type == _vr_setting_scope_centimetres || setting->type == _vr_setting_vehicle_centimetres) {
             double value=config_real(setting->key); if(!isfinite(value)) value=0;
             snprintf(line,sizeof(line),"%s: < %.0f %s >",setting->label,
                 setting->type!=_vr_setting_degrees?value*100:value,
@@ -1393,9 +1395,12 @@ boolean vr_menu_setting_change(
 	if (vr_menu_widget_kind(definition_tag_index, &page, &setting_index) != _vr_menu_setting)
 		return FALSE;
 	setting = &vr_menu_pages[page].settings[setting_index];
-    if(setting->type == _vr_setting_degrees || setting->type == _vr_setting_centimetres || setting->type == _vr_setting_vehicle_centimetres) {
+    if(setting->type == _vr_setting_degrees || setting->type == _vr_setting_centimetres ||
+		setting->type == _vr_setting_scope_centimetres || setting->type == _vr_setting_vehicle_centimetres) {
         double value=config_real(setting->key), unit=setting->type==_vr_setting_degrees?5.0:0.01;
-        double limit=setting->type==_vr_setting_degrees?180.0:setting->type==_vr_setting_vehicle_centimetres?0.50:0.20;
+        double limit=setting->type==_vr_setting_degrees?180.0:
+			setting->type==_vr_setting_vehicle_centimetres?0.50:
+			setting->type==_vr_setting_scope_centimetres?VR_SCOPE_ADJUST_LIMIT_METRES:0.20;
         if(!isfinite(value)) value=0.0;
         value=step>0?(floor(value/unit+0.00001)+1)*unit:(ceil(value/unit-0.00001)-1)*unit;
         value=fmax(-limit,fmin(limit,value)); written=config_write_real(setting->key,value);

@@ -1,6 +1,6 @@
 # Controls and options — Quest VR / flat Android
 
-## Test32 private candidate updates
+## Test34 private candidate updates
 
 The accepted Android circular controls, saved layouts, gamepad behavior and
 optional drag-anywhere look are unchanged. Multiplayer and online co-op now
@@ -210,7 +210,7 @@ Moving includes walking with the stick, arm-swing running and driving (the left 
 
 ## Scopes, first-person vehicles and the left hand (test22)
 
-- **SCOPES** (VR Settings): the pistol's and the sniper rifle's scopes each move **forward**, **up** and **right** (1 cm steps, up to 20 cm; right is your right in either hand) and change **size** (50–200%). **Reset Scopes** puts both back. Untouched, they are exactly where and as large as before; the rocket launcher's scope does not change.
+- **SCOPES** (VR Settings): the pistol's and the sniper rifle's scopes each move **forward**, **up** and **right** (1 cm steps, up to ±30 cm; right is your right in either hand) and change **size** (50–200%). The scope layer now follows the calibrated zoom view and shares the weapon view's 90 cm arm reach, preventing it from visually separating from an extended rifle. **Reset Scopes** puts both back. Untouched, they are exactly where and as large as before; the rocket launcher's scope does not change.
 - **First-person vehicle view** (Vehicles → View: First Person): the view turns with the vehicle as it is drawn, every frame, and rides the vehicle itself rather than the driver's steering and bump animations, so the interior stays still in your view while the vehicle's own turns and bounce come through. Third-person view is unchanged.
 - **Left hand:** a gun's ammo counter (the assault rifle's) reads the right way round when held left-handed.
 

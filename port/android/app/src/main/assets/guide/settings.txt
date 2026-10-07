@@ -1051,15 +1051,15 @@ How wide the scope is, in metres.
 
 vr.scope_pistol_forward [real]
 Default: 0.0
-The pistol (round sight) scope moved forward (toward the muzzle) from its usual place, metres (-0.20..0.20).
+The pistol (round sight) scope moved forward (toward the muzzle) from its usual place, metres (-0.30..0.30).
 
 vr.scope_pistol_up [real]
 Default: 0.0
-The pistol (round sight) scope moved up from its usual place, metres (-0.20..0.20).
+The pistol (round sight) scope moved up from its usual place, metres (-0.30..0.30).
 
 vr.scope_pistol_right [real]
 Default: 0.0
-The pistol (round sight) scope moved right (in either hand) from its usual place, metres (-0.20..0.20).
+The pistol (round sight) scope moved right (in either hand) from its usual place, metres (-0.30..0.30).
 
 vr.scope_pistol_scale [real]
 Default: 1.0
@@ -1067,15 +1067,15 @@ The pistol (round sight) scope's size as a share of vr.scope_size (1 = as usual)
 
 vr.scope_sniper_forward [real]
 Default: 0.0
-The sniper rifle scope moved forward (toward the muzzle) from its usual place, metres (-0.20..0.20).
+The sniper rifle scope moved forward (toward the muzzle) from its usual place, metres (-0.30..0.30).
 
 vr.scope_sniper_up [real]
 Default: 0.0
-The sniper rifle scope moved up from its usual place, metres (-0.20..0.20).
+The sniper rifle scope moved up from its usual place, metres (-0.30..0.30).
 
 vr.scope_sniper_right [real]
 Default: 0.0
-The sniper rifle scope moved right (in either hand) from its usual place, metres (-0.20..0.20).
+The sniper rifle scope moved right (in either hand) from its usual place, metres (-0.30..0.30).
 
 vr.scope_sniper_scale [real]
 Default: 1.0

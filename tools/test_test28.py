@@ -59,6 +59,7 @@ typedef union { struct { real i,j,k; }; real n[3]; } real_vector3d;
 #define WATCH_HOST_HEIGHT 1.0f
 #define WATCH_HOST_FOLLOW 0.2f
 static struct { boolean watching_host_valid; real_point3d watching_host_position; real_vector3d watching_host_forward; } coop_presentation;
+static int valid_real_vector3d_axes2(real_vector3d const *f, real_vector3d const *u);
 static real normalize3d(real_vector3d *v){ real l=sqrtf(v->i*v->i+v->j*v->j+v->k*v->k); if(l<1e-6f) return 0.f; v->i/=l; v->j/=l; v->k/=l; return l; }
 static void point_from_line3d(real_point3d const *p, real_vector3d const *v, real t, real_point3d *o){ o->x=p->x+v->i*t; o->y=p->y+v->j*t; o->z=p->z+v->k*t; }
 static void points_interpolate(real_point3d const *a, real_point3d const *b, real t, real_point3d *o){ for(int i=0;i<3;i++) o->n[i]=a->n[i]+(b->n[i]-a->n[i])*t; }
@@ -68,6 +69,7 @@ static void vectors_interpolate(real_vector3d const *a, real_vector3d const *b, 
 static int square(real_vector3d const *f, real_vector3d const *u){
  real lf=f->i*f->i+f->j*f->j+f->k*f->k, lu=u->i*u->i+u->j*u->j+u->k*u->k, d=f->i*u->i+f->j*u->j+f->k*u->k;
  return fabsf(lf-1.f)<1e-3f && fabsf(lu-1.f)<1e-3f && fabsf(d)<1e-3f; }
+static int valid_real_vector3d_axes2(real_vector3d const *f, real_vector3d const *u){return square(f,u);}
 int main(void){
  int n=0;
  for(int yaw=0;yaw<360;yaw+=7) for(int pitch=-90;pitch<=90;pitch+=3){
@@ -75,12 +77,15 @@ int main(void){
   coop_presentation.watching_host_valid=FALSE;
   for(int frame=0;frame<6;frame++){
    real_point3d pos={{10,20,3}}; real_vector3d f={{cosf(p)*cosf(y),cosf(p)*sinf(y),sinf(p)}}, u={{0,0,1}};
-   client_watch_host_from_behind(&pos,&f,&u);
+   assert(client_watch_host_from_behind(&pos,&f,&u));
    assert(square(&f,&u)); assert(u.k>=-1e-6f); n++; } }
  /* the logged case: forward -0.990,-0.060,-0.126 */
  { real_vector3d f={{-0.990173f,-0.060274f,-0.126194f}},u={{0,0,1}}; real_point3d pos={{-35.9f,-18.8f,1.6f}};
    normalize3d(&f); coop_presentation.watching_host_valid=FALSE; client_watch_host_from_behind(&pos,&f,&u);
    assert(square(&f,&u) && u.k>0.99f); }
+ /* invalid interpolated forward: decline this camera instead of handing bad axes to the engine */
+ { real_vector3d f={{0,0,0}},u={{0,0,1}}; real_point3d pos={{0,0,0}};
+   coop_presentation.watching_host_valid=FALSE; assert(!client_watch_host_from_behind(&pos,&f,&u)); }
  printf("PASS: %d host views (every pitch, straight up and down too): the camera watching the host is upright and its axes square"
         " (the logged d40 halt's case included)\n", n);
 }

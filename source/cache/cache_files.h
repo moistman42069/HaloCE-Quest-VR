@@ -191,8 +191,10 @@ void texture_cache_bitmap_new(
 
 /* ---------- public code */
 
-/* Network-22: report a missing map before starting its load. */
-boolean cache_files_map_present(char const *map_name);
+/* OpenCE network: the CE map header checksum is sent in map.version; stock
+maps retain zero so regional builds can still play together. */
+unsigned long cache_files_map_version(char const *map_name);
+boolean cache_files_map_present(char const *map_name, unsigned long version);
 
 boolean cache_file_tag_cache_contains(void const *address, long size);
 

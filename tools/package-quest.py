@@ -222,7 +222,9 @@ def main():
                     raise SystemExit("Test30 VR identity missing")
             if candidate_at_least(args.label, 29):
                 # OpenCE build 144's network 21, and the held HUD tap's and PR #1's text
-                expected_upstream = b"OpenCE build 145 (network 22)" if candidate_at_least(args.label, 31) else b"OpenCE build 144 (network 21)"
+                expected_upstream = (b"OpenCE build 147 (network 23)" if candidate_at_least(args.label, 34) else
+                                     b"OpenCE build 145 (network 22)" if candidate_at_least(args.label, 31) else
+                                     b"OpenCE build 144 (network 21)")
                 if expected_upstream not in dex:
                     raise SystemExit("Test29 upstream netcode text missing")
                 if vr:
@@ -247,8 +249,12 @@ def main():
                 # The candidate identity banner is emitted by the VR startup
                 # logger in vr_frame.c; flat Android shares the recovery code
                 # but has no VR frame startup path.
-                if vr and b"test33 candidate 1.0.14 code43" not in guest:
+                if vr and candidate_at_least(args.label, 34) is False and b"test33 candidate 1.0.14 code43" not in guest:
                     raise SystemExit("Test33 VR candidate identity marker missing")
+            if candidate_at_least(args.label, 34):
+                for marker in [b"OpenCE Build 147 / network 23", b"test34 candidate 1.0.15 code44"]:
+                    if marker not in guest:
+                        raise SystemExit("Test34 OpenCE or candidate identity marker missing: " + repr(marker))
             if candidate_at_least(args.label, 28):
                 # a release build (HALO_RELEASE, as OpenCE's): checks logged, play goes on
                 if b"(release build)" not in guest:
@@ -362,6 +368,8 @@ def main():
         documents += ["TEST31C-PLAYER-NOTES.md"]
     if candidate_at_least(args.label, 32) and not args.stable:
         documents += ["TEST32-PLAYER-NOTES.md"]
+    if candidate_at_least(args.label, 34) and not args.stable:
+        documents += ["TEST34-PLAYER-NOTES.md", "TEST34-UPSTREAM-INTEGRATION.md"]
     for doc in documents:
         shutil.copy2(ROOT / "docs" / doc, output / doc)
     for notice in ["CREDITS.md", "THIRD-PARTY-NOTICES.txt", "LICENSE.md"]:

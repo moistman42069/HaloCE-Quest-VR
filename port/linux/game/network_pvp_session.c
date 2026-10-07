@@ -1,5 +1,6 @@
 /* Production PvP bootstrap. No debug network-test behavior is enabled. */
 #include "cseries.h"
+#include "cache/cache_files.h"
 #include "game/game.h"
 #include "game/game_engine.h"
 #include "interface/player_ui.h"
@@ -31,7 +32,7 @@ boolean network_pvp_host_settings(struct network_game *game)
     if(request.score) game->variant.universal_variant.score_to_win=request.score;
     snprintf(game->map.name,sizeof(game->map.name),"levels\\test\\%s\\%s",request.map,request.map);
     p2p_set_hosting_public(request.publish);
-    game->map.version=0; game->minimum_players=2; game->maximum_players=(byte)request.maximum;
+    game->map.version=(long)cache_files_map_version(game->map.name); game->minimum_players=2; game->maximum_players=(byte)request.maximum;
     game->maximum_teams=game->variant.universal_variant.teams ? 2 : 1;
     for(i=0;i<15 && request.name[i];i++) game->name[i]=(unsigned char)request.name[i];
     game->name[i]=0;

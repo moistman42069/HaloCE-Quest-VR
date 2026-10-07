@@ -101,6 +101,28 @@ optional files beside the map give it what the Xbox levels have:
 
 ## What the native builds do
 
+### Multiplayer map identity (OpenCE network 23)
+
+OpenCE Build 147 carries a Custom Edition map's stored header checksum in the
+existing network map `version` field. A joining client compares its local map
+header checksum before loading the session. The loader separately computes
+the OpenSauce cache CRC to validate and report the map; that is not what the
+network field sends. This catches same-name CE maps with different contents, which can
+otherwise diverge during multiplayer. Stock Xbox maps keep version zero so
+the existing cross-region stock-map behavior is preserved. This checksum is
+the CE map-header identity used by OpenCE; it does not identify or validate
+an Xbox ISO/XISO revision.
+
+The CE loader checks map-file bounds, block ranges, references, resource files,
+and model data before conversion. Test34 imports OpenCE Build 147's tag schemas
+and validator, adapted to this port's combined map/resource/audio offsets and
+34.5 MiB (36 MB) Quest CE tag-cache reservation. This preserves the selected CE scenario
+vehicle-placement and animation/seat blocks beyond Xbox editing-kit limits
+while retaining signed-index, byte-range, overlap and runtime limits. The
+validator runs after conversion and before the game consumes the tags; any
+unrepresentable pointer or out-of-range extent rejects that cache. This does
+not prove every CE/OpenSauce map or OpenSauce runtime feature is supported.
+
 - **With the setting off** (the default), a Custom Edition cache in
   `maps\` is named and refused, instead of being rejected as "an old
   version" of this build's caches:

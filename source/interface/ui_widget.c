@@ -6054,6 +6054,16 @@ static boolean ui_mouse_selection_row(
 		(!strncmp(widget->name, "list_item_", 10) || !strncmp(widget->name, "server_item_", 12));
 }
 
+/* server rows have no row-specific action buttons: moving the menu pointer
+over one should select it immediately, just as moving the d-pad does. Keep
+profile/map rows click-to-select because pointer travel can pass their action
+buttons. */
+static boolean ui_mouse_selection_row_tracks_hover(
+	struct widget_instance *widget)
+{
+	return widget && !strncmp(widget->name, "server_item_", 12);
+}
+
 /* port: a press the menus post from their updates (menu_functions.c: the
 server browser's join, once its game is reached), posted where the mouse's
 are: one posted while the widgets update or draw would be overwritten by the
@@ -6137,8 +6147,10 @@ static void ui_widgets_process_mouse(
 				case _ui_mouse_target_item:
 				case _ui_mouse_target_value:
 					/* (a selection list's row is chosen by a click, not
-					by passing over it on the way to its buttons) */
-					if (!ui_mouse_selection_row(target->widget))
+					by passing over it on the way to its buttons; server rows
+					are the exception because they have no row actions) */
+					if (!ui_mouse_selection_row(target->widget) ||
+						ui_mouse_selection_row_tracks_hover(target->widget))
 						ui_mouse_give_focus(target->widget);
 					break;
 				case _ui_mouse_target_list_slot:

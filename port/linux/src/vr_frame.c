@@ -873,7 +873,7 @@ void vr_reload_settings(void)
 				if (!isfinite(value))
 					value = part == 3 ? 1.0 : 0.0;
 				vr.scope_adjust[kind][part] = part == 3 ? (float)fmin(2.0, fmax(0.5, value)) :
-					(float)fmin(0.20, fmax(-0.20, value));
+					(float)fmin(VR_SCOPE_ADJUST_LIMIT_METRES, fmax(-VR_SCOPE_ADJUST_LIMIT_METRES, value));
 			}
 		}
 	}
@@ -944,7 +944,7 @@ void vr_initialize(void)
 		return;
 	vr.initialized = 1;
 	config_vr_vehicle_defaults();
-	platform_log("vr: HaloCE Quest test33 candidate 1.0.14 code43 (fresh network browser search after a local-host session; OpenCE Build 145 / network 22; Test32 controls, VR settings, Android touch and vehicle behavior retained; private test, not device accepted)");
+	platform_log("vr: HaloCE Quest test34 candidate 1.0.15 code44 (server-row pointer hover selection; OpenCE Build 147 / network 23; CE map checksums, co-op capacities, Test32 controls, VR settings, Android touch and vehicle behavior retained; private test, not device accepted)");
 	platform_log("vr: retained baseline history: HaloCE Quest test30 candidate 1.0.12 (the menus' face buttons as the Xbox's of the same letter: X deletes a profile; the co-op host's server name; test29: OpenCE build 144 netcode, network 21; the HUD head tap held by the temple, HUD and head tap on the HUD page, wrist HUD on the wrist and movable, moving with a hand while holding the gun in both, glasses FOV and resolution to 200%% (PR #1); test28: co-op games entered in progress keep their camera upright, release checks as OpenCE ships, co-op hosted for 2 to 128 players as OpenCE's Server Setup offers, gyro aim on phones as an option; test27: OpenCE build 138 netcode, network 20, with its co-op for up to 16 players; test26: co-op: death screams no longer stop the second player, cutscene characters placed and animated as on the first; HUD head tap, reticle toggle on the left stick click with crouch on the turning stick held down (or crouch kept on the click: Controls), optional wrist HUD, adjustable head taps; impact melee along the gun with a follow-through; fingers bend smoothly against walls; test25: vehicle seat and recentre diagnostics, first-person horizon option and seat glass, settings rows that fit, vehicle offset reset; test24b: comfort vignette, smooth speed and snap angle, SPV1 marked not working; test24: co-op cutscenes animate for the second player; test23: remappable Quest buttons with the grenade on X; test22: co-op campaign host crash fixed, steady first-person vehicle view, left-hand ammo display, adjustable scopes, shot diagnostics; test21b: floating hands restored, torso-following arms, neck-pivot full body, auto two-hand lock, horn, online melee off, two-hand gun roll, pistol shots from the hand, reticle converges as shots do, per-gun aim, horn from either stick)");
 	if (!config_boolean("vr.enabled"))
 	{
@@ -3101,6 +3101,24 @@ int vr_hand_aiming(void)
 	return vr.hand_aiming || vr.hand_aiming_last_frame;
 }
 
+/* the local tracking-space origin of a hand pose, with the same 90 cm
+reach clamp as the rendered hand/weapon camera. The compositor scope uses
+this too, so it cannot drift away from that camera when the arm is extended. */
+#define VR_HAND_REACH_METRES 0.9f
+
+static void tracked_hand_origin(const struct halo_xr_pose *pose, float out[3])
+{
+	float arm[3], length, scale;
+	int axis;
+
+	for (axis = 0; axis < 3; axis++)
+		arm[axis] = pose->position[axis] - vr.frame.head.position[axis];
+	length = sqrtf(arm[0] * arm[0] + arm[1] * arm[1] + arm[2] * arm[2]);
+	scale = length > VR_HAND_REACH_METRES ? VR_HAND_REACH_METRES / length : 1.0f;
+	for (axis = 0; axis < 3; axis++)
+		out[axis] = vr.frame.head.position[axis] + arm[axis] * scale;
+}
+
 /* the hand's grip or aim pose as a view from `position` (the game's
 camera, where the head is drawn): the head's offset limited as for the
 eyes, the hand's from the head kept whole up to an arm's length */
@@ -3123,10 +3141,10 @@ static int hand_view(const struct halo_xr_pose *pose, const float extra[3], cons
 			arm[axis] += turned[axis];
 	}
 	length = sqrtf(arm[0] * arm[0] + arm[1] * arm[1] + arm[2] * arm[2]);
-	if (length > 0.9f)
+	if (length > VR_HAND_REACH_METRES)
 	{
 		for (axis = 0; axis < 3; axis++)
-			arm[axis] *= 0.9f / length;
+			arm[axis] *= VR_HAND_REACH_METRES / length;
 	}
 	head_offset(offset);
 	for (axis = 0; axis < 3; axis++)
@@ -4119,7 +4137,7 @@ static void place_scope(struct halo_xr_layers *layers)
 	int kind = vr.scope_shape == VR_SCOPE_SNIPER ? 1 : vr.scope_shape == VR_SCOPE_ROUND ? 0 : -1;
 	const float *adjust = kind >= 0 ? vr.scope_adjust[kind] : NULL;
 	/* OpenXR's x right, y up, z back; in the left hand, left is the other way */
-	float local[3], turned[3];
+	float local[3], turned[3], origin[3];
 	int axis;
 
 	local[0] = vr.weapon_hand ? -offset[1] : offset[1];
@@ -4132,10 +4150,14 @@ static void place_scope(struct halo_xr_layers *layers)
 		local[1] += adjust[1];
 		local[2] -= adjust[0];
 	}
+	tracked_hand_origin(&vr.aim_pose, origin);
 	rotate(vr.aim_pose.orientation, local, turned);
 	for (axis = 0; axis < 3; axis++)
-		layers->scope_pose.position[axis] = vr.aim_pose.position[axis] + turned[axis];
-	memcpy(layers->scope_pose.orientation, vr.aim_pose.orientation, sizeof(layers->scope_pose.orientation));
+		layers->scope_pose.position[axis] = origin[axis] + turned[axis];
+	/* The layer's image is rendered from shot_pose (which includes this gun's
+	 * aim calibration); keep its plane on that same direction. Its center and
+	 * adjustable sight offset remain attached to the physical gun pose. */
+	memcpy(layers->scope_pose.orientation, vr.shot_pose.orientation, sizeof(layers->scope_pose.orientation));
 	layers->scope_size[0] = layers->scope_size[1] = vr.scope_size * (adjust ? adjust[3] : 1.0f);
 	layers->flags |= HALO_XR_LAYER_SCOPE;
 }

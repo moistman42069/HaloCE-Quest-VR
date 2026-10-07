@@ -134,6 +134,7 @@ symbols in this file:
 #include "interface/ui_widget.h"
 #include "scenario/scenario_definitions.h"
 #include "sound/sound_manager.h"
+#include "tag_schema.h"
 #include "cache_file_formats.h"
 #include "custom_edition_cache.h"
 
@@ -245,6 +246,8 @@ static boolean cache_file_tag_header_verify(
 	struct cache_file_tag_header *tag_header,
 	long tag_data_size,
 	char const *scenario_name);
+static boolean cache_file_structure_bsp_tag_valid(
+	struct scenario_structure_bsp_reference const *reference);
 static boolean cache_file_structure_bsp_reference_verify(
 	struct scenario_structure_bsp_reference *reference);
 
@@ -458,6 +461,18 @@ static boolean cache_file_tag_header_verify(
 	return TRUE;
 }
 
+/* Whether the structure BSP datum names a loaded BSP tag. */
+static boolean cache_file_structure_bsp_tag_valid(
+	struct scenario_structure_bsp_reference const *reference)
+{
+	long absolute_index = DATUM_INDEX_TO_ABSOLUTE_INDEX(reference->structure_bsp.index);
+
+	return reference->structure_bsp.index != NONE &&
+		absolute_index >= 0 && absolute_index < global_tag_count &&
+		global_tag_instances[absolute_index].tag_index == reference->structure_bsp.index &&
+		global_tag_instances[absolute_index].group_tag == STRUCTURE_BSP_TAG;
+}
+
 /* port: whether a structure bsp reference (the scenario's) may be loaded:
 its bytes lie in the map and fit the tag cache after the tag data, where
 they are read to (rounded up to whole sectors, as the read is), and it
@@ -503,10 +518,7 @@ static boolean cache_file_structure_bsp_reference_verify(
 		return FALSE;
 	}
 
-	if (reference->structure_bsp.index == NONE ||
-		absolute_index >= cache_file_globals.tag_header->tag_count ||
-		global_tag_instances[absolute_index].tag_index != reference->structure_bsp.index ||
-		global_tag_instances[absolute_index].group_tag != STRUCTURE_BSP_TAG)
+	if (!cache_file_structure_bsp_tag_valid(reference))
 	{
 		error(
 			_error_silent,
@@ -1025,8 +1037,17 @@ void cache_files_show_multiplayer_unavailable(
 	return;
 }
 
-boolean cache_files_map_present(
+/* The CE header checksum is the map identity OpenCE sends in map.version.
+Stock Xbox maps use zero to preserve their existing cross-region behavior. */
+unsigned long cache_files_map_version(
 	char const *map_name)
+{
+	return custom_edition_level_name(map_name) ? custom_edition_map_checksum(map_name) : 0;
+}
+
+boolean cache_files_map_present(
+	char const *map_name,
+	unsigned long version)
 {
 	void platform_log(char const *format, ...);
 	wchar_t error_text[512];
@@ -1039,7 +1060,7 @@ boolean cache_files_map_present(
 	name = tag_name_strip_path(map_name);
 	if (custom_edition_level_name(map_name))
 	{
-		if (custom_edition_cache_present(map_name, message, sizeof(message)))
+		if (custom_edition_cache_present(map_name, version, message, sizeof(message)))
 			return TRUE;
 	}
 	else
@@ -1195,6 +1216,19 @@ long scenario_tags_load(
 
 				return NONE;
 			}
+			/* Validate retail tags before gameplay follows their blocks,
+			references, indices or runtime fields. Custom Edition tags use the
+			adapted validator in custom_edition_cache.c. */
+			if (!tag_validate_tags(
+				tag_cache_base_address,
+				cache_file_globals.header.tag_data_size,
+				cache_file_globals.header.file_length,
+				scenario_name))
+			{
+				cache_file_close();
+
+				return NONE;
+			}
 			cache_file_globals.tag_header = tag_cache_base_address;
 			match_vassert(
 				"c:\\halo\\SOURCE\\cache\\cache_files.c",
@@ -1255,11 +1289,20 @@ boolean scenario_structure_bsp_load(
 	byte *tag_cache_base_address;
 	/* port: the bsp's header, once read and checked */
 	struct cache_file_structure_bsp_header *structure_bsp_header;
+	boolean custom_edition = custom_edition_cache_tags_loaded();
 
 	/* port: the tag data's size was checked as the map loaded
 	(cache_file_header_verify); the bsp's reference is the map's, and is
 	checked before anything is read where it says */
-	if (cache_file_globals.header.tag_data_size < 0 ||
+	if (custom_edition)
+	{
+		if (!custom_edition_structure_bsp_reference_valid(reference) ||
+			!cache_file_structure_bsp_tag_valid(reference))
+		{
+			return FALSE;
+		}
+	}
+	else if (cache_file_globals.header.tag_data_size < 0 ||
 		cache_file_globals.header.tag_data_size > TAG_CACHE_SIZE ||
 		!cache_file_structure_bsp_reference_verify(reference))
 	{
@@ -1269,7 +1312,7 @@ boolean scenario_structure_bsp_load(
 	tag_cache_base_address = physical_memory_get_tag_cache_base_address();
 	/* a Halo Custom Edition structure BSP goes to the top of that map's own
 	tag cache, not this build's (port/linux/game/custom_edition_cache.c) */
-	if (!custom_edition_cache_tags_loaded())
+	if (!custom_edition)
 	{
 		csmemset(
 			tag_cache_base_address + cache_file_globals.header.tag_data_size,
@@ -1328,6 +1371,16 @@ boolean scenario_structure_bsp_load(
 
 			return FALSE;
 		}
+	}
+
+	/* Validate the BSP schema and its cross-tag references before registering
+	its native buffers or converting Custom Edition geometry. */
+	if (!tag_validate_structure_bsp(
+		reference->structure_bsp.index,
+		reference->base_address,
+		reference->file_size))
+	{
+		return FALSE;
 	}
 
 	cache_file_globals.structure_bsp_header = structure_bsp_header;

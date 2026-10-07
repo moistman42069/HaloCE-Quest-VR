@@ -50,6 +50,23 @@ def main():
         assert children[0].get('x') == '82' and children[0].get('y') == '73'
         assert int(children[1].get('y')) - (73 + 28) == 2
 
+    server_menu = ET.parse(ASSETS/'main_menu.multiplayer_type_select.join_game.xml').getroot()
+    server_rows = [w for w in server_menu.findall('widget') if '/server_item_' in w.get('name', '') and
+                   w.get('name', '').rsplit('/', 1)[-1][12:].isdigit()]
+    assert len(server_rows) == 15
+    server_list = next(w for w in server_menu.findall('widget') if w.get('name', '').endswith('/join_game_items_list'))
+    positions = {c.get('widget', '').rsplit('/', 1)[-1]: (int(c.get('x', '0')), int(c.get('y', '0')))
+                 for c in server_list.findall('child')}
+    for index in range(1, 16):
+        name = f'server_item_{index}'
+        row = next(w for w in server_rows if w.get('name', '').endswith('/' + name))
+        assert (int(row.get('width')), int(row.get('height'))) == (620, 18)
+        assert positions[name] == (10, 85 + index * 17)
+        assert {event.get('event') for event in row.findall('on')} >= {'a', 'left_mouse'}
+        for child in row.findall('child'):
+            definition = next(w for w in server_menu.findall('widget') if w.get('name') == child.get('widget'))
+            assert not definition.findall('on'), (name, child.get('widget'))
+
     ui = (ROOT/'source/interface/ui_widget.c').read_text()
     router = ui[ui.index('#define UI_MOUSE_MAXIMUM_TARGETS'):ui.index('static void widget_instance_render_recursive(', ui.index('#define UI_MOUSE_MAXIMUM_TARGETS'))]
     renderer = ui[ui.index('static void widget_instance_render_recursive(', ui.index('#define UI_MOUSE_MAXIMUM_TARGETS')):]
@@ -163,6 +180,42 @@ static int click(int x,int y){
  pointer.x=pointer.click_x=x;pointer.y=pointer.click_y=y;pointer.moved=pointer.left_clicks=1;
  ui_widgets_process_mouse();assert(post_count<=1);return posted;
 }
+static void move_pointer(int x,int y){
+ note();memset(&pointer,0,sizeof(pointer));posted=-1;post_count=0;
+ pointer.x=x;pointer.y=y;pointer.moved=1;
+ ui_widgets_process_mouse();assert(post_count==0);
+}
+static void test_server_row_hover(void){
+ setup(&records[0]);
+ memset(&root,0,sizeof(root));memset(&row,0,sizeof(row));memset(&neighbor,0,sizeof(neighbor));
+ value.visible=button.visible=0;
+ root.type=_ui_widget_type_column_list;root.visible=1;root.child=&row;root.parameters.list.number_of_items=2;
+ row.type=neighbor.type=_ui_widget_type_container;row.visible=neighbor.visible=1;
+ row.parent=neighbor.parent=&root;row.next=&neighbor;row.definition_tag_index=neighbor.definition_tag_index=1;
+ strcpy(row.name,"server_item_1");strcpy(neighbor.name,"server_item_2");
+ definitions[0].flags=FLAG(_widget_dpad_updown_tabs_thru_children_bit);
+ definitions[1].bounds=(rectangle2d){0,0,18,620};definitions[1].event_handlers.count=1;
+ definitions[3].bounds=(rectangle2d){18,0,36,620};definitions[3].event_handlers.count=1;
+ origin=(point2d){0,0};root.focused_child=&row;root.parameters.list.selected_index=0;
+ ui_mouse_target_count=ui_mouse_press_count=0;ui_mouse_hover_pending=ui_mouse_click_pending=0;
+ widget_globals.active_widgets[0]=&root;posted=-1;post_count=0;stock=extra_width=keyboard=0;ui_mouse_noting_targets=1;
+ move_pointer(100,25);
+ assert(root.focused_child==&neighbor&&root.parameters.list.selected_index==1);
+ assert(click(100,25)==_gamepad_analog_button_a);
+ assert(root.focused_child==&neighbor&&root.parameters.list.selected_index==1);
+ move_pointer(100,5);
+ assert(root.focused_child==&row&&root.parameters.list.selected_index==0);
+ assert(click(100,5)==_gamepad_analog_button_a);
+
+ /* Pointer travel keeps map/profile rows click-to-select. */
+ strcpy(row.name,"list_item_1");strcpy(neighbor.name,"list_item_2");
+ root.focused_child=&row;root.parameters.list.selected_index=0;
+ move_pointer(100,25);
+ assert(root.focused_child==&row&&root.parameters.list.selected_index==0);
+ assert(click(100,25)==-1);
+ assert(root.focused_child==&neighbor&&root.parameters.list.selected_index==1);
+ assert(click(100,25)==_gamepad_analog_button_a);
+}
 static void test_arrows(const struct record*r){
  setup(r);
  for(int arrow=0;arrow<2;arrow++){
@@ -194,6 +247,7 @@ static void test_arrows(const struct record*r){
 int main(int argc,char**argv){
  (void)argv;
  for(long i=0;i<NUMBEROF(records);i++)test_arrows(&records[i]);
+ test_server_row_hover();
  struct record category={"category",{0,0,28,256},{{9,3,21,9},{9,247,21,253}}};
  setup(&category);definitions[1].bounds=category.bounds;
  for(int y=0;y<28;y++)for(int x=0;x<256;x++)assert(click(origin.x+x,origin.y+y)==(x<128?_widget_event_dpad_left:_widget_event_dpad_right));
@@ -224,7 +278,7 @@ int main(int argc,char**argv){
   if(click(origin.x+5,origin.y+12)!=_widget_event_dpad_left)return 7;
   return 0;
  }
- printf("PASS: %ld XML value spinners, all arrow pixels, focus/events, full category row, neighbors, hidden/disabled, stock and read-only guards\n",NUMBEROF(records));
+ printf("PASS: %ld XML value spinners, server-row hover selection, map-row click-to-select, all arrow pixels, focus/events and guards\n",NUMBEROF(records));
  return 0;
 }
 '''.replace('RECORDS', rows)

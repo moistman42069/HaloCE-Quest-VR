@@ -1,20 +1,25 @@
-# Active work checkpoint — Test33 private candidate (2026-10-07)
+# Active work checkpoint — Test34 private candidate (2026-10-07)
 
-Read [TEST33-PROGRESS.md](TEST33-PROGRESS.md) and
-[TEST33-DELIVERY.md](TEST33-DELIVERY.md). The current pair is 1.0.14/code43,
-OpenCE Build145/network22, runtime `e522f34c04969daaa87bfa952bb0256b222be590`.
-The supplied Test32 log shows a stale native client after a local-host session:
-public P2P connections opened, but the joined client could not resume game
-advertisement discovery. Browser entry now starts a fresh search for clients
-that are no longer searching. All 56 regression suites passed for each flavor;
-both APKs passed native build, signing, payload, network-parity, and alignment
-checks. This is not headset acceptance. Ask the owner to test the local-host,
-return-to-menu, public-browser, join sequence and report fresh logs if it still
-fails. Do not publish or push. Preserve accepted Test31b VR settings and
-Test31c Android touch/gameplay. Test31b already had the same unchecked global
-client reuse, so the evidence shows a latent flow-specific bug, not a newly
-changed network protocol. Network protocol and upstream networking source
-remain unchanged.
+Read [TEST34-PROGRESS.md](TEST34-PROGRESS.md),
+[TEST34-UPSTREAM-INTEGRATION.md](TEST34-UPSTREAM-INTEGRATION.md), and
+[TEST34-DELIVERY.md](TEST34-DELIVERY.md). The active private candidate targets
+version 1.0.15/code44 and official OpenCE Build147/network23. Preserve the
+owner-accepted Test31b VR settings and Test31c Android touch/gameplay. Build147
+is Latest on its direct official release page; the general listing has shown
+stale Build145 metadata. Current integration includes the tag-schema validator
+for CE and retail tags, CE range adaptation, structure-BSP validation before
+conversion, network-23 map identity, capacity/co-op/camera safeguards, and
+server-row pointer hover. The source audit fixed the CE map file-data range to
+the declared file length and added the previously missing BSP validator call.
+The full regression suite passes; the CE cache-format suite has 127 passes and
+4 skips because no local CE map files are installed. VR scope alignment is also
+fixed across every zoom scope shape: calibrated view orientation, gun-anchored
+center, shared 90 cm reach clamp, and ±30 cm pistol/sniper offsets. Build, sign,
+and verify both release APKs before delivery. Then report exact hashes and ask
+the owner to test Android and Quest, including scope alignment, menu pointer
+selection, representative maps, and network-23 joins.
+This is not device acceptance. Keep the public v1.0.12 untouched; do not push,
+tag, publish, install, or launch the game.
 
 Earlier Test31/Test32 task notes below are historical; Test32 vehicle features
 are already incorporated in the candidate and documented in

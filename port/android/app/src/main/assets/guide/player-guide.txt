@@ -1,63 +1,71 @@
-# Test32 private candidate — Quest VR and Android
+# Test34 private candidate — Android and Quest VR
 
-Version 1.0.13 / Android code 42. OpenCE Build 145 / network 22.
-This is a private test build, not a new public release.
+**Version:** 1.0.15 / Android code 44
+
+**Networking:** OpenCE Build 147 / network 23
+
+**Status:** private test candidate; not device-accepted or publicly released.
 
 ## Install
 
-Install the matching Quest or Android APK over Test31c or the existing public
-app. Keep the app installed to retain imported game files, saves and settings.
-The original project signing certificate is required and verified when packaging.
-Quest and flat Android remain separate apps; use the correct APK for each device.
-Users still supply their own supported game files. Existing game sets remain.
+Use the matching flat Android or Quest APK from the Test34 delivery folder.
+Install over the existing app to retain imported game files, saves, and
+settings. Do not uninstall or clear app data. The two APKs are separate app
+variants. Provide your own legally obtained game files; none are included.
 
-## Changes to test
+## What changed
 
-- The launcher directs multiplayer and online campaign co-op to the OpenCE
-  in-game menus. It retains game-data management, updates, input setup, help
-  and logs. See the launcher’s multiplayer/co-op guide for browsing, creating
-  a server, direct links, passwords and troubleshooting.
-- Create Game's category arrows have larger, aligned click targets. Use the
-  left/right arrows to switch **MULTIPLAYER / SINGLEPLAYER** (and available
-  custom categories). Stick/D-pad navigation and other menus stay as before.
-- Vehicles recenter on entry and exit. Test leaning in a moving co-op passenger
-  seat as well as driver/gunner seats, in first- and third-person views.
-- VR Settings → Vehicles → TURRET AIM selects Right Hand (default), Left Hand,
-  Head or Stick independently of driver STEERING. These mean physical hands,
-  independent of which hand holds a weapon. Test mounted turrets and gunner seats.
-- HUD gestures require a steady gun-hand hold by its own temple for about
-  0.3 seconds; a buzz confirms. Withdraw clearly for at least a quarter second
-  before repeating. HUD → Shown/Hidden and Head Tap → Off remain available.
-  The flashlight gesture stays unchanged.
-- The accepted circular Android touch layout and optional look-without-LOOK-pad
-  behavior are preserved. The accepted VR settings design and glass toggle remain.
-- **Safe geometry is the default on both Android and Quest.** This supersedes
-  the earlier flat Android Normal default. The launcher still lets you choose
-  Normal explicitly; restart after changing geometry compatibility.
+- Pointer hover now selects server rows in the in-game server browser. Stick
+  and D-pad navigation remain available; lists with nested controls remain
+  click-to-select.
+- OpenCE Build 147 networking uses protocol version 23. Custom Edition maps
+  are compared by map name and header checksum before loading when a nonzero
+  checksum is available. The app's CE loader now uses the matching upstream
+  tag schemas with Android/Quest-specific combined-file ranges and cache size.
+- Build 147 capacity and safety updates cover widgets, light volumes, vehicle
+  home tracking, CE linear bitmap pitch, bounded co-op enemy growth, missing
+  Oddball spawn fallback, and host-only `bringto`.
+- The owner-accepted Android touch behavior and VR settings design are carried
+  forward. The existing upright co-op camera behavior remains; invalid axes
+  safely skip that camera update.
+- VR scope alignment now uses the same calibrated shot direction for the
+  compositor layer and zoom view. Its physical center stays on the gun, uses
+  the same 90 cm reach clamp as the rendered weapon, and the pistol/sniper
+  scope offsets can be adjusted through ±30 cm. This applies to every zoomed
+  weapon's scope shape, including the round and rocket-style overlays.
 
-Use the launcher **Versions & updates** for validated APK updates. The native
-menu's **USE LAUNCHER** message points to this existing updater; do not replace
-individual networking files with arbitrary upstream executables.
+## Multiplayer and compatibility
 
-Vehicle handle grabbing is deferred at the owner's request. It is not included.
-First-person vehicle comfort still needs headset testing; third-person remains
-the default. The existing per-vehicle position and driver horizon options remain.
+Every peer must use network 23. Network 21 and 22 clients/hosts cannot join
+this candidate. Select **Play → Multiplayer → Join Game → Server Browser** to
+browse, or **Create Game → Internet/LAN** to host. For campaign co-op, select
+**SINGLEPLAYER** in Create Game and then choose the mission, difficulty and
+Server Setup options. The launcher remains for game files, updates, input
+setup, help and logs.
 
-## Network and support
+The map checksum applies to Custom Edition cache headers and is not an Xbox
+ISO/XISO revision detector. A zero checksum does not guarantee content
+identity. Matching protocol versions do not guarantee a server is reachable;
+maps, NAT, firewall and network conditions still matter. See
+[Test34 multiplayer/upstream notes](MULTIPLAYER-BROWSER.md) and the
+[upstream integration audit](TEST34-UPSTREAM-INTEGRATION.md).
 
-Match OpenCE network 22. The upstream latest release/main were checked before
-this pass and still resolve to Build 145. Older network versions cannot join.
-All peers need the map/revision/content required by the server; a listed server
-does not guarantee matching game content or reachable NAT. Existing networking
-behavior is preserved. Test co-op entry/exit and vehicle role swaps with both peers.
+## What to test
 
-For a problem, provide exported launch logs, the installed build, headset/phone,
-host versus joiner, vehicle/seat/view mode, relevant settings and a short clip.
-Report in [the support Discord](https://discord.gg/S9uSCKxKx) or DM
-**@MeWhenINameMyself**. Avoid posting private invitations or network details publicly.
+1. Launch flat Android and Quest VR; verify menus, touch/gamepad controls, and
+   Safe geometry startup remain usable.
+2. In the in-game browser, move the pointer across several server rows, select
+   one, then verify stick/D-pad navigation still works.
+3. Join a Build147/network-23 host using the same game data. If possible,
+   compare matching and intentionally different CE map-header checksums.
+4. Load campaign and multiplayer maps, transition a co-op mission, and report
+   any crash, desync, missing map, or unexpected rejection.
+5. Export logs from every peer and include headset/phone model, OS version,
+   host/join role, map, game-data revision, network type and exact steps.
 
-Automated checks and build verification do not establish device acceptance.
-Test32 device results are pending.
+Send reports in the [Halo CE Decomp Discord](https://discord.gg/S9uSCKxKx) or
+DM **@MeWhenINameMyself**. Automated tests do not substitute for this device
+testing.
 
 
 ---
@@ -66,14 +74,18 @@ Test32 device results are pending.
 
 # Halo CE Quest VR + Android player guide
 
-## Current private build: Test32
+## Current private build: Test34
 
-The current development build uses **OpenCE Build 145 / exact network 22** and
-its full in-game menus. The public v1.0.12 downloads documented below use the
-older network 21 and are preserved; they are not the Test32 private APKs.
-Use [Test32 player notes](TEST32-PLAYER-NOTES.md) for the current candidate,
-vehicle/HUD changes and device checklist. The owner accepted Test31c Android
-gameplay/touch; this pass preserves it. Test32 itself still needs device testing.
+The current private candidate is aligned to the official **OpenCE Build 147 /
+network 23 release**, including the shared tag-schema validator adapted to this port's
+larger Quest cache. The [direct Build 147 release page](https://github.com/OpenCommunityEdition/OpenCE/releases/tag/build-147)
+marks it Latest; the general releases listing has shown stale Build 145
+metadata. The public v1.0.12 downloads documented below use
+network 21 and are preserved; they are not the Test34 APKs. Use
+[Test34 player notes](TEST34-PLAYER-NOTES.md) for cursor behavior, network-23
+compatibility and device checklist. The owner accepted the Test31c Android
+gameplay/touch behavior and prefers the Test31b VR settings design; Test34
+preserves both baselines and still needs device testing.
 
 ### Where multiplayer and co-op moved
 
@@ -285,11 +297,11 @@ The launcher browser reads the ChupathingyCE native-port directory and can merge
 
 **Host multiplayer** offers installed map, game type, name, score/time, friendly fire, radar, team balance, vehicle respawn, loadout/grenade options and **2–128 PvP slots**. Public listing is opt-in; private invites are available. Start with modest limits: 128 is protocol capacity, not a verified Quest-host performance target. Network settings expose Internet/LAN, UPnP, clipboard invites and tunnel port.
 
-Since 1.0.9 this project has followed OpenCE's native netcode. **v1.0.12 uses network 21 (Build 144)** and requires an exact match; v1.0.10 uses network 20. OpenCE Windows/macOS/Linux/Android builds at network 21 can cross-play when game data and connectivity are compatible. **Retail Halo PC/Custom Edition, original Xbox and MCC use different network protocols.** Other network versions are refused by name.
+This project's public v1.0.12 APKs use OpenCE network 21 (Build 144). The private Test34 candidate targets network 23 (Build 147) and cannot connect to network-21/22 peers. Matching network versions are required; compatible OpenCE desktop and Android builds may cross-play when their content and connectivity also match. Retail Halo PC/Custom Edition, original Xbox and MCC use different protocols. The Build 147 Custom Edition map checksum check compares namespaced CE map headers; it does not identify Xbox ISO/XISO disc revisions.
 
 ### Campaign co-op and avatars
 
-Co-op is OpenCE's native campaign mode on the same network version (21 since 1.0.12). Host sizes are 2, 4, 8, 12, 16, 24, 32, 48, 64, 96 and 128 players (4 by default). Players can join an active mission; the host runs scripts, AI, checkpoints and level changes. A dead player spectates a teammate and returns when safe. Everyone needs compatible campaign maps. Previous network 9–11 and CE01/CE02 sessions cannot join.
+Co-op is OpenCE's native campaign mode. The published v1.0.12 uses network 21; Test34 uses network 23. Host sizes are 2, 4, 8, 12, 16, 24, 32, 48, 64, 96 and 128 players (4 by default). Players can join an active mission; the host runs scripts, AI, checkpoints and level changes. A dead player spectates a teammate and returns when safe. Everyone needs compatible campaign maps. Network versions must match exactly.
 
 Step-by-step instructions are in the launcher: **How to join co-op & find servers** (also first in the Field guide).
 

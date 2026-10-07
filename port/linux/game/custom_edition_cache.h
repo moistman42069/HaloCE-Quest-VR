@@ -18,7 +18,12 @@ cache_file_formats.c.
 
 boolean custom_edition_level_name(char const *level_name);
 boolean custom_edition_map_file_present(char const *map_name);
-boolean custom_edition_cache_present(char const *level_name, char *message, long message_size);
+unsigned long custom_edition_map_checksum(char const *level_name);
+boolean custom_edition_cache_present(
+	char const *level_name,
+	unsigned long checksum,
+	char *message,
+	long message_size);
 
 /* ---------- structures */
 
@@ -69,6 +74,10 @@ struct cache_file_tag_header *custom_edition_cache_tags_load(
 
 boolean custom_edition_cache_tags_loaded(
 	void);
+/* Whether this loaded CE BSP reference fits above its tags and within the
+selected cache allocation. */
+boolean custom_edition_structure_bsp_reference_valid(
+	struct scenario_structure_bsp_reference const *reference);
 void custom_edition_cache_tags_unload(
 	void);
 

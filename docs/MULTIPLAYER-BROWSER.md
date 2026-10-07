@@ -1,9 +1,11 @@
 # Multiplayer and campaign co-op: current private builds
 
-Test32 retains the full **OpenCE Build 145 / network 22** menu and transport
-integration from Test31. Use matching network versions and compatible game files.
-Public v1.0.12 uses network 21 and is preserved separately. Test32 is a private
-candidate; see [player notes](TEST32-PLAYER-NOTES.md) for pending device checks.
+Test34 targets the official **OpenCE Build 147 release / network 23**, including CE
+map-header checksum matching. The direct Build 147 release page marks it
+Latest; the general releases listing has shown stale Build 145 metadata. Use
+matching network versions and compatible game files. Public
+v1.0.12 uses network 21 and is preserved separately. Test34 is a private
+candidate; see [player notes](TEST34-PLAYER-NOTES.md) for device checks.
 
 ## In-game browser and hosting
 
@@ -18,8 +20,10 @@ Choose **Play**, then **Multiplayer**. Create/select a profile if asked.
 | Host campaign co-op | Create Game > Internet or LAN > SINGLEPLAYER > mission > difficulty > Server Setup |
 
 The public browser uses OpenCE signed discovery, not the old launcher's HTTPS
-community catalog. Lists are ordered **most populated first**; use stick/D-pad
-navigation (MOVE on Android) to scroll the list. **REFRESH** requests current results.
+community catalog. Lists are ordered **most populated first**. In Test34, moving
+the pointer over a server row also selects that server; stick/D-pad navigation
+(MOVE on Android) and click selection remain available. **REFRESH** requests
+current results.
 Select a row or **JOIN GAME**. Locked listings ask for the password and have a
 retry path. If an in-progress lobby preview appears, choose JOIN GAME there.
 
@@ -68,7 +72,7 @@ are in [the current launcher guide](TEST32-LAUNCHER-GUIDE.md).
 
 ## Compatibility and reports
 
-Match **network 22**, map resources and the server's content. Different ISO/
+Match **network 23**, map resources and the server's content. Different ISO/
 revision files or modified maps can cause failures, but they are only one cause.
 The in-game browser does not automatically switch game sets or infer verified
 Original/Rev1/Rev2 requirements. Choose the correct imported set under **Game
@@ -82,7 +86,10 @@ Wi-Fi or LAN and a fresh invite. UPnP may help supported routers; no relay is
 included. Use launcher Versions & updates for reviewed port builds, not arbitrary
 upstream executable replacement.
 
-For crashes/desync/connection issues, collect both peers' Download/HaloCE logs,
+For CE maps, the host's header checksum is checked against the joining peer's
+file before loading. Stock Xbox maps retain zero in this field. This does not
+identify Original/Rev1/Rev2 ISO/XISO revisions, and the browser does not switch
+game sets automatically. For crashes/desync/connection issues, collect both peers' Download/HaloCE logs,
 build/network versions, device and connection types, map/game-set details,
 host/join roles and reproduction steps. Report in [support Discord](https://discord.gg/S9uSCKxKx)
 or DM **@MeWhenINameMyself**. Review logs for private links before public posting.

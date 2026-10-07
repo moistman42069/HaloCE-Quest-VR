@@ -1,16 +1,20 @@
 # Halo CE Quest VR + Android 1.0.12
 
-Development branch: **test31c / 1.0.13 private touch/glass correction** restores
-the familiar circular touch layout while retaining direct menu taps and optional
-free look. The owner accepted Test31b VR and prefers its new VR settings;
-that Quest APK is preserved as the baseline. This pass also fixes its Warthog
-glass toggle while keeping the VR settings design. Build145/network22 remains.
-[Current evidence and scope](docs/TEST31C-PROGRESS.md).
+Development branch: **test34 / 1.0.15 private OpenCE Build 147 and menu-pointer candidate**.
+It adds hover selection for server rows, adopts network 23 with CE map-checksum
+matching, integrates OpenCE's tag schemas and validator into the Quest CE cache
+loader, and adapts the applicable Build 146/147 safety and capacity changes.
+The owner-accepted VR settings and Android touch behavior remain the baseline.
+[Current evidence and scope](docs/TEST34-PROGRESS.md).
 The public download links below remain v1.0.12 until a release is authorized.
 
 [Latest release and downloads](https://github.com/moistman42069/HaloCE-Quest-VR/releases/tag/v1.0.12) · [Previous release v1.0.11](https://github.com/moistman42069/HaloCE-Quest-VR/releases/tag/v1.0.11) · [Full release notes](docs/RELEASE-1.0.12.md) · [Controls and settings](docs/CONTROLS-AND-OPTIONS.md) · [Credits](CREDITS.md)
 
-Halo: Combat Evolved for standalone Meta Quest VR and flat Android, built on the Halo CE decompilation. Version **1.0.12 / code 38** uses OpenCE Build 144's native network version 21 for PvP and campaign co-op.
+The latest public download from this project remains **v1.0.12 / code 38**. The private Test34 candidate is **1.0.15 / code 44**, adapted to OpenCE Build 147 / network 23. OpenCE's direct Build 147 release page marks it Latest; the general releases listing may still show stale Build 145 metadata. Private candidates are not public downloads.
+
+## Current private candidate: Test34
+
+Test34 updates the native game to OpenCE Build 147 behavior where applicable: network 23 with Custom Edition map-header checksum matching, the upstream tag-schema validator adapted to the Quest cache, Build 147 capacity/co-op/camera safeguards, and pointer hover selection for server rows. It preserves the owner-accepted Android touch behavior and VR settings design. The source-level and APK checks are recorded in [Test34 progress](docs/TEST34-PROGRESS.md) and [delivery](docs/TEST34-DELIVERY.md). These APKs remain private test candidates and have not received device acceptance.
 
 ## Downloads and installation
 
@@ -21,7 +25,7 @@ Halo: Combat Evolved for standalone Meta Quest VR and flat Android, built on the
 
 Both APKs are ARM64 and require Android 9/API 28 or newer. Quest requires Developer Mode and sideloading. Install over the existing project app; **do not uninstall or clear app data**. Back up saves and game data first. Import your own legally obtained Xbox Halo CE ISO/XISO or extracted game data through launcher **Game files & versions**. No game maps are distributed.
 
-## What's new
+## What's new in this project's latest published release (v1.0.12)
 
 - VR menus now map Quest A/X/Y to the matching on-screen button labels; X deletes the selected profile and B backs out once. Gameplay bindings are unchanged.
 - Campaign co-op hosting now accepts an optional, remembered server name (up to 15 printable ASCII characters); blank keeps the device name. It appears in lobbies and server browsers.
@@ -48,7 +52,7 @@ Both APKs are ARM64 and require Android 9/API 28 or newer. Quest requires Develo
 - **Touch:** tap **HUD** in game to move or resize buttons and adjust opacity, color and response. Use **MOVE + swipe** for movement and aiming, or drag **FIRE** to combine move/aim/fire. Touch visibility can be Auto, Always show or Always hide.
 - Detailed guides: [Android gamepad](docs/ANDROID-GAMEPAD.md) · [touch controls and HUD editor](docs/ANDROID-TOUCH-CONTROLS.md).
 
-## Multiplayer and campaign co-op
+## Multiplayer and campaign co-op in v1.0.12
 
 All peers must use **network version 21** (OpenCE Build 144 / this release); v1.0.11 peers remain compatible, while v1.0.10/network-20 and other versions are incompatible. Host from launcher **Campaign co-op → Host campaign**, select mission, difficulty and player limit, and optionally enter a remembered server name (up to 15 printable ASCII characters; blank uses the device name). Start from the game lobby. Join from **Multiplayer → System Link → Refresh** or the launcher's co-op browser, then select the host in System Link. Public lobbies appear in native OpenCE discovery/community listings; LAN also works.
 

@@ -13,6 +13,9 @@ off.
 
 #ifdef HALO_VR
 
+/* Maximum per-scope translation in the VR menu (metres). */
+#define VR_SCOPE_ADJUST_LIMIT_METRES 0.30f
+
 /* 1 once the OpenXR session exists (after the GL context does) */
 int vr_active(void);
 /* sets up the session; called once the GL context is current */

@@ -36,6 +36,7 @@ SUITES = [
     'test_test32_geometry',
     'test_test32_menu_arrows',
     'test_test33_network_browser_lifecycle',
+    'test_test34_opence',
 ]
 
 def main():

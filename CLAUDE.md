@@ -1,22 +1,21 @@
 # Agent and contributor continuation
 
-## Current: Test33 multiplayer browser recovery (2026-10-07)
+## Current: Test34 OpenCE Build 147 integration (2026-10-07)
 
 Read `docs/ACTIVE-WORK-CHECKPOINT.md`, `docs/CURRENT-STATE.md`,
-`docs/TEST33-PROGRESS.md`, and `docs/TEST33-DELIVERY.md` first. The private
-1.0.14/code43 pair builds from `e522f34c04969daaa87bfa952bb0256b222be590`;
-all 56 host suites and both package checks pass. Test the exact local-host →
-main-menu → public-browser → join flow on a Quest before claiming the issue is
-resolved. If the owner reports a failure, inspect that new log and compare
-against Test33; do not guess at protocol incompatibility. Preserve accepted
-Test31b VR settings and Test31c Android touch/gameplay. OpenCE Build145/network22
-and upstream networking sources are unchanged in this lifecycle fix. Test31b
-already had the same unchecked global-client reuse; this is a latent
-host-then-public-browser edge case, not an identified recent wire/protocol
-regression. Do not
-publish or push without a separate request. Older Test31/Test32 active-work
-paragraphs below are historical; the remaining interaction backlog is still
-tracked in `docs/VR-INTERACTION-REQUIREMENTS.md`.
+`docs/TEST34-PROGRESS.md`, `docs/TEST34-UPSTREAM-INTEGRATION.md`, and
+`docs/TEST34-DELIVERY.md`. The active private candidate targets 1.0.15/code44
+and official OpenCE Build 147/network23. Build 147 is marked Latest on its
+direct release page; the general releases listing has shown stale Build 145
+metadata. The candidate ports applicable Build147 behavior into the Android/
+Quest architecture, including the full shared tag schemas, CE cache adapter,
+retail tag validation, and structure-BSP validation. A source review caught
+and fixed use of physical file size instead of declared CE file length, plus
+missing BSP validation before conversion. Complete the full host suites and
+both release-mode APK builds, then record artifacts and hashes. This remains a
+private candidate: no device acceptance, push, tag, release, install, or game
+launch. Preserve the owner-accepted Test31b VR settings and Test31c Android
+touch/gameplay.
 
 ## Active touch/glass correction and accepted VR preference (2026-10-07)
 

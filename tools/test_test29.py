@@ -52,7 +52,7 @@ updater = read('port/android/app/src/main/java/com/halo/decomp/Updater.java')
 
 # --- 1. OpenCE's network version 21, exactly; its co-op, lobby and message files byte for byte
 network = int(re.search(r'#define HALO_PORT_NETWORK_VERSION (\d+)\b', limits).group(1))
-assert network in (21, 22)
+assert network in (21, 22, 23)
 for name in ['', '_MINIMUM', '_MAXIMUM']:
     assert re.search(r'#define HALO_PORT_NETWORK_VERSION%s %d\b' % (name, network), limits), name
 UPSTREAM_144 = [
@@ -82,16 +82,22 @@ UPSTREAM_144 = [
 COOP_CAMERA_PATCH = re.compile(r'\t/\* keep the camera upright: the world\'s up made square to forward\n.*?\n\t\t}\n\t}\n}', re.S)
 COOP_CAMERA_ORIGINAL = ('\t/* keep the camera upright */\n\tup->i = 0.0f;\n\tup->j = 0.0f;\n\tup->k = 1.0f;\n'
                         '\tdistributed_axes_make_valid(forward, up);\n}')
-for path, digest in UPSTREAM_144:
+for path, digest in (UPSTREAM_144 if network < 23 else []):
     data = (ROOT / path).read_bytes()
     if path.endswith('network_coop.c'):
         text = data.decode('utf-8')
         assert len(COOP_CAMERA_PATCH.findall(text)) == 1, 'the one camera patch'
         data = COOP_CAMERA_PATCH.sub(lambda m: COOP_CAMERA_ORIGINAL, text).encode('utf-8')
     assert hashlib.sha256(data).hexdigest() == digest, path + ' as OpenCE build 144'
-assert ('OpenCE build 144 (network 21)' if network == 21 else 'OpenCE build 145 (network 22)') in updater
-print('PASS: exact current network gate; %d co-op, lobby and message files are OpenCE build 144\'s byte for byte '
-      '(network_coop.c with only test28\'s camera)' % len(UPSTREAM_144))
+expected_upstream = ('OpenCE build 144 (network 21)' if network == 21 else
+                     'OpenCE build 145 (network 22)' if network == 22 else
+                     'OpenCE build 147 (network 23)')
+assert expected_upstream in updater
+if network < 23:
+    print('PASS: exact current network gate; %d co-op, lobby and message files are OpenCE build 144\'s byte for byte '
+          '(network_coop.c with only test28\'s camera)' % len(UPSTREAM_144))
+else:
+    print('PASS: network 23 gate; Build 147 integration assertions are checked by test_test34_opence.py')
 
 # --- 2. objects at rest: OpenCE build 144's three sends of one come to rest, and test26's resend of one at rest moved
 send = fn(objects_net, 'distributed_host_send_states')
