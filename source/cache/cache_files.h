@@ -196,4 +196,7 @@ boolean cache_files_map_present(char const *map_name);
 
 boolean cache_file_tag_cache_contains(void const *address, long size);
 
+void *cache_files_tag_instances(long *count);
+void cache_files_set_tag_instances(void *instances, long count);
+
 #endif // __CACHE_FILES_H

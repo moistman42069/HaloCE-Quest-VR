@@ -1295,7 +1295,9 @@ static struct cache_file_tag_instance *instances_grow(long count, long *first_in
 	/* (every tag's absolute index fits a tag index's 16 bits, short of
 	NONE's, and the table's size cannot wrap: the map's count was checked
 	as it loaded, cache_files.c, and is again) */
-	if (existing < 0 || count < 0 || existing > UNSIGNED_SHORT_MAX - count)
+	/* The app's tag consumers use signed short absolute indices. A menu
+	addition must stay addressable by those same consumers. */
+	if (existing < 0 || count < 0 || count > 0x7FFF || existing > 0x7FFF - count)
 	{
 		platform_log("menus: %ld tags and the map's %ld are too many for a tag table", count, existing);
 		return NULL;

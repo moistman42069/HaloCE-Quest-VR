@@ -12,6 +12,14 @@ Settings are named "section.key", as in the file: "display.vsync".
 
 #ifndef PORT_CONFIG_H
 #define PORT_CONFIG_H
+#include <stddef.h>
+
+int config_write(const char *name, const char *value);
+int config_text(const char *name, char *text, size_t size);
+int config_default(const char *name, char *text, size_t size);
+void config_folder(char *path, size_t size);
+char *config_file_read(const char *path, size_t *size);
+unsigned long config_changes(void);
 
 int config_boolean(const char *name);
 long config_integer(const char *name);

@@ -359,6 +359,8 @@ symbols in this file:
 #ifdef HALO_VR
 #include "halo_vr.h"
 #endif
+#include "custom_edition_maps.h" /* port: port/linux/game/custom_edition_maps.c */
+#include "halo_menus.h" /* port: PC_MENU_FUNCTION_BASE */
 
 /* ---------- constants */
 
@@ -666,6 +668,12 @@ static void warn_if_difficulty_will_nuke_saved_game(
 static void dim_if_no_system_link_cable(
 	struct widget_instance *widget);
 
+/* port: ui_widget.c's and port/linux/game/menu_tags.c's */
+short ui_widget_port_list_index(
+	struct widget_instance *list_widget);
+boolean pc_menu_tag(
+	long tag_index);
+
 /* ---------- globals */
 
 static ui_widget_game_data_function game_data_input_function_list[41];
@@ -683,6 +691,17 @@ static byte const local_player_controller_bitmap_frames[2][MAXIMUM_LOCAL_PLAYERS
 	{{3, 4, 5}, {6, 7, 8}, {9, 10, 11}, {12, 13, 14}},
 	{{3, 5, 4}, {6, 8, 7}, {9, 11, 10}, {12, 14, 13}}
 };
+
+/* port: the display index of a Custom Edition multiplayer map this machine
+has, which the menus show by its own name and picture even when its name
+holds an Xbox level's (port/linux/game/custom_edition_maps.c), or NONE */
+static short custom_edition_map_display_index(
+	char const *map_name)
+{
+	short display_index = custom_edition_maps_display_index(map_name);
+
+	return display_index != NONE && !custom_edition_maps_campaign(display_index) ? display_index : NONE;
+}
 
 /* ---------- public code */
 
@@ -721,6 +740,14 @@ void ui_widget_game_data_function_invoke(
 		return;
 	}
 #endif
+	/* port: the menus' own functions (port/linux/game/menu_functions.c) */
+	if (function >= PC_MENU_FUNCTION_BASE && function < 0x8000)
+	{
+		extern void pc_menu_game_data_function_invoke(struct widget_instance *widget, long function);
+
+		pc_menu_game_data_function_invoke(widget, function - PC_MENU_FUNCTION_BASE);
+		return;
+	}
 	if ((short)function >= 0 && function < NUMBEROF(game_data_input_function_list))
 	{
 		game_data_input_function_list[(short)function](widget);
@@ -761,15 +788,9 @@ static void settings_menu_update_extended_description(
 
 	description_picture = list_widget->parameters.list.extended_description->child;
 	description_text = description_picture->next;
-	child = list_widget->child;
-	index = 0;
-	while (child)
-	{
-		if (child == list_widget->focused_child)
-			break;
-		child = child->next;
-		index++;
-	}
+	/* port: in the PC version's lists (port/assets/menus), the item's number
+	among those that take events, as its game counts them (past its labels) */
+	index = ui_widget_port_list_index(list_widget);
 
 	if (index != NONE)
 	{
@@ -804,15 +825,9 @@ static void playlist_settings_menu_update_extended_description(
 		list_widget && list_widget->focused_child && list_widget->parameters.list.extended_description,
 		"invalid widget trying to update its extended list description");
 
-	index = 0;
-	child = list_widget->child;
-	while (child)
-	{
-		if (child == list_widget->focused_child)
-			break;
-		child = child->next;
-		index++;
-	}
+	/* port: in the PC version's lists (port/assets/menus), the item's number
+	among those that take events, as its game counts them (past its labels) */
+	index = ui_widget_port_list_index(list_widget);
 
 	if (index != NONE)
 	{
@@ -845,15 +860,9 @@ static void playlist_gametype_select_menu_update_extended_description(
 		list_widget && list_widget->focused_child && list_widget->parameters.list.extended_description,
 		"invalid widget trying to update its extended list description");
 
-	index = 0;
-	child = list_widget->child;
-	while (child)
-	{
-		if (child == list_widget->focused_child)
-			break;
-		child = child->next;
-		index++;
-	}
+	/* port: in the PC version's lists (port/assets/menus), the item's number
+	among those that take events, as its game counts them (past its labels) */
+	index = ui_widget_port_list_index(list_widget);
 
 	if (index != NONE)
 	{
@@ -887,15 +896,9 @@ static void multiplayer_type_menu_update_extended_description(
 			list_widget->parameters.list.extended_description->child->next,
 		"invalid widget trying to update its extended list description");
 
-	index = 0;
-	child = list_widget->child;
-	while (child)
-	{
-		if (child == list_widget->focused_child)
-			break;
-		child = child->next;
-		index++;
-	}
+	/* port: in the PC version's lists (port/assets/menus), the item's number
+	among those that take events, as its game counts them (past its labels) */
+	index = ui_widget_port_list_index(list_widget);
 
 	if (index != NONE)
 	{
@@ -925,20 +928,19 @@ static void difficulty_select_menu_update_extended_description(
 	match_vassert(
 		"c:\\halo\\SOURCE\\interface\\ui_widget_game_data_input_functions.c",
 		0x238,
-		description_definition->child_count == 2,
+		/* port: the PC version's (port/assets/menus) has the profile's name too */
+		description_definition->child_count == 2 ||
+			(description_definition->child_count == 3 && pc_menu_tag(list_widget->definition_tag_index)),
 		"this doesn't look like the difficulty select widget to me");
 
 	description_picture = list_widget->parameters.list.extended_description->child;
 	description_text = description_picture->next;
-	child = list_widget->child;
-	index = 0;
-	while (child)
-	{
-		if (child == list_widget->focused_child)
-			break;
-		child = child->next;
-		index++;
-	}
+	/* port: in the PC version's lists, among the items that take events; its
+	buttons (past its four difficulties) leave the last one shown, which its
+	OK button then sets (port/linux/game/menu_functions.c) */
+	index = ui_widget_port_list_index(list_widget);
+	if (pc_menu_tag(list_widget->definition_tag_index) && index >= 4)
+		index = NONE;
 
 	if (index != NONE)
 	{
@@ -2271,6 +2273,10 @@ static void player_profile_edit_select_menu_update_extended_description(
 		child = child->next;
 		index++;
 	}
+	/* port: the PC version's buttons (a list of their own, past its items)
+	leave the last item's description shown, as they have none */
+	if (pc_menu_tag(list_widget->definition_tag_index) && list_widget->focused_child->type == _ui_widget_type_column_list)
+		index = NONE;
 
 	if (index != NONE)
 	{
@@ -2337,11 +2343,23 @@ static void game_options_menu_update_text_desc(
 
 			if (column == widget->focused_child)
 			{
+				/* port: an extra item's own description (ui_widget.c) */
+				short extra_description = ui_widget_spinner_extra_description(spinner_list,
+					spinner_list->parameters.list.selected_list_item_index);
+
+				if (extra_description != NONE)
+				{
+					widget->parameters.list.extended_description->parameters.text_box.string_list_index =
+						extra_description;
+					return;
+				}
 				description_index += spinner_list->parameters.list.selected_list_item_index;
 				break;
 			}
 
-			description_index += spinner_list->parameters.list.number_of_items;
+			/* port: only the items of a spinner's string list's own have
+			descriptions in its tag */
+			description_index += ui_widget_spinner_own_item_count(spinner_list);
 			column = column->next;
 		}
 	}
@@ -2404,11 +2422,13 @@ static void game_options_menu_update_pic_desc(
 
 			if (column == widget->focused_child)
 			{
-				description_index += spinner_list->parameters.list.selected_list_item_index;
+				/* port: an extra item shows its spinner's last picture of its own */
+				description_index += MIN(spinner_list->parameters.list.selected_list_item_index,
+					ui_widget_spinner_own_item_count(spinner_list) - 1);
 				break;
 			}
 
-			description_index += spinner_list->parameters.list.number_of_items;
+			description_index += ui_widget_spinner_own_item_count(spinner_list);
 			column = column->next;
 		}
 	}

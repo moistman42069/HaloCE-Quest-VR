@@ -252,6 +252,8 @@ static boolean cache_file_structure_bsp_reference_verify(
 
 static struct cache_file_globals cache_file_globals = { 0 };
 extern struct cache_file_tag_instance *global_tag_instances;
+/* In-memory menu/VR tags never alter the on-disk tag header count. */
+static long global_tag_count;
 static char const *data_00316820[] =
 {
 	"d:\\maps_de\\",
@@ -283,13 +285,13 @@ static struct cache_file_tag_instance *cache_get_tag_instance(
 	match_vassert(
 		"c:\\halo\\SOURCE\\cache\\cache_files.c",
 		522,
-		absolute_index >= 0 && absolute_index < cache_file_globals.tag_header->tag_count,
+		absolute_index >= 0 && absolute_index < global_tag_count,
 		csprintf(temporary, "i don't think %08x is a tag index", tag_index));
 	/* port: an index that is not a tag (NONE, or one a map's data gave
 	that nothing checked) is the empty tag, not whatever lies around the
 	tag table */
 	if (!cache_file_globals.tags_loaded || !global_tag_instances ||
-		absolute_index < 0 || absolute_index >= cache_file_globals.tag_header->tag_count)
+		absolute_index < 0 || absolute_index >= global_tag_count)
 	{
 		return cache_empty_tag_instance(tag_index);
 	}
@@ -572,6 +574,7 @@ char const *cache_files_map_directory(
 void scenario_tags_unload(
 	void)
 {
+	{ extern void pc_menu_text_input_reset(void); pc_menu_text_input_reset(); }
 	/* port: the high-res HUD forgets this map's bitmaps (port/linux/game/hud_hires_tags.c) */
 	{
 		extern void hud_hires_tags_unloaded(void);
@@ -580,6 +583,11 @@ void scenario_tags_unload(
 	}
 	sound_cache_close();
 	texture_cache_close();
+	/* Free generated menu tags only after textures release their bitmaps. */
+	#ifdef HALO_VR
+	{ extern void vr_menu_tags_unloaded(void); vr_menu_tags_unloaded(); }
+	#endif
+	{ extern void menu_tags_unloaded(void); menu_tags_unloaded(); }
 	cache_file_close();
 	/* a Halo Custom Edition map has no Xbox vertex or index buffers
 	(port/linux/game/custom_edition_cache.c) */
@@ -593,8 +601,24 @@ void scenario_tags_unload(
 	}
 	cache_file_globals.tags_loaded = FALSE;
 	global_tag_instances = NULL;
+	global_tag_count = 0;
 
 	return;
+}
+
+void *cache_files_tag_instances(
+	long *count)
+{
+	*count = cache_file_globals.tags_loaded ? global_tag_count : 0;
+	return cache_file_globals.tags_loaded ? global_tag_instances : NULL;
+}
+
+void cache_files_set_tag_instances(
+	void *instances,
+	long count)
+{
+	global_tag_instances = instances;
+	global_tag_count = count;
 }
 
 void tag_files_open(
@@ -656,7 +680,7 @@ long tag_loaded(
 			global_tag_instances);
 
 		for (absolute_index = 0;
-			absolute_index < cache_file_globals.tag_header->tag_count;
+			absolute_index < global_tag_count;
 			absolute_index++)
 		{
 			if (group_tag == global_tag_instances[absolute_index].group_tag &&
@@ -796,7 +820,7 @@ long tag_iterator_next(
 {
 	long result = NONE;
 
-	while (iterator->absolute_index < cache_file_globals.tag_header->tag_count)
+	while (iterator->absolute_index < global_tag_count)
 	{
 		struct cache_file_tag_instance *tag_instance =
 			&global_tag_instances[iterator->absolute_index++];
@@ -1123,7 +1147,12 @@ long scenario_tags_load(
 		if (cache_file_globals.tag_header)
 		{
 			global_tag_instances = cache_file_globals.tag_header->tag_instances;
+			global_tag_count = cache_file_globals.tag_header->tag_count;
 			cache_file_globals.tags_loaded = TRUE;
+			{ extern void menu_tags_loaded(char const *map_name); menu_tags_loaded(cache_file_globals.header.name); }
+#ifdef HALO_VR
+			{ extern void vr_menu_tags_loaded(void); vr_menu_tags_loaded(); }
+#endif
 			result = cache_file_globals.tag_header->scenario_tag_index;
 		}
 
@@ -1183,6 +1212,7 @@ long scenario_tags_load(
 					'g',
 					's'));
 			global_tag_instances = cache_file_globals.tag_header->tag_instances;
+			global_tag_count = cache_file_globals.tag_header->tag_count;
 			tags_header_register_vertex_and_index_buffers(cache_file_globals.tag_header);
 			cache_file_globals.tags_loaded = TRUE;
 			/* port: a PAL map played as the NTSC maps are (port/linux/game/pal_tags.c) */
@@ -1197,6 +1227,7 @@ long scenario_tags_load(
 
 				hud_hires_tags_loaded();
 			}
+			{ extern void menu_tags_loaded(char const *map_name); menu_tags_loaded(cache_file_globals.header.name); }
 #ifdef HALO_VR
 			/* port: the pause menu's VR settings (port/linux/game/vr_menu.c) */
 			{
@@ -1374,14 +1405,16 @@ long cache_file_add_tag(
 
 	if (!cache_file_globals.tags_loaded || !global_tag_instances)
 		return NONE;
-	count = cache_file_globals.tag_header->tag_count;
+	count = global_tag_count;
+	if (count < 0 || count >= 0x7FFF)
+		return NONE;
 	if (global_tag_instances != instances)
 	{
 		/* (the last map's copy goes with it; the game's free asserts on
 		NULL, which the first map to add tags would give it) */
 		if (instances)
 			free(instances);
-		capacity = count + ADDED_TAG_ROOM;
+		capacity = MIN(count + ADDED_TAG_ROOM, 0x7FFF);
 		instances = malloc(capacity * sizeof(*instances));
 		if (!instances)
 		{
@@ -1415,7 +1448,7 @@ long cache_file_add_tag(
 	instance->tag_index = (long)((ADDED_TAG_SALT << 16) | count);
 	instance->name = name;
 	instance->base_address = base_address;
-	cache_file_globals.tag_header->tag_count = count + 1;
+	global_tag_count = count + 1;
 	return instance->tag_index;
 }
 
@@ -1472,7 +1505,7 @@ boolean tag_index_is_group(
 	struct cache_file_tag_instance *tag_instance;
 
 	if (tag_index == NONE || !cache_file_globals.tags_loaded || !global_tag_instances ||
-		absolute_index < 0 || absolute_index >= cache_file_globals.tag_header->tag_count)
+		absolute_index < 0 || absolute_index >= global_tag_count)
 	{
 		return FALSE;
 	}

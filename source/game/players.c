@@ -4977,3 +4977,11 @@ boolean player_name_valid(
 
 	return TRUE;
 }
+
+
+/* OpenCE menu: actual local players, separate from online peers. */
+short players_port_local_player_count(
+	void)
+{
+	return players_globals ? players_globals->local_player_count : 0;
+}

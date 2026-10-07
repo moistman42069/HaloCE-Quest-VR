@@ -16,6 +16,8 @@ it exists, so that the player's edits and comments stay.
 
 #include <SDL3/SDL.h>
 #include <ctype.h>
+#include <errno.h>
+#include <math.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -52,7 +54,7 @@ enum
 	_platform_desktop = _platform_linux | _platform_windows,
 	_platform_all = _platform_desktop | _platform_android,
 	/* the Android build for VR headsets (HALO_VR) only */
-	_platform_vr = 4,
+	_platform_vr = 8,
 };
 
 struct config_setting
@@ -69,6 +71,146 @@ struct config_setting
 
 static const struct config_setting config_settings[] =
 {
+	{ "browser.show_empty", _config_boolean, "true", "HALO_BROWSER_SHOW_EMPTY", _environment_value, _platform_all,
+		"Include empty games in the in-game server browser." },
+	{ "browser.show_full", _config_boolean, "true", "HALO_BROWSER_SHOW_FULL", _environment_value, _platform_all,
+		"Include full games in the in-game server browser." },
+	{ "browser.engine", _config_integer, "-1", "HALO_BROWSER_ENGINE", _environment_value, _platform_all,
+		"Browser game type: -1 all, 0 co-op, 1 CTF, 2 Slayer, 3 Oddball, 4 King, 5 Race." },
+	{ "browser.teams", _config_string, "\"all\"", "HALO_BROWSER_TEAMS", _environment_value, _platform_all,
+		"Browser teams: all, teams, or ffa." },
+	{ "browser.passwords", _config_string, "\"all\"", "HALO_BROWSER_PASSWORDS", _environment_value, _platform_all,
+		"Browser password filter: all, locked, or unlocked." },
+	{ "browser.maps", _config_string, "\"all\"", "HALO_BROWSER_MAPS", _environment_value, _platform_all,
+		"Browser map filter: all or known (catalog only; joining still checks actual game files)." },
+	{ "display.mode", _config_string, "\"\"", "HALO_DISPLAY_MODE", _environment_value, _platform_desktop,
+		"\"fullscreen\" takes the display (at display.resolution's mode),\n"
+		"\"borderless\" is a window over the whole desktop, \"windowed\" a window\n"
+		"(display.window_size). Empty: display.fullscreen's (true: borderless).\n"
+		"F11 switches to the window and back." },
+
+	{ "display.resolution", _config_string, "\"native\"", "HALO_RESOLUTION", _environment_value, _platform_desktop,
+		"What fullscreen and borderless draw at: \"native\", the display's own, or\n"
+		"\"<width>x<height>\" (\"1920x1080\"), 640x480 or more. Fullscreen sets the\n"
+		"display to it; borderless draws it scaled to the display." },
+
+	{ "display.resolution_scaling", _config_string, "\"native\"", "HALO_RESOLUTION_SCALING", _environment_value,
+		_platform_desktop,
+		"\"native\" draws at the window's resolution (fullscreen, the display's or\n"
+		"display.resolution); \"original\" draws the Xbox's 640x480 and scales it\n"
+		"up." },
+
+	{ "display.window_size", _config_string, "\"\"", "HALO_WINDOW_SIZE", _environment_value, _platform_desktop,
+		"The window's size, \"<width>x<height>\" (\"1920x1080\"), 640x480 or more (it\n"
+		"can be resized). Empty: display.window_scale's." },
+
+	{ "display.max_fps", _config_integer, "0", "HALO_MAX_FPS", _environment_value, _platform_desktop,
+		"With vsync off, the most frames a second: 0 for twice the display's\n"
+		"refresh rate, -1 for no limit (which can hang some Intel graphics)." },
+
+	{ "display.anti_aliasing", _config_string, "\"off\"", "HALO_ANTI_ALIASING", _environment_value, _platform_all,
+		"Smoothing of jagged edges, which the Xbox did not have: \"off\"; \"fxaa\"\n"
+		"or \"smaa\" smooth the 3D view once it is drawn (the HUD and menus stay\n"
+		"sharp); \"ssaa2x\" draws at twice the resolution each way (four times\n"
+		"the work); \"msaa2x\", \"msaa4x\" or \"msaa8x\" draw with that many samples\n"
+		"a pixel. Android has \"fxaa\" for \"smaa\", and no \"ssaa2x\"." },
+
+	{ "display.shadow_resolution", _config_integer, "128", "HALO_SHADOW_RESOLUTION", _environment_value,
+		_platform_all,
+		"The size the objects' shadows are drawn at, in pixels each way: 128 as\n"
+		"on the Xbox, or 256, 512 or 1024 for smoother edges, as soft." },
+
+	{ "display.menus", _config_string, "\"pc\"", "HALO_MENUS", _environment_value, _platform_all,
+		"The menus: \"pc\" for the PC version's main menu (port/assets/menus,\n"
+		"and a menus folder here for your own), \"xbox\" for the Xbox's." },
+
+	{ "display.per_pixel_lighting", _config_boolean, "false", "HALO_PER_PIXEL_LIGHTING", _environment_value,
+		_platform_all,
+		"Light the models (characters, weapons, vehicles, scenery) for each\n"
+		"pixel by the lights the game gives them, without the facets the light\n"
+		"of each vertex shows across curved surfaces; false lights each vertex,\n"
+		"as the Xbox does." },
+
+	{ "audio.music_volume", _config_real, "1.0", "HALO_MUSIC_VOLUME", _environment_value, _platform_all,
+		"The music's volume, 0.0 to 1.0 (of audio.volume)." },
+
+	{ "audio.effects_volume", _config_real, "1.0", "HALO_EFFECTS_VOLUME", _environment_value, _platform_all,
+		"The volume of every other sound (effects and speech), 0.0 to 1.0 (of\n"
+		"audio.volume)." },
+
+	{ "audio.reverb", _config_boolean, "false", "HALO_REVERB", _environment_value, _platform_all,
+		"Reverberate the world's sounds as the place the player is in does (the\n"
+		"maps' sound environments, as the Xbox's I3DL2 reverb did); false keeps\n"
+		"them dry." },
+
+	{ "input.mouse_vertical_sensitivity", _config_real, "0.0", "HALO_MOUSE_VERTICAL_SENSITIVITY", _environment_value,
+		_platform_desktop,
+		"How far the view turns up and down for the mouse's movement; 0 for the\n"
+		"same as input.mouse_sensitivity." },
+
+	{ "controls.move_forward", _config_string, "\"W\"", "HALO_KEY_MOVE_FORWARD", _environment_value, _platform_all,
+		"The keyboard and mouse's controls, which Settings > Controls Setup\n"
+		"changes: up to two keys or buttons each, separated by a comma. Keys by\n"
+		"their names (\"W\", \"Space\", \"Left Ctrl\", \"F1\"), and \"Mouse Left\",\n"
+		"\"Mouse Right\", \"Mouse Middle\", \"Mouse 4\", \"Mouse 5\", \"Wheel\" (either\n"
+		"way), \"Wheel Up\" and \"Wheel Down\"; empty for none. Moving forward:" },
+
+	{ "controls.move_backward", _config_string, "\"S\"", "HALO_KEY_MOVE_BACKWARD", _environment_value, _platform_all,
+		"Moving backward." },
+
+	{ "controls.strafe_left", _config_string, "\"A\"", "HALO_KEY_STRAFE_LEFT", _environment_value, _platform_all,
+		"Moving left." },
+
+	{ "controls.strafe_right", _config_string, "\"D\"", "HALO_KEY_STRAFE_RIGHT", _environment_value, _platform_all,
+		"Moving right." },
+
+	{ "controls.jump", _config_string, "\"Space\"", "HALO_KEY_JUMP", _environment_value, _platform_all,
+		"Jumping (and skipping cutscenes)." },
+
+	{ "controls.crouch", _config_string, "\"Left Ctrl, C\"", "HALO_KEY_CROUCH", _environment_value, _platform_all,
+		"Crouching." },
+
+	{ "controls.fire", _config_string, "\"Mouse Left\"", "HALO_KEY_FIRE", _environment_value, _platform_all,
+		"Firing." },
+
+	{ "controls.throw_grenade", _config_string, "\"Mouse Right, G\"", "HALO_KEY_THROW_GRENADE", _environment_value,
+		_platform_all,
+		"Throwing a grenade." },
+
+	{ "controls.melee", _config_string, "\"F, Mouse 4\"", "HALO_KEY_MELEE", _environment_value, _platform_all,
+		"Melee attack." },
+
+	{ "controls.reload", _config_string, "\"R\"", "HALO_KEY_RELOAD", _environment_value, _platform_all,
+		"Reloading." },
+
+	{ "controls.zoom", _config_string, "\"Z, Mouse Middle\"", "HALO_KEY_ZOOM", _environment_value, _platform_all,
+		"Zooming the scope." },
+
+	{ "controls.switch_weapon", _config_string, "\"Wheel, 1\"", "HALO_KEY_SWITCH_WEAPON", _environment_value,
+		_platform_all,
+		"Switching weapons." },
+
+	{ "controls.switch_grenade", _config_string, "\"X\"", "HALO_KEY_SWITCH_GRENADE", _environment_value, _platform_all,
+		"Switching grenades." },
+
+	{ "controls.action", _config_string, "\"E\"", "HALO_KEY_ACTION", _environment_value, _platform_all,
+		"The action: picking up (held: swapping weapons), entering and leaving\n"
+		"vehicles, pressing switches; never reloading (the controller's X does\n"
+		"when there is nothing to act on)." },
+
+	{ "controls.flashlight", _config_string, "\"Q\"", "HALO_KEY_FLASHLIGHT", _environment_value, _platform_all,
+		"The flashlight." },
+
+	{ "controls.scoreboard", _config_string, "\"Tab\"", "HALO_KEY_SCOREBOARD", _environment_value, _platform_all,
+		"Showing the scores (the controller's Back)." },
+
+	{ "controls.pause", _config_string, "\"Escape\"", "HALO_KEY_PAUSE", _environment_value, _platform_all,
+		"The pause menu (the controller's Start)." },
+
+	{ "debug.menu_open", _config_string, "\"\"", "HALO_MENU_OPEN", _environment_value, _platform_all,
+		"Start on this screen of the menus (port/assets/menus) instead of the main\n"
+		"menu, a player profile being edited; empty for the main menu." },
+
 	{ "pvp.time_limit", _config_integer, "0", "HALO_PVP_TIME_LIMIT", _environment_value, _platform_all,
 		"Match time limit in minutes: 0 (unlimited) to 1440." },
 
@@ -1097,18 +1239,27 @@ static char *config_default_text(void)
 	{
 		const struct config_setting *setting = &config_settings[index];
 		const char *dot = strchr(setting->name, '.');
+		size_t prior, item, length;
 		char buffer[64];
-
-		if (!(setting->platforms & CONFIG_PLATFORM) || !dot)
-			continue;
-		if (strncmp(section, setting->name, (size_t)(dot - setting->name)) ||
-			section[dot - setting->name] != 0)
+		if (!(setting->platforms & CONFIG_PLATFORM) || !dot) continue;
+		length = (size_t)(dot - setting->name);
+		for (prior = 0; prior < index; prior++)
 		{
-			snprintf(section, sizeof(section), "%.*s", (int)(dot - setting->name), setting->name);
-			snprintf(buffer, sizeof(buffer), "\n[%s]\n", section);
-			config_append(&text, buffer);
+			const struct config_setting *other = &config_settings[prior];
+			if ((other->platforms & CONFIG_PLATFORM) &&
+				!strncmp(other->name, setting->name, length) && other->name[length] == '.') break;
 		}
-		config_append_setting(&text, setting);
+		if (prior < index) continue;
+		snprintf(section, sizeof(section), "%.*s", (int)length, setting->name);
+		snprintf(buffer, sizeof(buffer), "\n[%s]\n", section);
+		config_append(&text, buffer);
+		for (item = index; item < NUMBER_OF_CONFIG_SETTINGS; item++)
+		{
+			const struct config_setting *other = &config_settings[item];
+			if ((other->platforms & CONFIG_PLATFORM) &&
+				!strncmp(other->name, section, length) && other->name[length] == '.')
+				config_append_setting(&text, other);
+		}
 	}
 	return text.buffer;
 }
@@ -1551,7 +1702,7 @@ is the setting as text, `written` as the file holds it (a string quoted) */
 /* test27: settings written since the start (config_changes; upstream's) */
 static volatile unsigned long config_change_count;
 
-static int config_write(const char *name, enum config_type type, const char *value, const char *written_value)
+static int config_write_typed(const char *name, enum config_type type, const char *value, const char *written_value)
 {
 	const char *dot = strchr(name, '.');
 	long index = config_setting_index(name);
@@ -1631,7 +1782,7 @@ static int config_write(const char *name, enum config_type type, const char *val
 
 int config_write_boolean(const char *name, int value)
 {
-	return config_write(name, _config_boolean, value ? "true" : "false", value ? "true" : "false");
+	return config_write_typed(name, _config_boolean, value ? "true" : "false", value ? "true" : "false");
 }
 
 int config_write_real(const char *name, double value)
@@ -1642,7 +1793,7 @@ int config_write_real(const char *name, double value)
 	/* (TOML wants a real's point) */
 	if (!strpbrk(text, ".eEn"))
 		strcat(text, ".0");
-	return config_write(name, _config_real, text, text);
+	return config_write_typed(name, _config_real, text, text);
 }
 
 int config_write_string(const char *name, const char *value)
@@ -1652,7 +1803,7 @@ int config_write_string(const char *name, const char *value)
 	if (strpbrk(value, "\"\\\n") || strlen(value) + 3 > sizeof(quoted))
 		return 0;
 	snprintf(quoted, sizeof(quoted), "\"%s\"", value);
-	return config_write(name, _config_string, value, quoted);
+	return config_write_typed(name, _config_string, value, quoted);
 }
 
 /* ---------- public code */
@@ -1777,3 +1928,102 @@ void config_vr_vehicle_defaults(void)
     platform_log("vr: third-person/right-controller defaults%s; later saved vehicle choices preserved", ok ? " saved" : " in memory only (migration will retry)");
 }
 #endif
+
+
+int config_write(const char *name, const char *text)
+{
+	long index = config_setting_index(name);
+	if (index < 0 || !text) return 0;
+	if (config_settings[index].type == _config_integer)
+	{
+		char *end;
+		long value;
+		errno = 0;
+		value = strtol(text, &end, 10);
+		char canonical[32];
+		if (end == text || *end || errno == ERANGE) return 0;
+		snprintf(canonical, sizeof(canonical), "%ld", value);
+		return config_write_typed(name, _config_integer, canonical, canonical);
+	}
+	if (config_settings[index].type == _config_real)
+	{
+		char *end;
+		double value;
+		errno = 0;
+		value = strtod(text, &end);
+		if (end == text || *end || errno == ERANGE || !isfinite(value)) return 0;
+		return config_write_real(name, value);
+	}
+	if (config_settings[index].type == _config_boolean && strcmp(text, "true") && strcmp(text, "false"))
+		return 0;
+	return config_write_text(name, text);
+}
+
+int config_default(const char *name, char *text, size_t size)
+{
+	long index = config_setting_index(name);
+	const char *value;
+	size_t length;
+
+	if (index < 0)
+		return 0;
+	value = config_default_value(&config_settings[index]);
+	length = strlen(value);
+	/* (a string's without its quotes: the defaults have no escapes) */
+	if (config_settings[index].type == _config_string && length >= 2 && value[0] == '"')
+	{
+		value++;
+		length -= 2;
+	}
+	snprintf(text, size, "%.*s", (int)length, value);
+	return 1;
+}
+
+int config_text(const char *name, char *text, size_t size)
+{
+	long index = config_setting_index(name);
+	const struct config_value *value;
+
+	if (index < 0)
+		return 0;
+	value = config_value(name, config_settings[index].type);
+	switch (config_settings[index].type)
+	{
+	case _config_boolean:
+		snprintf(text, size, "%s", value->boolean ? "true" : "false");
+		break;
+	case _config_integer:
+		snprintf(text, size, "%ld", value->integer);
+		break;
+	case _config_real:
+		snprintf(text, size, "%.15g", value->real);
+		break;
+	case _config_string:
+		snprintf(text, size, "%s", value->string ? value->string : "");
+		break;
+	}
+	return 1;
+}
+
+void config_folder(char *path, size_t size)
+{
+	char file[1024];
+	char *separator;
+
+	config_path(file, sizeof(file));
+	separator = strrchr(file, '/');
+#ifndef HALO_ANDROID
+	if (!separator || (strrchr(file, '\\') && strrchr(file, '\\') > separator))
+		separator = strrchr(file, '\\');
+#endif
+	if (separator)
+		separator[1] = 0;
+	else
+		file[0] = 0;
+	snprintf(path, size, "%s", file);
+}
+
+char *config_file_read(const char *path, size_t *size)
+{
+	return config_read_file(path, size);
+}
