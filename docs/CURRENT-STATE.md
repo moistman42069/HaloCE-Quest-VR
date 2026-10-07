@@ -2,19 +2,20 @@
 
 ## Current private candidate: Test34 OpenCE Build 147 (2026-10-07)
 
-Test34 is an in-progress, unaccepted candidate for version 1.0.15/code44,
+Test34 is a built, unaccepted candidate for version 1.0.15/code44,
 targeting the official OpenCE Build 147 release/network23. It adds server-row
 pointer hover and ports the applicable Build145→147 behavior. The integration
 includes CE map-header identity, upstream tag schemas adapted to the app's
 34.5 MiB cache, retail and CE tag validation, BSP validation before geometry
 conversion, capacity/co-op/camera updates, and app-specific safety paths. The
 source audit found and fixed an incorrect physical-file-length range and a
-missing BSP-validator call. See [TEST34-PROGRESS.md](TEST34-PROGRESS.md),
+missing BSP-validator call. A Test30 scope report showed no zoom state or
+scope layer, so Test34 adds input, zoom, configuration and render-gate
+diagnostics without changing scope alignment. See [TEST34-PROGRESS.md](TEST34-PROGRESS.md),
 [TEST34-UPSTREAM-INTEGRATION.md](TEST34-UPSTREAM-INTEGRATION.md), and
-[TEST34-DELIVERY.md](TEST34-DELIVERY.md). Complete automated suites and both
-release-mode APK builds before delivering the private candidates. No physical
-device acceptance is recorded, and no release/push/install/game launch is
-authorized.
+[TEST34-DELIVERY.md](TEST34-DELIVERY.md). Both candidate APKs and package
+archives are built and checked. No physical device acceptance is recorded,
+and no release/push/install/game launch is authorized.
 
 Preserve the owner-confirmed baselines: Test31b Quest VR settings and Test31c
 flat Android touch/gameplay. The public v1.0.12 remains unchanged at network21.

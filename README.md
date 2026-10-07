@@ -5,6 +5,10 @@ It adds hover selection for server rows, adopts network 23 with CE map-checksum
 matching, integrates OpenCE's tag schemas and validator into the Quest CE cache
 loader, and adapts the applicable Build 146/147 safety and capacity changes.
 The owner-accepted VR settings and Android touch behavior remain the baseline.
+For the scope report, the supplied Test30 log showed no game zoom state or
+scope layer; Test34 adds transition-only diagnostics for trigger input, zoom,
+settings and scope-render gates. The scope alignment transform was left alone
+because that log did not show it rendering.
 [Current evidence and scope](docs/TEST34-PROGRESS.md).
 The public download links below remain v1.0.12 until a release is authorized.
 

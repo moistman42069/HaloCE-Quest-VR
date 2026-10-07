@@ -11,11 +11,14 @@ metadata. The candidate ports applicable Build147 behavior into the Android/
 Quest architecture, including the full shared tag schemas, CE cache adapter,
 retail tag validation, and structure-BSP validation. A source review caught
 and fixed use of physical file size instead of declared CE file length, plus
-missing BSP validation before conversion. Complete the full host suites and
-both release-mode APK builds, then record artifacts and hashes. This remains a
-private candidate: no device acceptance, push, tag, release, install, or game
-launch. Preserve the owner-accepted Test31b VR settings and Test31c Android
-touch/gameplay.
+missing BSP validation before conversion. The new Test30 scope report had a
+held sniper but no game zoom state or submitted scope layer; Test34 adds
+transition-only input, zoom, setting and render-gate diagnostics without
+changing the accepted scope transform. Both APK builds and all registered
+host suites now pass; see `docs/TEST34-DELIVERY.md` for hashes and package
+artifacts. This remains a private candidate with no device acceptance, push,
+tag, release, install or game launch. Preserve the owner-accepted Test31b VR
+settings and Test31c Android touch/gameplay.
 
 ## Active touch/glass correction and accepted VR preference (2026-10-07)
 

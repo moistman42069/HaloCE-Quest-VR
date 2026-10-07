@@ -14,14 +14,15 @@ the declared file length and added the previously missing BSP validator call.
 The full regression suite passes; the CE cache-format suite has 127 passes and
 4 skips because no local CE map files are installed. VR scope alignment is also
 fixed across every zoom scope shape: calibrated view orientation, gun-anchored
-center, shared 90 cm reach clamp, and ±30 cm pistol/sniper offsets. Build, sign,
-and verify both release APKs before delivery. Then report exact hashes and ask
-the owner to test Android and Quest, including scope alignment, menu pointer
-selection, representative maps, and network-23 joins.
+center, shared 90 cm reach clamp, and ±30 cm pistol/sniper offsets. Both APKs
+are built and package-checked; hashes and matching archives are in
+`D:\HaloQuest\builds\test34-20261007-v1.0.15-scope-diagnostics\package`. Ask
+the owner to test Android and Quest, including scope activation/alignment,
+menu pointer selection, representative maps, and network-23 joins.
 This is not device acceptance. Keep the public v1.0.12 untouched; do not push,
 tag, publish, install, or launch the game.
 
-**Scope follow-up (2026-10-08):** the reporter's 1.0.12/Test30 log shows the
+**Scope follow-up (2026-10-07):** the reporter's 1.0.12/Test30 log shows the
 sniper rifle and hand aim, but no game zoom state and no submitted scope layer.
 Test34 now logs the off-hand trigger state, native game zoom transitions,
 effective Scope setting, render admission and VR pose rejection reasons. For

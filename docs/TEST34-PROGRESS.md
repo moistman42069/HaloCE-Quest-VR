@@ -1,7 +1,7 @@
 # Test34 progress — OpenCE Build 147 and server-row pointer selection
 
-**Status:** source integration and automated checks in progress; private APKs
-are not a public release and have no device acceptance yet.
+**Status:** both private APKs built and package-checked; not a public release
+and not device-accepted.
 
 ## Target
 
@@ -63,17 +63,22 @@ Detailed source mapping and limitations: [Test34 upstream integration](TEST34-UP
   shot direction, physical center stability and extended-arm clamping.
 - Scope input/gate diagnostics and the explicit right-handed left-trigger
   binding are included in the candidate and player guide.
-- Full Quest regression suite passes, including server browser pointer,
-  Android touch, VR lifecycle and menu startup.
-- CE cache-format suite: 127 passed, 4 skipped because no local CE map files
-  are installed; synthetic range and validator fixtures all ran and passed.
+- All **57 registered Quest/Android regression suites passed** in the VR
+  build and again in the flat Android build, including browser pointer, touch,
+  VR lifecycle, menu startup and scope/Build147 checks.
+- The cache-format suite was not rerun during this scope-only follow-up because
+  pytest is absent from the WSL Python environment. Its earlier Test34 result
+  was 127 passed, 4 optional real-map skips; no cache-format source changed.
+- Both APKs report version **1.0.15 / code 44**, ARM64, min SDK 28 and the
+  expected test signing certificate. The VR artifact has the OpenXR loader;
+  shared native networking parity is checked during packaging.
 
-## Still required before delivery
+## Delivery and remaining device checks
 
-- Release-mode native and Gradle builds for VR, then flat Android.
-- APK identity/signature/version/package checks and build/source ZIP hashes.
-- Record artifacts, hashes, test commands/results, and the owner device-test
-  checklist in [Test34 delivery](TEST34-DELIVERY.md).
+- APKs, matching source/build ZIPs, manifest, compatibility metadata and
+  checksums are in `D:\HaloQuest\builds\test34-20261007-v1.0.15-scope-diagnostics\package`.
+- Follow [Test34 delivery](TEST34-DELIVERY.md) for artifact hashes and the
+  headset/phone checklist. Host checks do not establish runtime acceptance.
 
 Host checks cannot verify Quest startup/rendering, actual mobile touch controls,
 large CE maps, or live network-23 compatibility. Those remain user device
