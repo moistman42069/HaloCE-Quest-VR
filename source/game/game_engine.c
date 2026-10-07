@@ -3049,7 +3049,7 @@ static void game_engine_post_rasterize_in_game(
 	match_assert(
 		"c:\\halo\\SOURCE\\game\\game_engine.c",
 		0x771,
-		NULL != game_engine);
+		NULL != game_engine || network_coop_active());
 
 	if (game_engine && player)
 		internal_rasterize_target_name(player_index);
@@ -3058,7 +3058,7 @@ static void game_engine_post_rasterize_in_game(
 	fade = game_engine_globals.hud_message_timers[local_player_index];
 	if ((!gamepad ||
 		!gamepad->buttons[_gamepad_binary_button_back]) &&
-		game_engine_globals.postgame_state != game_engine_mode_postgame_delay)
+		(!game_engine || game_engine_globals.postgame_state != game_engine_mode_postgame_delay))
 	{
 		/* a frame is no longer a tick (render_interpolation.c): fade in half
 		a second, not in 15 frames */
@@ -3293,7 +3293,8 @@ static void game_engine_build_lighting(
 		if (global_variant.game_engine_index == game_engine_race)
 		{
 			struct scenario *scenario = global_scenario_get();
-			short flag_index;
+			/* port: a long counter, for a map's long count */
+			long flag_index;
 
 			for (flag_index = 0;
 				flag_index < scenario->netgame_flags.count;
@@ -3436,6 +3437,12 @@ void game_engine_post_rasterize(
 				!"unreachable");
 			break;
 		}
+	}
+	/* port: network co-op's campaign has the scoreboard too, of names and
+	pings (game_engine_rasterize_scoreboard) */
+	else if (network_coop_active())
+	{
+		game_engine_post_rasterize_in_game();
 	}
 
 	return;
@@ -4457,7 +4464,8 @@ long find_netgame_flags(
 {
 	real radius_squared = radius * radius;
 	long found_count = 0;
-	short flag_index;
+	/* port: a long counter, for a map's long count */
+	long flag_index;
 	struct scenario *scenario;
 
 	scenario = global_scenario_get();
@@ -6206,6 +6214,9 @@ void game_engine_variant_cleanup(
 	variant->universal_variant.respawn_time = MAX(variant->universal_variant.respawn_time, 0);
 	variant->universal_variant.suicide_penalty = MAX(variant->universal_variant.suicide_penalty, 0);
 	variant->universal_variant.lives = MAX(variant->universal_variant.lives, 0);
+	/* port: a NaN passes no comparison, so PIN keeps it */
+	if (!(variant->universal_variant.health == variant->universal_variant.health))
+		variant->universal_variant.health = 1.0f;
 	variant->universal_variant.health = PIN(variant->universal_variant.health, 0.25f, 4.0f);
 	variant->universal_variant.weapon_set = PIN(variant->universal_variant.weapon_set, 0, NUMBER_OF_GAME_ENGINE_WEAPON_SETS - 1);
 	variant->universal_variant.vehicle_set = PIN(variant->universal_variant.vehicle_set, 0, NUMBER_OF_GAME_ENGINE_VEHICLE_SETS - 1);
@@ -6976,7 +6987,8 @@ static void netgame_flag_verify_no_team_duplicates(
 	char const *error_message)
 {
 	struct scenario *scenario = global_scenario_get();
-	short flag_index;
+	/* port: long counters, for a map's long count */
+	long flag_index;
 
 	for (flag_index = 0;
 		flag_index < scenario->netgame_flags.count;
@@ -6986,7 +6998,7 @@ static void netgame_flag_verify_no_team_duplicates(
 			&scenario->netgame_flags,
 			flag_index,
 			struct scenario_netgame_flag);
-		short duplicate_index;
+		long duplicate_index;
 
 		if (flag_type != flag->type)
 			continue;
@@ -7112,7 +7124,8 @@ static void netgame_flag_verify_team_range(
 	char const *error_message)
 {
 	struct scenario *scenario = global_scenario_get();
-	short flag_index;
+	/* port: a long counter, for a map's long count */
+	long flag_index;
 
 	for (flag_index = 0;
 		flag_index < scenario->netgame_flags.count;
@@ -7143,7 +7156,8 @@ static void netgame_verify_equipment(
 {
 	long matching_count = 0;
 	struct scenario *scenario = global_scenario_get();
-	short equipment_index;
+	/* port: a long counter, for a map's long count */
+	long equipment_index;
 
 	for (equipment_index = 0;
 		equipment_index < scenario->netgame_equipment.count;
@@ -7840,7 +7854,8 @@ static void game_engine_update_item_spawn(
 	void)
 {
 	struct scenario *scenario = global_scenario_get();
-	short equipment_index;
+	/* port: a long counter, for a map's long count */
+	long equipment_index;
 
 	/* a client of the distributed netcode has the host's items
 	(port/linux/game/network_distributed.c) */

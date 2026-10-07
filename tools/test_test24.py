@@ -98,7 +98,9 @@ old_net = git_show('55e77364', 'port/linux/game/network_objects.c')
 # re-applied: its reconciling is OpenCE's now, not 1.0.4's, and
 # the resend stays: test_test26 runs it)
 if 'network_objects_client_picked_up_weapon' in objects_net:
-    assert 'if (at_rest && !was_moving && !distributed_host_rest_moved(absolute_index, object_index))' in objects_net
+    assert 'if (at_rest && !was_moving && !distributed_host_rest_moved(absolute_index, object_index))' in objects_net or (
+        'if (at_rest && !distributed_host_rest_state_due(absolute_index) &&\n'
+        '\t\t\t!distributed_host_rest_moved(absolute_index, object_index))' in objects_net)  # (test29: with OpenCE build 144's rest repeats)
     old_net = None
 net_1_0_4 = objects_net
 net_1_0_4 = re.sub(r'/\* \.\.\. where each was when its state last went out.*?\} objects_host_rest_sent\[MAXIMUM_TRACKED_OBJECTS\];\n',

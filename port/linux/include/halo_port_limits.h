@@ -66,14 +66,15 @@ is newer (network_client_manager.c). A host advertises it, with its netcode,
 in its game's advertisement's reserved bytes (network_server_message_handler.c),
 which hosts built before there was a version send as zeros: version 0.
 Raise it with any change to what the machines send each other. */
-/* test27: this app plays OpenCE's netcode at its version (build 138), as
-every OpenCE build does: a host of another version is refused by name. The
-v9-11 window and this app's own CE01/CE02 campaign protocol were retired
-with it (OpenCE's co-op, network_coop.c, replaces the latter). The minimum
-and maximum are numbers for the launcher's build (build.gradle reads them). */
-#define HALO_PORT_NETWORK_VERSION 20
-#define HALO_PORT_NETWORK_VERSION_MINIMUM 20
-#define HALO_PORT_NETWORK_VERSION_MAXIMUM 20
+/* test27: this app plays OpenCE's netcode at its version, as every OpenCE
+build does: a host of another version is refused by name. The v9-11 window
+and this app's own CE01/CE02 campaign protocol were retired with it (OpenCE's
+co-op, network_coop.c, replaces the latter). The minimum and maximum are
+numbers for the launcher's build (build.gradle reads them). test29: OpenCE
+build 144 (network 21, since build 141). */
+#define HALO_PORT_NETWORK_VERSION 21
+#define HALO_PORT_NETWORK_VERSION_MINIMUM 21
+#define HALO_PORT_NETWORK_VERSION_MAXIMUM 21
 /* ... the advertisement's reserved bytes: the version (a little-endian word),
 then flags */
 #define HALO_PORT_ADVERTISED_VERSION_OFFSET 0

@@ -103,6 +103,7 @@ symbols in this file:
 #include "scenario/scenario_definitions.h"
 #include "sound/sound_definitions.h"
 #include "units/units.h"
+#include "hs/hs.h"
 #include "object_lists.h"
 #ifdef HALO_VR
 #include "halo_vr.h"
@@ -210,6 +211,7 @@ boolean hs_trigger_volume_test_objects(
 	long object_list_index,
 	boolean all)
 {
+	static boolean reported = FALSE;
 	long reference_index;
 	long object_index;
 	boolean result;
@@ -239,7 +241,17 @@ boolean hs_trigger_volume_test_objects(
 			&reference_index);
 	}
 
-	BIT_VECTOR_SET_FLAG(hs_debug_data, trigger_volume_index, result);
+	/* port: only the volumes hs_debug_data has bits for (a script's index,
+	map data; released maps have at most 158 volumes) */
+	if (VALID_INDEX(trigger_volume_index, MAXIMUM_TRIGGER_VOLUMES_PER_SCENARIO))
+	{
+		BIT_VECTOR_SET_FLAG(hs_debug_data, trigger_volume_index, result);
+	}
+	else if (!reported)
+	{
+		reported = TRUE;
+		error(_error_silent, "### ERROR a script tests trigger volume #%d", trigger_volume_index);
+	}
 
 	return result;
 }
@@ -863,12 +875,17 @@ boolean hs_trigger_volume_test_objects_all(
 	short trigger_volume_index,
 	long object_list_index)
 {
+	boolean inside;
+
+	if (!coop_scripts_any_player_will_do(object_list_index))
+		return hs_trigger_volume_test_objects(trigger_volume_index, object_list_index, TRUE);
 	/* port: in network co-op, waiting for every player means waiting for
-	any one of them (coop_scripts.c) */
-	return hs_trigger_volume_test_objects(
-		trigger_volume_index,
-		object_list_index,
-		!coop_scripts_any_player_will_do(object_list_index));
+	any one of them, and the rest are brought to them (coop_scripts.c) */
+	inside = hs_trigger_volume_test_objects(trigger_volume_index, object_list_index, FALSE);
+	if (inside && hs_runtime_waiting_on_call())
+		coop_scripts_gather_in_volume(trigger_volume_index, object_list_index);
+
+	return inside;
 }
 
 boolean hs_trigger_volume_test_objects_any(

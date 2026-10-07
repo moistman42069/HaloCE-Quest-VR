@@ -21,6 +21,7 @@ symbols in this file:
 #include "cseries.h"
 
 #include "render.h"
+#include "cseries/errors.h"
 #include "models/model_animation_definitions.h"
 #include "models/model_definitions.h"
 #include "models/models.h"
@@ -76,6 +77,9 @@ typedef char verify_sky_render_lighting_size[sizeof(struct render_lighting) == 0
 
 /* ---------- prototypes */
 
+static void render_sky_data_error(
+	char const *problem);
+
 /* ---------- globals */
 
 static real render_sky_globals[MAXIMUM_SKIES_PER_SCENARIO] = {0.f};
@@ -111,16 +115,27 @@ void render_sky(
 
 			if (sky->animation_graph.index != NONE)
 			{
+				/* port: no more animations than render_sky_globals holds (a
+				map's count) */
+				short animation_count = (short)MIN(sky->animations.count, (long)NUMBEROF(render_sky_globals));
+
 				animation_graph = animation_graph_definition_get(sky->animation_graph.index);
-				for (i = 0; i < sky->animations.count; i++)
+				if (sky->animations.count>animation_count)
+				{
+					render_sky_data_error("animations");
+				}
+				for (i = 0; i < animation_count; i++)
 				{
 					struct sky_animation *sky_animation = TAG_BLOCK_GET_ELEMENT(
 						&sky->animations,
 						i,
 						struct sky_animation);
 
+					/* port: and the animation read (the i-th) is one the graph
+					has too */
 					if (sky_animation->animation_index >= 0 &&
 						sky_animation->animation_index < animation_graph->animations.count &&
+						i < animation_graph->animations.count &&
 						sky_animation->period != 0.f)
 					{
 						struct animation *animation = TAG_BLOCK_GET_ELEMENT(
@@ -128,7 +143,13 @@ void render_sky(
 							i,
 							struct animation);
 
-						if (animation->node_count == model->nodes.count)
+						/* port: and no more nodes than node_orientations holds (a
+						map's count) */
+						if (animation->node_count > MAXIMUM_NODES_PER_ANIMATION)
+						{
+							render_sky_data_error("animation nodes");
+						}
+						else if (animation->node_count == model->nodes.count)
 						{
 							/* the second eye of a stereo frame draws the
 							phase the first moved on to (halo_vr.h) */
@@ -153,7 +174,12 @@ void render_sky(
 				global_forward3d,
 				global_up3d);
 
-			for (i = 0; i < sky->render_model_regions.count; i++)
+			/* port: no more than region_scales holds (a map's count) */
+			if (sky->render_model_regions.count>(long)NUMBEROF(region_scales))
+			{
+				render_sky_data_error("shader functions");
+			}
+			for (i = 0; i < sky->render_model_regions.count && i < (short)NUMBEROF(region_scales); i++)
 			{
 				TAG_BLOCK_GET_ELEMENT(
 					&sky->render_model_regions,
@@ -228,7 +254,8 @@ void render_sky(
 			view_matrix.position.y = render.camera.position.y * 0.9990234375f;
 			view_matrix.position.z = render.camera.position.z * 0.9990234375f;
 			{
-				long node_count = model->nodes.count;
+				/* port: no more nodes than node_matrices holds (a map's count) */
+				long node_count = MIN(model->nodes.count, MAXIMUM_NODES_PER_ANIMATION);
 
 				view_matrix.scale = 1.f / 1024.f;
 				for (i = 0; i < node_count; i++)
@@ -237,7 +264,6 @@ void render_sky(
 						&view_matrix,
 						&node_matrices[i],
 						&node_matrices[i]);
-					node_count = model->nodes.count;
 				}
 			}
 
@@ -266,3 +292,18 @@ void render_sky(
 }
 
 /* ---------- private code */
+
+/* port: a map's sky past what render_sky has room for; said once */
+static void render_sky_data_error(
+	char const *problem)
+{
+	static boolean reported = FALSE;
+
+	if (!reported)
+	{
+		error(_error_silent, "### ERROR a sky has more %s than render_sky holds; it is cut short", problem);
+		reported = TRUE;
+	}
+
+	return;
+}

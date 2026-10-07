@@ -61,11 +61,14 @@ units = read('source/units/units.c', 'latin-1')
 bipeds = read('source/units/bipeds.c', 'latin-1')
 
 # --- 1. OpenCE's network version, exactly (the launcher reads the numbers)
-assert re.search(r'#define HALO_PORT_NETWORK_VERSION 20\b', limits)
-assert re.search(r'#define HALO_PORT_NETWORK_VERSION_MINIMUM 20\b', limits)
-assert re.search(r'#define HALO_PORT_NETWORK_VERSION_MAXIMUM 20\b', limits)
+# (test29 follows OpenCE build 144, network 21: test_test29 checks it and
+# its files; the build 138 checks below hold for a network 20 tree)
+network = int(re.search(r'#define HALO_PORT_NETWORK_VERSION (\d+)\b', limits).group(1))
+assert network >= 20
+for name in ['', '_MINIMUM', '_MAXIMUM']:
+    assert re.search(r'#define HALO_PORT_NETWORK_VERSION%s %d\b' % (name, network), limits), 'exactly one version'
 assert '#define HALO_PORT_ADVERTISED_IN_PROGRESS_FLAG 0x02' in limits, "OpenCE's in-progress advertisement"
-print('PASS: network version 20, exactly (OpenCE build 138), with its in-progress advertisement')
+print('PASS: network version %d exactly (20: OpenCE build 138), with its in-progress advertisement' % network)
 
 # --- 2. upstream's co-op and lobby modules byte for byte
 UPSTREAM_138 = [
@@ -90,14 +93,15 @@ UPSTREAM_138 = [
 COOP_CAMERA_PATCH = re.compile(r'\t/\* keep the camera upright: the world\'s up made square to forward\n.*?\n\t\t}\n\t}\n}', re.S)
 COOP_CAMERA_ORIGINAL = ('\t/* keep the camera upright */\n\tup->i = 0.0f;\n\tup->j = 0.0f;\n\tup->k = 1.0f;\n'
                         '\tdistributed_axes_make_valid(forward, up);\n}')
-for path, digest in UPSTREAM_138:
+for path, digest in (UPSTREAM_138 if network == 20 else []):
     data = (ROOT / path).read_bytes()
     if path == 'port/linux/game/network_coop.c':
         text = data.decode('utf-8')
         assert len(COOP_CAMERA_PATCH.findall(text)) == 1, 'the one camera patch'
         data = COOP_CAMERA_PATCH.sub(lambda m: COOP_CAMERA_ORIGINAL, text).encode('utf-8')
     assert hashlib.sha256(data).hexdigest() == digest, path + ' as OpenCE build 138'
-print('PASS: %d co-op, lobby and message files are OpenCE build 138\'s byte for byte' % len(UPSTREAM_138))
+print('PASS: %d co-op, lobby and message files are OpenCE build 138\'s byte for byte' % len(UPSTREAM_138) if network == 20 else
+      'PASS: (network %d: the OpenCE files are checked against build 144 by test_test29)' % network)
 
 # --- 3. the message numbers: OpenCE's, this app's VR avatars in the free range
 enum = re.search(r'enum\n\{\n\t[^}]*?_distributed_message_player_prediction = 1,.*?NUMBER_OF_DISTRIBUTED_MESSAGES\n\};', distributed_h, re.S).group(0)

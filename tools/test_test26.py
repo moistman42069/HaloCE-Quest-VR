@@ -100,7 +100,9 @@ print('PASS: a co-op client replaying the host\'s death scream on a unit already
 
 # --- 2. a resting object's teleport goes out at once (cutscene characters placed as on the host)
 send = fn(objects_net, 'distributed_host_send_states')
-assert 'if (at_rest && !was_moving && !distributed_host_rest_moved(absolute_index, object_index))' in send
+assert 'if (at_rest && !was_moving && !distributed_host_rest_moved(absolute_index, object_index))' in send or (
+    'if (at_rest && !distributed_host_rest_state_due(absolute_index) &&\n'
+        '\t\t\t!distributed_host_rest_moved(absolute_index, object_index))' in send)  # (test29: with OpenCE build 144's rest repeats)
 assert send.count('distributed_host_note_rest_sent(absolute_index, object_index);') == 2, 'each state sent is noted'
 tolerances = ''.join(re.findall(r'#define REMOTE_OBJECT_(?:ANGLE_)?TOLERANCE [^\n]+\n', objects_net))
 assert tolerances.count('#define') == 2
@@ -429,7 +431,10 @@ assert '!vr.reticle_hidden' in fn(frame, 'vr_crosshair_enabled')
 for marker in ['if (!VR_HUD_HIDDEN())']:
     assert marker in hud, 'unit interface, nav points and damage indicators'
 assert hud_weapon.count('!VR_HUD_HIDDEN()') >= 2, 'weapon and grenade panels; the crosshair kept'
-run('hud_tap', r'''
+if 'HUD_TAP_HOLD_SECONDS' in frame:
+    print('PASS: (test29: the HUD tap is held, not passed through: test_test29 runs it)')
+else:
+    run('hud_tap', r'''
 #include <assert.h>
 #include <math.h>
 #include <stdint.h>
@@ -486,8 +491,9 @@ run('wrist', r'''
 #include <stdio.h>
 #include <string.h>
 #include "port/android/include/halo_android_abi.h"
-static struct { int weapon_hand, two_hand_held, seated; struct halo_xr_frame frame; struct halo_xr_info info; } vr;
-''' + fn(frame, 'rotate') + fn(frame, 'look_rotation') + fn(frame, 'place_wrist') + r'''
+static struct { int weapon_hand, two_hand_held, seated; struct halo_xr_frame frame; struct halo_xr_info info;
+ float wrist_along, wrist_across, wrist_out, wrist_size; } vr;
+''' + ''.join(re.findall(r'#define WRIST_HUD_\w+ [^\n]+\n', frame)) + fn(frame, 'rotate') + fn(frame, 'look_rotation') + fn(frame, 'place_wrist') + r'''
 static float dot(const float a[3], const float b[3]){ return a[0]*b[0]+a[1]*b[1]+a[2]*b[2]; }
 static void normalise(float v[3]){ float l=sqrtf(dot(v,v)); for(int i=0;i<3;i++) v[i]/=l; }
 static void cross(const float a[3], const float b[3], float o[3]){ o[0]=a[1]*b[2]-a[2]*b[1]; o[1]=a[2]*b[0]-a[0]*b[2]; o[2]=a[0]*b[1]-a[1]*b[0]; }
@@ -496,7 +502,7 @@ static void grip(int hand, const float z[3], const float x[3], const float at[3]
  float y[3], forward[3]={-z[0],-z[1],-z[2]}; cross(z,x,y);
  look_rotation(forward,y,vr.frame.grip[hand].orientation); memcpy(vr.frame.grip[hand].position,at,sizeof(float)*3); }
 int main(void){
- vr.info.width[HALO_XR_SWAPCHAIN_WRIST]=512; vr.info.height[HALO_XR_SWAPCHAIN_WRIST]=384;
+ vr.info.width[HALO_XR_SWAPCHAIN_WRIST]=512; vr.info.height[HALO_XR_SWAPCHAIN_WRIST]=384; vr.wrist_size=1;
  vr.frame.hand_valid[0]=vr.frame.hand_valid[1]=3;
  const float hand_at[3]={0,-0.3f,-0.35f}, east[3]={1,0,0}, west[3]={-1,0,0}, right_view[3]={1,0,0};
  float to_eyes[3]={0,0.3f,0.35f}; normalise(to_eyes);
@@ -514,7 +520,7 @@ int main(void){
   assert(dot(x,right_view)>0.99f);                   /* read left to right */
   assert(y[1]>0.7f&&y[2]<-0.6f);                     /* its top up and away: upright */
   float d[3]; for(int i=0;i<3;i++) d[i]=layers.wrist_pose.position[i]-hand_at[i];
-  assert(sqrtf(dot(d,d))<0.1f&&dot(d,to_eyes)>0.03f); /* at the wrist, out of the back of the hand */
+  assert(sqrtf(dot(d,d))<0.12f&&dot(d,to_eyes)>0.03f); /* at the wrist, out of the back of the hand (test29: 10 cm back) */
   assert(fabsf(layers.wrist_size[0]-0.11f)<1e-6f&&fabsf(layers.wrist_size[1]-0.0825f)<1e-6f);
   /* the palm to the eyes: not shown; the hand holding the gun, seated or untracked: not shown */
   grip(o, o==0?west:east, o==0?to_eyes:away, hand_at); assert(!place_wrist(&layers));
