@@ -2,6 +2,29 @@
 
 The latest public release is [v1.0.12](https://github.com/moistman42069/HaloCE-Quest-VR/releases/tag/v1.0.12), built from test30. Preserve v1.0.11 and all earlier releases. Provenance and APK hashes are in [RELEASE-PROVENANCE-1.0.12.md](RELEASE-PROVENANCE-1.0.12.md). The repository About description was not changed.
 
+## Queued future work (owner, 2026-10-07; not started)
+
+1. **Phones joining on mobile data, not only Wi-Fi.**
+   - **Evidence:**
+     - A phone on mobile data with a VPN (strict NAT, a new port per destination, two public addresses) and a Quest on home Wi-Fi (lenient NAT, no UPnP) both reached join stage 2/3, then exchanged no packets.
+     - The same phone on Wi-Fi worked.
+     - OpenCE's `p2p.c`: "There is no relay".
+   - **Options:**
+     - port prediction or many-port punching for strict NATs;
+     - clearer guidance (VPN off, forward `network.tunnel_port`);
+     - a relay, which needs a hosted server and helps only between this app's devices.
+2. **OpenCE's in-game menus, and anything else not yet taken.**
+   - **Code:** the PC-style menu system, `port/linux/game/menu_functions.c` (about 5,500 lines) and `menu_tags.c` (about 1,900), plus the XML screen layouts (55 files in `port/assets/menus/ce`) and SVG artwork.
+   - **Screens:** server browser with filters, Server Setup (co-op settings), direct IP, settings and controls.
+   - **Constraint:** it is built for mouse and keyboard, so it must work with the VR pointer and touch.
+   - **Also re-check:**
+     - the PC scoreboard (co-op included);
+     - map tag validation;
+     - OpenCE's own Custom Edition map support (from `f823a18d`), compared with this app's.
+3. **Upstream and network update, as usual.**
+   - OpenCE `main` moved to **network 22** at `4e8ed2f1` (2026-10-07, untagged); build 144 is still network 21, as were the live games then.
+   - Fetch, check the live directory's versions, and merge as test29 did (scripts in `work/test29`).
+
 ## Current release: test30
 
 Version **1.0.12 / code 38**, branch `test30-profiles-coopname`, on v1.0.11. It fixes Quest face-button actions in VR menus (A/X/Y match the displayed Xbox labels; X deletes the selected profile; B backs out once) and adds an optional remembered campaign co-op server name up to 15 printable ASCII characters. Gameplay mappings are unchanged; X still throws grenades during play. OpenCE Build 144/network 21 is unchanged, so v1.0.11 peers remain compatible.
