@@ -25,18 +25,22 @@ typedef int GLsizei;
 #define GL_BGRA 0
 #define GL_UNSIGNED_BYTE 0
 #define SCREEN_HEIGHT 480
+#define FALSE 0
 typedef struct { unsigned long Data; int depth; } D3DSurface;
 struct render_target_entry {
     struct render_target_entry *next, *next_in_bucket;
-    struct { unsigned long data, width, height, gl_width, gl_height; BOOL depth; float scale[2]; GLuint texture; } target;
+    struct { unsigned long data, width, height, gl_width, gl_height; BOOL depth; float scale[2]; GLuint texture, multisample; int samples; BOOL unresolved; } target;
     unsigned long last_rendered;
+    BOOL screen_buffer;
 };
 static struct render_target_entry *render_targets, *bucket;
-static struct { unsigned long frame; } device;
+static struct { unsigned long frame; D3DSurface back_buffer,depth_buffer; } device;
 static float screen_scale[2] = {1, 1};
 static unsigned textures, allocations;
 static struct render_target_entry **render_target_bucket(unsigned long data) { (void)data; return &bucket; }
 static int halo_screen_width(void) { return 640; }
+static BOOL surface_is_shadow_map(const D3DSurface *s) { (void)s; return 0; }
+static long halo_shadow_map_scale(void) { return 1; }
 static void surface_dimensions(const D3DSurface *s, unsigned long *w, unsigned long *h, BOOL *depth) {
     *w=640; *h=480; *depth=s->depth;
 }
@@ -77,6 +81,16 @@ int main(void) {
         }
     }
     assert(textures<=8); /* bounded despite 100 unique eye resolutions */
+    /* A stale MSAA allocation is invalidated when its texture storage is
+       recycled: the next bind must reallocate even for equal sample count. */
+    struct render_target_entry *stale=render_target_get(&surface);
+    stale->target.multisample=99;stale->target.samples=4;stale->target.unresolved=1;
+    for(struct render_target_entry *p=render_targets;p;p=p->next)p->last_rendered=device.frame;
+    stale->last_rendered=0;device.frame+=10;
+    screen_scale[0]=screen_scale[1]=3.0f;
+    assert(render_target_get(&surface)==stale);
+    assert(!stale->target.unresolved && stale->target.samples==-1);
+    assert(stale->target.multisample==99); /* same GL name/FBO attachment */
     while (render_targets) { struct render_target_entry *next=render_targets->next; free(render_targets); render_targets=next; }
     printf("PASS: stable per-pass storage; 100 resolution changes used %u textures\n",textures);
 }
