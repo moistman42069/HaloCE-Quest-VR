@@ -51,8 +51,10 @@ package = read('tools/package-quest.py')
 updater = read('port/android/app/src/main/java/com/halo/decomp/Updater.java')
 
 # --- 1. OpenCE's network version 21, exactly; its co-op, lobby and message files byte for byte
+network = int(re.search(r'#define HALO_PORT_NETWORK_VERSION (\d+)\b', limits).group(1))
+assert network in (21, 22)
 for name in ['', '_MINIMUM', '_MAXIMUM']:
-    assert re.search(r'#define HALO_PORT_NETWORK_VERSION%s 21\b' % name, limits), name
+    assert re.search(r'#define HALO_PORT_NETWORK_VERSION%s %d\b' % (name, network), limits), name
 UPSTREAM_144 = [
     ('port/linux/game/coop_enemies.c', '64288778915265ec598613e1bb982f27330953b4b4f5dd7af41244e26c4a7f2a'),
     ('port/linux/game/coop_enemies.h', '8984e3e416e5f6fa1c743313e57fc5de87fc9a2a47be488be667865808a05a68'),
@@ -87,8 +89,8 @@ for path, digest in UPSTREAM_144:
         assert len(COOP_CAMERA_PATCH.findall(text)) == 1, 'the one camera patch'
         data = COOP_CAMERA_PATCH.sub(lambda m: COOP_CAMERA_ORIGINAL, text).encode('utf-8')
     assert hashlib.sha256(data).hexdigest() == digest, path + ' as OpenCE build 144'
-assert 'OpenCE build 144 (network 21)' in updater
-print('PASS: network 21 exactly (OpenCE build 141 on); %d co-op, lobby and message files are OpenCE build 144\'s byte for byte '
+assert ('OpenCE build 144 (network 21)' if network == 21 else 'OpenCE build 145 (network 22)') in updater
+print('PASS: exact current network gate; %d co-op, lobby and message files are OpenCE build 144\'s byte for byte '
       '(network_coop.c with only test28\'s camera)' % len(UPSTREAM_144))
 
 # --- 2. objects at rest: OpenCE build 144's three sends of one come to rest, and test26's resend of one at rest moved

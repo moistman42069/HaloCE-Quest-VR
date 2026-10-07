@@ -7,7 +7,7 @@ The Halo Custom Edition maps in the multiplayer menus
 The maps are the Custom Edition caches of multiplayer scenarios in the maps
 folder, OpenSauce's ".yelo" maps among them (custom_edition_cache_multiplayer),
 looked for whenever the level list opens. A map is offered under its file's
-name, as the level levels\test\<name>\<name> as the Xbox levels are named:
+name, as the network-22 level custom_maps\<name>:
 the cache file loader finds a map by the last part of its level name. The
 game engine keeps a level name in 64 characters, so a map whose name is
 longer than 25 characters is left out, and so is a map named as one of the
@@ -48,7 +48,7 @@ in lines of about 20 characters.
 
 /* levels\test\<name>\<name> in the 63 characters the game engine's stage
 keeps of a level name (game_engine.c, struct game_engine_stage) */
-#define LEVEL_NAME_FORMAT "levels\\test\\%s\\%s"
+#define LEVEL_NAME_FORMAT CUSTOM_EDITION_LEVEL_NAME_PREFIX "%s"
 #define MAXIMUM_MAP_NAME_LENGTH 25
 
 /* The maps' display indices: beyond every string and frame of the menus'
@@ -297,7 +297,7 @@ static void custom_edition_map_add(
 	map = &globals->maps[globals->map_count++];
 	csmemset(map, 0, sizeof(*map));
 	csstrcpy(map->name, name);
-	csprintf(map->level_name, LEVEL_NAME_FORMAT, name, name);
+	csprintf(map->level_name, LEVEL_NAME_FORMAT, name);
 	display_name_make(name, map->display_name);
 	custom_edition_map_description_read(map);
 

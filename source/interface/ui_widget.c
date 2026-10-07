@@ -1430,6 +1430,10 @@ static boolean ui_check_for_pause_game(
 
 static struct ui_widget_bss_prefix ui_widget_globals_storage;
 
+static wchar_t const *ui_widget_port_error_pending_text;
+static wchar_t const *ui_widget_port_error_text;
+static struct widget_instance *ui_widget_port_error_text_box;
+
 #define string_data ui_widget_globals_storage.string_data
 #define widget_globals ui_widget_globals_storage.widget_globals
 #define we_are_at_the_main_menu ui_widget_globals_storage.we_are_at_the_main_menu
@@ -1920,6 +1924,24 @@ void display_error_when_main_menu_loaded(
 	return;
 }
 
+void display_error_text_when_main_menu_loaded(
+	wchar_t const *text)
+{
+	static wchar_t queued_text[512];
+
+	if (widget_globals.main_menu_deferred_error_code != NONE)
+	{
+		error(_error_silent, "there is already an error message queued for display at the main menu; ignoring this one");
+		return;
+	}
+	ustrncpy(queued_text, text, NUMBEROF(queued_text) - 1);
+	queued_text[NUMBEROF(queued_text) - 1] = 0;
+	ui_widget_port_error_pending_text = queued_text;
+	widget_globals.main_menu_deferred_error_code = _error_cannot_create_saved_game_file_with_empty_name;
+
+	return;
+}
+
 void display_error_abort_to_dashboard_deferred(
 	short error_code,
 	boolean optional)
@@ -2256,6 +2278,11 @@ void ui_widget_delete(
 	case _ui_widget_type_text_box:
 		if (widget->parameters.text_box.text)
 			dispose_pointer(widget_memory_pool, widget->parameters.text_box.text);
+		if (widget == ui_widget_port_error_text_box)
+		{
+			ui_widget_port_error_text_box = NULL;
+			ui_widget_port_error_text = NULL;
+		}
 		break;
 	case _ui_widget_type_spinner_list:
 	case _ui_widget_type_column_list:
@@ -4184,7 +4211,15 @@ void display_error(
 		struct widget_instance *top_widget;
 		long top_widget_tag_index;
 		struct widget_instance *widget;
+		/* (port: the port's own text for this error, taken whether or not its
+		dialog opens, so that it is never another's) */
+		wchar_t const *port_text = NULL;
 
+		if (error_code == _error_cannot_create_saved_game_file_with_empty_name)
+		{
+			port_text = ui_widget_port_error_pending_text;
+			ui_widget_port_error_pending_text = NULL;
+		}
 		if (local_player_index != NONE)
 		{
 			short index;
@@ -4297,6 +4332,12 @@ void display_error(
 					text_box->type == _ui_widget_type_text_box,
 					"expected a text box widget in the error widget");
 				text_box->parameters.text_box.string_list_index = PIN(error_code, 0, NUMBER_OF_ERROR_CODES - 1);
+				/* (port: the port's own text in place of the error's) */
+				if (port_text)
+				{
+					ui_widget_port_error_text_box = text_box;
+					ui_widget_port_error_text = port_text;
+				}
 				widget->widget_is_error_dialog = TRUE;
 				if (!widget->pause_game_time)
 				{
@@ -4882,6 +4923,57 @@ static long search_and_replace(
 	return replacements;
 }
 
+static boolean ui_widget_port_text_wrap(
+	wchar_t *text,
+	rectangle2d const *bounds,
+	short width)
+{
+	long line_start = 0;
+	long last_space = NONE;
+	long index;
+	boolean fits = TRUE;
+
+	for (index = 0; ; index++)
+	{
+		wchar_t character = text[index];
+
+		if (character == L'\r' || character == L'\n')
+		{
+			line_start = index + 1;
+			last_space = NONE;
+			continue;
+		}
+		if (character == L' ' || character == 0)
+		{
+			wchar_t line[256];
+			long length = MIN(index - line_start, (long)NUMBEROF(line) - 1);
+			rectangle2d text_bounds;
+			rectangle2d cursor_bounds;
+
+			csmemcpy(line, text + line_start, length * sizeof(wchar_t));
+			line[length] = 0;
+			draw_unicode_string_compute_bounds(bounds, line, &text_bounds, &cursor_bounds);
+			if (cursor_bounds.x0 - bounds->x0 > width && last_space != NONE)
+			{
+				text[last_space] = L'\r';
+				line_start = last_space + 1;
+				/* (the line begun, the word just measured: wider alone?) */
+				length = MIN(index - line_start, (long)NUMBEROF(line) - 1);
+				csmemcpy(line, text + line_start, length * sizeof(wchar_t));
+				line[length] = 0;
+				draw_unicode_string_compute_bounds(bounds, line, &text_bounds, &cursor_bounds);
+			}
+			if (cursor_bounds.x0 - bounds->x0 > width)
+				fits = FALSE;
+			if (character == 0)
+				break;
+			last_space = index;
+		}
+	}
+
+	return fits;
+}
+
 static void widget_instance_render_text_box(
 	struct widget_instance *widget,
 	struct ui_widget_definition *definition,
@@ -4909,9 +5001,9 @@ static void widget_instance_render_text_box(
 			string_list_index = definition->string_list_index;
 		else
 			string_list_index = widget->parameters.text_box.string_list_index;
-		string = unicode_string_list_get_string(
-			definition->text_label_string_list.index,
-			string_list_index);
+		string = widget == ui_widget_port_error_text_box && ui_widget_port_error_text ?
+			(wchar_t *)ui_widget_port_error_text :
+			unicode_string_list_get_string(definition->text_label_string_list.index, string_list_index);
 		length = ustrlen(string);
 		widget->parameters.text_box.text = pool_resize_pointer(
 			widget_memory_pool,
@@ -5012,6 +5104,41 @@ static void widget_instance_render_text_box(
 				SECONDS_PER_MILLISECOND * 3.0f) + 1.5f) * 0.4f) * color.alpha;
 	}
 	draw_string_set_draw_mode(font_index, NONE, justification, 0, &color);
+	/* port: the port's own error text, wrapped to its dialog: the box its
+	background draws (narrower than the text box; its picture is padded to a
+	power of two, so a margin of the text's offset on each side and as much
+	again), and as tall as the text box less its offset above and as much
+	below (the dialog's footer). Text that would be taller, or wider (a word
+	longer than a line), is drawn in the menus' smaller font. */
+	if (widget == ui_widget_port_error_text_box && ui_widget_port_error_text)
+	{
+		struct bitmap_data *background = definition->background_bitmap.index != NONE ?
+			bitmap_group_get_bitmap_from_sequence(definition->background_bitmap.index, 0, 0) : NULL;
+		short width = (short)(definition->bounds.x1 - definition->bounds.x0);
+		short height = (short)(definition->bounds.y1 - definition->bounds.y0 - 2 * definition->vertical_offset);
+		wchar_t wrapped[512];
+		rectangle2d text_bounds;
+		rectangle2d cursor_bounds;
+
+		if (background && background->width > 0 && background->width < width)
+			width = background->width;
+		width = (short)(width - 4 * definition->horizontal_offset);
+		ustrncpy(wrapped, *text, NUMBEROF(wrapped) - 1);
+		wrapped[NUMBEROF(wrapped) - 1] = 0;
+		if (!ui_widget_port_text_wrap(wrapped, &bounds, width) ||
+			(draw_unicode_string_compute_bounds(&bounds, wrapped, &text_bounds, &cursor_bounds),
+			cursor_bounds.y1 - bounds.y0 > height))
+		{
+			long small_font_index = tag_loaded('font', "ui\\small_ui");
+
+			if (small_font_index != NONE)
+			{
+				font_index = small_font_index;
+				draw_string_set_draw_mode(font_index, NONE, justification, 0, &color);
+			}
+		}
+		ui_widget_port_text_wrap(*text, &bounds, width);
+	}
 	if (string_has_icons_to_draw(*text))
 		draw_string_and_hack_in_icons(&bounds, &clip, NULL, 0, *text, FALSE);
 	else

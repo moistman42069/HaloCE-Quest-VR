@@ -192,3 +192,6 @@ void texture_cache_bitmap_new(
 /* ---------- public code */
 
 #endif // __CACHE_FILES_H
+
+/* Network-22: report a missing map before starting its load. */
+boolean cache_files_map_present(char const *map_name);

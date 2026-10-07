@@ -72,9 +72,9 @@ and this app's own CE01/CE02 campaign protocol were retired with it (OpenCE's
 co-op, network_coop.c, replaces the latter). The minimum and maximum are
 numbers for the launcher's build (build.gradle reads them). test29: OpenCE
 build 144 (network 21, since build 141). */
-#define HALO_PORT_NETWORK_VERSION 21
-#define HALO_PORT_NETWORK_VERSION_MINIMUM 21
-#define HALO_PORT_NETWORK_VERSION_MAXIMUM 21
+#define HALO_PORT_NETWORK_VERSION 22
+#define HALO_PORT_NETWORK_VERSION_MINIMUM 22
+#define HALO_PORT_NETWORK_VERSION_MAXIMUM 22
 /* ... the advertisement's reserved bytes: the version (a little-endian word),
 then flags */
 #define HALO_PORT_ADVERTISED_VERSION_OFFSET 0

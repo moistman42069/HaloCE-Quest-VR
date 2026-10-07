@@ -928,6 +928,8 @@ boolean cache_files_map_plays_multiplayer(
 	build[0] = 0;
 	if (!map_name || !map_name[0])
 		return TRUE;
+	if (custom_edition_level_name(map_name))
+		return TRUE;
 	snprintf(path, sizeof(path), "%s%s.map", cache_files_map_directory(), tag_name_strip_path(map_name));
 	file = CreateFileA(path, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
 	if (file != INVALID_HANDLE_VALUE)
@@ -980,6 +982,59 @@ void cache_files_show_multiplayer_unavailable(
 	platform_show_message("Halo: multiplayer unavailable", message);
 
 	return;
+}
+
+boolean cache_files_map_present(
+	char const *map_name)
+{
+	void platform_log(char const *format, ...);
+	wchar_t error_text[512];
+	char const *name;
+	char message[512];
+	short index;
+
+	if (!map_name || !map_name[0])
+		return TRUE;
+	name = tag_name_strip_path(map_name);
+	if (custom_edition_level_name(map_name))
+	{
+		if (custom_edition_cache_present(map_name, message, sizeof(message)))
+			return TRUE;
+	}
+	else
+	{
+		char path[256];
+		HANDLE file;
+
+		if (cache_files_precache_map_loaded(map_name))
+			return TRUE;
+		snprintf(path, sizeof(path), "%s%s.map", cache_files_map_directory(), name);
+		file = CreateFileA(path, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
+		if (file != INVALID_HANDLE_VALUE)
+		{
+			CloseHandle(file);
+			return TRUE;
+		}
+		/* (a host of another version of this port, which names a Custom
+		Edition map as the game's own maps are named) */
+		if (custom_edition_map_file_present(name))
+		{
+			snprintf(message, sizeof(message),
+				"The host's map %.64s is a Custom Edition map named for another version of this game.", name);
+		}
+		else
+		{
+			snprintf(message, sizeof(message), "You don't have the map %.64s.map. If you have it, add it to the active game set maps folder.",
+				name);
+		}
+	}
+	platform_log("map missing: %s", message);
+	for (index = 0; message[index] && index < NUMBEROF(error_text) - 1; index++)
+		error_text[index] = (wchar_t)(unsigned char)message[index];
+	error_text[index] = 0;
+	display_error_text_when_main_menu_loaded(error_text);
+
+	return FALSE;
 }
 
 boolean cache_files_give_time_to_precache(
@@ -1043,7 +1098,7 @@ long scenario_tags_load(
 	/* a Halo Custom Edition map, when those may run, is read in place into
 	its own tag cache and has no Xbox vertex or index buffers
 	(port/linux/game/custom_edition_cache.c) */
-	if (custom_edition_cache_playable(stripped_scenario_name))
+	if (custom_edition_level_name(scenario_name) || custom_edition_cache_playable(stripped_scenario_name))
 	{
 		cache_file_globals.tag_header = custom_edition_cache_tags_load(
 			stripped_scenario_name,

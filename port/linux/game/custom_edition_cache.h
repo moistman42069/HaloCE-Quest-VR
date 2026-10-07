@@ -14,6 +14,12 @@ cache_file_formats.c.
 #ifndef __CUSTOM_EDITION_CACHE_H
 #define __CUSTOM_EDITION_CACHE_H
 
+#define CUSTOM_EDITION_LEVEL_NAME_PREFIX "custom_maps\\"
+
+boolean custom_edition_level_name(char const *level_name);
+boolean custom_edition_map_file_present(char const *map_name);
+boolean custom_edition_cache_present(char const *level_name, char *message, long message_size);
+
 /* ---------- structures */
 
 struct cache_file_tag_header;
