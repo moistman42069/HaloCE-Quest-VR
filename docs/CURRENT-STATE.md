@@ -1,24 +1,16 @@
 # Current development state
 
-## Current GitHub latest release: v1.0.10 (test28 APKs)
+## Current GitHub latest release: v1.0.11 (test29 APKs)
 
-**Status: published as Latest on 2026-10-06.** The release uses the APKs from `D:\HaloQuest\builds\test28-20261006-v1.0.10`. It is version **1.0.10 / code 36**, OpenCE Build 138/network 20, with standard APK filenames and updater metadata. The release checklist, hashes and validation are in [`RELEASE-1.0.10.md`](RELEASE-1.0.10.md), [`RELEASE-PROVENANCE-1.0.10.md`](RELEASE-PROVENANCE-1.0.10.md), and [`TEST28-DELIVERY.md`](TEST28-DELIVERY.md). Prior public releases remain intact; the About description was not changed.
+**Published as Latest on 2026-10-07** from `D:\HaloQuest\builds\test29-20261007-v1.0.11`. Version **1.0.11 / code 37**, OpenCE Build 144/network 21. The release includes the upstream network/co-op update, held HUD head-tap fix, HUD and wrist-HUD settings, two-hand movement fix, and graphics FOV/resolution options. See [`RELEASE-1.0.11.md`](RELEASE-1.0.11.md), [`RELEASE-PROVENANCE-1.0.11.md`](RELEASE-PROVENANCE-1.0.11.md), and [`TEST29-DELIVERY.md`](TEST29-DELIVERY.md). Previous releases remain intact; the GitHub About description was not changed.
 
-The owner reports campaign co-op works well. Exact device pairing, mission and lobby size were not specified. Test28 adds co-op host limits up to 128, but stable performance at that maximum is not established. Android gyro aim is optional and off by default; no gyro test report was provided.
+The owner confirmed co-op on v1.0.10/network 20. No device-session result for the v1.0.11/network-21 APK pair was supplied before publication. Automated tests, release hashes and live-directory version checks are recorded in test29 docs; they do not substitute for device acceptance. The 128-player capacity and resolution above 100% are not performance-certified.
 
-The prior public release is v1.0.6. Historical progress and older release notes below are retained as records, not current compatibility guidance.
+The prior public release is v1.0.10. Historical progress and older release notes below are retained as records, not current compatibility guidance.
 
-## Next candidate: test29 (1.0.11 / code 37)
+## Post-release validation: test29
 
-**Next candidate (private, not released): test29, version 1.0.11 / code 37**, branch `test29-opence-144`, built on the published v1.0.10:
-- OpenCE build 144 netcode (network 21). Current OpenCE co-op and multiplayer games are on 21, which 1.0.10 cannot join.
-- The HUD head tap must now be held by the temple for a moment, so a hand passing by no longer hides the HUD.
-- New HUD rows: HUD Shown/Hidden and Head Tap.
-- The wrist HUD sits on the wrist and can be moved and resized.
-- MOVE WITH a hand follows the gun while both hands hold it.
-- Pull request #1 adds a glasses FOV option and resolution steps up to 200%; defaults are as in 1.0.10.
-
-See [TEST29-PROGRESS.md](TEST29-PROGRESS.md) and [TEST29-DELIVERY.md](TEST29-DELIVERY.md).
+Collect Quest and Android reports for network-21 PvP/co-op, updated co-op synchronization and transitions, HUD tap, wrist placement/adjustments, Move With under two-hand grip, and FOV/resolution choices. Preserve logs from each peer for connection/desync/crash reports. See [TEST29-DELIVERY.md](TEST29-DELIVERY.md).
 
 ## Historical progress
 

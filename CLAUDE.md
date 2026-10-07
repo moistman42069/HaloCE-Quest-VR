@@ -1,16 +1,18 @@
 # Agent and contributor continuation
 
-## Current GitHub latest release: v1.0.10 (test28 APKs)
+## Current GitHub latest release: v1.0.11 (test29 APKs)
+
+**Published release: test29 (version 1.0.11 / code 37).** OpenCE Build 144/network 21, HUD tap and wrist-HUD refinements, two-hand movement alignment, glasses FOV and higher resolution options. The exact v1.0.11 APK pair had no owner device-session validation at publication; the owner-confirmed co-op result applies to v1.0.10/network 20. Preserve all prior releases and do not alter the repository About description. See `docs/RELEASE-1.0.11.md`, `docs/RELEASE-PROVENANCE-1.0.11.md`, `docs/TEST29-PROGRESS.md`, and `docs/OPENCE-COOP-COMPATIBILITY.md`.
 
 **Published release: test28 (version 1.0.10 / code 36).** The user supplied `D:\HaloQuest\builds\test28-20261006-v1.0.10` and reports campaign co-op works well in testing. Test28 uses OpenCE Build 138/network 20, fixes the join-in-progress camera halt, offers co-op lobby sizes up to 128, and adds optional phone gyro aiming. High-count performance and gyro behavior were not reported as tested. See `docs/RELEASE-1.0.10.md`, `docs/RELEASE-PROVENANCE-1.0.10.md`, `docs/TEST28-PROGRESS.md` and `docs/OPENCE-COOP-COMPATIBILITY.md`. The release is Latest at https://github.com/moistman42069/HaloCE-Quest-VR/releases/tag/v1.0.10. Preserve all prior releases and do not alter the repository About description.
 
-**Next candidate (private, not released): test29, version 1.0.11 / code 37**, branch `test29-opence-144`, built on the published v1.0.10:
+**Published from candidate:** test29, version 1.0.11 / code 37, branch `test29-opence-144`, built on v1.0.10:
 - OpenCE build 144 netcode (network 21). Current OpenCE co-op and multiplayer games are on 21, which 1.0.10 cannot join.
 - The HUD head tap must now be held by the temple for a moment, so a hand passing by no longer hides the HUD.
 - New HUD rows: HUD Shown/Hidden and Head Tap.
 - The wrist HUD sits on the wrist and can be moved and resized.
 - MOVE WITH a hand follows the gun while both hands hold it.
-- Pull request #1 adds a glasses FOV option and resolution steps up to 200%; defaults are as in 1.0.10.
+- [Willem Horak's PR #1](https://github.com/moistman42069/HaloCE-Quest-VR/pull/1) contributes the glasses FOV option and resolution steps up to 200%; defaults are as in 1.0.10.
 
 See [TEST29-PROGRESS.md](docs/TEST29-PROGRESS.md) and [TEST29-DELIVERY.md](docs/TEST29-DELIVERY.md).
 

@@ -1,28 +1,28 @@
 {
     "schema":  1,
     "project":  "moistman42069/HaloCE-Quest-VR",
-    "tag":  "v1.0.10",
-    "source_commit":  "235c2f5b249c5f68de9fd425c31643bcebeb28f2",
+    "tag":  "v1.0.11",
+    "source_commit":  "e9ea658180dd1da7026742eb5761c4162329b61e",
     "minimum_app_code":  15,
     "save_policy":  "preserve",
     "config_policy":  "preserve",
     "vr_and_coop_integrated":  true,
-    "native_minimum":  20,
-    "native_maximum":  20,
+    "native_minimum":  21,
+    "native_maximum":  21,
     "coop":  "opence-native",
     "editions":  {
                      "com.halo.decomp.vr":  {
-                                                "apk":  "HaloCE-Quest-1.0.10.apk",
-                                                "sha256":  "5e7beecb4ea9216b3f3d8268899fd210db1f4b8adfbe47bea3f714caa1f207ba",
-                                                "bytes":  28265091,
-                                                "version_code":  36,
+                                                "apk":  "HaloCE-Quest-1.0.11.apk",
+                                                "sha256":  "ba6b3e807ff9f09c9547be048b9d21ef3d2b51a97b9a89de85c968032b30ec60",
+                                                "bytes":  28347011,
+                                                "version_code":  37,
                                                 "min_sdk":  28
                                             },
                      "com.halo.decomp":  {
-                                             "apk":  "HaloCE-Android-1.0.10.apk",
-                                             "sha256":  "70c712edb5a7b525a0f806ff6643e0ed6be61067022223dd45532ae60c0f28d8",
-                                             "bytes":  26253876,
-                                             "version_code":  36,
+                                             "apk":  "HaloCE-Android-1.0.11.apk",
+                                             "sha256":  "3f5c385fa35ad8dbf8d327b9d427199b71d74d7d1fff1daf8350a5c2a267cefd",
+                                             "bytes":  26266164,
+                                             "version_code":  37,
                                              "min_sdk":  28
                                          }
                  }

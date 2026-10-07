@@ -1,18 +1,18 @@
-# Active work checkpoint — after v1.0.10 release (2026-10-06)
+# Active work checkpoint — after v1.0.11 release (2026-10-07)
 
-The latest public release is [v1.0.10](https://github.com/moistman42069/HaloCE-Quest-VR/releases/tag/v1.0.10), built from test28. Preserve v1.0.6 and all earlier releases. Release APK hashes and validation are in [RELEASE-PROVENANCE-1.0.10.md](RELEASE-PROVENANCE-1.0.10.md). The repository About description was not changed.
+The latest public release is [v1.0.11](https://github.com/moistman42069/HaloCE-Quest-VR/releases/tag/v1.0.11), built from test29. Preserve v1.0.10, v1.0.6 and all earlier releases. Release APK hashes and validation are in [RELEASE-PROVENANCE-1.0.11.md](RELEASE-PROVENANCE-1.0.11.md). The repository About description was not changed.
 
-## Next candidate (test29, 2026-10-07)
+## Current release (test29, 2026-10-07)
 
-**Next candidate (private, not released): test29, version 1.0.11 / code 37**, branch `test29-opence-144`, built on the published v1.0.10:
+**Published as v1.0.11 / code 37**, branch `test29-opence-144`, built on v1.0.10:
 - OpenCE build 144 netcode (network 21). Current OpenCE co-op and multiplayer games are on 21, which 1.0.10 cannot join.
 - The HUD head tap must now be held by the temple for a moment, so a hand passing by no longer hides the HUD.
 - New HUD rows: HUD Shown/Hidden and Head Tap.
 - The wrist HUD sits on the wrist and can be moved and resized.
 - MOVE WITH a hand follows the gun while both hands hold it.
-- Pull request #1 adds a glasses FOV option and resolution steps up to 200%; defaults are as in 1.0.10.
+- [Willem Horak's PR #1](https://github.com/moistman42069/HaloCE-Quest-VR/pull/1) contributes the glasses FOV option and resolution steps up to 200%; defaults are as in 1.0.10.
 
-See [TEST29-PROGRESS.md](TEST29-PROGRESS.md) and [TEST29-DELIVERY.md](TEST29-DELIVERY.md).
+See [TEST29-PROGRESS.md](TEST29-PROGRESS.md), [TEST29-DELIVERY.md](TEST29-DELIVERY.md), and [RELEASE-PROVENANCE-1.0.11.md](RELEASE-PROVENANCE-1.0.11.md). The exact pair still needs owner device validation; do not infer a v1.0.11 co-op acceptance from the earlier v1.0.10 report.
 
 ## Owner confirmation and follow-up
 
@@ -61,12 +61,12 @@ Private candidate **test22** (version 1.0.4 / code 29) after the published v1.0.
 
 Private candidate **test21b** (1.0.2 / code 27, replacing test21 code 26, branch `test21-hands-body`) addresses this report plus the owner's later additions (floating toggle kept arms, Warthog horn, easy online melee, automatic two-hand lock on by default, the Quest OS v78 two-hand gun roll, the tester's pistol reticle with per-gun aim, and the multiplayer avatar question). Causes, changes and headset checks: [TEST21-PROGRESS.md](TEST21-PROGRESS.md); delivery: [TEST21B-DELIVERY.md](TEST21B-DELIVERY.md) (test21b notes: [TEST21B-PROGRESS.md](TEST21B-PROGRESS.md)). The video/log mismatch is resolved: the overlay and the `body legs` lines are different moments of one session (video starts 12:45:58). Signing key matches v1.0.2. Nothing is accepted until the owner tests on a headset.
 
-## Accepted release and work boundary
+## Historical hand and IK report (2026-10-04)
 
-- The latest public release is [`v1.0.2`](https://github.com/moistman42069/HaloCE-Quest-VR/releases/tag/v1.0.2), the exact test20e APK pair, Android version code 25. Its provenance and SHA-256 values are in [`RELEASE-PROVENANCE-1.0.2.md`](RELEASE-PROVENANCE-1.0.2.md). Preserve the release and prior releases; do not replace or withdraw them based only on this report.
-- The present task is diagnosis and a private candidate for the Quest/VR rendering regression reported on 2026-10-04: the previously corrected cut-off/floating-hand appearance has returned, and arm IK does not follow correctly when the player's body turns.
+- At the time, the latest public release was [`v1.0.2`](https://github.com/moistman42069/HaloCE-Quest-VR/releases/tag/v1.0.2), the exact test20e APK pair, Android version code 25. This is historical; the current release is v1.0.11 above.
+- The original report concerned a Quest/VR rendering regression: cut-off/floating hands and arm IK not following body turns. Keep the evidence below for reference; reopen only if new reports point to a regression.
 - Do not assume the public v1.0.2 binary caused the symptoms. The supplied logs include both a test20d-labelled runtime and a test20e-labelled runtime. Match APK hashes/version codes and source revisions before calling this a public-release regression.
-- No release or public APK upload is authorized by this checkpoint. Keep the accepted release intact and ask for device acceptance before any later publication.
+- The owner later authorized test29 as v1.0.11. The exact v1.0.11 pair still needs device validation; see the current release section above and `TEST29-DELIVERY.md`.
 
 ## Evidence available in Git
 

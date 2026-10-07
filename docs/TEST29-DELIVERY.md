@@ -1,12 +1,11 @@
-# Test29 — 1.0.11 candidate (private): current OpenCE, HUD tap fix, wrist HUD placement, glasses FOV
+# Test29 — 1.0.11 release delivery: OpenCE 144, HUD and graphics refinements
 
-Not a release. GitHub's Latest is v1.0.10. Do not publish without explicit
-owner approval. Details: [TEST29-PROGRESS.md](TEST29-PROGRESS.md).
+Published as the latest release at [v1.0.11](https://github.com/moistman42069/HaloCE-Quest-VR/releases/tag/v1.0.11). The owner explicitly authorized this release. Details: [release notes](RELEASE-1.0.11.md) and [TEST29-PROGRESS.md](TEST29-PROGRESS.md). No exact-pair device session was recorded before publication.
 
 ## Installation
 
-- Quest/VR: `HaloCE-Quest-test29.apk` (package `com.halo.decomp.vr`)
-- Android/flat: `HaloCE-Android-test29.apk` (package `com.halo.decomp`)
+- Android/flat: `HaloCE-Android-1.0.11.apk` (package `com.halo.decomp`)
+- Quest/VR: `HaloCE-Quest-1.0.11.apk` (package `com.halo.decomp.vr`)
 
 Both are **version 1.0.11 / code 37**, ARM64, API 28+, signed with the same
 certificate as every release since v1.0.2. They install over v1.0.10 without
@@ -49,8 +48,8 @@ build 141 or newer.
 
 | File | Bytes | SHA-256 |
 | --- | ---: | --- |
-| `HaloCE-Quest-test29.apk` | 28,347,011 | `ba6b3e807ff9f09c9547be048b9d21ef3d2b51a97b9a89de85c968032b30ec60` |
-| `HaloCE-Android-test29.apk` | 26,266,164 | `3f5c385fa35ad8dbf8d327b9d427199b71d74d7d1fff1daf8350a5c2a267cefd` |
+| `HaloCE-Android-1.0.11.apk` | 26,266,164 | `3f5c385fa35ad8dbf8d327b9d427199b71d74d7d1fff1daf8350a5c2a267cefd` |
+| `HaloCE-Quest-1.0.11.apk` | 28,347,011 | `ba6b3e807ff9f09c9547be048b9d21ef3d2b51a97b9a89de85c968032b30ec60` |
 
 Runtime source `e9ea6581` on branch `test29-opence-144`; later commits
 change only documentation. Certificate SHA-256

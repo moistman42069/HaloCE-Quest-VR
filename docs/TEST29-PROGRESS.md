@@ -1,7 +1,9 @@
 # Test29 checkpoint: OpenCE build 144 (network 21), HUD tap fix and settings, wrist HUD placement, two-hand movement, PR #1
 
-Updated 2026-10-07. Private candidate **test29, version 1.0.11 / code 37**,
-branch `test29-opence-144`, on top of the published v1.0.10. Not released.
+Updated 2026-10-07. **Published as test29, version 1.0.11 / code 37**,
+branch `test29-opence-144`, on top of the published v1.0.10. The exact APK
+pair still needs owner device validation; do not treat automated protocol
+checks as runtime acceptance.
 
 ## Requests
 
@@ -18,7 +20,8 @@ branch `test29-opence-144`, on top of the published v1.0.10. Not released.
 4. A player's report: with the gun held in both hands, the left stick's
    forward slowly turned into a strafe, and letting go reset it. Fix only if
    the cause is conclusive.
-5. Pull request #1 (glasses field of view and resolution steps): add it
+5. Include the glasses field of view and resolution contribution from
+   [Willem Horak's PR #1](https://github.com/moistman42069/HaloCE-Quest-VR/pull/1)
    without regressions.
 
 ## 1. OpenCE build 144 (network 21)

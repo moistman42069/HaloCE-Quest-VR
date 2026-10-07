@@ -1,25 +1,26 @@
-# Halo CE Quest VR + Android 1.0.10
+# Halo CE Quest VR + Android 1.0.11
 
-[Latest release and downloads](https://github.com/moistman42069/HaloCE-Quest-VR/releases/tag/v1.0.10) · [Previous public release v1.0.6](https://github.com/moistman42069/HaloCE-Quest-VR/releases/tag/v1.0.6) · [Full release notes](docs/RELEASE-1.0.10.md) · [Controls and settings](docs/CONTROLS-AND-OPTIONS.md) · [Credits](CREDITS.md)
+[Latest release and downloads](https://github.com/moistman42069/HaloCE-Quest-VR/releases/tag/v1.0.11) · [Previous release v1.0.10](https://github.com/moistman42069/HaloCE-Quest-VR/releases/tag/v1.0.10) · [Full release notes](docs/RELEASE-1.0.11.md) · [Controls and settings](docs/CONTROLS-AND-OPTIONS.md) · [Credits](CREDITS.md)
 
-Halo: Combat Evolved for standalone Meta Quest VR and flat Android, built on the Halo CE decompilation. Version **1.0.10 / code 36** uses OpenCE Build 138's native network version 20 for PvP and campaign co-op.
+Halo: Combat Evolved for standalone Meta Quest VR and flat Android, built on the Halo CE decompilation. Version **1.0.11 / code 37** uses OpenCE Build 144's native network version 21 for PvP and campaign co-op.
 
 ## Downloads and installation
 
 | Device | Download |
 | --- | --- |
-| Android phone/tablet — flat play | [HaloCE-Android-1.0.10.apk](https://github.com/moistman42069/HaloCE-Quest-VR/releases/download/v1.0.10/HaloCE-Android-1.0.10.apk) |
-| Meta Quest — standalone VR | [HaloCE-Quest-1.0.10.apk](https://github.com/moistman42069/HaloCE-Quest-VR/releases/download/v1.0.10/HaloCE-Quest-1.0.10.apk) |
+| Android phone/tablet — flat play | [HaloCE-Android-1.0.11.apk](https://github.com/moistman42069/HaloCE-Quest-VR/releases/download/v1.0.11/HaloCE-Android-1.0.11.apk) |
+| Meta Quest — standalone VR | [HaloCE-Quest-1.0.11.apk](https://github.com/moistman42069/HaloCE-Quest-VR/releases/download/v1.0.11/HaloCE-Quest-1.0.11.apk) |
 
 Both APKs are ARM64 and require Android 9/API 28 or newer. Quest requires Developer Mode and sideloading. Install over the existing project app; **do not uninstall or clear app data**. Back up saves and game data first. Import your own legally obtained Xbox Halo CE ISO/XISO or extracted game data through launcher **Game files & versions**. No game maps are distributed.
 
 ## What's new
 
-- Direct OpenCE Build 138 netcode integration: network v20 for multiplayer and campaign co-op.
-- Campaign co-op supports joining an active mission. Lobby-size choices now range from 2 to 128; 128 is an engine option, not a tested Quest/phone performance target.
-- Fixed the join-in-progress blue-screen camera fault and build mode now matches OpenCE's release builds.
-- Flat Android gyro aiming is optional and off by default, with Always / touch-to-aim modes, sensitivity and inversion.
+- OpenCE Build 144 netcode, network v21, plus upstream co-op replication and area-transition fixes.
+- Fixed HUD head tap behavior; added HUD visibility and head-tap settings, wrist HUD placement/size controls, and two-hand movement alignment.
+- Added glasses FOV and resolution options through 200% (125% Q3 approximates Quest 3 panels).
+- Co-op lobby-size choices range from 2 to 128; 128 is an engine option, not a tested Quest/phone performance target.
 - VR options include the optional wrist HUD, flashlight/HUD gestures, configurable body and finger modes, weapon grip/aim tuning, close-contact movement, melee and vehicle adjustments. **Legs + Arms** and **Third Person + Right Hand steering** are the defaults; first-person vehicles remain experimental.
+- Flat Android gyro aiming is optional and off by default; controller/touch settings and per-launch logging remain available.
 - Android includes the controller/touch adjustment guide below, game-data revision manager, updater and per-launch logging.
 
 ## Quick inputs
@@ -38,12 +39,12 @@ Both APKs are ARM64 and require Android 9/API 28 or newer. Quest requires Develo
 
 ## Multiplayer and campaign co-op
 
-All peers must use **network version 20** (OpenCE Build 138 / this release). Older/newer network versions, including this project's 1.0.8 and earlier, are incompatible. Host from launcher **Campaign co-op → Host campaign**, select mission, difficulty and player limit, then start from the game lobby. Join from **Multiplayer → System Link → Refresh** or the launcher's co-op browser, then select the host in System Link. Public lobbies appear in native OpenCE discovery/community listings; LAN also works.
+All peers must use **network version 21** (OpenCE Build 144 / this release). v1.0.10 network-20 peers and other network versions are incompatible. Host from launcher **Campaign co-op → Host campaign**, select mission, difficulty and player limit, then start from the game lobby. Join from **Multiplayer → System Link → Refresh** or the launcher's co-op browser, then select the host in System Link. Public lobbies appear in native OpenCE discovery/community listings; LAN also works.
 
-The owner tested co-op and reports it works well. Larger lobby options are available, but high player-count performance and every device/network combination have not been established. Use matching campaign maps. Strict NAT, passwords, modified content, missing maps or version mismatches can prevent joining.
+The owner confirmed co-op worked well on v1.0.10/network 20. The new v1.0.11/network-21 pair has no recorded device session yet; test hosting/joining on the updated build. Larger lobby options are available, but high player-count performance and every device/network combination have not been established. Use matching campaign maps. Strict NAT, passwords, modified content, missing maps or version mismatches can prevent joining.
 
 ## Support
 
 DM **@MeWhenINameMyself** or report in the [Halo CE Decomp Discord server](https://discord.gg/S9uSCKxKx). Include app/OpenCE version, device and OS, game-data revision/build, map, network type, steps and logs from all players. Android logs are under **Download/HaloCE** when permitted; remove private invite/device details before sharing.
 
-See the [complete v1.0.10 release notes](docs/RELEASE-1.0.10.md) for installation, controls, VR/mobile settings, multiplayer/revision compatibility, known issues and credits. The GitHub About description is unchanged.
+See the [complete v1.0.11 release notes](docs/RELEASE-1.0.11.md) for installation, controls, VR/mobile settings, multiplayer/revision compatibility, known issues and credits. The GitHub About description is unchanged.
