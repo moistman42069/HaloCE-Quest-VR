@@ -4,31 +4,33 @@ Release: [Halo CE Quest VR + Android 1.0.18](https://github.com/moistman42069/Ha
 Upstream: OpenCE Build 157, network 24
 Version: 1.0.18 / Android code 48
 Packages: `com.halo.decomp` and `com.halo.decomp.vr`; ARM64; minimum API 28
-Source commit: to be filled after the release commit is published.
+Runtime source commit: `2680beaa42d9b53098a21198200f79c76aa3b308`
 Signing certificate SHA-256: `53d416f7e123cc62b749940983209bc9a400002e033fd5f50900d4ffad8e2aa4`
 
 ## APK assets
 
-Final byte counts and SHA-256 digests are copied from the packaging manifest
-after the stable APK pair is rebuilt and verified.
+Final byte counts and SHA-256 digests are copied from the stable packaging
+manifest after rebuild and package-gate verification.
 
 | Asset | Package | Bytes | SHA-256 |
 | --- | --- | ---: | --- |
-| `HaloCE-Android-1.0.18.apk` | `com.halo.decomp` | pending | pending |
-| `HaloCE-Quest-1.0.18.apk` | `com.halo.decomp.vr` | pending | pending |
-| `compatibility.json` | updater metadata | pending | pending |
+| `HaloCE-Android-1.0.18.apk` | `com.halo.decomp` | 32,672,838 | `076ccb567c5b05c6d2e1a97e84bcd4b3f2c729d702822814327975ae9b5ab86e` |
+| `HaloCE-Quest-1.0.18.apk` | `com.halo.decomp.vr` | 34,765,337 | `6f1b20b4e6f2a3e8aee35c3f6c2aa5a8f6c52bd6510922ef8b6904c5124864c4` |
+| `compatibility.json` | updater metadata | 821 | `02a6ef05ba32e01c38953198da8815e665c592cc76452be05f6306bb52c1f621` |
 
 ## Build and validation
 
-- Built from the final release source commit with stable version name 1.0.18
+- Built from runtime source commit `2680beaa` with stable version name 1.0.18
   and Android version code 48. The offline player guide and VR startup identity
-  use the stable release name; no test label remains in release APK identity.
-- Test37's registered Android/Quest regression suites: 62 passed. Cache-format
-  pytest: 127 passed, 4 optional real-map fixture skips. Final stable package
-  gate results and exact source revision are recorded below after packaging.
-- Both APKs must pass established signing certificate, package/version/API/
-  ARM64, ZIP/orphaned-payload, guide/license, updater marker and flat/VR
-  networking parity checks.
+  use the stable release name; neither APK carries the Test37 version label.
+- All 62 registered Android/Quest regression suites passed for both build
+  flavors. Cache-format pytest reported 127 passed and 4 optional real-map
+  fixture skips because the required real maps are unavailable here.
+- The final stable package gate passed APK signing certificate, package/version,
+  API/ARM64, ZIP/orphaned-payload, guide/license, updater markers and flat/VR
+  networking parity checks. Both APKs use the established project certificate.
+- OpenCE's clang 22 PGO profiles are unavailable to the installed clang 18, so
+  this build uses the supported non-PGO build path.
 - No exhaustive physical-device, historical server, co-op player-count or
   Original/Rev1/Rev2 XISO matrix is implied by source and automated checks.
 
