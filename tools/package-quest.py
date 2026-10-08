@@ -24,6 +24,45 @@ def sha(path):
         return hashlib.file_digest(stream, "sha256").hexdigest()
 
 
+def reject_orphaned_apk_data(path, archive):
+    """Catch stale payload left behind by incremental APK assembly.
+
+    A ZIP central directory can remain valid while old local file records are
+    stranded between indexed entries (or before the APK signing block). Those
+    bytes are invisible to normal ZIP listing and can bloat an otherwise valid
+    APK. Android signing blocks are small; reject any unexplained gap above
+    1 MiB while allowing alignment padding and normal v2/v3 signatures.
+    """
+    entries = archive.infolist()
+    if len({entry.filename for entry in entries}) != len(entries):
+        raise SystemExit("APK contains duplicate central-directory paths: " + str(path))
+    spans = []
+    with path.open("rb") as stream:
+        for entry in entries:
+            stream.seek(entry.header_offset)
+            header = stream.read(30)
+            if len(header) != 30 or header[:4] != b"PK\x03\x04":
+                raise SystemExit("APK local ZIP record is missing: " + entry.filename)
+            flags = struct.unpack_from("<H", header, 6)[0]
+            name_length, extra_length = struct.unpack_from("<HH", header, 26)
+            raw_name = stream.read(name_length)
+            if raw_name.decode("utf-8" if flags & 0x800 else "cp437") != entry.filename:
+                raise SystemExit("APK local/central path mismatch: " + entry.filename)
+            stream.seek(extra_length, 1)
+            end = entry.header_offset + 30 + name_length + extra_length + entry.compress_size
+            if flags & 0x08:  # ZIP data descriptor, optional signature included.
+                stream.seek(end)
+                descriptor = stream.read(4)
+                end += (16 if descriptor == b"PK\x07\x08" else 12)
+            spans.append((entry.header_offset, end, entry.filename))
+    spans.sort()
+    for (_, end, name), (next_start, _, next_name) in zip(spans, spans[1:]):
+        if end > next_start or next_start - end > (1 << 20):
+            raise SystemExit("APK has overlapping or orphaned ZIP data between " + name + " and " + next_name)
+    if spans and (archive.start_dir < spans[-1][1] or archive.start_dir - spans[-1][1] > (1 << 20)):
+        raise SystemExit("APK has oversized unindexed data before its central directory: " + str(path))
+
+
 def network_value(name):
     text=(ROOT / "port/linux/include/halo_port_limits.h").read_text()
     return int(re.search(r"^#define " + name + r" (\d+)$", text, re.M)[1])
@@ -177,6 +216,7 @@ def main():
         with zipfile.ZipFile(path) as archive:
             if archive.testzip() is not None:
                 raise SystemExit("APK ZIP checksum failure")
+            reject_orphaned_apk_data(path, archive)
             names = archive.namelist()
             for guide in ["player-guide", "controls", "touch", "settings", "credits"]:
                 if "assets/guide/"+guide+".txt" not in names:

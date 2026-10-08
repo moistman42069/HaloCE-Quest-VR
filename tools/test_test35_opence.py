@@ -36,6 +36,7 @@ assert 'OpenCE build 148 (network 23)' in updater
 package_script = read("tools/package-quest.py")
 assert '"runtime_accepted": False' in package_script
 assert 'args.stable and args.label == "1.0.16"' in package_script
+assert 'reject_orphaned_apk_data' in package_script
 
 # SPV1's ten map files are larger than 128 MiB, but fit the current bounded
 # Custom Edition cache reader. Keep that distinction visible and avoid
