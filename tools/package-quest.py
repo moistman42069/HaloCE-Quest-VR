@@ -393,7 +393,8 @@ def main():
                         raise SystemExit("v1.0.18 launcher network selector missing: " + repr(marker))
                 guide = re.sub(rb"\s+", b" ", archive.read("assets/guide/player-guide.txt"))
                 for marker in [b"Halo CE Quest VR + Android 1.0.18", b"version code 48",
-                               b"network-version population selector", b"Hosting remains on network 24",
+                               b"Network-version selection with population information",
+                               b"Hosting and signed advertisements always remain network 24",
                                b"Build 157", b"First-person vehicle view", b"original Xbox Halo CE XISO"]:
                     if marker not in guide:
                         raise SystemExit("v1.0.18 offline guide is stale or missing: " + repr(marker))
