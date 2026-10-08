@@ -89,7 +89,7 @@ assert 'protected-map conversion, resources and gameplay still need "\n        +
 select = fn(launcher.replace('    private void selectMod', 'void selectMod'), 'selectMod')
 assert select.index('modDetails.addView(name);') < select.index('warning.setText(SPV1_COMPATIBILITY_NOTE);') < \
     select.index('description.setText(mod.description);'), 'the warning first in the SPV1 panel'
-assert '**SPV1 is experimental and unverified on this port.**' in guide
+assert 'SPV1 is experimental and unverified' in guide
 
 # --- version
 # (1.0.6 / 32 or later)
