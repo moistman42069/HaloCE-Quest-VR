@@ -1,24 +1,24 @@
 # Agent and contributor continuation
 
-## Current: Test34 OpenCE Build 147 integration (2026-10-07)
+## Current: Test35 OpenCE Build 148 integration (2026-10-07)
 
 Read `docs/ACTIVE-WORK-CHECKPOINT.md`, `docs/CURRENT-STATE.md`,
-`docs/TEST34-PROGRESS.md`, `docs/TEST34-UPSTREAM-INTEGRATION.md`, and
-`docs/TEST34-DELIVERY.md`. The active private candidate targets 1.0.15/code44
-and official OpenCE Build 147/network23. Build 147 is marked Latest on its
-direct release page; the general releases listing has shown stale Build 145
-metadata. The candidate ports applicable Build147 behavior into the Android/
-Quest architecture, including the full shared tag schemas, CE cache adapter,
-retail tag validation, and structure-BSP validation. A source review caught
-and fixed use of physical file size instead of declared CE file length, plus
-missing BSP validation before conversion. The new Test30 scope report had a
-held sniper but no game zoom state or submitted scope layer; Test34 adds
-transition-only input, zoom, setting and render-gate diagnostics without
-changing the accepted scope transform. Both APK builds and all registered
-host suites now pass; see `docs/TEST34-DELIVERY.md` for hashes and package
-artifacts. This remains a private candidate with no device acceptance, push,
-tag, release, install or game launch. Preserve the owner-accepted Test31b VR
-settings and Test31c Android touch/gameplay.
+`docs/TEST35-PROGRESS.md`, `docs/TEST35-UPSTREAM-INTEGRATION.md`, and
+`docs/TEST35-DELIVERY.md`. The private candidate targets Android/Quest
+1.0.16/code45. It ports Build148's applicable particle-radius tag corrections,
+runtime point-physics guard, and native build/error halt-screen details while
+retaining network23. Build148 does not change the network protocol. Preserve
+Test34's map/cache/BSP validation, co-op/camera safeguards, cursor selection,
+scope diagnostics/alignment, and the owner-accepted Test31b VR settings and
+Test31c Android touch/gameplay. Test35's two APKs and matching archives have
+been built and packaged; consult `TEST35-DELIVERY.md` for exact hashes and
+automated results. Await phone and Quest testing; automated checks are not
+device acceptance. Do not push, publish, install or launch the game.
+
+This Test35 entry is the active handoff. Older Test31/Test32 "Active" headings
+below are retained historical notes and are superseded; do not resume their
+branches or targets. The separate interaction backlog remains in
+`docs/VR-INTERACTION-REQUIREMENTS.md`.
 
 ## Active touch/glass correction and accepted VR preference (2026-10-07)
 

@@ -65,7 +65,7 @@ assert "scope_path_log(5, zoom_level, shape)" in scope_window
 assert "state == previous_state" in scope_path_log
 assert "hold the off-hand index trigger" in scope_path_log
 package_gate = read("tools/package-quest.py")
-assert 'if vr:\n                    for marker in [b"OpenCE Build 147 / network 23"' in package_gate
+assert 'if vr:\n                    for marker in [b"OpenCE Build 148 / network 23"' in package_gate
 assert 'b"scope render path %s"' in package_gate
 assert 'b"left trigger for right-handed play"' in package_gate
 

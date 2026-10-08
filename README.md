@@ -1,24 +1,21 @@
 # Halo CE Quest VR + Android 1.0.12
 
-Development branch: **test34 / 1.0.15 private OpenCE Build 147 and menu-pointer candidate**.
-It adds hover selection for server rows, adopts network 23 with CE map-checksum
-matching, integrates OpenCE's tag schemas and validator into the Quest CE cache
-loader, and adapts the applicable Build 146/147 safety and capacity changes.
-The owner-accepted VR settings and Android touch behavior remain the baseline.
-For the scope report, the supplied Test30 log showed no game zoom state or
-scope layer; Test34 adds transition-only diagnostics for trigger input, zoom,
-settings and scope-render gates. The scope alignment transform was left alone
-because that log did not show it rendering.
-[Current evidence and scope](docs/TEST34-PROGRESS.md).
+Development branch: **test35 / 1.0.16 private OpenCE Build 148 candidate**.
+It corrects negative/NaN particle collision radii while maps load, adds a
+runtime zero-radius fallback and improves native halt-screen build/error
+details. Network compatibility remains OpenCE network 23. It carries forward
+the Test34 server-row pointer selection, CE map validation, candidate
+diagnostics, owner-accepted VR settings and Android touch behavior.
+[Current evidence and scope](docs/TEST35-PROGRESS.md).
 The public download links below remain v1.0.12 until a release is authorized.
 
 [Latest release and downloads](https://github.com/moistman42069/HaloCE-Quest-VR/releases/tag/v1.0.12) · [Previous release v1.0.11](https://github.com/moistman42069/HaloCE-Quest-VR/releases/tag/v1.0.11) · [Full release notes](docs/RELEASE-1.0.12.md) · [Controls and settings](docs/CONTROLS-AND-OPTIONS.md) · [Credits](CREDITS.md)
 
-The latest public download from this project remains **v1.0.12 / code 38**. The private Test34 candidate is **1.0.15 / code 44**, adapted to OpenCE Build 147 / network 23. OpenCE's direct Build 147 release page marks it Latest; the general releases listing may still show stale Build 145 metadata. Private candidates are not public downloads.
+The latest public download from this project remains **v1.0.12 / code 38**. The private Test35 candidate is **1.0.16 / code 45**, adapted to OpenCE Build 148 / network 23. Private candidates are not public downloads.
 
-## Current private candidate: Test34
+## Current private candidate: Test35
 
-Test34 updates the native game to OpenCE Build 147 behavior where applicable: network 23 with Custom Edition map-header checksum matching, the upstream tag-schema validator adapted to the Quest cache, Build 147 capacity/co-op/camera safeguards, and pointer hover selection for server rows. It preserves the owner-accepted Android touch behavior and VR settings design. The source-level and APK checks are recorded in [Test34 progress](docs/TEST34-PROGRESS.md) and [delivery](docs/TEST34-DELIVERY.md). These APKs remain private test candidates and have not received device acceptance.
+Test35 updates applicable OpenCE Build 148 behavior while retaining network 23: malformed negative particle radii and widths are corrected during tag validation, computed invalid radii are clamped before physics, and native error screens identify the platform/build and show recent errors. The source-level audit and device checklist are recorded in [Test35 progress](docs/TEST35-PROGRESS.md), [upstream integration](docs/TEST35-UPSTREAM-INTEGRATION.md), and [delivery](docs/TEST35-DELIVERY.md). These APKs remain private test candidates and have not received device acceptance.
 
 ## Downloads and installation
 

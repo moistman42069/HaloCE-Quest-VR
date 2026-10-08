@@ -300,8 +300,9 @@ public class LauncherActivity extends Activity {
         TextView modsTitle = label(layout, "MODS", 18, HALO_BLUE);
         modsTitle.setPadding(0, dp(24), 0, dp(4));
 
-        // SPV1 does not work yet (owner, 1.0.6): said on its button and in its panel
-        Button spv1 = menuButton(layout, ModInstaller.SPV1.title + " (not working yet)");
+        // SPV1's maps fit the current CE reader's file-size bounds, but this mod
+        // has not yet been verified in a real campaign on this port.
+        Button spv1 = menuButton(layout, ModInstaller.SPV1.title + " (experimental; unverified)");
         spv1.setOnClickListener(v -> selectMod(ModInstaller.SPV1));
 
         // the selected mod: what it is, and what can be done with it
@@ -358,10 +359,11 @@ public class LauncherActivity extends Activity {
     }
 
     /** Shows the mod's description and buttons (again: hides them). */
-    /** SPV1 integration does not work yet; said wherever it is offered. */
-    static final String MOD_NOT_WORKING = "WARNING: SPV1 support is currently not functioning. It will be refined "
-        + "in a future release. You can still try it, but expect it not to work; Restore the original campaign "
-        + "puts everything back.";
+    static final String SPV1_COMPATIBILITY_NOTE = "SPV1 is experimental and has not been verified in a campaign "
+        + "on this port. Its maps are about 157-253 MiB each, larger than the 128 MiB limit sometimes quoted. "
+        + "This Custom Edition reader accepts map files up to 384 MiB (576 MiB for OpenSauce-upgraded caches), "
+        + "so size alone does not rule SPV1 out; protected-map conversion, resources and gameplay still need "
+        + "testing. Keep a backup; Restore returns the original campaign.";
 
     private void selectMod(ModInstaller.Mod mod) {
         if (selectedMod == mod && modDetails.getVisibility() == View.VISIBLE) {
@@ -378,7 +380,7 @@ public class LauncherActivity extends Activity {
         modDetails.addView(name);
 
         TextView warning = new TextView(this);
-        warning.setText(MOD_NOT_WORKING);
+        warning.setText(SPV1_COMPATIBILITY_NOTE);
         warning.setTextColor(Color.rgb(255, 190, 70));
         warning.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
         warning.setPadding(0, dp(8), 0, 0);

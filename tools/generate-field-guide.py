@@ -7,7 +7,7 @@ OUT=ROOT/'port/android/app/src/main/assets/guide';OUT.mkdir(parents=True,exist_o
 for source,target in [('PLAYER-GUIDE.md','player-guide.txt'),('CONTROLS-AND-OPTIONS.md','controls.txt'),('ANDROID-TOUCH-CONTROLS.md','touch.txt')]:
     text=(ROOT/'docs'/source).read_text(encoding='utf-8')
     if target == 'player-guide.txt':
-        text = (ROOT/'docs/TEST34-PLAYER-NOTES.md').read_text(encoding='utf-8') + '\n\n---\n\n# Previous public release reference\n\n' + text
+        text = (ROOT/'docs/TEST35-PLAYER-NOTES.md').read_text(encoding='utf-8') + '\n\n---\n\n# Previous public release reference\n\n' + text
     if target=='touch.txt': text+='\n\n'+(ROOT/'docs/ANDROID-GAMEPAD.md').read_text(encoding='utf-8')
     (OUT/target).write_text(text,encoding='utf-8',newline='\n')
 s=(ROOT/'port/linux/src/port_config.c').read_text(encoding='utf-8')

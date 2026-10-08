@@ -1,17 +1,15 @@
 # Halo CE Quest VR + Android player guide
 
-## Current private build: Test34
+## Current private build: Test35
 
-The current private candidate is aligned to the official **OpenCE Build 147 /
-network 23 release**, including the shared tag-schema validator adapted to this port's
-larger Quest cache. The [direct Build 147 release page](https://github.com/OpenCommunityEdition/OpenCE/releases/tag/build-147)
-marks it Latest; the general releases listing has shown stale Build 145
-metadata. The public v1.0.12 downloads documented below use
-network 21 and are preserved; they are not the Test34 APKs. Use
-[Test34 player notes](TEST34-PLAYER-NOTES.md) for cursor behavior, network-23
-compatibility and device checklist. The owner accepted the Test31c Android
-gameplay/touch behavior and prefers the Test31b VR settings design; Test34
-preserves both baselines and still needs device testing.
+The current private candidate follows official **OpenCE Build 148** while
+retaining network 23. It corrects invalid negative/NaN particle radii in map
+tags and adds a runtime physics fallback plus more useful native error-screen
+details. The public v1.0.12 downloads documented below use network 21 and are
+preserved; they are not the Test35 APKs. Use
+[Test35 player notes](TEST35-PLAYER-NOTES.md) for the changes and device
+checklist. Test35 preserves the owner-accepted Android touch behavior and the
+preferred VR settings design; device testing is still required.
 
 ### Where multiplayer and co-op moved
 
@@ -223,7 +221,7 @@ The launcher browser reads the ChupathingyCE native-port directory and can merge
 
 **Host multiplayer** offers installed map, game type, name, score/time, friendly fire, radar, team balance, vehicle respawn, loadout/grenade options and **2–128 PvP slots**. Public listing is opt-in; private invites are available. Start with modest limits: 128 is protocol capacity, not a verified Quest-host performance target. Network settings expose Internet/LAN, UPnP, clipboard invites and tunnel port.
 
-This project's public v1.0.12 APKs use OpenCE network 21 (Build 144). The private Test34 candidate targets network 23 (Build 147) and cannot connect to network-21/22 peers. Matching network versions are required; compatible OpenCE desktop and Android builds may cross-play when their content and connectivity also match. Retail Halo PC/Custom Edition, original Xbox and MCC use different protocols. The Build 147 Custom Edition map checksum check compares namespaced CE map headers; it does not identify Xbox ISO/XISO disc revisions.
+This project's public v1.0.12 APKs use OpenCE network 21 (Build 144). The private Test35 candidate targets network 23 (Build 148) and cannot connect to network-21/22 peers. Matching network versions are required; compatible OpenCE desktop and Android builds may cross-play when their content and connectivity also match. Retail Halo PC/Custom Edition, original Xbox and MCC use different protocols. The Build 147 Custom Edition map checksum check compares namespaced CE map headers; it does not identify Xbox ISO/XISO disc revisions.
 
 ### Campaign co-op and avatars
 
@@ -264,7 +262,7 @@ Use **Game files & versions** to import/switch, or place images/extracted roots 
 - Safe geometry can reduce performance. Refresh requests do not guarantee that frame rate; simulation remains 30 Hz with interpolated rendering.
 - Controller mappings/rumble depend on Android, driver, connection type and model. Other headsets/phones have less testing than Quest 3.
 - NAT/firewall/Wi-Fi isolation can block multiplayer; the native transport has no general relay fallback. Keep the app foregrounded during a match. **Mobile data is the usual cause when one device joins a server and another does not:** carrier networks give each connection its own public port (the log says "this network's NAT gives each destination its own port"), so hosts whose routers are also strict cannot be reached. Use Wi-Fi for multiplayer. The Quest and Android builds share the same multiplayer code; the log names the stage that failed (1 asking the host, 2 opening the direct connection, 3 connected) and the network type ("Network: Wi-Fi" or "mobile data").
-- **SPV1 is currently not functioning.** The launcher's SPV1 section says so; it will be refined in a future release. Restore the original campaign puts everything back.
+- **SPV1 is experimental and unverified on this port.** Its maps are about 157-253 MiB each, above the 128 MiB limit sometimes quoted. This build's Custom Edition cache reader accepts individual map files up to 384 MiB (576 MiB for OpenSauce-upgraded caches), so file size alone does not rule SPV1 out. Protected-map conversion, resources and gameplay still need testing. Keep a backup; Restore returns the original campaign.
 - Custom Edition/custom rigs/resources remain experimental; custom cache support does not add retail Custom Edition network compatibility.
 - **Logs:** each launch writes to `Download/HaloCE`, with app-storage fallback if needed. Include the matching log, build, map, device/OS and reproduction steps in a report. Review logs before posting: they may contain invites and device/path details.
 - Back up the whole data root, including `game-versions`, for all imported sets and saves. Uninstalling or clearing app data can remove app-specific files. Switching sets intentionally keeps progress separate.

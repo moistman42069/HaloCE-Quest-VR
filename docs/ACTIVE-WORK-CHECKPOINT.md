@@ -1,26 +1,26 @@
-# Active work checkpoint — Test34 private candidate (2026-10-07)
+# Active work checkpoint — Test35 private candidate (2026-10-07)
 
-Read [TEST34-PROGRESS.md](TEST34-PROGRESS.md),
-[TEST34-UPSTREAM-INTEGRATION.md](TEST34-UPSTREAM-INTEGRATION.md), and
-[TEST34-DELIVERY.md](TEST34-DELIVERY.md). The active private candidate targets
-version 1.0.15/code44 and official OpenCE Build147/network23. Preserve the
-owner-accepted Test31b VR settings and Test31c Android touch/gameplay. Build147
-is Latest on its direct official release page; the general listing has shown
-stale Build145 metadata. Current integration includes the tag-schema validator
-for CE and retail tags, CE range adaptation, structure-BSP validation before
-conversion, network-23 map identity, capacity/co-op/camera safeguards, and
-server-row pointer hover. The source audit fixed the CE map file-data range to
-the declared file length and added the previously missing BSP validator call.
-The full regression suite passes; the CE cache-format suite has 127 passes and
-4 skips because no local CE map files are installed. VR scope alignment is also
-fixed across every zoom scope shape: calibrated view orientation, gun-anchored
-center, shared 90 cm reach clamp, and ±30 cm pistol/sniper offsets. Both APKs
-are built and package-checked; hashes and matching archives are in
-`D:\HaloQuest\builds\test34-20261007-v1.0.15-scope-diagnostics\package`. Ask
-the owner to test Android and Quest, including scope activation/alignment,
-menu pointer selection, representative maps, and network-23 joins.
-This is not device acceptance. Keep the public v1.0.12 untouched; do not push,
-tag, publish, install, or launch the game.
+Read [TEST35-PROGRESS.md](TEST35-PROGRESS.md),
+[TEST35-UPSTREAM-INTEGRATION.md](TEST35-UPSTREAM-INTEGRATION.md), and
+[TEST35-DELIVERY.md](TEST35-DELIVERY.md). Test35 targets Android/Quest 1.0.16,
+code45, with official OpenCE Build148 behavior and network23. It adds
+map-load correction for negative/NaN particle collision radii, a point-physics
+zero-radius fallback, and native halt-screen platform/build and recent-error
+details. Build148 does not change the network protocol. It preserves Test34's
+CE map validation, network-23 identity, co-op/camera safeguards, server-row
+pointer hover, scope diagnostics and alignment, plus the owner-accepted Test31b
+VR settings and Test31c Android touch/gameplay. Both APKs and matching source/
+build archives are packaged; hashes and automated results are recorded in
+TEST35-DELIVERY.md.
+Await owner device testing of both APKs, representative maps/effects, error
+logging and network-23 multiplayer. No device acceptance, push, release,
+install or game launch is implied. Keep public v1.0.12 intact.
+
+SPV1's ten listed maps are 157-253 MiB each, above the often-quoted 128 MiB
+figure but within the current Custom Edition reader's 384 MiB ordinary / 576
+MiB OpenSauce-upgraded file bounds. The launcher now explains the distinction;
+SPV1 remains experimental until a real campaign is tested. All older Test31
+"Active" headings below are historical and superseded by this Test35 work.
 
 **Scope follow-up (2026-10-07):** the reporter's 1.0.12/Test30 log shows the
 sniper rifle and hand aim, but no game zoom state and no submitted scope layer.

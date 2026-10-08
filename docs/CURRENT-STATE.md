@@ -1,21 +1,27 @@
 # Current development state
 
-## Current private candidate: Test34 OpenCE Build 147 (2026-10-07)
+## Current private candidate: Test35 OpenCE Build 148 (2026-10-07)
 
-Test34 is a built, unaccepted candidate for version 1.0.15/code44,
-targeting the official OpenCE Build 147 release/network23. It adds server-row
-pointer hover and ports the applicable Build145→147 behavior. The integration
-includes CE map-header identity, upstream tag schemas adapted to the app's
-34.5 MiB cache, retail and CE tag validation, BSP validation before geometry
-conversion, capacity/co-op/camera updates, and app-specific safety paths. The
-source audit found and fixed an incorrect physical-file-length range and a
-missing BSP-validator call. A Test30 scope report showed no zoom state or
-scope layer, so Test34 adds input, zoom, configuration and render-gate
-diagnostics without changing scope alignment. See [TEST34-PROGRESS.md](TEST34-PROGRESS.md),
-[TEST34-UPSTREAM-INTEGRATION.md](TEST34-UPSTREAM-INTEGRATION.md), and
-[TEST34-DELIVERY.md](TEST34-DELIVERY.md). Both candidate APKs and package
-archives are built and checked. No physical device acceptance is recorded,
-and no release/push/install/game launch is authorized.
+Test35 targets Android/Quest version 1.0.16/code45. It ports applicable
+OpenCE Build148 changes while retaining network23: tag validation corrects
+negative/NaN particle collision radii and widths in particle, particle-system,
+contrail, weather, effect and breakable-surface records; point physics also
+clamps any computed invalid radius before its assertion and reports it once.
+The native halt screen identifies the platform/build and puts recent error
+messages first. Build148 does not change network compatibility. Test34's CE
+cache/BSP validation, map identity, capacity/co-op/camera fixes, server-row
+pointer selection, scope diagnostics/alignment and the owner-accepted Android
+touch / VR settings baselines remain. See [TEST35-PROGRESS.md](TEST35-PROGRESS.md),
+[TEST35-UPSTREAM-INTEGRATION.md](TEST35-UPSTREAM-INTEGRATION.md), and
+[TEST35-DELIVERY.md](TEST35-DELIVERY.md). This is a private test candidate;
+automated checks and APK builds do not establish device acceptance. No public
+release, push, install or game launch is authorized. The private Test35 APKs
+and matching archives are packaged and awaiting owner testing; exact hashes
+and host validation are in [TEST35-DELIVERY.md](TEST35-DELIVERY.md).
+
+SPV1 remains experimental. Its listed map files exceed 128 MiB but fit the
+current Custom Edition parser's 384 MiB ordinary / 576 MiB upgraded file caps;
+the launcher explains that size alone does not establish gameplay support.
 
 Preserve the owner-confirmed baselines: Test31b Quest VR settings and Test31c
 flat Android touch/gameplay. The public v1.0.12 remains unchanged at network21.

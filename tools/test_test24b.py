@@ -81,18 +81,20 @@ assert 'if (!vr.aiming)\n\t\tvr.vignette_amount = vr.snap_pulse = 0.0f;' in fn(f
 aim = fn(frame, 'vr_aim')
 assert aim.index('if (hand_may_aim >= 0) turn();') < aim.index('comfort_update(vr.frame.predicted_display_period * 1e-9);')
 
-# --- SPV1 marked as not working
-assert 'menuButton(layout, ModInstaller.SPV1.title + " (not working yet)")' in launcher
-assert 'SPV1 support is currently not functioning. It will be refined "\n        + "in a future release.' in launcher
+# --- SPV1 remains explicitly unverified; document its actual Custom Edition file bounds
+assert 'menuButton(layout, ModInstaller.SPV1.title + " (experimental; unverified)")' in launcher
+assert 'Its maps are about 157-253 MiB each, larger than the 128 MiB limit sometimes quoted.' in launcher
+assert 'accepts map files up to 384 MiB (576 MiB for OpenSauce-upgraded caches)' in launcher
+assert 'protected-map conversion, resources and gameplay still need "\n        + "testing.' in launcher
 select = fn(launcher.replace('    private void selectMod', 'void selectMod'), 'selectMod')
-assert select.index('modDetails.addView(name);') < select.index('warning.setText(MOD_NOT_WORKING);') < \
+assert select.index('modDetails.addView(name);') < select.index('warning.setText(SPV1_COMPATIBILITY_NOTE);') < \
     select.index('description.setText(mod.description);'), 'the warning first in the SPV1 panel'
-assert '**SPV1 is currently not functioning.**' in guide
+assert '**SPV1 is experimental and unverified on this port.**' in guide
 
 # --- version
 # (1.0.6 / 32 or later)
 assert int(re.search(r'versionCode Math\.max\((\d+), buildNumber\)', gradle).group(1)) >= 32
-assert 'comfort vignette, smooth speed and snap angle, SPV1 marked not working' in frame
+assert 'comfort vignette, smooth speed and snap angle, SPV1 compatibility note' in frame
 
 # --- the vignette's shape (the shader's sum, here in Python) for a Quest-like eye
 shader = frame[frame.index('static const char vignette_fragment_source[] ='):]
@@ -252,4 +254,4 @@ int main(void){
 }
 ''')
 print('PASS: test24b wiring (comfort settings default off/unchanged, COMFORT page, Controls turning keeps every choice, '
-      'vignette drawn per gameplay eye with imported GL calls, SPV1 marked not working, version 1.0.6 / 32)')
+      'vignette drawn per gameplay eye with imported GL calls, SPV1 compatibility note, version 1.0.6 / 32)')

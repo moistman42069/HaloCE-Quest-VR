@@ -222,7 +222,7 @@ def main():
                     raise SystemExit("Test30 VR identity missing")
             if candidate_at_least(args.label, 29):
                 # OpenCE build 144's network 21, and the held HUD tap's and PR #1's text
-                expected_upstream = (b"OpenCE build 147 (network 23)" if candidate_at_least(args.label, 34) else
+                expected_upstream = (b"OpenCE build 148 (network 23)" if candidate_at_least(args.label, 34) else
                                      b"OpenCE build 145 (network 22)" if candidate_at_least(args.label, 31) else
                                      b"OpenCE build 144 (network 21)")
                 if expected_upstream not in dex:
@@ -253,9 +253,9 @@ def main():
                     raise SystemExit("Test33 VR candidate identity marker missing")
             if candidate_at_least(args.label, 34):
                 if vr:
-                    for marker in [b"OpenCE Build 147 / network 23", b"test34 candidate 1.0.15 code44"]:
+                    for marker in [b"OpenCE Build 148 / network 23", b"test35 candidate 1.0.16 code45"]:
                         if marker not in guest:
-                            raise SystemExit("Test34 OpenCE or candidate identity marker missing: " + repr(marker))
+                            raise SystemExit("Test35 OpenCE or candidate identity marker missing: " + repr(marker))
                     for marker in [b"scope display %s; zoom with the off-hand index trigger",
                                    b"zoom input %s from %s-hand index trigger", b"game zoom state %s",
                                    b"scope view gate: %s", b"scope render path %s"]:
@@ -295,8 +295,11 @@ def main():
                 for marker in [b"COMFORT", b"VIGNETTE ON", b"SNAP ANGLE", b"SMOOTH SPEED", b"vr.vignette",
                                b"vr.snap_turn_amount", b"vr: comfort: turning"]:
                     if marker not in guest: raise SystemExit("Test24b comfort marker missing: " + repr(marker))
-            if candidate_at_least(args.label, 24, "b") and b"not working yet" not in dex:
-                raise SystemExit("Test24b SPV1 notice missing")
+            if candidate_at_least(args.label, 24, "b"):
+                for marker in [b"SPV1 is experimental and has not been verified in a campaign",
+                               b"128 MiB limit sometimes quoted", b"size alone does not rule SPV1 out"]:
+                    if marker not in dex:
+                        raise SystemExit("SPV1 compatibility note missing: " + repr(marker))
             if candidate_at_least(args.label, 24):
                 if b"client follows the host's activating place" not in guest:
                     raise SystemExit("Test24 co-op cutscene activation missing")
@@ -378,6 +381,8 @@ def main():
         documents += ["TEST32-PLAYER-NOTES.md"]
     if candidate_at_least(args.label, 34) and not args.stable:
         documents += ["TEST34-PLAYER-NOTES.md", "TEST34-UPSTREAM-INTEGRATION.md"]
+    if candidate_at_least(args.label, 35) and not args.stable:
+        documents += ["TEST35-PLAYER-NOTES.md", "TEST35-UPSTREAM-INTEGRATION.md"]
     for doc in documents:
         shutil.copy2(ROOT / "docs" / doc, output / doc)
     for notice in ["CREDITS.md", "THIRD-PARTY-NOTICES.txt", "LICENSE.md"]:
