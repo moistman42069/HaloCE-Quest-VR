@@ -26,7 +26,7 @@ limits = read("port/linux/include/halo_port_limits.h")
 assert re.search(r"^#define HALO_PORT_NETWORK_VERSION 24$", limits, re.M)
 gradle = read("port/android/app/build.gradle")
 assert "versionCode Math.max(46, buildNumber)" in gradle
-assert '"1.0.17"' in gradle
+assert '"1.0.17-test36"' in gradle
 frame = read("port/linux/src/vr_frame.c")
 assert "HaloCE Quest test36 candidate 1.0.17-test36 code46" in frame
 assert "OpenCE Build 157 / network 24" in frame

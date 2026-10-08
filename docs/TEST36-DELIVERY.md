@@ -25,6 +25,14 @@ checks; the finite-value guard and aim behavior are unchanged. The affected
 Test21/Test36 checks and the real Quest-target `vr_frame.c` compilation then
 passed. Both APKs are rebuilt from the corrected source before delivery.
 
+Package validation also caught the Gradle fallback labeling a private build
+as `1.0.17` instead of `1.0.17-test36`. The branch now defaults to the private
+identity without requiring a shell override. Both Gradle packages are
+regenerated; their native payloads must remain byte-identical to the corrected
+native builds. The parity check explicitly recognizes only the exact reviewed
+VR startup banner, whose change summary happens to contain the word "lobby";
+altered banners and networking differences remain rejected by fixture tests.
+
 Record the results of the complete serial `tools/run-quest-checks.py` suite,
 Android/VR builds, APK signature/package/version/network-parity checks, package
 archive checks and SHA-256 verification here. No APK is installed or launched
