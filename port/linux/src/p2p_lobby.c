@@ -176,6 +176,11 @@ static struct
 
 	/* browsing */
 	int browsing;
+	/* Observational only: bounded discovery diagnostics, no invite/key data. */
+	unsigned long diagnostic_time;
+	unsigned long diagnostic_seen, diagnostic_malformed, diagnostic_version;
+	unsigned long diagnostic_expired, diagnostic_signature, diagnostic_verified;
+	int diagnostic_remote_version;
 	int query_wanted;
 	struct queued queue[MAXIMUM_QUEUED];
 	int queue_count;
@@ -539,6 +544,7 @@ void p2p_lobby_slot_heard(const char *hash_text, const unsigned char *payload, i
 	/* (an emptied slot is no news: a wipe is not a delete) */
 	if (!lobby.browsing || size < MINIMUM_LISTING_SIZE || size > MAXIMUM_LISTING_SIZE)
 		return;
+	lobby.diagnostic_seen++;
 	/* the same listing again: heard, no work */
 	game = find_game(key_hash);
 	if (game && game->payload_size == size && !memcmp(game->payload, payload, (size_t)size))
@@ -662,8 +668,18 @@ static void update_browsing(void)
 		int good;
 
 		memmove(lobby.queue, lobby.queue + 1, sizeof(*lobby.queue) * (size_t)(--lobby.queue_count));
-		if (!listing_read(queued.payload, queued.size, &listing) || listing.version != HALO_PORT_NETWORK_VERSION ||
-			!signing_key_hash(listing.key, key_hash) || memcmp(key_hash, queued.key_hash, P2P_KEY_HASH_SIZE))
+		if (!listing_read(queued.payload, queued.size, &listing))
+		{
+			lobby.diagnostic_malformed++;
+			continue;
+		}
+		if (listing.version != HALO_PORT_NETWORK_VERSION)
+		{
+			lobby.diagnostic_version++;
+			lobby.diagnostic_remote_version = listing.version;
+			continue;
+		}
+		if (!signing_key_hash(listing.key, key_hash) || memcmp(key_hash, queued.key_hash, P2P_KEY_HASH_SIZE))
 		{
 			continue;
 		}
@@ -674,14 +690,22 @@ static void update_browsing(void)
 			long difference = (long)(listing.time - (unsigned long)time(NULL));
 
 			if (difference > RETAINED_WINDOW || difference < -RETAINED_WINDOW)
+			{
+				lobby.diagnostic_expired++;
 				continue;
+			}
 		}
 		/* (the work, without the lock: the game's threads need not wait) */
 		pthread_mutex_unlock(&p2p_lock);
 		good = listing_signed(queued.payload, &listing);
 		pthread_mutex_lock(&p2p_lock);
+		if (!good)
+			lobby.diagnostic_signature++;
 		if (good && lobby.browsing)
+		{
+			lobby.diagnostic_verified++;
 			listing_take(&queued, &listing);
+		}
 	}
 	if (lobby.queue_count && !lobby.browsing)
 		lobby.queue_count = 0;
@@ -689,6 +713,20 @@ static void update_browsing(void)
 	{
 		if (lobby.games[index].used && elapsed(lobby.games[index].heard_time, GAME_EXPIRY))
 			lobby.games[index].used = 0;
+	}
+	if (lobby.browsing && elapsed(lobby.diagnostic_time, 10000))
+	{
+		int visible = 0;
+		for (index = 0; index < MAXIMUM_GAMES; index++)
+			visible += lobby.games[index].used != 0;
+		platform_log("Internet play: discovery network=%d broker_ready=%d visible=%d queued=%d "
+			"heard=%lu malformed=%lu version_rejected=%lu last_unverified_version=%d "
+			"expired=%lu signature_rejected=%lu verified=%lu",
+			HALO_PORT_NETWORK_VERSION, p2p_signal_connected(), visible, lobby.queue_count,
+			lobby.diagnostic_seen, lobby.diagnostic_malformed, lobby.diagnostic_version,
+			lobby.diagnostic_remote_version, lobby.diagnostic_expired,
+			lobby.diagnostic_signature, lobby.diagnostic_verified);
+		lobby.diagnostic_time = p2p_now();
 	}
 }
 
@@ -791,6 +829,10 @@ void p2p_lobby_browse(int on)
 	if (on != lobby.browsing)
 	{
 		lobby.browsing = on;
+		lobby.diagnostic_time = p2p_now();
+		lobby.diagnostic_seen = lobby.diagnostic_malformed = lobby.diagnostic_version = 0;
+		lobby.diagnostic_expired = lobby.diagnostic_signature = lobby.diagnostic_verified = 0;
+		lobby.diagnostic_remote_version = 0;
 		if (!on)
 		{
 			memset(lobby.games, 0, sizeof(lobby.games));

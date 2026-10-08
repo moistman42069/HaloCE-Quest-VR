@@ -7,7 +7,9 @@ import java.util.*;
 import java.util.concurrent.*;
 
 final class LauncherHelp {
-    static final String DATA_COMPATIBILITY_NOTE = "Some server incompatibilities may be caused by different map files from ISO/revision versions or modified game data. Use Game files & versions to select another supported set. A revision label alone does not prove compatibility; network versions, missing maps and connection problems can also prevent joining.";
+    static final String RECOMMENDED_ISO_NOTE = "Recommended game image: the original Xbox Halo: Combat Evolved XISO. It is the best starting point for consistent maps and multiplayer compatibility. Rev 1 and Rev 2 images can be imported, but are not recommended; different revisions may contain different game or map files and can prevent players from matching.";
+    static final String DATA_COMPATIBILITY_NOTE = RECOMMENDED_ISO_NOTE + "\n\nSome server incompatibilities may also be caused by modified game data, a network-version mismatch, missing maps or connection problems. Use Game files & versions to select another supported set. A revision label alone does not prove compatibility.";
+    static final String SUPPORT_NOTE = "Need help? DM @MeWhenINameMyself on Discord.";
     // Retained for older internal callers; the launcher now uses topic pages.
     static final String COOP_GUIDE = InGameNetworkGuide.COOP;
 

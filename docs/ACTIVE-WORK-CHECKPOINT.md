@@ -1,5 +1,40 @@
 # Active work checkpoint — v1.0.16 release (2026-10-07)
 
+## Active private candidate: test36 / 1.0.17-test36 / OpenCE Build 157 (2026-10-08)
+
+The public latest release remains v1.0.16 / Android code45 / network23. The
+current local work is an unpublished test36 candidate, version 1.0.17-test36,
+code46 / network24. It ports the applicable OpenCE Build 157 update and keeps
+the existing public release intact. The owner's public Android1.0.16 browser
+was empty on mobile data and Wi-Fi. A live broker sample found network24
+listings and no network23 listings; the supplied log cannot prove exactly
+what the phone received. Test36 adds bounded broker/listing diagnostics and
+retains strict network24 admission. See TEST36-PROGRESS.md for evidence and
+the remaining device retest. The candidate also keeps
+the accepted mobile controls and VR settings baselines. The new report says a
+rifle scope shifts when support grip engages, while one-handed aim looks right.
+The source confirms that two-hand aim replaces calibrated weapon-hand forward
+with the grip-to-grip line. The supplied clip has no device log or pose metrics,
+so this candidate adds transition-based diagnostics for that aim transition,
+scope camera/layer state and mounted aim selection without changing behavior.
+Conflicting Shade Turret reports remain unresolved; preserve turret behavior
+until a failing-session log identifies the actual source/tracking state. Saved
+campaign resume and Rev2-specific behavior also remain unchanged without a
+matching log. The launcher now recommends the original Xbox Halo CE XISO for
+best compatibility, while still allowing imports from supported revisions.
+Both setup and Play screens also provide a persistent Halo-inspired font toggle
+and the user's Discord support DM; long instructions remain in the standard
+font. The updater was checked against current public release metadata and left
+unchanged.
+See [TEST36-PROGRESS.md](TEST36-PROGRESS.md),
+[TEST36-UPSTREAM-INTEGRATION.md](TEST36-UPSTREAM-INTEGRATION.md), and
+[TEST36-DELIVERY.md](TEST36-DELIVERY.md). Package both APKs for private testing;
+do not publish or describe this candidate as device-accepted.
+
+Build 157 requires network24. It is not multiplayer-compatible with the public
+v1.0.16/network23 build or servers still on network23. Preserve v1.0.16 as the
+current public release until the owner tests and separately requests a release.
+
 The user authorized and the repository published [v1.0.16](https://github.com/moistman42069/HaloCE-Quest-VR/releases/tag/v1.0.16) as Latest. It is OpenCE Build 148 / network 23, Android code 45. Release notes and exact hashes are in [RELEASE-1.0.16.md](RELEASE-1.0.16.md) and [RELEASE-PROVENANCE-1.0.16.md](RELEASE-PROVENANCE-1.0.16.md). Prior releases and the GitHub About description are preserved. The exact APK pair has no recorded device session; do not describe publication as runtime acceptance.
 
 The release source and implementation record are:
@@ -22,8 +57,8 @@ intact as an older release but uses network 21.
 SPV1's ten listed maps are 157-253 MiB each, above the often-quoted 128 MiB
 figure but within the current Custom Edition reader's 384 MiB ordinary / 576
 MiB OpenSauce-upgraded file bounds. The launcher now explains the distinction;
-SPV1 remains experimental until a real campaign is tested. All older Test31
-"Active" headings below are historical and superseded by this Test35 work.
+SPV1 remains experimental until a real campaign is tested. Older Test31/Test35
+"Active" headings below are historical and superseded by this Test36 work.
 
 **Scope follow-up (2026-10-07):** the reporter's 1.0.12/Test30 log shows the
 sniper rifle and hand aim, but no game zoom state and no submitted scope layer.

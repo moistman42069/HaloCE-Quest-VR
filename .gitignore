@@ -49,3 +49,7 @@ port/android/app/src/main/assets/*
 !port/android/app/src/main/assets/guide/
 port/android/app/src/main/assets/guide/*
 !port/android/app/src/main/assets/guide/*.txt
+!port/android/app/src/main/assets/fonts/
+port/android/app/src/main/assets/fonts/*
+!port/android/app/src/main/assets/fonts/Orbitron-Regular.ttf
+!port/android/app/src/main/assets/fonts/OFL-Orbitron.txt

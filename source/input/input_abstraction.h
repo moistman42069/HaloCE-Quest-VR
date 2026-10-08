@@ -51,6 +51,8 @@ void input_abstraction_get_local_player_preferences(
 void input_abstraction_update_local_player_preferences(
 	short controller_index,
 	struct game_input_preferences const *preferences);
+real input_abstraction_port_primary_trigger(
+	short controller_index);
 struct game_input_state *input_abstraction_get_input_state(
 	short local_player_index);
 

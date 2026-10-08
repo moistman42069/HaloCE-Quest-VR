@@ -1928,6 +1928,47 @@ static void dsound_virtual_set_location(
 	return;
 }
 
+/* A stereo stream with a world source needs the same position, distance,
+occlusion and obstruction effects as the equivalent mono 3D stream. */
+void dsound_port_set_channel_stereo_position(
+	short virtual_channel_index,
+	boolean positioned,
+	real pan,
+	real distance,
+	real minimum_distance,
+	real distance_fade,
+	real occlusion,
+	real obstruction,
+	boolean attenuate_direct_path)
+{
+	extern void dsound_sdl_stream_set_stereo_position(IDirectSoundStream *stream, BOOL positioned, float pan,
+		float distance, float minimum_distance, float distance_fade);
+	short channel_index = dsound_virtual_touch(virtual_channel_index);
+
+	if (channel_index != NONE)
+	{
+		struct sound_channel *channel = channel_get(channel_index);
+
+		if (channel->stream && TEST_FLAG(channel->type_flags, _sound_channel_stereo_bit))
+		{
+			if (channel->spatialized != positioned ||
+				!realcmp_epsilon(occlusion, channel->occlusion, 0.001f) ||
+				!realcmp_epsilon(obstruction, channel->obstruction, 0.001f) ||
+				channel->attenuate_direct_path != attenuate_direct_path)
+			{
+				channel->spatialized = positioned;
+				channel->occlusion = occlusion;
+				channel->obstruction = obstruction;
+				channel->attenuate_direct_path = attenuate_direct_path;
+				dsound_channel_set_I3DL2_properties(channel_index);
+			}
+			dsound_sdl_stream_set_stereo_position(channel->stream, positioned, pan,
+				distance, minimum_distance, distance_fade);
+		}
+	}
+	return;
+}
+
 static void dsound_virtual_set_properties(
 	short virtual_channel_index,
 	struct platform_sound_channel_properties const *properties,

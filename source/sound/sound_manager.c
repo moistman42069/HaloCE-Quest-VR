@@ -244,6 +244,13 @@ symbols in this file:
 #include <math.h>
 #include <stdio.h>
 
+/* A stereo stream whose source is in the world: the SDL mixer positions its
+centre, fades it with distance and applies the same obstruction/reverb data as
+a 3D stream. */
+void dsound_port_set_channel_stereo_position(short virtual_channel_index, boolean positioned, real pan,
+	real distance, real minimum_distance, real distance_fade, real occlusion, real obstruction,
+	boolean attenuate_direct_path);
+
 /* ---------- constants */
 
 enum
@@ -3493,10 +3500,16 @@ static void update_channels(
 			else
 			{
 				real_point3d relative_position = sound->source.location.position;
+				real stereo_obstruction = 0.f;
+				real stereo_occlusion = 0.f;
+				boolean stereo_underwater = FALSE;
 
 				switch (sound->source.spatialization_mode)
 				{
 				case _sound_spatialization_mode_none:
+					if (TEST_FLAG(channel->type_flags, _sound_channel_stereo_bit))
+						dsound_port_set_channel_stereo_position(channel_index, FALSE, 0.f, 0.f, 0.f, 1.f,
+							0.f, 0.f, FALSE);
 					break;
 
 				case _sound_spatialization_mode_absolute:
@@ -3512,6 +3525,9 @@ static void update_channels(
 							&listener->matrix,
 							&sound->source.location.position,
 							&relative_position);
+						stereo_obstruction = sound->source.obstruction;
+						stereo_occlusion = sound->source.occlusion;
+						stereo_underwater = listener->underwater;
 					}
 					/* fall through */
 
@@ -3523,15 +3539,33 @@ static void update_channels(
 						real maximum_distance =
 							sound_definition_get_maximum_distance(
 								sound->definition_index);
-					real distance = square_root(
+						real distance = square_root(
 						relative_position.x * relative_position.x +
 						(relative_position.y * relative_position.y +
 							relative_position.z * relative_position.z));
 						real attenuation = 1.f -
 							(distance - minimum_distance) /
 							(maximum_distance - minimum_distance);
+						real distance_fade = PIN(attenuation, 0.f, 1.f);
 
-						fade *= PIN(attenuation, 0.f, 1.f);
+						if (TEST_FLAG(channel->type_flags, _sound_channel_stereo_bit))
+						{
+							real horizontal = square_root(
+								relative_position.x * relative_position.x +
+								relative_position.y * relative_position.y);
+							real pan = horizontal > 1.0e-4f ? -relative_position.y / horizontal : 0.f;
+
+							/* The SDL stereo voice also applies inverse-distance
+							attenuation to its room send. */
+							distance_fade = minimum_distance > 0.f && distance > minimum_distance ?
+								minimum_distance / distance : 1.f;
+							if (distance < minimum_distance && minimum_distance > 0.f)
+								pan *= distance / minimum_distance;
+							dsound_port_set_channel_stereo_position(channel_index, TRUE, 0.75f * pan,
+								distance, minimum_distance, distance_fade, stereo_occlusion,
+								stereo_obstruction, stereo_underwater);
+						}
+						fade *= distance_fade;
 					}
 					break;
 

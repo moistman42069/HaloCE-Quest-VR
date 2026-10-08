@@ -1,6 +1,6 @@
 # Halo CE Quest VR + Android player guide
 
-This guide is for **v1.0.16 / OpenCE Build 148 / network 23**. For the complete feature, installation, compatibility and credits list, see [release notes](RELEASE-1.0.16.md).
+This guide describes the unpublished **test36 candidate / 1.0.17-test36 / OpenCE Build 157 / network 24**. It is provided for testing, not as a public release. For the current public build see [v1.0.16 release notes](RELEASE-1.0.16.md).
 
 ## Install and update
 
@@ -22,7 +22,7 @@ The OpenCE multiplayer flow is in the game menus. Create/select a profile if pro
 
 In **Server Setup**, choose the server name, player limit, public/private listing and password as needed. PvP also has match rules; campaign has co-op options. Start the lobby, invite players or publish it, then start the match when ready. The campaign player selector offers limits up to 128; start with a small group because the maximum is not a performance guarantee.
 
-All players need **network 23**, compatible maps/resources and a reachable network route. Public listings do not relay traffic. NAT, firewall/VPN, mobile-data restrictions, Wi-Fi isolation, passwords, full lobbies and missing or different game content can prevent joining. If joining fails, record logs from both host and client and note the network type and selected game-data set.
+All players need **network 24** for this candidate, compatible maps/resources and a reachable network route. It cannot join network-23 sessions from public v1.0.16. Public listings do not relay traffic. NAT, firewall/VPN, mobile-data restrictions, Wi-Fi isolation, passwords, full lobbies and missing or different game content can prevent joining. If joining fails, record logs from both host and client and note the network type and selected game-data set.
 
 The launcher no longer hosts or browses through its old server lists. It retains help, saved-invite access, game-data management, updates, controller/touch settings and logs. Copy a saved invite into the in-game Direct Link flow.
 
@@ -57,6 +57,6 @@ Settings include body/hand modes, fingers, hand/gun calibration, weapon grip and
 
 ## Revisions, logs and support
 
-The launcher recognizes supported Xbox cache format/build identifiers, but cannot determine every Original/Rev 1/Rev 2 disc label from a filename or promise full-disc integrity. Different revisions or modified maps can prevent a join; the server browser cannot automatically prove which ISO revision a host uses. SPV1 is experimental and unverified; file sizes fitting the current reader limits do not establish protected-map/resource/campaign support.
+For the best compatibility, use the original Xbox Halo: Combat Evolved XISO. Rev 1 and Rev 2 images can be imported, but are not recommended; different revisions may contain different game or map files and can prevent players from matching. The launcher recognizes supported Xbox cache format/build identifiers, but cannot determine every disc label from a filename or promise full-disc integrity. The server browser cannot automatically prove which ISO revision a host uses. SPV1 is experimental and unverified; file sizes fitting the current reader limits do not establish protected-map/resource/campaign support.
 
 Each launch writes a detailed log under **Download/HaloCE** when Android allows; app-private storage is used as fallback. For crashes, failed joins or desyncs, share logs from each peer and include device/model, OS, app/network version, game-data set, map/mission, network type and reproduction steps. Contact **@MeWhenINameMyself** or the [Halo CE Decomp Discord](https://discord.gg/S9uSCKxKx). Remove private invite/device details before sharing.

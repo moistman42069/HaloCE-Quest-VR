@@ -38,6 +38,7 @@ SUITES = [
     'test_test33_network_browser_lifecycle',
     'test_test34_opence',
     'test_test35_opence',
+    'test_test36_opence157',
 ]
 
 def main():

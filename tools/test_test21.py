@@ -285,7 +285,10 @@ assert 'tracked_hand_origin(&vr.aim_pose, origin);' in scope_layer
 assert 'rotate(vr.aim_pose.orientation, local, turned);' in scope_layer
 assert 'memcpy(layers->scope_pose.orientation, vr.shot_pose.orientation' in scope_layer
 assert 'shot_pose' not in fn(frame, 'compute_aim_pose')
-assert re.search(r'compute_aim_pose\(\);\n\tsteady_aim\(\);\n\tupdate_shot_pose\(\);', fn(frame, 'update_aim_pose'))
+aim_update = fn(frame, 'update_aim_pose')
+assert re.search(r'compute_aim_pose\(\);.*?steady_aim\(\);\n\tupdate_shot_pose\(\);', aim_update, re.S)
+assert 'main-hand to grip-line angle' in aim_update and 'aim behavior unchanged' in aim_update
+assert 'vr.aim_pose.orientation =' not in aim_update and 'look_rotation(' not in aim_update
 assert 'vr_set_gun_class(kind);' in fn(render, 'vr_render_actions')
 reticle = fn(render, 'vr_render_windows')
 assert 'if (vr_shot_offset(unit_index, from_hand, &direction, &shift))' in reticle

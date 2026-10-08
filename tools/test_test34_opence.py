@@ -23,7 +23,7 @@ def function(source, name):
 
 limits = read("port/linux/include/halo_port_limits.h")
 for suffix in ("", "_MINIMUM", "_MAXIMUM"):
-    assert re.search(r"#define HALO_PORT_NETWORK_VERSION%s 23\b" % suffix, limits)
+    assert re.search(r"#define HALO_PORT_NETWORK_VERSION%s 24\b" % suffix, limits)
 
 # The zoom scope plane follows the calibrated scope view while its center
 # stays on the physical gun, using the same extended-arm clamp. Ensure config
@@ -58,14 +58,14 @@ scope_path_log = function(render_vr, "scope_path_log")
 assert "previous_scope_setting != enabled" in reload_settings
 assert "previous_zoom_input_state" in layout_controls and "vr.frame.trigger[off_hand]" in layout_controls
 assert "routed to gamepad zoom" in layout_controls
-assert "vr.zoom_level != zoom_level" in set_zoom_level and "game zoom state" in set_zoom_level
+assert "vr.zoom_level != zoom_level" in set_zoom_level and "game zoom transition" in set_zoom_level
 assert "scope view gate" in scope_view and "weapon-hand aim pose is not tracked" in scope_view
 assert "scope_path_log(0, zoom_level, 0)" in scope_window
 assert "scope_path_log(5, zoom_level, shape)" in scope_window
 assert "state == previous_state" in scope_path_log
 assert "hold the off-hand index trigger" in scope_path_log
 package_gate = read("tools/package-quest.py")
-assert 'if vr:\n                    for marker in [b"OpenCE Build 148 / network 23"' in package_gate
+assert 'current_upstream_markers = ([b"OpenCE Build 157 / network 24"' in package_gate
 assert 'b"scope render path %s"' in package_gate
 assert 'b"left trigger for right-handed play"' in package_gate
 

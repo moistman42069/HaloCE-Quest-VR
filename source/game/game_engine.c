@@ -590,6 +590,7 @@ struct network_game *network_game_server_get_game(struct network_game_server *se
 #include "text/unicode.h"
 #include "units/bipeds.h"
 #include "units/units.h"
+#include "custom_edition_cache.h" /* port: port/linux/game/custom_edition_cache.c */
 
 /* network_game_globals.c's */
 boolean network_game_distributed_client(void);
@@ -3696,7 +3697,8 @@ boolean game_variant_options_valid(struct game_variant_options const *o)
         o->primary_weapon >= NUMBER_OF_LOADOUT_WEAPONS || o->secondary_weapon >= NUMBER_OF_LOADOUT_WEAPONS)
         return FALSE;
     for (side = 0; side < 2; side++) {
-        if (o->vehicle_set[side] > 7 && o->vehicle_set[side] != VARIANT_VEHICLE_SET_CUSTOM) return FALSE;
+        if (o->vehicle_set[side] > 7 && o->vehicle_set[side] != VARIANT_VEHICLE_SET_PC &&
+            o->vehicle_set[side] != VARIANT_VEHICLE_SET_CUSTOM) return FALSE;
         for (vehicle = 0; vehicle < NUMBER_OF_VARIANT_VEHICLES; vehicle++)
             if (o->vehicle_counts[side][vehicle] > MAXIMUM_VARIANT_VEHICLE_COUNT) return FALSE;
     }
@@ -7127,6 +7129,9 @@ boolean game_engine_vehicle_placement_allowed(
 		return TRUE;
 	side = global_variant.universal_variant.teams ? game_engine_nearest_team(&placement->position) : 0;
 	set = options->vehicle_set[side];
+	/* port (OpenCE Build 157): PC gets every vehicle the map places. */
+	if (set == VARIANT_VEHICLE_SET_PC)
+		return TRUE;
 	type = game_engine_variant_vehicle_type(TAG_BLOCK_GET_ELEMENT(palette, placement->palette_entry_index,
 		struct scenario_object_palette_entry)->reference.index);
 	/* (the map's own: the multiplayer ones of the globals, as the Xbox
@@ -7224,6 +7229,12 @@ long game_engine_remap_vehicle(
 	/* a Halo Custom Edition map's vehicles are chosen by their placements,
 	and its scripts may create any (port/linux/game/custom_edition_objects.c) */
 	if (custom_edition_vehicles_by_placement())
+	{
+		return result;
+	}
+	/* port (OpenCE Build 157): PC gets every vehicle the map places. */
+	if (game_engine && (game_variant_options_get()->vehicle_set[0] == VARIANT_VEHICLE_SET_PC ||
+		game_variant_options_get()->vehicle_set[1] == VARIANT_VEHICLE_SET_PC))
 	{
 		return result;
 	}
@@ -8416,6 +8427,10 @@ static void game_engine_update_item_spawn(
 					definition_index,
 					NONE);
 				placement_data.position = equipment->position;
+				/* port (OpenCE Build 157): face Custom Edition map items the way
+				its placements do, as Halo PC does. */
+				if (custom_edition_cache_tags_loaded())
+					vector3d_from_angle(&placement_data.forward, equipment->facing);
 				object_index = object_new(&placement_data);
 				if (object_index != NONE)
 				{

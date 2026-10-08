@@ -157,6 +157,9 @@ int main(void){
  turret="left";generation++;assert(vr_aim(0,1,vr_vehicle_aim_source(),&heading,f));assert(fabsf(f[1]-sinf(heading))>.4f);
  turret="right";generation++;vr.frame.hand_valid[1]=0;assert(!vr_aim(0,1,vr_vehicle_aim_source(),&heading,f));assert(vr.aiming&&vr.heading_valid); /* native facing held, camera alive */
  turret="stick";generation++;assert(!vr_aim(0,1,vr_vehicle_aim_source(),&heading,f)&&vr.seated);
+ int log_before=logs;turret="right";generation++;assert(vr_vehicle_aim_source()==2);assert(logs==log_before+1);
+ log_before=logs;assert(vr_vehicle_aim_source()==2);assert(logs==log_before); /* selection logs are transition-only */
+ turret="left";generation++;assert(vr_vehicle_aim_source()==3);assert(logs==log_before+1);
  puts("PASS: production seat identity + stereo positional/rotational lean, entry/exit/transfer recenters, invalid handles, independent turret source and lost tracking");
 }
 '''

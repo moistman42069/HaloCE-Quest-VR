@@ -100,6 +100,7 @@ run('seat', r'''
 #include <assert.h>
 #include <math.h>
 #include <stdio.h>
+#include <stdarg.h>
 #include <string.h>
 typedef float real; typedef int boolean;
 #define TRUE 1
@@ -206,8 +207,10 @@ run('scope', r'''
 #define VR_HAND_REACH_METRES 0.9f
 struct halo_xr_pose { float position[3], orientation[4]; };
 struct halo_xr_layers { unsigned flags; struct halo_xr_pose scope_pose; float scope_size[2]; };
-static struct { int weapon_hand, scope_shape; float scope_size, scope_adjust[2][4];
- struct halo_xr_pose aim_pose, shot_pose; struct { struct halo_xr_pose head; } frame; } vr;
+static struct { int weapon_hand, scope_shape, zoom_level, two_handed, gun_class, settings_generation;
+ float scope_size, scope_adjust[2][4]; struct halo_xr_pose aim_pose, shot_pose;
+ struct { struct halo_xr_pose head; unsigned hand_valid[2]; } frame; } vr;
+static void platform_log(const char *format,...){ (void)format; }
 ''' + fn(frame, 'rotate') + fn(frame, 'tracked_hand_origin') + fn(frame, 'place_scope') + r'''
 static const float usual[3][3]={{-0.10f,0.00f,0.15f},{-0.15f,0.00f,0.15f},{0.10f,0.20f,0.10f}};
 int main(void){

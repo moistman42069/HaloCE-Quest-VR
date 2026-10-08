@@ -2988,8 +2988,8 @@ boolean server_has_enough_machines(
 	struct network_game_server *server)
 {
 	boolean has_enough_machines;
-	long minimum_machine_count =
-		network_game_is_splitscreen_local() ? 1 : 2;
+	/* port (OpenCE Build 157): an internet/LAN host can start alone. */
+	long minimum_machine_count = 1;
 	long machine_count = 0;
 	long client_machine_index;
 
@@ -3011,13 +3011,21 @@ boolean server_has_enough_machines(
 	return has_enough_machines;
 }
 
+/* port (OpenCE Build 157): one player may start a game and admit others
+while it is in progress. */
+static boolean server_alone(
+	struct network_game_server *server)
+{
+	return server->game.player_count == 1;
+}
+
 boolean server_ok_to_countdown(
 	struct network_game_server *server)
 {
 	if (server_has_enough_machines(server) &&
 		server_has_a_player_on_each_machine(server) &&
-		!server_needs_more_teams(server) &&
-		server->game.player_count >= server->game.minimum_players)
+		(!server_needs_more_teams(server) || server_alone(server)) &&
+		(server->game.player_count >= server->game.minimum_players || server_alone(server)))
 	{
 		return TRUE;
 	}
@@ -3178,7 +3186,7 @@ boolean network_game_server_game_can_start(
 	match_assert(NETWORK_SERVER_MANAGER_FILE, 0x782, server);
 
 	return server->state == 0 &&
-		server->game.player_count >= server->game.minimum_players;
+		(server->game.player_count >= server->game.minimum_players || server_alone(server));
 }
 
 void network_game_server_pause_countdown(
@@ -3678,7 +3686,8 @@ void network_game_server_update_countdown(
 				else
 				{
 					if (network_game_should_accept_remote_connections() == FALSE ||
-						network_game_server_get_client_machine_count(server) > 1)
+						network_game_server_get_client_machine_count(server) > 1 ||
+						server_alone(server))
 					{
 						unsigned long countdown;
 

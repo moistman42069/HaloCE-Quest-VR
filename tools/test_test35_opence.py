@@ -1,4 +1,4 @@
-"""Build 148 particle-radius validation and native error-screen checks."""
+"""Build 148 particle-radius validation remains in the Build 157 candidate."""
 from pathlib import Path
 import re
 import subprocess
@@ -21,18 +21,17 @@ def function(source, name):
     return source[match.start():end]
 
 
-# Build 148 retains OpenCE's protocol 23. It adds tag corrections and a
-# runtime fallback, rather than changing peer compatibility.
+# Preserve the released Build 148 fixes while the candidate moves to Build 157.
 limits = read("port/linux/include/halo_port_limits.h")
-assert re.search(r"^#define HALO_PORT_NETWORK_VERSION 23$", limits, re.M)
+assert re.search(r"^#define HALO_PORT_NETWORK_VERSION 24$", limits, re.M)
 gradle = read("port/android/app/build.gradle")
-assert "versionCode Math.max(45, buildNumber)" in gradle
-assert '"1.0.16"' in gradle
+assert "versionCode Math.max(46, buildNumber)" in gradle
+assert '"1.0.17"' in gradle
 frame = read("port/linux/src/vr_frame.c")
-assert "HaloCE Quest 1.0.16 release" in frame
-assert "OpenCE Build 148 / network 23" in frame
+assert "HaloCE Quest test36 candidate 1.0.17-test36 code46" in frame
+assert "OpenCE Build 157 / network 24" in frame
 updater = read('port/android/app/src/main/java/com/halo/decomp/Updater.java')
-assert 'OpenCE build 148 (network 23)' in updater
+assert 'OpenCE build 157 (network 24)' in updater
 package_script = read("tools/package-quest.py")
 assert '"runtime_accepted": False' in package_script
 assert 'args.stable and args.label == "1.0.16"' in package_script

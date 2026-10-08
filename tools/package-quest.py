@@ -211,6 +211,9 @@ def main():
             raise SystemExit("Wrong package or ABI: " + str(path))
         if f"versionName='{version_name}'" not in badging:
             raise SystemExit("Wrong candidate version: " + str(path))
+        version_code = re.search(r"versionCode='(\d+)'", badging)
+        if candidate_at_least(args.label, 36) and (version_code is None or int(version_code[1]) < 46):
+            raise SystemExit("Test36 Android version code must be at least 46: " + str(path))
         if args.stable and args.label == "1.0.16" and "versionCode='45'" not in badging:
             raise SystemExit("Wrong v1.0.16 Android version code: " + str(path))
         with zipfile.ZipFile(path) as archive:
@@ -218,11 +221,24 @@ def main():
                 raise SystemExit("APK ZIP checksum failure")
             reject_orphaned_apk_data(path, archive)
             names = archive.namelist()
+            for asset in ["assets/fonts/Orbitron-Regular.ttf", "assets/fonts/OFL-Orbitron.txt"]:
+                if asset not in names:
+                    raise SystemExit("Launcher font/license missing from APK: " + asset)
+            font_data = archive.read("assets/fonts/Orbitron-Regular.ttf")
+            if hashlib.sha256(font_data).hexdigest() != "f8c2b5e8dbd870bb73ad0802b1ffcdff4e053c5c074fe403132b9c1852d962d9":
+                raise SystemExit("Unexpected or modified Orbitron font data in APK")
+            if b"SIL Open Font License, Version 1.1" not in archive.read("assets/fonts/OFL-Orbitron.txt"):
+                raise SystemExit("Orbitron OFL notice missing from APK")
             for guide in ["player-guide", "controls", "touch", "settings", "credits"]:
                 if "assets/guide/"+guide+".txt" not in names:
                     raise SystemExit("Bundled guide missing: "+guide)
             guest = archive.read("assets/halo_guest.elf")
             host = archive.read("lib/arm64-v8a/libmain.so")
+            if candidate_at_least(args.label, 36):
+                for marker in [b"discovery network=%d broker_ready=%d", b"last_unverified_version=%d",
+                               b"connection failed/closed at state=%d", b"ready (MQTT %d, retained=%d wildcard=%d)"]:
+                    if marker not in guest:
+                        raise SystemExit("Test36 discovery diagnostic missing: " + repr(marker))
             dex = b"".join(archive.read(name) for name in names if re.fullmatch(r"classes\d*\.dex", name))
             for marker in [b"ServerBrowser;", b"ServerListing;", b"RunLog;", b"openGameLog", b"CoopLauncher;",
                            b"CoopLauncher;", b"prepareGameExit", b"PvpLauncher;", b"TouchLayout;", b"UpdatePolicy;",
@@ -264,7 +280,8 @@ def main():
                     raise SystemExit("Test30 VR identity missing")
             if candidate_at_least(args.label, 29):
                 # OpenCE build 144's network 21, and the held HUD tap's and PR #1's text
-                expected_upstream = (b"OpenCE build 148 (network 23)" if candidate_at_least(args.label, 34) else
+                expected_upstream = (b"OpenCE build 157 (network 24)" if candidate_at_least(args.label, 36) else
+                                     b"OpenCE build 148 (network 23)" if candidate_at_least(args.label, 34) else
                                      b"OpenCE build 145 (network 22)" if candidate_at_least(args.label, 31) else
                                      b"OpenCE build 144 (network 21)")
                 if expected_upstream not in dex:
@@ -295,16 +312,40 @@ def main():
                     raise SystemExit("Test33 VR candidate identity marker missing")
             if candidate_at_least(args.label, 34):
                 if vr:
-                    for marker in [b"OpenCE Build 148 / network 23", b"test35 candidate 1.0.16 code45"]:
+                    current_upstream_markers = ([b"OpenCE Build 157 / network 24", b"test36 candidate 1.0.17-test36 code46"]
+                        if candidate_at_least(args.label, 36) else
+                        [b"OpenCE Build 148 / network 23", b"test35 candidate 1.0.16 code45"])
+                    for marker in current_upstream_markers:
                         if marker not in guest:
-                            raise SystemExit("Test35 OpenCE or candidate identity marker missing: " + repr(marker))
+                            raise SystemExit("OpenCE or candidate identity marker missing: " + repr(marker))
                     for marker in [b"scope display %s; zoom with the off-hand index trigger",
-                                   b"zoom input %s from %s-hand index trigger", b"game zoom state %s",
+                                   b"zoom input %s from %s-hand index trigger", b"game zoom transition %d -> %d",
                                    b"scope view gate: %s", b"scope render path %s"]:
                         if marker not in guest:
                             raise SystemExit("Test34 scope diagnosis marker missing: " + repr(marker))
                     if b"left trigger for right-handed play" not in archive.read("assets/guide/controls.txt"):
                         raise SystemExit("Test34 explicit scope zoom input missing from bundled control guide")
+            if candidate_at_least(args.label, 36):
+                guide = archive.read("assets/guide/player-guide.txt")
+                for marker in [b"1.0.17-test36", b"OpenCE Build 157 / network 24",
+                               b"Two-hand aim centering diagnostics",
+                               b"Scope, aim, turret and vehicle behavior remain unchanged",
+                               b"A Halo-inspired launcher font is selectable"]:
+                    if marker not in guide:
+                        raise SystemExit("Test36 offline guide marker missing: " + repr(marker))
+                if b"Orbitron Regular" not in archive.read("assets/guide/credits.txt"):
+                    raise SystemExit("Test36 bundled font credit missing from offline guide")
+                for marker in [b"scope camera: zoom %d, shape %d", b"scope layer pose: shape %d",
+                               b"mounted aim selection: role %s", b"turret/gunner aim %s"]:
+                    if marker not in guest:
+                        raise SystemExit("Test36 diagnostic marker missing: " + repr(marker))
+                for marker in [b"Recommended game image: the original Xbox Halo: Combat Evolved XISO",
+                               b"Rev 1 and Rev 2 images can be imported, but are not recommended",
+                               b"Font: Halo (tap for normal)",
+                               b"Font: normal (tap for Halo)",
+                               b"Need help? DM @MeWhenINameMyself on Discord."]:
+                    if marker not in dex:
+                        raise SystemExit("Test36 launcher ISO recommendation missing: " + repr(marker))
             if args.stable and args.label == "1.0.16":
                 if b"OpenCE build 148 (network 23)" not in dex:
                     raise SystemExit("v1.0.16 updater does not identify OpenCE Build 148 / network 23")
@@ -437,6 +478,8 @@ def main():
         documents += ["TEST34-PLAYER-NOTES.md", "TEST34-UPSTREAM-INTEGRATION.md"]
     if candidate_at_least(args.label, 35) and not args.stable:
         documents += ["TEST35-PLAYER-NOTES.md", "TEST35-UPSTREAM-INTEGRATION.md"]
+    if candidate_at_least(args.label, 36) and not args.stable:
+        documents += ["TEST36-PLAYER-NOTES.md", "TEST36-UPSTREAM-INTEGRATION.md"]
     for doc in documents:
         shutil.copy2(ROOT / "docs" / doc, output / doc)
     for notice in ["CREDITS.md", "THIRD-PARTY-NOTICES.txt", "LICENSE.md"]:

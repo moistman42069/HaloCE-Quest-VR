@@ -1,13 +1,17 @@
 """Generate the offline launcher guide from current public docs and production config descriptions."""
 from pathlib import Path
 import re,ast
+import os
 ROOT=Path(__file__).resolve().parents[1]
 OUT=ROOT/'port/android/app/src/main/assets/guide';OUT.mkdir(parents=True,exist_ok=True)
 (OUT/'credits.txt').write_text((ROOT/'CREDITS.md').read_text(encoding='utf-8')+'\n\n'+(ROOT/'THIRD-PARTY-NOTICES.txt').read_text(encoding='utf-8'),encoding='utf-8',newline='\n')
 for source,target in [('PLAYER-GUIDE.md','player-guide.txt'),('CONTROLS-AND-OPTIONS.md','controls.txt'),('ANDROID-TOUCH-CONTROLS.md','touch.txt')]:
     text=(ROOT/'docs'/source).read_text(encoding='utf-8')
     if target == 'player-guide.txt':
-        text = (ROOT/'docs/RELEASE-1.0.16.md').read_text(encoding='utf-8') + '\n\n---\n\n' + text
+        candidate = os.environ.get('HALO_CANDIDATE_GUIDE')
+        cover = (ROOT/'docs'/('TEST'+candidate+'-PLAYER-NOTES.md')).read_text(encoding='utf-8') if candidate else \
+            (ROOT/'docs/RELEASE-1.0.16.md').read_text(encoding='utf-8')
+        text = cover + '\n\n---\n\n' + text
     if target=='touch.txt': text+='\n\n'+(ROOT/'docs/ANDROID-GAMEPAD.md').read_text(encoding='utf-8')
     (OUT/target).write_text(text,encoding='utf-8',newline='\n')
 s=(ROOT/'port/linux/src/port_config.c').read_text(encoding='utf-8')

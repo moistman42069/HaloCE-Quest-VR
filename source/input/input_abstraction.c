@@ -190,6 +190,28 @@ byte input_abstraction_port_accept(
 	return 0;
 }
 
+/* port (OpenCE Build 157): the fire control's pressure, not how many ticks it
+has been held (the weapon's analog-rate-of-fire flag reads this value). */
+real input_abstraction_port_primary_trigger(
+	short controller_index)
+{
+	struct gamepad_state const *gamepad;
+	short button_index;
+
+	if (controller_index < 0 || controller_index >= MAXIMUM_GAMEPADS)
+		return 0.f;
+	gamepad = input_get_gamepad_state(controller_index);
+	if (!gamepad)
+		return 0.f;
+	button_index = input_abstraction_globals.player_control_preferences[controller_index]
+		.game_control_to_xbox_buttons[_game_control_primary_trigger];
+	if (button_index >= NUMBER_OF_GAMEPAD_BUTTONS)
+		return 0.f;
+	if (button_index < NUMBER_OF_GAMEPAD_ANALOG_BUTTONS)
+		return (real)gamepad->analog_buttons[button_index] * (1.f / 255.f);
+	return gamepad->buttons[button_index] ? 1.f : 0.f;
+}
+
 /* ---------- public code */
 
 void input_abstraction_initialize(

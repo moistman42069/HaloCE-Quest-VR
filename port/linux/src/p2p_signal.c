@@ -206,6 +206,10 @@ struct broker
 	unsigned long sent_time;
 	unsigned long heard_time;
 	int failures;
+	unsigned long diagnostic_time;
+	int diagnostic_logged;
+	unsigned long diagnostic_ready_time;
+	int diagnostic_ready_logged;
 	unsigned short packet_identifier;
 	/* 5 (MQTT 5), or 4 (3.1.1: the broker refused 5) */
 	int protocol;
@@ -414,6 +418,16 @@ static void make_topic(const unsigned char *token, const char *label, const unsi
 
 static void broker_close(struct broker *broker, int failed)
 {
+	/* At most one failed transition per broker per 30 seconds. State identifies
+	TCP connect (1), MQTT acknowledgement (2), or established session (3). */
+	if (failed && (!broker->diagnostic_logged ||
+		(unsigned int)(p2p_now() - broker->diagnostic_time) >= 30000))
+	{
+		platform_log("Internet play: broker %s connection failed/closed at state=%d after %lu ms; retry=%d",
+			broker->host, broker->state, p2p_now() - broker->state_time, broker->failures + 1);
+		broker->diagnostic_logged = 1;
+		broker->diagnostic_time = p2p_now();
+	}
 	if (broker->socket >= 0)
 		posix_socket_close(broker->socket);
 	broker->socket = -1;
@@ -1365,6 +1379,14 @@ static int broker_acknowledged(struct broker *broker, const unsigned char *body,
 				break;
 			}
 		}
+	}
+	if (!broker->diagnostic_ready_logged ||
+		(unsigned int)(p2p_now() - broker->diagnostic_ready_time) >= 30000)
+	{
+		platform_log("Internet play: broker %s ready (MQTT %d, retained=%d wildcard=%d)",
+			broker->host, broker->protocol, broker->retain_available, broker->wildcard_available);
+		broker->diagnostic_ready_logged = 1;
+		broker->diagnostic_ready_time = p2p_now();
 	}
 	broker->state = _broker_ready;
 	broker->failures = 0;

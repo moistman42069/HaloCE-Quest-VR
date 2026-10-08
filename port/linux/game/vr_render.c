@@ -166,13 +166,49 @@ static int vr_turret_aim(void)
 
 static int vr_vehicle_aim_source(void)
 {
-	int mode;
+	static int previous_role = -1, previous_seat = NONE, previous_source = -99, previous_generation = -1;
+	static long previous_vehicle = NONE;
+	int role, mode, source, generation = vr_settings_generation();
+	const char *setting, *effective;
+
 	if (!vr_render.seat.seated)
+	{
+		previous_role = 0;
+		previous_seat = NONE;
+		previous_vehicle = NONE;
+		previous_source = -99;
+		previous_generation = generation;
 		return 1; /* existing handheld-weapon aim */
-	if (!vr_render.seat.driver && !vr_render.seat.gunner)
-		return 0; /* existing passenger head aim */
-	mode = vr_render.seat.driver ? vr_vehicle_steering() : vr_turret_aim();
-	return mode == _vr_steering_stick ? -1 : mode == _vr_steering_right ? 2 : mode == _vr_steering_left ? 3 : 0;
+	}
+	role = vr_render.seat.driver ? 1 : vr_render.seat.gunner ? 2 : 3;
+	if (role == 3)
+	{
+		mode = _vr_steering_head;
+		setting = "native passenger head aim";
+		source = 0;
+	}
+	else
+	{
+		mode = role == 1 ? vr_vehicle_steering() : vr_turret_aim();
+		setting = config_string(role == 1 ? "vr.vehicle_steering" : "vr.turret_aim");
+		source = mode == _vr_steering_stick ? -1 : mode == _vr_steering_right ? 2 :
+			mode == _vr_steering_left ? 3 : 0;
+	}
+	effective = source == -1 ? "native stick" : source == 2 ? "right controller" :
+		source == 3 ? "left controller" : "head";
+	if (role != previous_role || vr_render.seat.seat_index != previous_seat ||
+		vr_render.seat.vehicle_index != previous_vehicle || source != previous_source || generation != previous_generation)
+	{
+		static const char *const roles[] = { "on foot", "driver", "gunner/turret", "passenger" };
+		platform_log("vr: mounted aim selection: role %s, seat %d, vehicle object %ld; setting %s, effective source %s (%d)",
+			roles[role], vr_render.seat.seat_index, vr_render.seat.vehicle_index, setting, effective, source);
+		previous_role = role;
+		previous_seat = vr_render.seat.seat_index;
+		previous_vehicle = vr_render.seat.vehicle_index;
+		previous_source = source;
+		previous_generation = generation;
+	}
+	return source;
 }
 
 static real vr_yaw(
@@ -808,6 +844,9 @@ static boolean scope_window(
 	struct render_window *window,
 	struct render_window const *player)
 {
+	static int logged_zoom = -999, logged_shape = -1, logged_width = -1, logged_height = -1;
+	static int logged_two_handed = -1, logged_weapon_hand = -1;
+	static real logged_fov = -1.0f, logged_scale_x = -1.0f, logged_scale_y = -1.0f;
 	struct render_camera *camera = &window->rasterizer_camera;
 	real_point3d position;
 	real_vector3d forward, up, vector;
@@ -877,6 +916,25 @@ static boolean scope_window(
 	vr_render.scope_shape = shape;
 	window->render_camera = *camera;
 	scope_path_log(5, zoom_level, shape);
+	if (logged_zoom != zoom_level || logged_shape != shape || logged_width != width || logged_height != height ||
+		logged_two_handed != vr_two_handed() || logged_weapon_hand != vr_weapon_hand() ||
+		fabsf((float)(logged_fov - player->render_camera.vertical_field_of_view)) > 0.001f ||
+		fabsf((float)(logged_scale_x - scale[0])) > 0.001f || fabsf((float)(logged_scale_y - scale[1])) > 0.001f)
+	{
+		platform_log("vr: scope camera: zoom %d, shape %d, weapon hand %s, aim %s, two-hand %s; viewport %dx%d, eye pixels %d, screen scale %.3f/%.3f, game FOV %.1f deg, scope vertical span %.1f deg",
+			zoom_level, shape, vr_weapon_hand() ? "right" : "left", vr_hand_aiming() ? "hand" : "head",
+			vr_two_handed() ? "locked" : "one hand", width, height, pixels, scale[0], scale[1],
+			player->render_camera.vertical_field_of_view * 57.29578f, atan((double)half) * 2.0 * 57.29578);
+		logged_zoom = zoom_level;
+		logged_shape = shape;
+		logged_width = width;
+		logged_height = height;
+		logged_two_handed = vr_two_handed();
+		logged_weapon_hand = vr_weapon_hand();
+		logged_fov = player->render_camera.vertical_field_of_view;
+		logged_scale_x = scale[0];
+		logged_scale_y = scale[1];
+	}
 	return TRUE;
 }
 

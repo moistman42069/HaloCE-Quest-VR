@@ -28,7 +28,7 @@ def fn(text, name):
 
 # These accepted paths are intentionally outside this change.
 for name in ('decode_adpcm', 'catmull_rom', 'voice_frame', 'spatialize',
-             'voice_gains', 'audio_statistics_log'):
+             'audio_statistics_log'):
     assert fn(source, name) == fn(prior, name), name
 assert '#define XBOX_ADPCM_BLOCK_SAMPLES 65' in source
 assert 'config_' not in fn(source, 'mix') + fn(source, 'audio_callback')
@@ -84,7 +84,11 @@ body += r'''
  pthread_mutex_lock(&mixer_lock); body; pthread_mutex_unlock(&mixer_lock); return DS_OK;
 '''
 body += fn(source, 'IDirectSoundStream_SetI3DL2Source')
-body += fn(prior, 'mix_voice').replace('mix_voice(', 'baseline_mix_voice(')
+body += fn(source, 'stream_from_interface')
+body += fn(source, 'dsound_sdl_stream_set_stereo_position')
+body += fn(prior, 'voice_gains').replace('voice_gains(', 'baseline_voice_gains(')
+body += fn(prior, 'mix_voice').replace('mix_voice(', 'baseline_mix_voice(').replace(
+    'voice_gains(', 'baseline_voice_gains(')
 body += fn(prior, 'mix').replace('mix(', 'baseline_mix(').replace('mix_voice(', 'baseline_mix_voice(')
 
 tests = r'''
@@ -170,6 +174,30 @@ static void test_parameters(void){
  assert(isfinite(s.i3dl2_gain) && isfinite(s.room_rolloff_factor));
  puts("PASS: listener/source finite bounds, maximum delays and null inputs under ASan/UBSan");
 }
+static void test_positioned_stereo(void){
+ struct sdl_stream s;stream_init(&s,2,0);reset_room(0);
+ s.mix_left=0.6f;s.mix_right=0.8f;
+ DSI3DL2BUFFER b={0};b.lDirect=0;b.lDirectHF=-3000;b.lRoom=-1000;b.lRoomHF=-2000;
+ assert(IDirectSoundStream_SetI3DL2Source(&s.object,&b,0)==DS_OK);
+ dsound_sdl_stream_set_stereo_position(&s.object,TRUE,0,10,1,0.1f);
+ assert(mutex_depth==0 && s.stereo_positioned && s.minimum_distance==1 && s.stereo_distance==10);
+ float l,r,room_gain,direct_filter,room_filter;
+ voice_gains(&s,&l,&r);assert(fabsf(l-0.42f)<1e-5f && fabsf(r-0.56f)<1e-5f);
+ voice_room_gains(&s,&room_gain,&direct_filter,&room_filter);
+ assert(room_gain==0 && direct_filter>0 && room_filter==0);
+ reverb_enabled=1;voice_room_gains(&s,&room_gain,&direct_filter,&room_filter);
+ assert(room_gain>0 && direct_filter>0);
+ float send[2]={0}, output[4]={0};samples[0]=10000;samples[1]=20000;
+ s.packet_count=1;s.cursor=0;s.packets[0].samples=samples;s.packets[0].frames=4;
+ dsound_sdl_stream_set_stereo_position(&s.object,TRUE,-1,10,1,0.1f);
+ mix_voice(&s,output,send,1);assert(output[0]>0 && fabsf(output[1])<1e-6f);
+ memset(output,0,sizeof(output));s.cursor=0;s.packets[0].finished=FALSE;s.gains_valid=FALSE;
+ dsound_sdl_stream_set_stereo_position(&s.object,TRUE,1,10,1,0.1f);
+ mix_voice(&s,output,send,1);assert(fabsf(output[0])<0.01f && output[1]>0);
+ dsound_sdl_stream_set_stereo_position(&s.object,FALSE,0,0,0,1);
+ assert(!s.stereo_positioned);
+ streams=NULL;puts("PASS: world stereo position pans without changing centred gain, preserves width, applies direct filtering/reverb, and leaves ordinary stereo unchanged");
+}
 static void test_routing(void){
  struct sdl_stream s;stream_init(&s,1,0);reset_room(1);
  float a,b,c;voice_room_gains(&s,&a,&b,&c);assert(!a&&!b&&!c);
@@ -193,7 +221,7 @@ static void benchmark(void){
  clock_gettime(CLOCK_MONOTONIC,&b);double sec=b.tv_sec-a.tv_sec+(b.tv_nsec-a.tv_nsec)*1e-9;
  printf("BENCH: %.3f ms per 1024-frame (21.33 ms) room block; host CPU only, not Quest performance\n",sec*1000/1500);
 }
-int main(void){test_dry_identity();test_impulse_toggle();test_parameters();test_routing();benchmark();return 0;}
+int main(void){test_dry_identity();test_impulse_toggle();test_parameters();test_positioned_stereo();test_routing();benchmark();return 0;}
 '''
 (OUT / 'reverb.c').write_text(header + body + tests)
 for flags, name in [(['-O1', '-fsanitize=address,undefined'], 'reverb-sanitized'), (['-O2'], 'reverb-optimized')]:

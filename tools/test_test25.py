@@ -290,25 +290,26 @@ run('diagnostics', r'''
 #include <stdio.h>
 #include <string.h>
 #define HALO_XR_FRAME_RECENTRED 8u
-static struct { struct { unsigned flags; } frame; int recentre_source, seat_logged; float heading, head_yaw, aim_yaw; } vr;
+static struct { struct { unsigned flags; unsigned hand_valid[2]; } frame; int recentre_source, seat_logged; float heading, head_yaw, aim_yaw; } vr;
 static int logs; static char last[300];
 static void platform_log(const char *f, ...){ va_list a; va_start(a, f); vsnprintf(last, sizeof(last), f, a); va_end(a); logs++; }
 ''' + fn(frame, 'aim_diagnostics') + r'''
 int main(void){
  float seat = 1.0f;
  vr.seat_logged = -1;
+ vr.frame.hand_valid[0]=vr.frame.hand_valid[1]=2;
  aim_diagnostics(0.5f, 0, 1, NULL, 0); assert(logs == 0 && vr.seat_logged == 0);           /* first seen: no log */
  aim_diagnostics(0.5f, 0, 1, NULL, 0); assert(logs == 0);                                  /* steady: never per frame */
- aim_diagnostics(0.5f, 1, 2, NULL, 0); assert(logs == 1 && strstr(last, "on foot -> third person") && strstr(last, "right hand"));
- aim_diagnostics(0.5f, 1, 2, &seat, 0); assert(logs == 2 && strstr(last, "third person -> first person") && strstr(last, "seat 57.3"));
+ aim_diagnostics(0.5f, 1, 2, NULL, 0); assert(logs == 2 && strstr(last, "on foot -> third person") && strstr(last, "right hand"));
+ aim_diagnostics(0.5f, 1, 2, &seat, 0); assert(logs == 3 && strstr(last, "third person -> first person") && strstr(last, "seat 57.3"));
  vr.recentre_source = 1; vr.frame.flags = HALO_XR_FRAME_RECENTRED; vr.heading = 1.0f;
  aim_diagnostics(0.5f, 1, 2, &seat, 0.25f);
- assert(logs == 3 && strstr(last, "recentre (both sticks): seated, first person, heading 14.3 -> 57.3") && vr.recentre_source == 0);
- aim_diagnostics(0.5f, 1, 3, &seat, 0); assert(logs == 4 && strstr(last, "the system or the headset regaining focus") && strstr(last, "left hand"));
+ assert(logs == 4 && strstr(last, "recentre (both sticks): seated, first person, heading 14.3 -> 57.3") && vr.recentre_source == 0);
+ aim_diagnostics(0.5f, 1, 3, &seat, 0); assert(logs == 6 && strstr(last, "the system or the headset regaining focus") && strstr(last, "left hand"));
  vr.frame.flags = 0;
- aim_diagnostics(0.5f, 0, 1, NULL, 0); assert(logs == 5 && strstr(last, "first person -> on foot"));
+ aim_diagnostics(0.5f, 0, 1, NULL, 0); assert(logs == 7 && strstr(last, "first person -> on foot"));
  vr.recentre_source = 2; vr.frame.flags = HALO_XR_FRAME_RECENTRED; aim_diagnostics(0.5f, 0, 1, NULL, 0);
- assert(logs == 6 && strstr(last, "(View held): on foot"));
+ assert(logs == 8 && strstr(last, "(View held): on foot"));
  puts("PASS: each recentre (both sticks, View held, the system or focus), seat entered or left and view switched is "
       "logged once with the heading before and after, head, aim, steering hand, game and seat angles; nothing per frame");
 }

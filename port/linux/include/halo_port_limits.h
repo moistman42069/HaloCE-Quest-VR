@@ -67,11 +67,11 @@ in its game's advertisement's reserved bytes (network_server_message_handler.c),
 which hosts built before there was a version send as zeros: version 0.
 Raise it with any change to what the machines send each other. */
 /* This app follows OpenCE's protocol version. Hosts and clients of another
-version cannot play together. Build 147 uses network 23; the minimum and
+version cannot play together. Build 157 uses network 24; the minimum and
 maximum are consumed by the Android launcher and updater metadata. */
-#define HALO_PORT_NETWORK_VERSION 23
-#define HALO_PORT_NETWORK_VERSION_MINIMUM 23
-#define HALO_PORT_NETWORK_VERSION_MAXIMUM 23
+#define HALO_PORT_NETWORK_VERSION 24
+#define HALO_PORT_NETWORK_VERSION_MINIMUM 24
+#define HALO_PORT_NETWORK_VERSION_MAXIMUM 24
 /* ... the advertisement's reserved bytes: the version (a little-endian word),
 then flags */
 #define HALO_PORT_ADVERTISED_VERSION_OFFSET 0

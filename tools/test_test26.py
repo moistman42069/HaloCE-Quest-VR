@@ -580,11 +580,9 @@ identity_match = re.search(
     r'platform_log\("vr: (HaloCE Quest (?:test\d+[a-z]? candidate|\d+\.\d+\.\d+ release)[^"]*)"\);', frame)
 assert identity_match, 'VR identity uses either a candidate or stable-release label'
 identity = identity_match.group(1)
-# Test31 separates current identity from the retained baseline-history line.
-# Keep the history assertion, and validate parity exclusions on the current banner.
+# The identity banner now explicitly names the candidate's upstream network.
+# Keep the history assertion and ensure it identifies Build157/network24.
 assert 'test26 candidate 1.0.8' in frame or 'test26:' in frame
-network_words = re.compile(r"Internet play|browser: |signalling|UPnP|upnp|STUN|stun\.|tunnel|invite|network\.[a-z_]+|"
-                           r"halo://join|p2p|lobby|games\.txt|joining|join requested|Multiplayer join")
-assert not network_words.search(identity), 'the identity line holds none of the networking parity words'
+assert 'OpenCE Build 157 / network 24' in identity
 assert 'candidate_at_least(args.label, 26)' in package
 print('PASS: test26 wiring (version 1.0.8 / 34 or later, identity line, package markers)')

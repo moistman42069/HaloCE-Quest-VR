@@ -1,5 +1,23 @@
 # Agent and contributor continuation
 
+## Active private work: Test36 (2026-10-08)
+
+Keep public v1.0.16 unchanged. Continue from `docs/ACTIVE-WORK-CHECKPOINT.md`,
+`docs/CURRENT-STATE.md`, `docs/TEST36-PROGRESS.md`, and
+`docs/TEST36-UPSTREAM-INTEGRATION.md`. The private candidate is 1.0.17-test36,
+Android code46, OpenCE Build157/network24. It ports the verified Build157
+changes and adds transition diagnostics for the two-hand scope report without
+changing scope/aim or turret behavior absent a device log. Saved-game resume
+and Rev2 reports remain unmodified pending exact logs. Both launcher screens
+now show the refined ISO recommendation, Discord support contact and a
+persistent Halo-inspired display-font toggle. The existing GitHub updater was
+checked against the current live release and left unchanged. Package both APKs
+for owner testing only; do not publish, push or alter public release metadata.
+
+The public latest release remains v1.0.16/code45/network23; Build157/network24
+will not join network23 sessions. The owner has asked that uncertain runtime
+reports be left unchanged until an exact determination is available.
+
 ## Current: v1.0.16 public release (2026-10-07)
 
 Read `docs/ACTIVE-WORK-CHECKPOINT.md`, `docs/CURRENT-STATE.md`,
@@ -14,9 +32,9 @@ VR settings and Test31c Android touch/gameplay. The exact v1.0.16 APK pair has
 no recorded device session, so distinguish release publication from device
 acceptance. Keep older releases and the repository About description intact.
 
-This Test35 entry is the active handoff. Older Test31/Test32 "Active" headings
-below are retained historical notes and are superseded; do not resume their
-branches or targets. The separate interaction backlog remains in
+Test35 below is the previous released implementation record. Older
+Test31/Test32 "Active" headings are retained historical notes and are
+superseded; do not resume their branches or targets. The separate interaction backlog remains in
 `docs/VR-INTERACTION-REQUIREMENTS.md`.
 
 ## Active touch/glass correction and accepted VR preference (2026-10-07)

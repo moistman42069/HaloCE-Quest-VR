@@ -17,6 +17,7 @@ alone. Prints PASS or the failures.
 #include "p2p_internal.h"
 
 #include <stdio.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -35,7 +36,23 @@ static const unsigned char *hosting_token;
 void posix_random_bytes(void *buffer, unsigned long size) { memset(buffer, 0x5a, size); }
 unsigned long p2p_now(void) { return clock_now; }
 int config_boolean(const char *name) { (void)name; return 1; }
-void platform_log(const char *format, ...) { (void)format; }
+static unsigned long last_discovery_log;
+static int discovery_logs, discovery_too_frequent;
+static char discovery_text[1024];
+void platform_log(const char *format, ...)
+{
+	if (strstr(format, "discovery network="))
+	{
+		va_list arguments;
+		if (discovery_logs && clock_now - last_discovery_log < 10000)
+			discovery_too_frequent = 1;
+		last_discovery_log = clock_now;
+		discovery_logs++;
+		va_start(arguments, format);
+		vsnprintf(discovery_text, sizeof(discovery_text), format, arguments);
+		va_end(arguments);
+	}
+}
 
 void p2p_hex(const unsigned char *bytes, int size, char *text)
 {
@@ -68,6 +85,7 @@ void p2p_sign(const void *message, int size, unsigned char *signature)
 }
 void p2p_new_invite_if_listed(void) {}
 void p2p_signal_lobby_topics(int listed, int browsing) { (void)listed; (void)browsing; }
+int p2p_signal_connected(void) { return 1; }
 void p2p_signal_lobby_query(void) {}
 void p2p_signal_lobby_publish(const unsigned char *listing, int size, int closing)
 {
@@ -242,6 +260,12 @@ static void lobby_checks(void)
 	check(count == 1 && !strcmp(listing.name, "Test game") && !strcmp(listing.map, "bloodgulch") &&
 		!strcmp(listing.gametype, "Slayer") && listing.player_count == 3 && listing.maximum_player_count == 16 &&
 		listing.engine_type == 2 && listing.open && listing.has_teams && !listing.in_progress, "the listing's details");
+	/* A foreign network header is rejected before signature work; diagnostics
+	must identify that header as unverified, never as a compatible server. */
+	memcpy(tampered, first, (size_t)first_size);
+	tampered[4] ^= 1;
+	hear(tampered, first_size, 0, NULL);
+	check(games(NULL) == 1, "a different network version never enters the listing set");
 	/* a change: published again after TRIGGER_INTERVAL */
 	p2p_set_game_listing(NULL, NULL, NULL, 2, 1, 1, 1);
 	clock_now += 1000;
@@ -321,6 +345,11 @@ int main(void)
 {
 	crypto_checks();
 	lobby_checks();
+	check(discovery_logs > 0 && !discovery_too_frequent, "discovery logs are bounded to one per ten seconds");
+	check(strstr(discovery_text, "broker_ready=1") && strstr(discovery_text, "version_rejected=1 "),
+		"discovery distinguishes broker status and version filtering");
+	check(!strstr(discovery_text, "halo://") && !strstr(discovery_text, "hunter2"),
+		"discovery summary contains no invite or password");
 	printf("%s (%d failures)\n", failures ? "FAIL" : "PASS", failures);
 	return failures != 0;
 }

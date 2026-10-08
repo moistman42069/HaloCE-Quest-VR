@@ -82,6 +82,11 @@ struct sdl_stream
 	/* 2D gains */
 	float volume;             /* SetVolume */
 	float mix_left, mix_right;
+	/* a stereo sound located in the world */
+	BOOL stereo_positioned;
+	float stereo_pan;
+	float stereo_distance;
+	float stereo_distance_fade;
 	float headroom;
 
 	/* 3D */
@@ -364,6 +369,15 @@ static void voice_gains(const struct sdl_stream *stream, float *left, float *rig
 	{
 		spatialize(stream, left, right);
 	}
+	else if (stream->channels == 2 && stream->stereo_positioned)
+	{
+		/* Position a stereo sound's centre while preserving its width. */
+		float angle = (stream->stereo_pan + 1.0f) * 0.25f * 3.14159265f;
+		float direct = stream->i3dl2_gain;
+
+		*left = cosf(angle) * 1.41421356f * stream->mix_left * direct;
+		*right = sinf(angle) * 1.41421356f * stream->mix_right * direct;
+	}
 	else
 	{
 		*left = stream->mix_left;
@@ -382,6 +396,28 @@ static void voice_room_gains(const struct sdl_stream *stream, float *room,
 	int axis;
 
 	*room = *direct_lowpass = *room_lowpass = 0.0f;
+	if (stream->channels == 2 && stream->stereo_positioned)
+	{
+		cosine = frequency_cosine(environment.flHFReference);
+		if (stream->direct_hf < stream->direct)
+			*direct_lowpass = lowpass_coefficient(gain_from_millibels(stream->direct_hf - stream->direct), cosine);
+		if (!reverb_enabled)
+			return;
+		level = environment.lRoom + stream->room;
+		high_level = environment.lRoom + environment.lRoomHF + stream->room_hf;
+		distance = bounded_real(stream->stereo_distance, 0.0f, 1.0e9f, 0.0f);
+		minimum = bounded_real(stream->minimum_distance, 0.0f, 1.0e9f, 0.0f);
+		rolloff = bounded_real(environment.flRoomRolloffFactor + stream->room_rolloff_factor, 0.0f, 10.0f, 0.0f);
+		if (!isfinite(distance))
+			return;
+		if (minimum > 0.0f && distance > minimum)
+			attenuation = minimum / (minimum + rolloff * (distance - minimum));
+		*room = gain_from_millibels(level) * attenuation /
+			(stream->stereo_distance_fade > 0.05f ? stream->stereo_distance_fade : 0.05f) * stream->volume;
+		if (*room > 0.0f && high_level < level)
+			*room_lowpass = lowpass_coefficient(gain_from_millibels(high_level - level), cosine);
+		return;
+	}
 	if (!reverb_enabled || !stream->has_3d || stream->mode == DS3DMODE_DISABLE)
 		return;
 	cosine = frequency_cosine(environment.flHFReference);
@@ -635,6 +671,15 @@ static void mix_voice(struct sdl_stream *stream, float *output, float *send, uns
 			/* a mono voice's mix bins or pan split it across the speakers */
 			output[frame * 2] += sample_left * left;
 			output[frame * 2 + 1] += sample_left * right;
+		}
+		else if (stream->channels == 2 && stream->stereo_positioned)
+		{
+			float middle = 0.5f * (sample_left + sample_right);
+			float side = 0.5f * (sample_left - sample_right);
+			float far_gain = left < right ? left : right;
+
+			output[frame * 2] += middle * left + side * far_gain;
+			output[frame * 2 + 1] += middle * right - side * far_gain;
 		}
 		else
 		{
@@ -1278,8 +1323,26 @@ static HRESULT STDMETHODCALLTYPE stream_flush(IDirectSoundStream *object)
 	}
 	stream->cursor = 0.0;
 	stream->previous_valid = FALSE;
+	stream->stereo_positioned = FALSE;
 	pthread_mutex_unlock(&mixer_lock);
 	return S_OK;
+}
+
+/* Set the position and distance data for a stereo stream whose sound is in
+the world. Ordinary stereo streams retain their existing unpositioned mix. */
+void dsound_sdl_stream_set_stereo_position(IDirectSoundStream *object, BOOL positioned, float pan,
+	float distance, float minimum_distance, float distance_fade)
+{
+	struct sdl_stream *stream = stream_from_interface(object);
+
+	pthread_mutex_lock(&mixer_lock);
+	stream->stereo_positioned = positioned && stream->channels == 2;
+	stream->stereo_pan = bounded_real(pan, -1.0f, 1.0f, 0.0f);
+	stream->stereo_distance = bounded_real(distance, 0.0f, 1.0e9f, 0.0f);
+	stream->stereo_distance_fade = bounded_real(distance_fade, 0.0f, 1.0f, 0.0f);
+	stream->minimum_distance = bounded_real(minimum_distance, 0.0f, 1.0e9f, 0.0f);
+	stream->maximum_distance = 3.4e38f;
+	pthread_mutex_unlock(&mixer_lock);
 }
 
 static IDirectSoundStreamVtbl stream_vtable =

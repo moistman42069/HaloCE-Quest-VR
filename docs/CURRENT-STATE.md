@@ -1,5 +1,22 @@
 # Current development state
 
+## Unpublished test36 candidate work (2026-10-08)
+
+The accepted public pointer is still v1.0.16 / code45 / OpenCE Build148 /
+network23. A private test36 candidate is being prepared at 1.0.17-test36 /
+code46 / Build157 / network24. It ports selected upstream networking and
+gameplay changes and adds evidence-only two-hand aim and hand-aim fallback
+diagnostics. The reported scope shift is consistent with the source switching
+from calibrated weapon-hand aim to the line between the two grips; with no
+device log, the aim behavior remains unchanged. The candidate is not headset-
+accepted and must not advance this public/accepted pointer. The two launcher
+screens also have the persistent Halo-inspired display-font toggle, support
+contact and original-XISO recommendation; the existing updater was audited
+against live v1.0.16 metadata and not changed. Read
+[TEST36-PROGRESS.md](TEST36-PROGRESS.md),
+[TEST36-UPSTREAM-INTEGRATION.md](TEST36-UPSTREAM-INTEGRATION.md), and
+[TEST36-DELIVERY.md](TEST36-DELIVERY.md).
+
 ## Current published release: v1.0.16 (2026-10-07)
 
 Release **Halo CE Quest VR + Android 1.0.16** is published as Latest from

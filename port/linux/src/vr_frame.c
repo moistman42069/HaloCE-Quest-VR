@@ -888,6 +888,11 @@ void vr_reload_settings(void)
 			}
 		}
 	}
+	platform_log("vr: scope settings: display %s, layer size %.3f m; pistol offset forward/up/right %.3f/%.3f/%.3f m scale %.3f; "
+		"sniper offset forward/up/right %.3f/%.3f/%.3f m scale %.3f",
+			vr.scope_enabled ? "on" : "off", vr.scope_size,
+			vr.scope_adjust[0][0], vr.scope_adjust[0][1], vr.scope_adjust[0][2], vr.scope_adjust[0][3],
+			vr.scope_adjust[1][0], vr.scope_adjust[1][1], vr.scope_adjust[1][2], vr.scope_adjust[1][3]);
 	if (vr.roomscale != config_boolean("vr.roomscale"))
 	{
 		vr.roomscale = config_boolean("vr.roomscale");
@@ -916,6 +921,8 @@ void vr_reload_settings(void)
 		config_real("vr.resolution_scale"), config_real("vr.refresh_rate"),
 		config_boolean("vr.close_contact") ? "offline on" : "off", config_string("vr.two_handed"),
 		vr.move_relative == 1 ? "the left hand" : vr.move_relative == 2 ? "the right hand" : "the head");
+	platform_log("vr: mounted aim settings: vehicle steering %s, turret/gunner aim %s (default right controller)",
+		config_string("vr.vehicle_steering"), config_string("vr.turret_aim"));
 }
 
 int vr_settings_generation(void)
@@ -955,7 +962,7 @@ void vr_initialize(void)
 		return;
 	vr.initialized = 1;
 	config_vr_vehicle_defaults();
-	platform_log("vr: HaloCE Quest 1.0.16 release (OpenCE Build 148 / network 23; negative particle-radius tag corrections, point-physics zero-radius guard, native error-screen diagnostics; server-row pointer hover, CE map checksums, co-op capacity/camera safety, VR settings and Android touch retained; public release; device acceptance not recorded)");
+	platform_log("vr: HaloCE Quest test36 candidate 1.0.17-test36 code46 (OpenCE Build 157 / network 24; upstream analog trigger, Custom Edition spawn facing, PC vehicle set and solo lobby start; scope/turret behavior retained with aim-state diagnostics; Safe geometry and accepted VR settings retained)");
 	platform_log("vr: retained baseline history: HaloCE Quest test30 candidate 1.0.12 (the menus' face buttons as the Xbox's of the same letter: X deletes a profile; the co-op host's server name; test29: OpenCE build 144 netcode, network 21; the HUD head tap held by the temple, HUD and head tap on the HUD page, wrist HUD on the wrist and movable, moving with a hand while holding the gun in both, glasses FOV and resolution to 200%% (PR #1); test28: co-op games entered in progress keep their camera upright, release checks as OpenCE ships, co-op hosted for 2 to 128 players as OpenCE's Server Setup offers, gyro aim on phones as an option; test27: OpenCE build 138 netcode, network 20, with its co-op for up to 16 players; test26: co-op: death screams no longer stop the second player, cutscene characters placed and animated as on the first; HUD head tap, reticle toggle on the left stick click with crouch on the turning stick held down (or crouch kept on the click: Controls), optional wrist HUD, adjustable head taps; impact melee along the gun with a follow-through; fingers bend smoothly against walls; test25: vehicle seat and recentre diagnostics, first-person horizon option and seat glass, settings rows that fit, vehicle offset reset; test24b: comfort vignette, smooth speed and snap angle, SPV1 compatibility note; test24: co-op cutscenes animate for the second player; test23: remappable Quest buttons with the grenade on X; test22: co-op campaign host crash fixed, steady first-person vehicle view, left-hand ammo display, adjustable scopes, shot diagnostics; test21b: floating hands restored, torso-following arms, neck-pivot full body, auto two-hand lock, horn, online melee off, two-hand gun roll, pistol shots from the hand, reticle converges as shots do, per-gun aim, horn from either stick)");
 	if (!config_boolean("vr.enabled"))
 	{
@@ -2129,7 +2136,9 @@ static void steady_aim(void)
 void vr_set_zoom_level(int zoom_level)
 {
 	if (vr.zoom_level != zoom_level)
-		platform_log("vr: game zoom state %s (level %d)", zoom_level < 0 ? "off" : "on", zoom_level);
+		platform_log("vr: game zoom transition %d -> %d (%s); scope setting %s, weapon hand %s, last sampled two-hand state %s",
+			vr.zoom_level, zoom_level, zoom_level < 0 ? "off" : "on", vr.scope_enabled ? "on" : "off",
+			vr.weapon_hand ? "right" : "left", vr.two_handed ? "locked" : "one hand");
 	vr.zoom_level = zoom_level;
 }
 
@@ -2896,7 +2905,71 @@ static void update_shot_pose(void)
 
 static void update_aim_pose(void)
 {
+	static int previous_two_handed = -1;
+	static int previous_zoom_level = -999;
+	static const float xr_forward[3] = { 0.0f, 0.0f, -1.0f };
+	static const float xr_right[3] = { 1.0f, 0.0f, 0.0f };
+	static const float xr_up[3] = { 0.0f, 1.0f, 0.0f };
+	int two_handed;
+	int two_hand_changed, zoom_changed;
+
 	compute_aim_pose();
+	two_handed = vr.two_handed;
+	two_hand_changed = previous_two_handed != two_handed && (previous_two_handed == 1 || two_handed == 1);
+	zoom_changed = previous_zoom_level != vr.zoom_level && previous_zoom_level != -999;
+	if (two_hand_changed || (zoom_changed && two_handed))
+	{
+		if (two_handed)
+		{
+			float between[3], one_hand_orientation[4], one_hand_forward[3], one_hand_right[3], one_hand_up[3];
+			float length, dot, line_right, line_up;
+			int w = vr.weapon_hand, o = 1 - vr.weapon_hand, axis;
+
+			for (axis = 0; axis < 3; axis++)
+				between[axis] = vr.frame.grip[o].position[axis] - vr.frame.grip[w].position[axis];
+			length = sqrtf(between[0] * between[0] + between[1] * between[1] + between[2] * between[2]);
+			if (length > 1.0e-5f && isfinite(length))
+			{
+				for (axis = 0; axis < 3; axis++)
+					between[axis] /= length;
+				vr_alignment_multiply(vr.frame.aim[w].orientation, vr.weapon_rotation[w], one_hand_orientation);
+				rotate(one_hand_orientation, xr_forward, one_hand_forward);
+				rotate(one_hand_orientation, xr_right, one_hand_right);
+				rotate(one_hand_orientation, xr_up, one_hand_up);
+				dot = PIN(one_hand_forward[0] * between[0] + one_hand_forward[1] * between[1] +
+					one_hand_forward[2] * between[2], -1.0f, 1.0f);
+				line_right = one_hand_right[0] * between[0] + one_hand_right[1] * between[1] + one_hand_right[2] * between[2];
+				line_up = one_hand_up[0] * between[0] + one_hand_up[1] * between[1] + one_hand_up[2] * between[2];
+				if (isfinite(dot) && isfinite(line_right) && isfinite(line_up))
+					platform_log("vr: two-hand aim %s: weapon hand %s, grip separation %.3f m, "
+						"main-hand to grip-line angle %.1f deg (forward/right/up %.3f/%.3f/%.3f), "
+						"tracking L/R 0x%x/0x%x, zoom %d, scope %s, weapon class %d; aim behavior unchanged",
+						two_hand_changed ? "engaged" : "sampled at zoom change", vr.weapon_hand ? "right" : "left", length,
+						acosf(dot) * 57.2957795f, dot, line_right, line_up,
+						(unsigned)vr.frame.hand_valid[0], (unsigned)vr.frame.hand_valid[1], vr.zoom_level,
+						vr.scope_enabled ? "on" : "off", vr.gun_class);
+				else
+					platform_log("vr: two-hand aim %s: pose angle unavailable; weapon hand %s, tracking L/R 0x%x/0x%x, "
+						"zoom %d, scope %s, weapon class %d; aim behavior unchanged",
+						two_hand_changed ? "engaged" : "sampled at zoom change", vr.weapon_hand ? "right" : "left",
+						(unsigned)vr.frame.hand_valid[0], (unsigned)vr.frame.hand_valid[1], vr.zoom_level,
+						vr.scope_enabled ? "on" : "off", vr.gun_class);
+			}
+			else
+				platform_log("vr: two-hand aim %s: grip distance unavailable; weapon hand %s, tracking L/R 0x%x/0x%x, "
+					"zoom %d, scope %s, weapon class %d; aim behavior unchanged",
+					two_hand_changed ? "engaged" : "sampled at zoom change", vr.weapon_hand ? "right" : "left",
+					(unsigned)vr.frame.hand_valid[0], (unsigned)vr.frame.hand_valid[1], vr.zoom_level,
+					vr.scope_enabled ? "on" : "off", vr.gun_class);
+		}
+		else if (two_hand_changed)
+			platform_log("vr: two-hand aim released: weapon hand %s, tracking L/R 0x%x/0x%x, zoom %d, scope %s, "
+				"weapon class %d; aim behavior unchanged",
+				vr.weapon_hand ? "right" : "left", (unsigned)vr.frame.hand_valid[0],
+				(unsigned)vr.frame.hand_valid[1], vr.zoom_level, vr.scope_enabled ? "on" : "off", vr.gun_class);
+	}
+	previous_two_handed = two_handed;
+	previous_zoom_level = vr.zoom_level;
 	steady_aim();
 	update_shot_pose();
 }
@@ -2962,6 +3035,8 @@ seat's. Once per event, never per frame */
 static void aim_diagnostics(float game_yaw, int seated, int hand_may_aim, const float *base_heading,
 	float heading_before)
 {
+	static int previous_vehicle_source = -99;
+	static int previous_vehicle_tracking = -1;
 	static const char *const sources[] = { "the system or the headset regaining focus", "both sticks", "View held", "vehicle entry", "vehicle exit", "seat transfer" };
 	static const char *const steering[] = { "stick", "on foot", "head", "right hand", "left hand" };
 	int state = seated ? (base_heading ? 2 : 1) : 0;
@@ -2970,6 +3045,24 @@ static void aim_diagnostics(float game_yaw, int seated, int hand_may_aim, const 
 
 	if (base_heading)
 		snprintf(seat, sizeof(seat), ", seat %.1f", *base_heading * 57.29578f);
+	if (seated && (hand_may_aim == 2 || hand_may_aim == 3))
+	{
+		int hand = hand_may_aim == 2 ? 1 : 0;
+		int tracked = (vr.frame.hand_valid[hand] & 2) != 0;
+		if (previous_vehicle_source != hand_may_aim || previous_vehicle_tracking != tracked)
+		{
+			platform_log("vr: seated hand-aim source %s: controller orientation %s; native-facing fallback %s",
+				hand ? "right" : "left", tracked ? "tracked" : "unavailable",
+				tracked ? "off" : "active");
+			previous_vehicle_source = hand_may_aim;
+			previous_vehicle_tracking = tracked;
+		}
+	}
+	else
+	{
+		previous_vehicle_source = -99;
+		previous_vehicle_tracking = -1;
+	}
 	if (vr.frame.flags & HALO_XR_FRAME_RECENTRED)
 	{
 		platform_log("vr: recentre (%s): %s, heading %.1f -> %.1f, head %.1f, aim %.1f (%s), game %.1f%s",
@@ -4094,7 +4187,11 @@ int vr_scope_view(const float position[3], float out_position[3], float out_forw
 			"disabled in VR settings", "waiting for stereo frame", "requires hand aim",
 			"weapon-hand aim pose is not tracked", "camera pose check"
 		};
-		platform_log("vr: scope view gate: %s", reasons[gate]);
+		platform_log("vr: scope view gate: %s; enabled %d, stereo %d, hand aim %d, weapon hand %s, "
+			"weapon-hand tracking 0x%x, tracking L/R 0x%x/0x%x, zoom %d, two-hand %s, weapon class %d",
+			reasons[gate], vr.scope_enabled, vr.stereo, vr_hand_aiming(), vr.weapon_hand ? "right" : "left",
+			(unsigned)vr.frame.hand_valid[vr.weapon_hand], (unsigned)vr.frame.hand_valid[0],
+			(unsigned)vr.frame.hand_valid[1], vr.zoom_level, vr.two_handed ? "locked" : "one hand", vr.gun_class);
 		previous_gate = gate;
 	}
 	if (gate < 4)
@@ -4179,6 +4276,9 @@ void vr_resolve_scope(unsigned int texture, int width, int height, int x, int y,
 aim), facing back along it, vr.scope_size across */
 static void place_scope(struct halo_xr_layers *layers)
 {
+	static int logged_shape = -1, logged_zoom = -999, logged_weapon_hand = -1;
+	static int logged_two_handed = -1, logged_gun_class = -999, logged_settings_generation = -1;
+	static const float xr_forward[3] = { 0.0f, 0.0f, -1.0f };
 	static const float offsets[][3] =
 	{
 		{ -0.10f, 0.00f, 0.15f },  /* VR_SCOPE_ROUND */
@@ -4192,7 +4292,7 @@ static void place_scope(struct halo_xr_layers *layers)
 	int kind = vr.scope_shape == VR_SCOPE_SNIPER ? 1 : vr.scope_shape == VR_SCOPE_ROUND ? 0 : -1;
 	const float *adjust = kind >= 0 ? vr.scope_adjust[kind] : NULL;
 	/* OpenXR's x right, y up, z back; in the left hand, left is the other way */
-	float local[3], turned[3], origin[3];
+	float local[3], turned[3], origin[3], shot_forward[3];
 	int axis;
 
 	local[0] = vr.weapon_hand ? -offset[1] : offset[1];
@@ -4215,6 +4315,26 @@ static void place_scope(struct halo_xr_layers *layers)
 	memcpy(layers->scope_pose.orientation, vr.shot_pose.orientation, sizeof(layers->scope_pose.orientation));
 	layers->scope_size[0] = layers->scope_size[1] = vr.scope_size * (adjust ? adjust[3] : 1.0f);
 	layers->flags |= HALO_XR_LAYER_SCOPE;
+	if (logged_shape != vr.scope_shape || logged_zoom != vr.zoom_level || logged_weapon_hand != vr.weapon_hand ||
+		logged_two_handed != vr.two_handed || logged_gun_class != vr.gun_class ||
+		logged_settings_generation != vr.settings_generation)
+	{
+		rotate(vr.shot_pose.orientation, xr_forward, shot_forward);
+		platform_log("vr: scope layer pose: shape %d, zoom %d, weapon hand %s, two-hand %s, weapon class %d, "
+			"tracking L/R 0x%x/0x%x; center %.3f/%.3f/%.3f m, local offset %.3f/%.3f/%.3f m, "
+			"shot forward %.3f/%.3f/%.3f, layer size %.3f m",
+			vr.scope_shape, vr.zoom_level, vr.weapon_hand ? "right" : "left",
+			vr.two_handed ? "locked" : "one hand", vr.gun_class,
+			(unsigned)vr.frame.hand_valid[0], (unsigned)vr.frame.hand_valid[1],
+			layers->scope_pose.position[0], layers->scope_pose.position[1], layers->scope_pose.position[2],
+			local[0], local[1], local[2], shot_forward[0], shot_forward[1], shot_forward[2], layers->scope_size[0]);
+		logged_shape = vr.scope_shape;
+		logged_zoom = vr.zoom_level;
+		logged_weapon_hand = vr.weapon_hand;
+		logged_two_handed = vr.two_handed;
+		logged_gun_class = vr.gun_class;
+		logged_settings_generation = vr.settings_generation;
+	}
 }
 
 /* seconds a change of mode takes to come in from black */

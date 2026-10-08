@@ -39,6 +39,7 @@ public class LauncherActivity extends Activity {
     private static final int PICK_RESOURCES = 2;
 
     private File dataRoot;
+    private View launcherRoot;
     private GameDataManager dataManager;
     private TextView status, updateStatus;
     private ProgressBar progress;
@@ -243,7 +244,7 @@ public class LauncherActivity extends Activity {
     private ModInstaller.Mod selectedMod;
     private LinearLayout modDetails;
     private TextView modState;
-    private Button play, modAction, modDelete, modResources, resetSettings, mainMenu3d;
+    private Button play, modAction, modDelete, modResources, resetSettings, mainMenu3d, fontToggle;
     private boolean busy;
 
     private Button menuButton(LinearLayout parent, String text) {
@@ -270,6 +271,19 @@ public class LauncherActivity extends Activity {
         return view;
     }
 
+    private Button addFontToggle(LinearLayout parent) {
+        fontToggle = menuButton(parent, LauncherFont.toggleLabel(this));
+        fontToggle.setOnClickListener(v -> {
+            if (busy)
+                return;
+            LauncherFont.toggle(this);
+            fontToggle.setText(LauncherFont.toggleLabel(this));
+            if (launcherRoot != null)
+                LauncherFont.apply(this, launcherRoot);
+        });
+        return fontToggle;
+    }
+
     private void buildMenu() {
         android.widget.ScrollView scroll = new android.widget.ScrollView(this);
         LinearLayout layout = new LinearLayout(this);
@@ -289,8 +303,13 @@ public class LauncherActivity extends Activity {
 
         label(layout, BuildConfig.VERSION_NAME + " • community release", 12, HALO_BLUE);
         updateStatus = Updater.launcher(this, gameRoot(), layout);
+        LauncherFont.keepNormal(updateStatus);
         play = menuButton(layout, "Play");
         play.setOnClickListener(v -> startFromMenu());
+
+        label(layout, LauncherHelp.RECOMMENDED_ISO_NOTE, 14, Color.rgb(255, 190, 70));
+        label(layout, LauncherHelp.SUPPORT_NOTE, 13, Color.rgb(150, 190, 210));
+        addFontToggle(layout);
 
         label(layout, "Browse and host games in Play > Multiplayer. Use the guide below for online co-op, public servers, LAN and invites.",
             13, Color.rgb(150, 160, 170));
@@ -351,9 +370,12 @@ public class LauncherActivity extends Activity {
         layout.addView(progress, progressLayout);
 
         status = label(layout, "", 14, Color.rgb(160, 200, 160));
+        LauncherFont.keepNormal(status);
         label(layout, "This launch's log: " + RunLog.destination(), 13, Color.rgb(160, 200, 160));
         status.setPadding(0, dp(8), 0, 0);
 
+        LauncherFont.apply(this, scroll);
+        launcherRoot = scroll;
         setContentView(scroll);
         play.requestFocus();
     }
@@ -394,6 +416,7 @@ public class LauncherActivity extends Activity {
         modDetails.addView(description);
 
         modState = new TextView(this);
+        LauncherFont.keepNormal(modState);
         modState.setTextColor(HALO_BLUE);
         modState.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
         modDetails.addView(modState);
@@ -455,6 +478,8 @@ public class LauncherActivity extends Activity {
         busy = value;
         play.setEnabled(!value);
         resetSettings.setEnabled(!value);
+        if (fontToggle != null)
+            fontToggle.setEnabled(!value);
         progress.setVisibility(value ? View.VISIBLE : View.GONE);
         refreshMod();
     }
@@ -566,8 +591,8 @@ public class LauncherActivity extends Activity {
 
         TextView message = new TextView(this);
         menuButton(layout, "Game files & versions").setOnClickListener(v -> dataManager().show());
-        message.setText("Choose an Xbox disc image of Halo: Combat Evolved (an .iso or .xiso file, any "
-            + "version) on this device. Its maps folder is copied into the app's storage (about 1.8 GB), "
+        message.setText("Choose an Xbox disc image of Halo: Combat Evolved (an .iso or .xiso file) "
+            + "on this device. Its maps folder is copied into the app's storage (about 1.8 GB), "
             + "and you can delete the image afterwards.\n\n"
             + "You can also copy a maps folder from a computer:\n"
             + "adb push <folder with maps>/. " + (dataRoot != null ? dataRoot.getAbsolutePath() : "") + "/");
@@ -576,6 +601,23 @@ public class LauncherActivity extends Activity {
         message.setGravity(Gravity.CENTER);
         message.setPadding(0, dp(16), 0, dp(16));
         layout.addView(message);
+
+        TextView recommendation = new TextView(this);
+        recommendation.setText(LauncherHelp.RECOMMENDED_ISO_NOTE);
+        recommendation.setTextColor(Color.rgb(255, 190, 70));
+        recommendation.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
+        recommendation.setGravity(Gravity.CENTER);
+        recommendation.setPadding(0, 0, 0, dp(12));
+        layout.addView(recommendation);
+
+        addFontToggle(layout);
+        TextView support = new TextView(this);
+        support.setText(LauncherHelp.SUPPORT_NOTE);
+        support.setTextColor(Color.rgb(150, 190, 210));
+        support.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+        support.setGravity(Gravity.CENTER);
+        support.setPadding(0, 0, 0, dp(12));
+        layout.addView(support);
 
         pick = new Button(this);
         pick.setText("Choose disc image");
@@ -599,6 +641,7 @@ public class LauncherActivity extends Activity {
         layout.addView(progress, progressLayout);
 
         status = new TextView(this);
+        LauncherFont.keepNormal(status);
         status.setTextColor(Color.rgb(160, 200, 160));
         status.setGravity(Gravity.CENTER);
         status.setPadding(0, dp(8), 0, 0);
@@ -606,10 +649,13 @@ public class LauncherActivity extends Activity {
 
         LauncherTheme.button(pick);
         updateStatus = Updater.launcher(this, gameRoot(), layout);
+        LauncherFont.keepNormal(updateStatus);
         menuButton(layout, "Getting started & controls").setOnClickListener(v -> LauncherHelp.show(this));
         android.widget.ScrollView importScroll = new android.widget.ScrollView(this);
         importScroll.setFillViewport(true); importScroll.setBackground(new LauncherTheme());
         layout.setBackgroundColor(Color.TRANSPARENT); importScroll.addView(layout);
+        LauncherFont.apply(this, importScroll);
+        launcherRoot = importScroll;
         setContentView(importScroll);
         pick.requestFocus();
     }

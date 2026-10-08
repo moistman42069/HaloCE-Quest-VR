@@ -52,7 +52,7 @@ updater = read('port/android/app/src/main/java/com/halo/decomp/Updater.java')
 
 # --- 1. OpenCE's network version 21, exactly; its co-op, lobby and message files byte for byte
 network = int(re.search(r'#define HALO_PORT_NETWORK_VERSION (\d+)\b', limits).group(1))
-assert network in (21, 22, 23)
+assert network in (21, 22, 23, 24)
 for name in ['', '_MINIMUM', '_MAXIMUM']:
     assert re.search(r'#define HALO_PORT_NETWORK_VERSION%s %d\b' % (name, network), limits), name
 UPSTREAM_144 = [
@@ -91,13 +91,14 @@ for path, digest in (UPSTREAM_144 if network < 23 else []):
     assert hashlib.sha256(data).hexdigest() == digest, path + ' as OpenCE build 144'
 expected_upstream = ('OpenCE build 144 (network 21)' if network == 21 else
                      'OpenCE build 145 (network 22)' if network == 22 else
-                     'OpenCE build 148 (network 23)')
+                     'OpenCE build 148 (network 23)' if network == 23 else
+                     'OpenCE build 157 (network 24)')
 assert expected_upstream in updater
 if network < 23:
     print('PASS: exact current network gate; %d co-op, lobby and message files are OpenCE build 144\'s byte for byte '
           '(network_coop.c with only test28\'s camera)' % len(UPSTREAM_144))
 else:
-    print('PASS: network 23 gate; Build 148 integration assertions are checked by test_test34_opence.py and test_test35_opence.py')
+    print('PASS: current OpenCE network gate; Build 148/157 integration assertions are checked by test_test34_opence.py, test_test35_opence.py and test_test36_opence157.py')
 
 # --- 2. objects at rest: OpenCE build 144's three sends of one come to rest, and test26's resend of one at rest moved
 send = fn(objects_net, 'distributed_host_send_states')

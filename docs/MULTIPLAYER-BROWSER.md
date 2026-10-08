@@ -1,11 +1,18 @@
 # Multiplayer and campaign co-op: current private builds
 
-Test34 targets the official **OpenCE Build 147 release / network 23**, including CE
+The active private test36 candidate integrates OpenCE Build 157 / network 24.
+The public v1.0.16 APK and older network23 servers cannot join it. Build157
+adds the PC vehicle set, Custom Edition item spawn facing, analog trigger
+pressure for analog-rate-of-fire weapons, and the ability for a lone host to
+start. Details and validation limits: [TEST36-UPSTREAM-INTEGRATION.md](TEST36-UPSTREAM-INTEGRATION.md).
+
+Test34 historically targeted the official **OpenCE Build 147 release / network 23**, including CE
 map-header checksum matching. The direct Build 147 release page marks it
 Latest; the general releases listing has shown stale Build 145 metadata. Use
 matching network versions and compatible game files. Public
-v1.0.12 uses network 21 and is preserved separately. Test34 is a private
-candidate; see [player notes](TEST34-PLAYER-NOTES.md) for device checks.
+v1.0.12 uses network 21 and is preserved separately. Test34 was a private
+candidate; its device-check notes are retained at
+[TEST34-PLAYER-NOTES.md](TEST34-PLAYER-NOTES.md).
 
 ## In-game browser and hosting
 
@@ -72,7 +79,7 @@ are in [the current launcher guide](TEST32-LAUNCHER-GUIDE.md).
 
 ## Compatibility and reports
 
-Match **network 23**, map resources and the server's content. Different ISO/
+For Test34 and older released builds, match **network 23**, map resources and the server's content. Test36 requires network24. Different ISO/
 revision files or modified maps can cause failures, but they are only one cause.
 The in-game browser does not automatically switch game sets or infer verified
 Original/Rev1/Rev2 requirements. Choose the correct imported set under **Game

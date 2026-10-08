@@ -101,9 +101,9 @@ optional files beside the map give it what the Xbox levels have:
 
 ## What the native builds do
 
-### Multiplayer map identity (OpenCE network 23)
+### Multiplayer map identity (introduced in Build 147; current candidate network 24)
 
-OpenCE Build 147 carries a Custom Edition map's stored header checksum in the
+OpenCE Build 147 introduced carrying a Custom Edition map's stored header checksum in the
 existing network map `version` field. A joining client compares its local map
 header checksum before loading the session. The loader separately computes
 the OpenSauce cache CRC to validate and report the map; that is not what the
@@ -113,7 +113,8 @@ the existing cross-region stock-map behavior is preserved. This checksum is
 the CE map-header identity used by OpenCE; it does not identify or validate
 an Xbox ISO/XISO revision.
 
-The CE loader checks map-file bounds, block ranges, references, resource files,
+The Test36 candidate upgrades to OpenCE Build 157 / network24; the map-header
+checksum identity remains in place. The CE loader checks map-file bounds, block ranges, references, resource files,
 and model data before conversion. Test34 imports OpenCE Build 147's tag schemas
 and validator, adapted to this port's combined map/resource/audio offsets and
 34.5 MiB (36 MB) Quest CE tag-cache reservation. This preserves the selected CE scenario
