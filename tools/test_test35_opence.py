@@ -28,15 +28,23 @@ gradle = read("port/android/app/build.gradle")
 assert "versionCode Math.max(47, buildNumber)" in gradle
 assert '"1.0.18-test37"' in gradle
 frame = read("port/linux/src/vr_frame.c")
-assert "HaloCE Quest test37 candidate 1.0.18-test37 code47" in frame
+assert "HaloCE Quest 1.0.18 release code48" in frame
 assert "OpenCE Build 157 / network 24" in frame
 updater = read('port/android/app/src/main/java/com/halo/decomp/Updater.java')
 assert 'OpenCE build 157 (network 24)' in updater
 package_script = read("tools/package-quest.py")
 assert '"runtime_accepted": False' in package_script
 assert 'args.stable and args.label == "1.0.16"' in package_script
+assert 'args.stable and args.label == "1.0.18"' in package_script
 assert 'reject_orphaned_apk_data' in package_script
 assert '"source_commit": runtime_commit if args.stable else commit' in package_script
+release_notes = read("docs/RELEASE-1.0.18.md")
+for marker in ["## 1. Installation", "## 3. Controls / Inputs", "network version 24",
+               "All compatible networks", "Hosting and signed advertisements always remain network 24",
+               "original Xbox Halo CE XISO", "@MeWhenINameMyself"]:
+    assert marker.lower() in release_notes.lower(), marker
+guide_generator = read("tools/generate-field-guide.py")
+assert "HALO_RELEASE_GUIDE" in guide_generator and "RELEASE-'+stable_release+'.md" in guide_generator
 
 # SPV1's ten map files are larger than 128 MiB, but fit the current bounded
 # Custom Edition cache reader. Keep that distinction visible and avoid

@@ -1,10 +1,16 @@
-## Test37 delivery checkpoint
+## Current release checkpoint — v1.0.18 (2026-10-08)
 
-Local branch `test37-network-browser`; read `docs/TEST37-DELIVERY.md` for APK hashes, validation, source packaging and remaining device/ISO tests. No push/publication/install. Hosting stays24; client targets11-24 or0; old campaign/CE joins and later lobby transitions are rejected. Preserve public1.0.16 and prior Test36 artifacts.
+The owner authorized and published [v1.0.18](https://github.com/moistman42069/HaloCE-Quest-VR/releases/tag/v1.0.18) as Latest. It is Android code48, OpenCE Build157/network24, with the Test37 network-version selector and population-sorted launcher listings. The exact release assets and checks are in `docs/RELEASE-PROVENANCE-1.0.18.md`; full user-facing instructions are in `docs/RELEASE-1.0.18.md`. Prior releases and the GitHub About description are preserved.
+
+Hosting remains network24. The launcher selects the next client's native discovery/admission target (11–24 or All compatible); it does not downgrade hosting. Targets11–22 are original Xbox-map PvP only; campaign/CE requires host23/24. Do not describe the population catalog as exhaustive or hardware cross-play as universally verified. Original/Rev1/Rev2 image comparison remains deferred until the user supplies those files.
+
+## Historical Test37 delivery checkpoint
+
+Local branch `test37-network-browser`; read `docs/TEST37-DELIVERY.md` for original private-candidate APK hashes, validation, source packaging and remaining device/ISO tests. Those Test37 APKs were superseded by the stable v1.0.18 artifacts. Hosting stays24; client targets11-24 or0; old campaign/CE joins and later lobby transitions are rejected. Preserve public1.0.16 and prior Test36 artifacts.
 
 ## Networking resumed; ISO validation deferred — 2026-10-08
 
-The owner explicitly resumed networking implementation, validation and private APK packaging. Original/Rev1/Rev2 ISO validation waits for the images later. No publication is authorized. The earlier pause is superseded for networking.
+The owner explicitly resumed networking implementation and validation. Original/Rev1/Rev2 ISO validation waits for the images later. The earlier publication hold was superseded by explicit v1.0.18 publication authorization.
 
 Resume requirements:
 - Actual startup network/protocol switching from the launcher, with reported player/server populations sorted busiest first; a directory filter alone does not satisfy the request.
@@ -12,13 +18,13 @@ Resume requirements:
 - Current source work implements client targets 0 (all compatible 11-24) or exact 11-24, with native discovery/admission gates; hosting and signed advertisements stay 24. Versions 11-22 are original Xbox-map PvP only; campaign/CE require 23 or 24. The earlier 23/24 host-profile and PC vehicle-guard plan is superseded. Final source is on local branch test37-network-browser; both APKs compiled and all62 suites have passing results. See TEST37-DELIVERY.md. This is not device acceptance.
 - Compare actual original/Rev1/Rev2 images once supplied: import detection, map/revision differences and reproducible compatibility failures. ISO revision is separate from network protocol. Do not claim universal ISO or network compatibility from source review alone.
 - Preserve working VR/mobile behavior, saves, original signing identity, prior APKs and public releases. No speculative fixes or unsupported selectable profiles. Explicitly report any remaining evidence/testing gap.
-- Latest verified upstream is OpenCE Build157 / 73dc01d / default network24. Public release remains v1.0.16. Test36 APKs remain preserved. Test37 final APK hashes and packaging gates are recorded in TEST37-DELIVERY.md; deliver privately and await owner testing.
+- Latest verified upstream is OpenCE Build157 / 73dc01d / default network24. v1.0.18 is now public; Test36 and v1.0.16 assets remain preserved. Test37 private-candidate hashes and packaging gates are recorded in TEST37-DELIVERY.md; stable hashes are in RELEASE-PROVENANCE-1.0.18.md.
 - Local WSL Ubuntu has clang/JDK/Android SDK and the existing debug keystore. Run checks in WSL, not Windows Python (which lacks clang/javac on PATH). Historical version tests were adjusted to accept private candidate suffixes. Final checks cover native admission and post-join lobby changes, Java persistence/counts and full launcher compilation; see the delivery record for the corrected test extractor and validation limits.
 - Relevant implementation files: NetworkProfile.java, ServerBrowser.java, native halo_port_active_network_version implementation/guards, tools/test_test37_launcher.py and tools/test_test37_network_profiles.py. Read git diff and both agents' findings before continuing. Read-only ChupathingyCE audit downloads are under ignored build/chupa-audit.
 
-# Active work checkpoint — v1.0.16 release (2026-10-07)
+# Historical work checkpoint - v1.0.16 release (2026-10-07)
 
-## Active private candidate: test37 / 1.0.18-test37 / OpenCE Build 157 (2026-10-08)
+## Historical private candidate: test37 / 1.0.18-test37 / OpenCE Build 157 (2026-10-08)
 
 The private candidate is **1.0.18-test37 / code47 / OpenCE Build 157**.
 Local hosting and signed advertisements remain **network24**. The launcher
@@ -36,13 +42,13 @@ versions remain visible but unavailable. MQTT brokers are discovery mirrors,
 not additional protocol implementations. One public HTTPS catalog is verified;
 up to four compatible custom catalogs can be configured.
 
-Public v1.0.16/code45/network23 and the Test36 artifacts remain unchanged.
-This candidate has not been device-accepted. Source checks and compilation do
-not establish every historical server, map revision or co-op combination.
+Public v1.0.16/code45/network23 and the Test36 artifacts remained unchanged
+while this candidate was private. The owner later authorized publication;
+source checks and compilation still do not establish every historical server,
+map revision or co-op combination.
 Read [TEST37-PROGRESS.md](TEST37-PROGRESS.md),
 [TEST37-UPSTREAM-INTEGRATION.md](TEST37-UPSTREAM-INTEGRATION.md) and
-[TEST37-PLAYER-NOTES.md](TEST37-PLAYER-NOTES.md). No publication, push,
-installation or game launch is authorized.
+[TEST37-PLAYER-NOTES.md](TEST37-PLAYER-NOTES.md) for contemporaneous evidence.
 
 ## Superseded Test36 candidate archive: 1.0.17-test36 / network24 (2026-10-08)
 
@@ -133,7 +139,7 @@ then supply BOTH 1.0.13/code41 APKs. Preserve the code40 Quest artifact as the
 comparison baseline and its new VR settings design. See `TEST31C-PROGRESS.md`.
 No release/push/install.
 
-## Active priority: repair rejected Test31
+## Historical priority: repair rejected Test31
 
 The owner rejected Test31 on 2026-10-07: Quest startup crashes and Android
 loses usable touch navigation. Follow `TEST31B-PROGRESS.md` on branch
@@ -170,7 +176,7 @@ Public/accepted build pointers below remain unchanged.
 
 Historical prior release: [v1.0.12](https://github.com/moistman42069/HaloCE-Quest-VR/releases/tag/v1.0.12), built from test30 on network 21. It remains preserved but is not compatible with v1.0.16/network 23. See the current release pointer at the top of this checkpoint.
 
-## Current Test31 implementation status
+## Historical Test31 implementation status
 
 The initial mobile-data/menu/upstream queue has been worked through in source.
 It is no longer an unstarted future list:
@@ -217,7 +223,7 @@ checks in [VR-INTERACTION-REQUIREMENTS.md](VR-INTERACTION-REQUIREMENTS.md).
 No publication, upload, installation or game launch follows automatically
 from preparing this private pair.
 
-## Current release: test30
+## Historical release: test30
 
 Version **1.0.12 / code 38**, branch `test30-profiles-coopname`, on v1.0.11. It fixes Quest face-button actions in VR menus (A/X/Y match the displayed Xbox labels; X deletes the selected profile; B backs out once) and adds an optional remembered campaign co-op server name up to 15 printable ASCII characters. Gameplay mappings are unchanged; X still throws grenades during play. OpenCE Build 144/network 21 is unchanged, so v1.0.11 peers remain compatible.
 

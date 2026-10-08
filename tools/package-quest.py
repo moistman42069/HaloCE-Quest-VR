@@ -76,7 +76,8 @@ NETWORK_STRING = re.compile(rb"Internet play|browser: |signalling|UPnP|upnp|STUN
 # This exact VR startup identity mentions "lobby" in its change summary. It is
 # not a networking path; keep all other runtime/import differences fatal.
 VR_BUILD_IDENTITIES = {
-    b"vr: HaloCE Quest test37 candidate 1.0.18-test37 code47 (OpenCE Build 157 / network 24; launcher network-version browser and population selector; upstream analog trigger, Custom Edition spawn facing, PC vehicle set and solo lobby start; scope/turret behavior retained; Safe geometry and accepted VR settings retained)"
+    b"vr: HaloCE Quest test37 candidate 1.0.18-test37 code47 (OpenCE Build 157 / network 24; launcher network-version browser and population selector; upstream analog trigger, Custom Edition spawn facing, PC vehicle set and solo lobby start; scope/turret behavior retained; Safe geometry and accepted VR settings retained)",
+    b"vr: HaloCE Quest 1.0.18 release code48 (OpenCE Build 157 / network 24; launcher network-version browser and population selector; upstream analog trigger, Custom Edition spawn facing, PC vehicle set and host-alone lobby start; scope/turret behavior retained; Safe geometry and accepted VR settings retained)"
 }
 
 
@@ -225,6 +226,8 @@ def main():
                              + " Android version code must be at least " + str(required_candidate_code) + ": " + str(path))
         if args.stable and args.label == "1.0.16" and "versionCode='45'" not in badging:
             raise SystemExit("Wrong v1.0.16 Android version code: " + str(path))
+        if args.stable and args.label == "1.0.18" and "versionCode='48'" not in badging:
+            raise SystemExit("Wrong v1.0.18 Android version code: " + str(path))
         with zipfile.ZipFile(path) as archive:
             if archive.testzip() is not None:
                 raise SystemExit("APK ZIP checksum failure")
@@ -376,6 +379,26 @@ def main():
                                b"Need help? DM @MeWhenINameMyself on Discord."]:
                     if marker not in dex:
                         raise SystemExit("Test36 launcher ISO recommendation missing: " + repr(marker))
+            if args.stable and args.label == "1.0.18":
+                if b"OpenCE build 157 (network 24)" not in dex:
+                    raise SystemExit("v1.0.18 updater does not identify OpenCE Build 157 / network 24")
+                for marker in [b"network client target: all compatible", b"network client target: exact",
+                               b"Campaign co-op requires network version", b"Custom Edition map requires network version",
+                               b"leaving pregame lobby: host version"]:
+                    if marker not in guest:
+                        raise SystemExit("v1.0.18 network-version compatibility gate missing: " + repr(marker))
+                for marker in [b"Browse multiplayer servers", b"Browse campaign co-op servers",
+                               b"Network: All networks", b"unavailable; protocol not included"]:
+                    if marker not in dex:
+                        raise SystemExit("v1.0.18 launcher network selector missing: " + repr(marker))
+                guide = re.sub(rb"\s+", b" ", archive.read("assets/guide/player-guide.txt"))
+                for marker in [b"Halo CE Quest VR + Android 1.0.18", b"version code 48",
+                               b"network-version population selector", b"Hosting remains on network 24",
+                               b"Build 157", b"First-person vehicle view", b"original Xbox Halo CE XISO"]:
+                    if marker not in guide:
+                        raise SystemExit("v1.0.18 offline guide is stale or missing: " + repr(marker))
+                if vr and b"HaloCE Quest 1.0.18 release code48" not in guest:
+                    raise SystemExit("v1.0.18 VR release identity is missing")
             if args.stable and args.label == "1.0.16":
                 if b"OpenCE build 148 (network 23)" not in dex:
                     raise SystemExit("v1.0.16 updater does not identify OpenCE Build 148 / network 23")

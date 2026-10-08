@@ -1,6 +1,24 @@
 # Current development state
 
-## Unpublished test37 candidate (2026-10-08)
+## Current public release: v1.0.18 (2026-10-08)
+
+The owner authorized publication of **Halo CE Quest VR + Android 1.0.18** as
+the new Latest release. It is built from the Test37 network-browser work on
+OpenCE Build157/network24, Android code48. Both APKs, updater metadata,
+release guide and provenance are published at
+[GitHub v1.0.18](https://github.com/moistman42069/HaloCE-Quest-VR/releases/tag/v1.0.18).
+Prior releases and the GitHub About description remain unchanged. Exact APK
+hashes and final package checks are in
+[RELEASE-PROVENANCE-1.0.18.md](RELEASE-PROVENANCE-1.0.18.md).
+
+The launcher adds a population-sorted client network target: exact 11–24 or
+All compatible (11–24). Hosting stays on 24. Original Xbox-map PvP can use
+11–22; campaign/co-op and Custom Edition require host 23/24. This is not a
+claim of exhaustive hardware cross-play or every ISO/revision combination.
+Read [RELEASE-1.0.18.md](RELEASE-1.0.18.md) for complete user instructions,
+controls and boundaries.
+
+## Historical Test37 candidate record (2026-10-08)
 
 Final local branch: `test37-network-browser`. Both APKs compiled; all62 regression suites have passing results. See [TEST37-DELIVERY.md](TEST37-DELIVERY.md) for exact APK hashes, packaging gates and test limitations. Device acceptance is pending.
 
@@ -20,13 +38,14 @@ versions remain visible but unavailable. MQTT brokers are discovery mirrors,
 not additional protocol implementations. One public HTTPS catalog is verified;
 up to four compatible custom catalogs can be configured.
 
-Public v1.0.16/code45/network23 and the Test36 artifacts remain unchanged.
-This candidate has not been device-accepted. Source checks and compilation do
+Public v1.0.16/code45/network23 and the Test36 artifacts remained unchanged
+while this candidate was in private testing. Source checks and compilation do
 not establish every historical server, map revision or co-op combination.
 Read [TEST37-PROGRESS.md](TEST37-PROGRESS.md),
 [TEST37-UPSTREAM-INTEGRATION.md](TEST37-UPSTREAM-INTEGRATION.md) and
-[TEST37-PLAYER-NOTES.md](TEST37-PLAYER-NOTES.md). No publication, push,
-installation or game launch is authorized.
+[TEST37-PLAYER-NOTES.md](TEST37-PLAYER-NOTES.md) for its contemporaneous
+evidence and delivery state. The owner later authorized publication; the
+release pointer above supersedes this candidate status.
 
 ## Superseded test36 candidate work (2026-10-08)
 
@@ -46,7 +65,7 @@ against live v1.0.16 metadata and not changed. Read
 [TEST36-UPSTREAM-INTEGRATION.md](TEST36-UPSTREAM-INTEGRATION.md), and
 [TEST36-DELIVERY.md](TEST36-DELIVERY.md).
 
-## Current published release: v1.0.16 (2026-10-07)
+## Historical public release: v1.0.16 (2026-10-07)
 
 Release **Halo CE Quest VR + Android 1.0.16** is published as Latest from
 OpenCE Build 148 / network 23, version code 45. The release includes Android
@@ -84,7 +103,7 @@ Preserve the owner-confirmed baselines: Test31b Quest VR settings and Test31c
 flat Android touch/gameplay. The prior v1.0.12 release remains archived at
 network 21; it is not compatible with v1.0.16/network 23.
 
-## Latest owner-accepted private result: Test31c Android; Test31b VR
+## Historical owner-accepted private baseline: Test31c Android; Test31b VR
 
 On 2026-10-07 the owner reports the mobile port works great and requests leaving
 its gameplay/touch implementation as-is. This applies to Test31c/code41,
@@ -125,7 +144,7 @@ No device-session result for the exact v1.0.12 APK pair was supplied before publ
 
 The prior public release is v1.0.11. Historical progress and older release notes below are retained as records, not current compatibility guidance.
 
-## Current release: test30 (1.0.12 / code 38)
+## Historical release: test30 (1.0.12 / code 38)
 
 **Published as Latest:** test30, version 1.0.12 / code 38, branch `test30-profiles-coopname`, on v1.0.11. The owner confirmed the prior build was in good shape and reported that X did nothing in the VR main menu when deleting a profile. Menus now map Quest A/X/Y to the on-screen labels, while B goes back once; gameplay bindings are unchanged. Campaign hosting has an optional remembered server name. See [TEST30-PROGRESS.md](TEST30-PROGRESS.md), [TEST30-DELIVERY.md](TEST30-DELIVERY.md), and [RELEASE-PROVENANCE-1.0.12.md](RELEASE-PROVENANCE-1.0.12.md). No device session on this exact pair is recorded yet.
 

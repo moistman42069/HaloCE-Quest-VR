@@ -1,6 +1,22 @@
 # Agent and contributor continuation
 
-## Active private candidate: Test37 (2026-10-08)
+## Current public release: v1.0.18 (2026-10-08)
+
+The owner authorized publication of Halo CE Quest VR + Android 1.0.18 as
+Latest. It is based on Test37, OpenCE Build157/network24, Android code48.
+Read `docs/RELEASE-1.0.18.md` for the complete user-facing feature, controls
+and compatibility record and `docs/RELEASE-PROVENANCE-1.0.18.md` for exact
+asset hashes and checks. The launcher offers client targets 11–24 or All
+compatible; hosting stays network24. Older client targets are limited to
+original Xbox-map PvP; co-op/Custom Edition require host23/24. Preserve older
+releases and the existing GitHub About description.
+
+The original Test37 private-candidate record below is historical; it records
+the state before the owner authorized publication. Device/revision limitations
+remain visible in the release notes. Continue from the published release and
+preserve its package identity and signing certificate.
+
+## Historical private candidate: Test37 (2026-10-08)
 
 Continue on local branch `test37-network-browser`. Read `docs/TEST37-DELIVERY.md` for final APK hashes and checks. Await owner device results; no public release is authorized.
 
@@ -20,17 +36,18 @@ versions remain visible but unavailable. MQTT brokers are discovery mirrors,
 not additional protocol implementations. One public HTTPS catalog is verified;
 up to four compatible custom catalogs can be configured.
 
-Public v1.0.16/code45/network23 and the Test36 artifacts remain unchanged.
-This candidate has not been device-accepted. Source checks and compilation do
-not establish every historical server, map revision or co-op combination.
+Public v1.0.16/code45/network23 and the Test36 artifacts remained unchanged
+while this candidate was private. Source checks and compilation do not
+establish every historical server, map revision or co-op combination.
 Read [TEST37-PROGRESS.md](docs/TEST37-PROGRESS.md),
 [TEST37-UPSTREAM-INTEGRATION.md](docs/TEST37-UPSTREAM-INTEGRATION.md) and
-[TEST37-PLAYER-NOTES.md](docs/TEST37-PLAYER-NOTES.md). No publication, push,
-installation or game launch is authorized.
+[TEST37-PLAYER-NOTES.md](docs/TEST37-PLAYER-NOTES.md) record candidate-era
+validation. This historical hold was superseded by the owner's later release
+authorization.
 
 Read `docs/ACTIVE-WORK-CHECKPOINT.md` and `docs/CURRENT-STATE.md` first. Preserve the accepted VR/mobile baselines and leave uncertain runtime reports unchanged until exact evidence is available.
 
-## Current: v1.0.16 public release (2026-10-07)
+## Historical public release: v1.0.16 (2026-10-07)
 
 Read `docs/ACTIVE-WORK-CHECKPOINT.md`, `docs/CURRENT-STATE.md`,
 `docs/RELEASE-1.0.16.md`, `docs/RELEASE-PROVENANCE-1.0.16.md`,
@@ -49,7 +66,7 @@ Test31/Test32 "Active" headings are retained historical notes and are
 superseded; do not resume their branches or targets. The separate interaction backlog remains in
 `docs/VR-INTERACTION-REQUIREMENTS.md`.
 
-## Active touch/glass correction and accepted VR preference (2026-10-07)
+## Historical touch/glass correction and accepted VR preference (2026-10-07)
 
 The owner reports **Test31b Quest VR works great** and explicitly prefers its
 new VR settings. Preserve that implementation and the exact Quest code40 APK.
@@ -63,7 +80,7 @@ Quest code40 APK stays preserved as the comparison baseline; retain its new
 VR settings and change only the broken glass path. Do not publish. The later
 interaction scope remains queued. This supersedes the Android-only plan.
 
-## Active repair: Test31 rejected (2026-10-07)
+## Historical repair: Test31 rejected (2026-10-07)
 
 Read `docs/TEST31B-PROGRESS.md` first. The owner reports Quest startup crashes
 and unusable Android touch input in Test31. Branch `test31b-startup-touch`
