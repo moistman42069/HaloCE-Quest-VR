@@ -342,10 +342,11 @@ def main():
                         raise SystemExit("Test36 offline guide marker missing: " + repr(marker))
                 if b"Orbitron Regular" not in archive.read("assets/guide/credits.txt"):
                     raise SystemExit("Test36 bundled font credit missing from offline guide")
-                for marker in [b"scope camera: zoom %d, shape %d", b"scope layer pose: shape %d",
-                               b"mounted aim selection: role %s", b"turret/gunner aim %s"]:
-                    if marker not in guest:
-                        raise SystemExit("Test36 diagnostic marker missing: " + repr(marker))
+                if vr:
+                    for marker in [b"scope camera: zoom %d, shape %d", b"scope layer pose: shape %d",
+                                   b"mounted aim selection: role %s", b"turret/gunner aim %s"]:
+                        if marker not in guest:
+                            raise SystemExit("Test36 VR diagnostic marker missing: " + repr(marker))
                 for marker in [b"Recommended game image: the original Xbox Halo: Combat Evolved XISO",
                                b"Rev 1 and Rev 2 images can be imported, but are not recommended",
                                b"Font: Halo (tap for normal)",
