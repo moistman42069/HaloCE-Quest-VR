@@ -11,8 +11,9 @@ changing scope/aim or turret behavior absent a device log. Saved-game resume
 and Rev2 reports remain unmodified pending exact logs. Both launcher screens
 now show the refined ISO recommendation, Discord support contact and a
 persistent Halo-inspired display-font toggle. The existing GitHub updater was
-checked against the current live release and left unchanged. Package both APKs
-for owner testing only; do not publish, push or alter public release metadata.
+checked against the current live release and left unchanged. Both APKs are
+packaged for owner testing; read TEST36-DELIVERY.md under docs for hashes and
+checks, then await device feedback. Do not publish, push or alter public release metadata.
 
 The public latest release remains v1.0.16/code45/network23; Build157/network24
 will not join network23 sessions. The owner has asked that uncertain runtime

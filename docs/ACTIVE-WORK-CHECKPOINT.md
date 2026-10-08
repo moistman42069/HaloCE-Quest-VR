@@ -26,9 +26,11 @@ Both setup and Play screens also provide a persistent Halo-inspired font toggle
 and the user's Discord support DM; long instructions remain in the standard
 font. The updater was checked against current public release metadata and left
 unchanged.
+The pair is packaged for owner testing; see TEST36-DELIVERY.md for APK hashes,
+final source identity and validation limits. Await owner device results.
 See [TEST36-PROGRESS.md](TEST36-PROGRESS.md),
 [TEST36-UPSTREAM-INTEGRATION.md](TEST36-UPSTREAM-INTEGRATION.md), and
-[TEST36-DELIVERY.md](TEST36-DELIVERY.md). Package both APKs for private testing;
+[TEST36-DELIVERY.md](TEST36-DELIVERY.md). Both APKs are private test candidates;
 do not publish or describe this candidate as device-accepted.
 
 Build 157 requires network24. It is not multiplayer-compatible with the public
