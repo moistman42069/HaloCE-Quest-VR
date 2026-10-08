@@ -161,7 +161,7 @@ print('PASS: the launcher\'s Host campaign has an optional server name, checked,
 
 # --- 3. version, identity, package markers
 assert int(re.search(r'versionCode Math\.max\((\d+), buildNumber\)', gradle).group(1)) >= 38
-assert int(re.search(r': "1\.0\.(\d+)"', gradle).group(1)) >= 12
+assert int(re.search(r': "1\.0\.(\d+)(?:-test\d+[a-z]?)?"', gradle).group(1)) >= 12
 assert 'HaloCE Quest test30 candidate 1.0.12 (' in frame
 assert 'candidate_at_least(args.label, 30)' in package
 print('PASS: test30 wiring (version 1.0.12 / 38, identity, package markers)')

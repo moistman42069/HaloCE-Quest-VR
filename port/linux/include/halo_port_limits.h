@@ -59,19 +59,25 @@ protocol version and never see the Xbox game's, or it theirs. */
 
 #define HALO_PORT_NETWORK_GAME_MESSAGE_VERSION 2
 
-/* The native builds' network code has a version of its own (an unsigned
-16-bit number): machines of different versions cannot play together, and a
-client does not join a host of another version, but tells the player which
-is newer (network_client_manager.c). A host advertises it, with its netcode,
-in its game's advertisement's reserved bytes (network_server_message_handler.c),
-which hosts built before there was a version send as zeros: version 0.
-Raise it with any change to what the machines send each other. */
-/* This app follows OpenCE's protocol version. Hosts and clients of another
-version cannot play together. Build 157 uses network 24; the minimum and
-maximum are consumed by the Android launcher and updater metadata. */
+/* The native builds' network code uses an unsigned 16-bit host version in
+game advertisements. This build advertises 24; supported PvP clients may
+accept a compatible host version from the declared range. Hosts built before
+the field was added send zero, which clients reject. Raise the host version
+when a wire change requires it. */
+/* This build hosts and advertises as OpenCE network version 24. The supported
+PvP host range (11..24) follows ChupaThingyCE's OpenCE-derived compatibility
+table; client selection can narrow discovery/admission but never changes the
+local wire version. Campaign and Custom Edition map joins require version 23
+or newer. The range is also consumed by Android launcher/update metadata. */
 #define HALO_PORT_NETWORK_VERSION 24
-#define HALO_PORT_NETWORK_VERSION_MINIMUM 24
+#define HALO_PORT_NETWORK_VERSION_MINIMUM 11
 #define HALO_PORT_NETWORK_VERSION_MAXIMUM 24
+#define HALO_PORT_CAMPAIGN_NETWORK_VERSION_MINIMUM 23
+#define HALO_PORT_CUSTOM_EDITION_NETWORK_VERSION_MINIMUM 23
+/* The binary always hosts/advertises as 24. This immutable startup selection
+ * controls which compatible remote PvP protocol versions are listed/joined;
+ * zero means all compatible versions in the declared 11..24 range. */
+int halo_port_active_network_version(void);
 /* ... the advertisement's reserved bytes: the version (a little-endian word),
 then flags */
 #define HALO_PORT_ADVERTISED_VERSION_OFFSET 0

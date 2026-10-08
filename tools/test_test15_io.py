@@ -69,7 +69,7 @@ struct message_server_game_settings_update {word total_size,offset,length,pad;by
 static int applied;
 static struct network_game result;
 static boolean network_game_client_game_settings_updated(struct network_game_client*c,struct network_game*g){(void)c;result=*g;applied++;return TRUE;}
-'''+fn(engine,'boolean game_variant_options_valid(')+fn(engine,'void game_variant_options_default(')+assembly+r'''
+''' + fn(engine,'boolean game_variant_options_valid(')+fn(engine,'void game_variant_options_default(')+assembly+r'''
 struct network_game_server {int unused;};struct network_game_server_client_machine {int unused;};
 static int campaign;
 static int network_campaign_game(const void *g){(void)g;return campaign;}
@@ -103,6 +103,8 @@ int main(void){
  assert(sizeof(g.variant_options)==28);g.variant_options.no_map_weapons=1;assert(game_variant_options_valid(&g.variant_options));
  g.variant_options.no_map_weapons=255;assert(!game_variant_options_valid(&g.variant_options));g.variant_options.no_map_weapons=0;
  g.variant_options.vehicle_counts[1][5]=255;assert(!game_variant_options_valid(&g.variant_options));
+ g.variant_options.vehicle_counts[1][5]=0;g.variant_options.vehicle_set[0]=VARIANT_VEHICLE_SET_PC;
+ assert(game_variant_options_valid(&g.variant_options)); /* local host remains network 24 even when client target is narrowed */
  puts("PASS: settings fragment assembly (OpenCE's record; the v9-v10 record refused), local-data tail, defaults, bounded match options");
 }
 ''')

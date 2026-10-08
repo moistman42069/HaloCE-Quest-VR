@@ -15,6 +15,10 @@ final class InGameNetworkGuide {
         + "use the stick/D-pad on controllers or MOVE on Android to see more.\n"
         + "3. Select a server row or JOIN GAME. Locked games ask for the host's password. "
         + "If an in-progress lobby preview opens, select JOIN GAME there too.\n\n"
+        + "If the in-game list is empty, return to the launcher and use Browse multiplayer servers or "
+        + "Browse campaign co-op servers. The community directory shows reported population by network version; "
+        + "select a target from 11 through 24 or All compatible networks for the next launch. This changes native discovery and join admission. "
+        + "Targets 11–22 support original Xbox-map PvP; co-op and Custom Edition require 23 or 24. Hosting stays on network 24.\n\n"
         + "FILTERS\n"
         + "Use FILTERS > GAME TYPE > CO-OP for campaign games, or ANY for all game types. "
         + "You can include empty/full servers, filter team games or passwords, and select ALL MAPS or KNOWN MAPS. "
@@ -96,8 +100,11 @@ final class InGameNetworkGuide {
 
     static final String COMPATIBILITY =
         "NETWORK AND GAME FILES\n"
-        + "This build uses OpenCE network " + BuildConfig.HALO_NETWORK_VERSION + ". "
+        + "This build hosts on OpenCE network 24. Launcher client targets cover 11–24, with 24 selected by default. "
         + "Use matching native-port networking versions on Quest, Android and compatible desktop ports. "
+        + "The launcher directory can display listings from other network versions and their reported populations, "
+        + "and lets you target one supported host version or all compatible versions on the next launch. "
+        + "Legacy targets 11–22 support original Xbox-map PvP only; campaign and Custom Edition require 23 or 24. "
         + "Retail Halo PC/Custom Edition executables, Xbox and MCC do not share this protocol. "
         + "A directory can show incompatible, full or unreachable games; visibility alone does not establish compatibility.\n\n"
         + "Some server incompatibilities may be caused by different ISO/revision versions or modified game files. "

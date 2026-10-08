@@ -12,7 +12,8 @@ import tempfile
 ROOT=Path(__file__).resolve().parents[1]
 OUT=ROOT/'build/test32-geometry'
 OUT.mkdir(parents=True,exist_ok=True)
-production=(ROOT/'port/linux/src/port_config.c').read_text().replace('#include "platform.h"','static void platform_log(const char *s,...) {(void)s;}').replace('#include <SDL3/SDL.h>','')
+production=(ROOT/'port/linux/src/port_config.c').read_text().replace('#include "platform.h"','static void platform_log(const char *s,...) {(void)s;}').replace(
+ '#include "halo_port_limits.h"','#define HALO_PORT_NETWORK_VERSION 24\n#define HALO_PORT_NETWORK_VERSION_MINIMUM 11\n#define HALO_PORT_NETWORK_VERSION_MAXIMUM 24').replace('#include <SDL3/SDL.h>','')
 boundaries=r'''
 #include <stdio.h>
 #include <stdlib.h>

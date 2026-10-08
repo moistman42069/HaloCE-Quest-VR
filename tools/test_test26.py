@@ -575,7 +575,7 @@ print('PASS: OpenCE build 128 adopted where it fits (engine speed-ups, glass, a 
 
 # --- 14. version, identity and package markers
 code = int(re.search(r'versionCode Math\.max\((\d+), buildNumber\)', gradle).group(1))
-assert code >= 34 and int(re.search(r': "1\.0\.(\d+)"', gradle).group(1)) >= 8
+assert code >= 34 and int(re.search(r': "1\.0\.(\d+)(?:-test\d+[a-z]?)?"', gradle).group(1)) >= 8
 identity_match = re.search(
     r'platform_log\("vr: (HaloCE Quest (?:test\d+[a-z]? candidate|\d+\.\d+\.\d+ release)[^"]*)"\);', frame)
 assert identity_match, 'VR identity uses either a candidate or stable-release label'

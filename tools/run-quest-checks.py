@@ -39,6 +39,7 @@ SUITES = [
     'test_test34_opence',
     'test_test35_opence',
     'test_test36_opence157',
+    'test_test37_network_profiles', 'test_test37_launcher', 'test_test37_wire',
 ]
 
 def main():

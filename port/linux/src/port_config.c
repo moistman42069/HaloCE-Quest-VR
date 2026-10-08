@@ -12,6 +12,7 @@ it exists, so that the player's edits and comments stay.
 
 #include "platform.h"
 #include "port_config.h"
+#include "halo_port_limits.h"
 #include "tomlc17.h"
 
 #include <SDL3/SDL.h>
@@ -346,6 +347,13 @@ static const struct config_setting config_settings[] =
 		"clipboard) that lets whoever has it join over the internet; opening a\n"
 		"link (or copying one before switching to the game) joins. Only people\n"
 		"with the invite can join. Off keeps system link to the local network." },
+	{ "network.protocol_version", _config_integer, "24", "HALO_NETWORK_PROTOCOL_VERSION", _environment_value,
+		_platform_all,
+		"Client protocol target: 0 lists/joins all compatible PvP versions 11-24;\n"
+		"11-24 selects one exact server version. This build always hosts as 24.\n"
+		"Campaign and Custom Edition map joins require version 23 or newer. This\n"
+		"is read once when the game starts; restart after changing it. Invalid\n"
+		"values fall back to the default, 24." },
 	{ "network.join_from_clipboard", _config_boolean, "true", "HALO_NET_JOIN_FROM_CLIPBOARD", _environment_value,
 		_platform_all,
 		"Join the game of an invite link found on the clipboard when the game\n"
@@ -1065,6 +1073,49 @@ struct config_value
 static struct config_value config_values[NUMBER_OF_CONFIG_SETTINGS];
 static int config_loaded = 0;
 static pthread_mutex_t config_lock = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t active_network_version_lock = PTHREAD_MUTEX_INITIALIZER;
+static int active_network_version = HALO_PORT_NETWORK_VERSION;
+static int active_network_version_initialized = 0;
+
+/* The active selection is a remote client target, not the local host wire
+ * version. Zero means all versions in the upstream declared PvP range. */
+static int network_protocol_version_resolve(long configured)
+{
+	if (configured == 0 || (configured >= HALO_PORT_NETWORK_VERSION_MINIMUM &&
+		configured <= HALO_PORT_NETWORK_VERSION_MAXIMUM))
+		return (int)configured;
+	platform_log("network.protocol_version=%ld is unsupported; using default %d (supported: 0 or %d..%d)",
+		configured, HALO_PORT_NETWORK_VERSION, HALO_PORT_NETWORK_VERSION_MINIMUM,
+		HALO_PORT_NETWORK_VERSION_MAXIMUM);
+	return HALO_PORT_NETWORK_VERSION;
+}
+
+static void active_network_version_initialize(void)
+{
+	long configured = config_integer("network.protocol_version");
+	active_network_version = network_protocol_version_resolve(configured);
+	if (active_network_version == 0)
+		platform_log("network client target: all compatible (%d..%d); local host/listing protocol remains %d; fixed until restart",
+			HALO_PORT_NETWORK_VERSION_MINIMUM, HALO_PORT_NETWORK_VERSION_MAXIMUM,
+			HALO_PORT_NETWORK_VERSION);
+	else
+		platform_log("network client target: exact %d; local host/listing protocol remains %d; fixed until restart",
+			active_network_version, HALO_PORT_NETWORK_VERSION);
+}
+
+int halo_port_active_network_version(void)
+{
+	int result;
+	pthread_mutex_lock(&active_network_version_lock);
+	if (!active_network_version_initialized)
+	{
+		active_network_version_initialize();
+		active_network_version_initialized = 1;
+	}
+	result = active_network_version;
+	pthread_mutex_unlock(&active_network_version_lock);
+	return result;
+}
 
 /* ---------- the file */
 

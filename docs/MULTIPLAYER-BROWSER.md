@@ -1,7 +1,7 @@
 # Multiplayer and campaign co-op: current private builds
 
-The active private test36 candidate integrates OpenCE Build 157 / network 24.
-The public v1.0.16 APK and older network23 servers cannot join it. Build157
+The active private test37 candidate integrates OpenCE Build 157 / network 24.
+Hosting remains network24; backward client targets are described below. Build157
 adds the PC vehicle set, Custom Edition item spawn facing, analog trigger
 pressure for analog-rate-of-fire weapons, and the ability for a lone host to
 start. Details and validation limits: [TEST36-UPSTREAM-INTEGRATION.md](TEST36-UPSTREAM-INTEGRATION.md).
@@ -57,14 +57,13 @@ unchanged by Test32's launcher cleanup.
 
 ## Launcher tools and older saved entries
 
-The launcher no longer exposes a second server browser or host-setup flow.
-**Multiplayer & co-op guide** gives the current in-game steps. Its **Saved
-invites** topic reads both prior launcher stores, displays entries and can copy
-an invite for Direct Link. It neither deletes/migrates preferences nor uploads
-invitations. Custom directory URLs remain stored but are not automatically
-imported into the in-game discovery service. Expired entries need fresh invites.
-Supported external invitation links still start the game through the existing
-app path.
+The launcher provides **Browse multiplayer servers** and **Browse campaign co-op servers** as a directory fallback. The **Network** selector shows catalog-reported server/player totals per version, sorted by reported players, then server count, then version. Server rows retain population ordering. Select an exact client target from 11 through 24 or **All compatible networks** (11-24); the default is 24. The choice changes native discovery/admission on the next launch, not only the directory filter. It is shared across PvP/co-op and imported data sets. Close the game before changing it; a running game keeps its startup target.
+
+Local hosting and signed advertisements remain network24 in every target. Older targets 11-22 permit original Xbox-map PvP only; campaign co-op and Custom Edition require host23 or host24. Versions below 11 and unknown future protocols remain unavailable even if returned by a catalog. An old client is not made able to join this app's network24 host by selecting its version in the launcher. The source model and device-validation limits are documented in [TEST37-UPSTREAM-INTEGRATION.md](TEST37-UPSTREAM-INTEGRATION.md).
+
+The HTTPS list may differ from signed MQTT/LAN results. Four existing MQTT brokers are discovery mirrors, not four protocols. Up to four compatible HTTPS catalogs can be merged with duplicate invites removed. The default ChupathingyCE/Delta `games.txt` feed is the only public cross-version catalog verified in this pass. Custom URLs must implement the supported text or schema-1 JSON format; arbitrary Halo directories are not interchangeable. Counts may be stale and exclude private/LAN games; a failed refresh is not evidence of zero population.
+
+PvP directory joins retain the installed map/game-set chooser. Campaign joins do not automatically choose a compatible revision. **Saved invites** reads prior launcher stores and can copy an invite for Direct Link; it does not delete/migrate preferences or upload invitations. Expired entries require fresh invites. Supported external invitation links retain their existing path.
 
 Ordinary Play archives stale one-shot `coop_host.txt`, `pvp_host.txt` and
 `join_link.txt` requests under the active set's `launcher-history` rather than
@@ -79,7 +78,7 @@ are in [the current launcher guide](TEST32-LAUNCHER-GUIDE.md).
 
 ## Compatibility and reports
 
-For Test34 and older released builds, match **network 23**, map resources and the server's content. Test36 requires network24. Different ISO/
+For the public v1.0.16 build, match **network 23** and the server's map resources. Test37 defaults to client target24 and offers the backward targets described above. Different ISO/
 revision files or modified maps can cause failures, but they are only one cause.
 The in-game browser does not automatically switch game sets or infer verified
 Original/Rev1/Rev2 requirements. Choose the correct imported set under **Game

@@ -392,6 +392,9 @@ symbols in this file:
 #include "networking/network_server_manager.h"
 #include "text/unicode.h"
 
+/* the platform layer's (sdl_platform.c) */
+void platform_show_message(char const *title, char const *message);
+
 /* ---------- constants */
 
 enum
@@ -799,13 +802,52 @@ static unsigned long network_game_client_link_down_time;
 static unsigned long network_game_client_link_checked_time;
 static boolean network_game_client_link_down;
 
-/* each advertised game's host's network version and netcode, by its place
-in the client's available_games (HALO_PORT_NETWORK_VERSION) */
+/* each advertised game's host version and netcode, by its place in the
+client's available_games */
 static struct
 {
 	word version;
 	byte flags;
 } network_game_client_advertised_versions[MAXIMUM_NETWORK_ADVERTISED_GAMES];
+
+/* The version of the host this client actually started joining. Keep this
+separate from the browse list: entries can move while the lobby is open. */
+static unsigned int network_game_client_joined_host_version;
+
+static unsigned int network_game_client_host_version_for_join(
+	struct network_game_client const *client,
+	struct network_advertised_game const *game)
+{
+	short index;
+
+	if (!client || !game)
+		return 0;
+	for (index = 0; index < MAXIMUM_NETWORK_ADVERTISED_GAMES; index++)
+	{
+		if (game == &client->available_games[index])
+			return network_game_client_advertised_versions[index].version;
+	}
+	/* The only non-list join is this build's local host. Unknown remote
+	records remain version zero and are treated conservatively later. */
+	return global_network_game_server_get() ? HALO_PORT_NETWORK_VERSION : 0;
+}
+
+static void network_game_client_clear_joined_host_version(void)
+{
+	network_game_client_joined_host_version = 0;
+}
+
+static void network_game_client_record_joined_host_version(
+	struct network_game_client const *client,
+	struct network_advertised_game const *game)
+{
+	network_game_client_joined_host_version = network_game_client_host_version_for_join(client, game);
+}
+
+static boolean network_advertised_map_is_custom_edition(struct network_game_map const *map);
+static boolean network_game_client_settings_version_compatible(
+	unsigned int host_version,
+	struct network_game const *game);
 
 struct network_game_client network_game_client_dont_use_directly;
 boolean allow_out_of_sync = FALSE;
@@ -901,6 +943,7 @@ void network_game_client_dispose(
 {
 	if (client)
 	{
+		network_game_client_clear_joined_host_version();
 		if (client->connection)
 			network_connection_delete(client->connection);
 
@@ -1261,6 +1304,29 @@ boolean network_game_client_game_settings_updated(
 		"c:\\halo\\SOURCE\\networking\\network_client_manager.c",
 		0x375,
 		client && message_packet);
+	/* A host can switch its pre-game lobby after admission. Apply the same
+	version floors to every settings record before map precaching or copying. */
+	if (!network_game_client_settings_version_compatible(network_game_client_joined_host_version,
+		message_packet))
+	{
+		boolean custom_edition_map = message_packet->map.version != 0 ||
+			network_advertised_map_is_custom_edition(&message_packet->map);
+		char message[256];
+
+		csprintf(message,
+			"The host switched this lobby to %s, but its network version is %u.\n\n"
+			"Campaign co-op and Custom Edition maps require network version 23 or newer.",
+			custom_edition_map ? "a Custom Edition map" : "campaign co-op",
+			network_game_client_joined_host_version);
+		network_event("leaving pregame lobby: host version %u switched to campaign/Custom Edition settings",
+			network_game_client_joined_host_version);
+		platform_show_message("Cannot continue in this game", message);
+		display_error_when_main_menu_loaded(_error_network_failed_to_join_game);
+		/* Use the existing server-rejection cleanup path. */
+		network_game_abort();
+		network_game_client_reset(client, TRUE);
+		return TRUE;
+	}
 
 	if (message_packet->machine_count >= 0 &&
 		message_packet->machine_count <= MAXIMUM_NETWORK_MACHINE_COUNT &&
@@ -2031,6 +2097,9 @@ boolean network_game_client_initiate_join_game(
 		0x157,
 		client && (client->state == _network_game_client_state_searching) && game && join_parameters && client->connection && !network_connection_connected(client->connection) && (game->platform == network_game_get_local_platform()));
 
+	/* A failed or replacement join must not inherit the previous host's
+	protocol floor. Record this only after the connection starts. */
+	network_game_client_clear_joined_host_version();
 	client->join_in_progress = TRUE;
 	client->connect_process = 0;
 	client->connection_attempt_time = system_milliseconds();
@@ -2044,6 +2113,7 @@ boolean network_game_client_initiate_join_game(
 
 	if (success == TRUE)
 	{
+		network_game_client_record_joined_host_version(client, game);
 		/* port: the join's wait counted from the connection made, not from
 		before a connect that took seconds (idle_joining) */
 		network_connection_keep_alive(client->connection);
@@ -2194,6 +2264,7 @@ void network_game_client_reset(
 
 	network_game_invalidate(&client->game);
 
+	network_game_client_clear_joined_host_version();
 	client->machine_index = NONE;
 	client->state = _network_game_client_state_searching;
 
@@ -3052,26 +3123,55 @@ static void network_game_client_set_error(
 	return;
 }
 
+static boolean network_advertised_map_is_custom_edition(struct network_game_map const *map)
+{
+	static char const custom_edition_prefix[] = "custom_maps\\";
+	return map && map->name[0] &&
+		_strnicmp(map->name, custom_edition_prefix, sizeof(custom_edition_prefix) - 1) == 0;
+}
+
+static boolean network_game_client_settings_version_compatible(
+	unsigned int host_version,
+	struct network_game const *game)
+{
+	boolean campaign;
+	boolean custom_edition_map;
+
+	if (!game)
+		return FALSE;
+	campaign = game->variant.game_engine_index == game_engine_none;
+	/* Older CE advertisements have map.version zero; the custom_maps path
+	continues to identify them in pre-game settings. */
+	custom_edition_map = game->map.version != 0 || network_advertised_map_is_custom_edition(&game->map);
+	return (!campaign || host_version >= HALO_PORT_CAMPAIGN_NETWORK_VERSION_MINIMUM) &&
+		(!custom_edition_map || host_version >= HALO_PORT_CUSTOM_EDITION_NETWORK_VERSION_MINIMUM);
+}
+
+static boolean network_protocol_target_allows_version(unsigned int target, unsigned int remote)
+{
+	return remote != 0 && remote >= HALO_PORT_NETWORK_VERSION_MINIMUM &&
+		remote <= HALO_PORT_NETWORK_VERSION_MAXIMUM && (target == 0 || target == remote);
+}
+
 /* the native ports' automated network tests (port/linux/game/network_test.c):
 joins the first open game the client's search has found, as picking it in
 the system link list does (network_game_join_game_from_server_list) */
-/* the platform layer's (sdl_platform.c) */
-void platform_show_message(char const *title, char const *message);
-
 /* whether this client can join the advertised game: its host's network
-version is this machine's (HALO_PORT_NETWORK_VERSION), and it plays the
-distributed netcode (a host of this version built before the lockstep
-netcode was removed may play that). If not the player is told why (when
-tell), and nothing is joined. */
+version matches the selected client target (or is anywhere in 11..24 when
+target is zero), and it plays distributed netcode. Campaign and Custom
+Edition map joins require version 23 or newer. This build itself always
+hosts as version 24. Incompatible hosts are rejected before joining. */
 boolean network_game_client_advertised_game_compatible(
 	struct network_game_client *client,
 	struct network_advertised_game const *game,
 	boolean tell)
 {
 	long game_index = client ? game - client->available_games : NONE;
-	unsigned int ours = HALO_PORT_NETWORK_VERSION;
+	unsigned int target = (unsigned int)halo_port_active_network_version();
 	unsigned int theirs;
 	boolean distributed;
+	boolean campaign;
+	boolean custom_edition_map;
 	char message[400];
 
 	if (game_index < 0 || game_index >= MAXIMUM_NETWORK_ADVERTISED_GAMES)
@@ -3079,11 +3179,10 @@ boolean network_game_client_advertised_game_compatible(
 	theirs = network_game_client_advertised_versions[game_index].version;
 	distributed = (network_game_client_advertised_versions[game_index].flags &
 		HALO_PORT_ADVERTISED_DISTRIBUTED_FLAG) != 0;
-	if (theirs == ours && distributed)
-	{
-		network_event("joining a host of network version %u", theirs);
-		return TRUE;
-	}
+	campaign = game->engine_type == game_engine_none;
+	/* Older hosts before the checksum field report map.version=0 even for CE
+	 * maps. The advertised map path still carries the bounded custom_maps\\ prefix. */
+	custom_edition_map = game->map.version != 0 || network_advertised_map_is_custom_edition(&game->map);
 	/* port: a co-op host of this app before 1.0.9 (its own protocol, CE01
 	1.0.0 to 1.0.7, CE02 1.0.8: retired, test27) */
 	if ((theirs & 0xFF00) == 0xCE00)
@@ -3094,35 +3193,51 @@ boolean network_game_client_advertised_game_compatible(
 			"This version plays co-op as OpenCE does. Ask the host to update this app.",
 			theirs);
 	}
-	else if (theirs == ours)
+	else if (!network_protocol_target_allows_version(target, theirs))
 	{
-		csprintf(message,
-			"The host is using the lockstep network code, which this version no longer has.\n\n"
-			"Ask the host to update the game.");
+		if (theirs == 0)
+			csprintf(message, "This host does not advertise a supported network version.\n\n"
+				"Ask the host to update to a compatible OpenCE build.");
+		else if (theirs < HALO_PORT_NETWORK_VERSION_MINIMUM ||
+			theirs > HALO_PORT_NETWORK_VERSION_MAXIMUM)
+			csprintf(message, "This host uses network version %u, outside this build's supported PvP range (%d-%d).\n\n"
+				"Choose a host in the supported range or update the game.", theirs,
+				HALO_PORT_NETWORK_VERSION_MINIMUM, HALO_PORT_NETWORK_VERSION_MAXIMUM);
+		else
+			csprintf(message, "The selected network target is %u, but this host uses version %u.\n\n"
+				"Choose All Compatible or select version %u in the launcher's network settings.",
+				target, theirs, theirs);
 	}
-	else if (theirs > ours)
+	else if (!distributed)
 	{
-		/* port: this app plays OpenCE's network version (test27); a newer
-		host is a newer OpenCE build, which an update of this app follows */
 		csprintf(message,
-			"The host is using a newer version of the network code than this app.\n\n"
-			"This app is on version %u. The host is on version %u "
-			"(a newer OpenCE build).\n\n"
-			"Update this app when a version for it is out, or choose a host on version %u.",
-			ours, theirs, ours);
+			"This host is using the retired lockstep network code.\n\n"
+			"Ask the host to update to a distributed-netcode build.");
+	}
+	else if (custom_edition_map && theirs < HALO_PORT_CUSTOM_EDITION_NETWORK_VERSION_MINIMUM)
+	{
+		csprintf(message,
+			"This Custom Edition map requires network version %d or newer for its map checksum and layout.\n\n"
+			"The host is on version %u. Choose a compatible host or ask them to update.",
+			HALO_PORT_CUSTOM_EDITION_NETWORK_VERSION_MINIMUM, theirs);
+	}
+	else if (campaign && theirs < HALO_PORT_CAMPAIGN_NETWORK_VERSION_MINIMUM)
+	{
+		csprintf(message,
+			"Campaign co-op requires network version %d or newer.\n\n"
+			"This host is on version %u. Choose a compatible host or ask them to update.",
+			HALO_PORT_CAMPAIGN_NETWORK_VERSION_MINIMUM, theirs);
 	}
 	else
 	{
-		csprintf(message,
-			"The host is using an older version of the network code than you.\n\n"
-			"You are on version %u. The host is on version %u.\n\n"
-			"Ask the host to update the game.",
-			ours, theirs);
+		network_event("joining host of network version %u (target=%u; local host protocol=%d)",
+			theirs, target, HALO_PORT_NETWORK_VERSION);
+		return TRUE;
 	}
 	if (tell)
 	{
-		network_event("not joining a host of network version %u%s (this machine's is %u)", theirs,
-			distributed ? "" : " with the lockstep netcode", ours);
+		network_event("not joining host version %u: target=%u distributed=%d campaign=%d custom_edition_map=%d",
+			theirs, target, distributed, campaign, custom_edition_map);
 		platform_show_message("Halo: cannot join this game", message);
 	}
 	return FALSE;

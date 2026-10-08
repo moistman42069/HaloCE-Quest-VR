@@ -116,7 +116,7 @@ assert old_net is None or net_1_0_4 == old_net, 'network_objects.c as in 1.0.4 b
 
 # --- version
 code = int(re.search(r'versionCode Math\.max\((\d+), buildNumber\)', gradle).group(1))
-assert code >= 31 and re.search(r'"1\.0\.(\d+)"', gradle) and int(re.search(r'"1\.0\.(\d+)"', gradle).group(1)) >= 6
+assert code >= 31 and re.search(r'"1\.0\.(\d+)(?:-test\d+[a-z]?)?"', gradle) and int(re.search(r'"1\.0\.(\d+)(?:-test\d+[a-z]?)?"', gradle).group(1)) >= 6
 assert 'co-op cutscenes animate for the second player' in frame
 
 # --- the launcher: co-op and server-browser steps, the co-op listing on by default
@@ -138,7 +138,7 @@ assert 'LauncherHelp.network(this)' in launcher
 assert '"Multiplayer & co-op guide", "Getting started & multiplayer"' in help_java
 assert 'if(item==0) { network(activity); return; }' in help_java
 assert 'Multiplayer > System Link' in coop and 'How to join co-op & find servers' in coop
-assert 'In-game server browser: press Play' in browser
+assert 'Public in-game listings are under Multiplayer > Join Game > Server Browser' in browser
 
 # --- the real capture, wire and replay
 body = script[script.index('static char const *presentation_names[] = {'):]

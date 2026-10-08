@@ -132,14 +132,27 @@ NETWORK = re.search(r"^#define HALO_PORT_NETWORK_VERSION (\d+)$", (ROOT / "port/
 subprocess.run(["java", "-cp", str(OUT), "com.halo.decomp.BrowserCheck", NETWORK, *sys.argv[1:]], check=True)
 
 source = (ROOT / "source/networking/network_client_manager.c").read_text()
-start = source.index("boolean network_game_client_advertised_game_compatible(")
-end = source.index("\nboolean network_game_client_join_first_available_game(", start)
+def production_function(name):
+    match = re.search(r"^(?:static )?boolean " + re.escape(name) + r"\s*\([^;{]*\)\s*\{", source, re.M)
+    assert match, name
+    start = source.index("{", match.start())
+    depth, end = 1, start + 1
+    while depth:
+        depth += (source[end] == "{") - (source[end] == "}")
+        end += 1
+    return source[match.start():end]
+functions = "\n".join(production_function(name) for name in [
+    "network_advertised_map_is_custom_edition", "network_protocol_target_allows_version",
+    "network_game_client_advertised_game_compatible"])
+
 limits = (ROOT / "port/linux/include/halo_port_limits.h").read_text()
-defines = "\n".join(re.findall(r"^#define HALO_PORT_(?:NETWORK_VERSION(?:_MINIMUM|_MAXIMUM)?|ADVERTISED_DISTRIBUTED_FLAG|ADVERTISED_IN_PROGRESS_FLAG) .*$", limits, re.M))
+defines = "\n".join(re.findall(r"^#define HALO_PORT_(?:NETWORK_VERSION(?:_MINIMUM|_MAXIMUM)?|CAMPAIGN_NETWORK_VERSION_MINIMUM|CUSTOM_EDITION_NETWORK_VERSION_MINIMUM|ADVERTISED_DISTRIBUTED_FLAG|ADVERTISED_IN_PROGRESS_FLAG) .*$", limits, re.M))
 c = OUT / "compatibility.c"
 c.write_text(r'''
 #include <assert.h>
+#include <ctype.h>
 #include <stdio.h>
+#include <string.h>
 typedef int boolean;
 typedef unsigned short word;
 #define NONE (-1)
@@ -151,28 +164,58 @@ typedef unsigned short word;
 #define HALO_CAMPAIGN_NETWORK_VERSION 0xCE01
 #define HALO_CAMPAIGN_ADVERTISED_FLAG 2
 static boolean network_campaign_advertised(unsigned short v, unsigned char f) { return v==HALO_CAMPAIGN_NETWORK_VERSION && (f&3)==3; }
-struct network_advertised_game { int unused; };
+enum { game_engine_none = 0 };
+struct network_game_map { char name[32]; unsigned long version; };
+struct network_advertised_game { int unused; short engine_type; struct network_game_map map; };
 struct network_game_client { struct network_advertised_game available_games[4]; };
 static struct { unsigned int version, flags; } network_game_client_advertised_versions[4];
+static unsigned int active_network_version = 24;
+static unsigned int halo_port_active_network_version(void) { return active_network_version; }
 static void platform_show_message(const char *title, const char *message) { (void)title; (void)message; }
-''' + defines + "\n" + source[start:end] + r'''
+static int _strnicmp(const char *a,const char *b,size_t n){for(size_t i=0;i<n;i++){int x=tolower((unsigned char)a[i]),y=tolower((unsigned char)b[i]);if(x!=y||!x||!y)return x-y;}return 0;}
+''' + defines + "\n" + functions + r'''
 int main(void) {
     struct network_game_client client = {0};
-    for (int version = 0; version < 26; version++) for (int flags = 0; flags < 4; flags++) {
+    for (int target = 0; target <= 24; target++) {
+      if (target != 0 && target < HALO_PORT_NETWORK_VERSION_MINIMUM) continue;
+      active_network_version = target;
+      for (int version = 0; version < 28; version++) for (int flags = 0; flags < 4; flags++) for (int engine = 0; engine < 3; engine++) {
+        client.available_games[0].engine_type = (short)engine;
+        client.available_games[0].map.version = 0;
         network_game_client_advertised_versions[0].version = version;
         network_game_client_advertised_versions[0].flags = flags;
-        assert(network_game_client_advertised_game_compatible(&client, &client.available_games[0], 1)
-            == ((flags & HALO_PORT_ADVERTISED_DISTRIBUTED_FLAG) && (version >= HALO_PORT_NETWORK_VERSION_MINIMUM && version <= HALO_PORT_NETWORK_VERSION_MAXIMUM)));
+        int in_target = version >= HALO_PORT_NETWORK_VERSION_MINIMUM && version <= HALO_PORT_NETWORK_VERSION_MAXIMUM && (target == 0 || target == version);
+        int expected = in_target && (flags & HALO_PORT_ADVERTISED_DISTRIBUTED_FLAG) && (engine != game_engine_none || version >= HALO_PORT_CAMPAIGN_NETWORK_VERSION_MINIMUM);
+        assert(network_game_client_advertised_game_compatible(&client, &client.available_games[0], 0) == expected);
+      }
     }
+    active_network_version = 0;
+    network_game_client_advertised_versions[0].version = 22;
+    network_game_client_advertised_versions[0].flags = HALO_PORT_ADVERTISED_DISTRIBUTED_FLAG;
+    client.available_games[0].engine_type = 2;
+    client.available_games[0].map.version = 0;
+    assert(network_game_client_advertised_game_compatible(&client,&client.available_games[0],0)); /* legacy PvP allowed */
+    strcpy(client.available_games[0].map.name,"CUSTOM_MAPS\\old");
+    client.available_games[0].map.version = 0; /* old host has no CE checksum field */
+    assert(!network_game_client_advertised_game_compatible(&client,&client.available_games[0],1)); /* CE checksum needs v23 */
+    client.available_games[0].map.name[0] = 0;
+    client.available_games[0].map.version = 1234;
+    assert(!network_game_client_advertised_game_compatible(&client,&client.available_games[0],1)); /* current CE checksum also needs v23 */
+    client.available_games[0].map.version = 0;
+    client.available_games[0].engine_type = game_engine_none;
+    assert(!network_game_client_advertised_game_compatible(&client,&client.available_games[0],1)); /* campaign needs v23 */
     /* test27: this app's own co-op before 1.0.9 (CE01, CE02) is retired: never joined, whatever its flags */
     for (int version = 0xCE01; version <= 0xCE02; version++) for (int flags=0;flags<4;flags++) {
         network_game_client_advertised_versions[0].version = version;
         network_game_client_advertised_versions[0].flags=flags;
         assert(!network_game_client_advertised_game_compatible(&client,&client.available_games[0],1));
     }
+    network_game_client_advertised_versions[0].version = 0;
+    network_game_client_advertised_versions[0].flags = HALO_PORT_ADVERTISED_DISTRIBUTED_FLAG;
+    assert(!network_game_client_advertised_game_compatible(&client,&client.available_games[0],1)); /* unknown always rejected */
     assert(!network_game_client_advertised_game_compatible(NULL, NULL, 0));
     assert(!network_game_client_advertised_game_compatible(&client, &client.available_games[4], 0));
-    printf("PASS: 112 native compatibility cases: network %d only (OpenCE's, in progress or not), the retired CE01/CE02 refused, absent client and out-of-range slot\n", HALO_PORT_NETWORK_VERSION);
+    printf("PASS: native exact/all-compatible target filters; PvP 11..24, campaign and CE 23+, unknown/lockstep/retired CE01/CE02, bad client/slot guards\n");
 }
 ''')
 subprocess.run(["clang", "-fsanitize=address,undefined", str(c), "-o", str(OUT / "compatibility")], check=True)

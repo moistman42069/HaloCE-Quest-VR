@@ -76,7 +76,8 @@ int main(void){
 }
 ''')
 # Full production config, including one-time upgrade, atomic persistence and opt-out.
-s=(ROOT/'port/linux/src/port_config.c').read_text(encoding='utf-8').replace('#include "platform.h"','static void platform_log(const char *s, ...) {(void)s;}').replace('#include <SDL3/SDL.h>','')
+s=(ROOT/'port/linux/src/port_config.c').read_text(encoding='utf-8').replace('#include "platform.h"','static void platform_log(const char *s, ...) {(void)s;}').replace(
+ '#include "halo_port_limits.h"','#define HALO_PORT_NETWORK_VERSION 24\n#define HALO_PORT_NETWORK_VERSION_MINIMUM 11\n#define HALO_PORT_NETWORK_VERSION_MAXIMUM 24').replace('#include <SDL3/SDL.h>','')
 p=OUT/'config.c';p.write_text('#define HALO_ANDROID 1\n#define HALO_VR 1\n'+s+r'''
 #include <assert.h>
 int main(int argc,char **argv){

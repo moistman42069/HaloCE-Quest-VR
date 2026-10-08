@@ -17,7 +17,8 @@ def compile_run(name,code,extra=()):
  subprocess.run(['clang','-std=gnu11','-Wall','-Wextra','-Werror','-Wno-unused-function','-Wno-missing-braces','-fno-sanitize-recover=all','-fsanitize=address,undefined','-I',str(ROOT),str(p),*extra,'-lm','-pthread','-o',str(OUT/name)],check=True)
  subprocess.run([str(OUT/name)],check=True)
 # Compile complete config implementation; stub only platform logging / unused SDL include.
-s=(ROOT/'port/linux/src/port_config.c').read_text().replace('#include "platform.h"','static void platform_log(const char *s, ...) {(void)s;}').replace('#include <SDL3/SDL.h>','')
+s=(ROOT/'port/linux/src/port_config.c').read_text().replace('#include "platform.h"','static void platform_log(const char *s, ...) {(void)s;}').replace(
+ '#include "halo_port_limits.h"','#define HALO_PORT_NETWORK_VERSION 24\n#define HALO_PORT_NETWORK_VERSION_MINIMUM 11\n#define HALO_PORT_NETWORK_VERSION_MAXIMUM 24').replace('#include <SDL3/SDL.h>','')
 for vr in (False,True):
  name='config-vr' if vr else 'config-flat'
  p=OUT/(name+'.c');p.write_text('#define HALO_ANDROID 1\n'+('#define HALO_VR 1\n' if vr else '')+s+'\n#include <assert.h>\nint main(int argc,char **argv){assert(argc==2);assert(config_boolean("renderer.safe_geometry")==atoi(argv[1]));return 0;}\n')

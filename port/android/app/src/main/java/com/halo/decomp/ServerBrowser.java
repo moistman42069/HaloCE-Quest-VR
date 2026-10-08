@@ -21,6 +21,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.HashSet;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -41,11 +43,20 @@ final class ServerBrowser {
     private final LinearLayout rows;
     private final TextView status;
     private final Button refresh;
+    private final Button networkSelector;
     private final AlertDialog dialog;
     private volatile boolean closed;
     private volatile HttpsURLConnection connection;
     private int generation;
     private int visibleListings = 50;
+    /** 0 shows all observed network versions; a positive value filters one protocol. */
+    private int selectedNetworkVersion;
+    private boolean directoryLoaded;
+
+    private java.io.File gameRoot() {
+        return activity instanceof LauncherActivity ? ((LauncherActivity)activity).gameRoot()
+            : GameDataLibrary.activeRoot(activity.getExternalFilesDir(null));
+    }
 
     private static final class Entry {
         final String name, invite, description;
@@ -53,6 +64,7 @@ final class ServerBrowser {
         final int players, maximum;
         final String map;
         final boolean open;
+        final boolean customEdition;
         final boolean capacityKnown;
         final ServerListing.Kind kind;
         Entry(JSONObject object) {
@@ -64,6 +76,7 @@ final class ServerBrowser {
             maximum = Math.max(1, Math.min(128, object.optInt("maximum_players", 128)));
             capacityKnown = object.has("maximum_players");
             map = ServerInvite.displayName(object.optString("map", ""));
+            customEdition = object.optBoolean("custom_edition", false) || ServerListing.customEditionMap(map);
             open = object.optBoolean("open", true);
             kind = ServerListing.kind(version, object.optInt("engine", -1), map);
         }
@@ -73,23 +86,31 @@ final class ServerBrowser {
             description = listing.description();
             version = listing.version;
             players = listing.players; maximum = listing.maximum; map = listing.map;
+            customEdition = listing.customEdition;
             open = listing.open;
             capacityKnown = true;
             kind = listing.kind;
         }
         boolean compatible() {
-            return version == 0 || (version >= BuildConfig.HALO_NETWORK_MINIMUM
-                && version <= BuildConfig.HALO_NETWORK_MAXIMUM);
+            return version == 0 || NetworkProfile.supported(version);
         }
         JSONObject json() {
             JSONObject object = new JSONObject();
             try {
                 object.put("name", name).put("invite", invite).put("description", description)
-                    .put("network_version", version);
+                    .put("network_version", version).put("custom_edition", customEdition);
                 if (capacityKnown) object.put("maximum_players",maximum).put("players",players).put("map",map).put("open",open);
             } catch (org.json.JSONException impossible) { throw new IllegalStateException(impossible); }
             return object;
         }
+    }
+
+    private static final class NetworkPopulation {
+        final int version;
+        int servers;
+        int players;
+        boolean compatible;
+        NetworkPopulation(int version) { this.version = version; }
     }
 
     ServerBrowser(Activity activity, Join join) {
@@ -101,23 +122,22 @@ final class ServerBrowser {
         this.join = join;
         this.campaign = campaign;
         preferences = activity.getSharedPreferences(campaign ? "coop_browser" : "server_browser", Activity.MODE_PRIVATE);
+        selectedNetworkVersion = NetworkProfile.selected(activity);
         LinearLayout content = column();
-        text(content, campaign ? "Campaign co-op, as OpenCE plays it: Quest, Android, Windows, Mac and Linux players "
-            + "together, up to 128, joining any time, with the same campaign maps. Games on network version "
-            + BuildConfig.HALO_NETWORK_MAXIMUM + " can be joined; others need the matching version. "
-            + "Games marked as co-op of this app 1.0.8 or older need their host to update."
-            : "Cross-play: native Windows, Mac, Linux and Android ports with compatible network versions "
-            + "and maps. Retail Halo PC, MCC and Xbox are incompatible.");
-        text(content, "How to join: pick a game and press Join. When the game opens, go to Multiplayer > System Link "
-            + "and choose the same host. Upstream ports may call this Direct Link. Nearby LAN games also appear there. "
-            + "Public listings are supplied by ChupathingyCE; availability may change.");
-        if (!campaign) text(content, "In-game server browser: press Play, then in the game's main menu open "
-            + "Multiplayer > System Link and press Refresh. It lists public games and games on your Wi-Fi, busiest first.");
-        text(content, LauncherHelp.DATA_COMPATIBILITY_NOTE);
+        networkSelector = button(content, "Network: All networks", this::selectNetwork);
+        refresh = button(content, "Refresh populations & servers", this::refresh);
+        status = text(content, "");
+        text(content, "Choose a network above, then join a server or return to Play. Network changes apply on the next game launch. Counts are directory reports and may lag.");
+        button(content, "Network & joining help", () -> LauncherHelp.page(activity, "Network & joining help",
+            "The selector ranks networks by reported player population. Select an available profile to change which host versions the native game discovers and can join on its next launch. "
+            + "All compatible networks searches every supported host version. Networks 11–22 are limited to original Xbox-map PvP; co-op and Custom Edition require 23 or 24. Hosting always uses current network 24.\n\n"
+            + "A directory Join passes the host's invite to the game. Open Multiplayer > Join Game > LAN and choose that host once the connection appears. "
+            + "Direct Link also accepts invites. Public in-game listings are under Multiplayer > Join Game > Server Browser.\n\n"
+            + "The community directory is supplied by ChupathingyCE. The in-game browser uses signed OpenCE discovery and LAN. "
+            + "These sources can show different results. Retail Halo PC, MCC and Xbox use incompatible protocols.\n\n"
+            + LauncherHelp.DATA_COMPATIBILITY_NOTE));
         button(content, "Add / paste server invite", this::addInvite);
         button(content, "Directory settings", this::setDirectory);
-        refresh = button(content, "Refresh directory", this::refresh);
-        status = text(content, "");
         rows = column();
         content.addView(rows);
         ScrollView scroll = new ScrollView(activity);
@@ -199,9 +219,9 @@ final class ServerBrowser {
 
     private void setDirectory() {
         LinearLayout fields = column();
-        text(fields, "Default: ChupathingyCE live directory. Add up to four HTTPS directories, one per line. "
+        text(fields, "Default: ChupathingyCE live directory, which lists games across network versions. Add up to four HTTPS directories, one per line. "
             + "Accepts games.txt format or a schema-1 JSON catalog. Duplicates are merged. "
-            + "Leave empty to use saved invites only. "
+            + "The Network selector discovers versions from the combined results. Leave empty to use saved invites only. "
             + "Your saved invites are never uploaded.");
         EditText url = input(fields, "https://.../servers.json", preferences.getString("directory", DEFAULT_DIRECTORY));
         button(fields, "Use ChupathingyCE", () -> url.setText(DEFAULT_DIRECTORY));
@@ -216,6 +236,7 @@ final class ServerBrowser {
             catch (Exception e) { url.setError("Use an HTTPS URL without a password or username."); return; }
             preferences.edit().putString("directory", value).apply();
             directory.clear();
+            directoryLoaded = false;
             render();
             edit.dismiss();
             refresh();
@@ -230,12 +251,17 @@ final class ServerBrowser {
     }
 
     private void render() {
+        updateNetworkSelector();
         rows.removeAllViews();
-        text(rows, "Community directory — most populated first");
+        List<Entry> filtered = filteredDirectory();
+        text(rows, selectedNetworkVersion == 0
+            ? "Community directory — all networks, most populated servers first"
+            : "Community directory — network v" + selectedNetworkVersion + ", most populated first");
         if (directory.isEmpty()) text(rows, "No directory listings loaded.");
-        int shown = Math.min(visibleListings, directory.size());
-        for (int i = 0; i < shown; i++) row(directory.get(i), false);
-        if (shown < directory.size()) button(rows, "Show next 50 servers (" + shown + "/" + directory.size() + ")", () -> {
+        else if (filtered.isEmpty()) text(rows, "No listings for this network in the selected directory. Choose another network above.");
+        int shown = Math.min(visibleListings, filtered.size());
+        for (int i = 0; i < shown; i++) row(filtered.get(i), false);
+        if (shown < filtered.size()) button(rows, "Show next 50 servers (" + shown + "/" + filtered.size() + ")", () -> {
             visibleListings += 50;
             render();
         });
@@ -244,16 +270,110 @@ final class ServerBrowser {
         for (Entry entry : saved) row(entry, true);
     }
 
+    private List<Entry> filteredDirectory() {
+        if (selectedNetworkVersion == 0) return directory;
+        List<Entry> filtered = new ArrayList<>();
+        for (Entry entry : directory)
+            if (entry.version == selectedNetworkVersion) filtered.add(entry);
+        return filtered;
+    }
+
+    private static String networkLabel(int version) {
+        return ServerListing.isCampaign(version)
+            ? "Legacy app co-op CE" + String.format(java.util.Locale.ROOT, "%02X", version & 0xFF)
+            : "Network v" + version;
+    }
+
+    /** Counts are calculated from the deduplicated listings currently returned by configured directories. */
+    private List<NetworkPopulation> networkPopulations() {
+        Map<Integer, NetworkPopulation> grouped = new HashMap<>();
+        for (int version : NetworkProfile.SUPPORTED) {
+            NetworkPopulation population = new NetworkPopulation(version);
+            population.compatible = true;
+            grouped.put(version, population);
+        }
+        for (Entry entry : directory) {
+            if (entry.version <= 0) continue;
+            NetworkPopulation population = grouped.get(entry.version);
+            if (population == null) {
+                population = new NetworkPopulation(entry.version);
+                grouped.put(entry.version, population);
+            }
+            population.servers++;
+            population.players += entry.players;
+            population.compatible = NetworkProfile.supported(entry.version);
+        }
+        List<NetworkPopulation> result = new ArrayList<>(grouped.values());
+        result.sort((a, b) -> {
+            int players = Integer.compare(b.players, a.players);
+            if (players != 0) return players;
+            int servers = Integer.compare(b.servers, a.servers);
+            return servers != 0 ? servers : Integer.compare(b.version, a.version);
+        });
+        return result;
+    }
+
+    private void updateNetworkSelector() {
+        List<NetworkPopulation> populations = networkPopulations();
+        String title = NetworkProfile.label(NetworkProfile.selected(activity)) + " · tap to switch";
+        if (directoryLoaded && !directory.isEmpty()) title += " · busiest v" + populations.get(0).version
+            + ": " + populations.get(0).players + " players";
+        networkSelector.setText(title);
+    }
+
+    private void selectNetwork() {
+        List<NetworkPopulation> populations = networkPopulations();
+        String[] choices = new String[populations.size() + 1];
+        choices[0] = "All compatible networks (11–24) · " + (directoryLoaded ? compatibleReportedPlayers() + " reported players" : "population unavailable");
+        int checked = selectedNetworkVersion == 0 ? 0 : -1;
+        for (int i = 0; i < populations.size(); i++) {
+            NetworkPopulation population = populations.get(i);
+            choices[i + 1] = networkLabel(population.version) + " · "
+                + (directoryLoaded ? population.players + " players · " + population.servers + " servers" : "population unavailable")
+                + " · " + (population.compatible ? (population.version == NetworkProfile.selected(activity)
+                    ? "active" : "switch on next launch") : "unavailable; protocol not included");
+            if (population.version >= 11 && population.version < 23) choices[i + 1] += " · Xbox-map PvP only";
+            if (population.version == selectedNetworkVersion) checked = i + 1;
+        }
+        AlertDialog chooser = new GamepadNavigation.Builder(activity).setTitle("Select server network")
+            .setSingleChoiceItems(choices, checked, (selected, which) -> {
+                int version = which == 0 ? 0 : populations.get(which - 1).version;
+                    try { NetworkProfile.select(activity, gameRoot(), version); }
+                    catch (java.io.IOException e) {
+                        LauncherHelp.page(activity, "Network unavailable", e.getMessage());
+                        return;
+                    }
+                    status.setText(NetworkProfile.label(version) + " selected for the next launch. Return to Play or join a listed server. Hosting remains on network 24.");
+                selectedNetworkVersion = version;
+                visibleListings = 50;
+                render();
+                selected.dismiss();
+            }).setNegativeButton("Cancel", null).create();
+        chooser.show();
+    }
+
+    private int compatibleReportedPlayers() {
+        int players = 0;
+        for (Entry entry : directory)
+            if (entry.version > 0 && NetworkProfile.supported(entry.version)
+                && (!(campaign || entry.customEdition) || entry.version >= 23)) players += entry.players;
+        return players;
+    }
+
+    private int totalReportedPlayers() {
+        int players = 0;
+        for (NetworkPopulation population : networkPopulations()) players += population.players;
+        return players;
+    }
+
     private void row(Entry entry, boolean favorite) {
         text(rows, entry.name + " — " + entry.description);
         boolean old = entry.kind == ServerListing.Kind.CAMPAIGN;
         boolean compatible = ServerListing.joinable(campaign, entry.kind, entry.version,
-            BuildConfig.HALO_NETWORK_MINIMUM, BuildConfig.HALO_NETWORK_MAXIMUM);
-        String version = entry.version == 0 ? "version checked by game" : "network v" + entry.version;
-        text(rows, version + (compatible ? "" : " — incompatible; supported: "
-            + (old ? "network v" + BuildConfig.HALO_NETWORK_MAXIMUM + " (this app 1.0.9 or later)"
-            : "network v" + BuildConfig.HALO_NETWORK_MINIMUM
-            + (BuildConfig.HALO_NETWORK_MAXIMUM != BuildConfig.HALO_NETWORK_MINIMUM ? "–" + BuildConfig.HALO_NETWORK_MAXIMUM : ""))));
+            NetworkProfile.minimum(NetworkProfile.selected(activity)), NetworkProfile.maximum(NetworkProfile.selected(activity)))
+            && !((campaign || entry.customEdition) && entry.version > 0 && entry.version < 23);
+        String version = entry.version == 0 ? "version checked by game" : networkLabel(entry.version);
+        text(rows, version + (compatible ? "" : " — not available with " + NetworkProfile.label(NetworkProfile.selected(activity))));
         Button open = button(rows, "Join " + entry.name, () -> {
             Runnable connect=()->{
                 RunLog.line("Multiplayer join requested: " + entry.name + " network=" + entry.version + " map=" + entry.map
@@ -266,12 +386,11 @@ final class ServerBrowser {
         });
         String blocked = old ? "This co-op game is from this app 1.0.8 or older, whose co-op this version no longer "
             + "plays (it plays co-op as OpenCE does). Ask the host to update to " + BuildConfig.VERSION_NAME + " or later."
-            : !compatible && campaign ? "Version mismatch: this co-op host is on network v" + entry.version
-            + ", this app on v" + BuildConfig.HALO_NETWORK_MAXIMUM + ". "
-            + (entry.version > BuildConfig.HALO_NETWORK_MAXIMUM ? "Update this app when a version for it is out."
-            : "Ask the host to update.")
-            : !compatible ? "Protocol mismatch: this host uses network v" + entry.version +
-            ". Disc revision cannot change the network protocol. Ask the host to update or choose a compatible server."
+            : entry.customEdition && entry.version > 0 && entry.version < 23 ? "Custom Edition maps require a network 23 or 24 host."
+            : campaign && entry.version > 0 && entry.version < 23 ? "Legacy co-op on this network is not supported. Use a network 23 or 24 host."
+            : !compatible ? "Protocol mismatch: this host uses " + networkLabel(entry.version) + ". "
+            + (NetworkProfile.supported(entry.version) ? "Choose it in the Network selector above, then join."
+                : "This app has no implementation for that version. Disc revision cannot change the network protocol.")
             : !favorite && entry.players >= entry.maximum ? "Server full. Refresh after a player leaves."
             : !favorite && !entry.open ? "Host is closed to joining (loading, postgame, or locked lobby). Refresh later."
             : "";
@@ -418,9 +537,11 @@ final class ServerBrowser {
                 if (closed || requestId != generation || activity.isFinishing()) return;
                 refresh.setEnabled(true);
                 if (completed == null) {
+                    directoryLoaded = false;
                     directory.clear();
                     status.setText("Directory unavailable: " + failure + ". Saved invites remain available.");
                 } else {
+                    directoryLoaded = true;
                     directory.clear();
                     int old = 0;
                     for (Entry entry : completed)
@@ -429,12 +550,17 @@ final class ServerBrowser {
                             if (entry.kind == ServerListing.Kind.CAMPAIGN) old++;
                         }
                     visibleListings = 50;
-                    int players = 0;
-                    for (Entry entry : directory) players += entry.players;
+                    int players = totalReportedPlayers();
+                    List<NetworkPopulation> populations = networkPopulations();
+                    int observedVersions = 0;
+                    for (NetworkPopulation population : populations) if (population.servers > 0) observedVersions++;
+                    String busiest = directory.isEmpty() ? "" : "; busiest network v"
+                        + populations.get(0).version + " (" + populations.get(0).players + " reported players)";
                     RunLog.line("Directory classified for the " + (campaign ? "co-op" : "multiplayer") + " browser: "
                         + directory.size() + " listed" + (campaign ? ", " + old + " from this app 1.0.8 or older (not joinable)" : ""));
                     status.setText(directory.size() + " servers · " + players
-                        + " reported players. Most populated first; full/incompatible games cannot be joined."
+                        + " reported players across " + observedVersions + " network versions" + busiest
+                        + ". Most populated first; full/incompatible games cannot be joined."
                         + (old > 0 ? " " + old + " are co-op games of this app 1.0.8 or older (their hosts need to update)." : "")
                         + (failure == null ? "" : " Some directories failed; showing available results."));
                 }

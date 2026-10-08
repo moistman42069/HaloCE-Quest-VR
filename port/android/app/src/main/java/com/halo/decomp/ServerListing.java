@@ -70,6 +70,11 @@ final class ServerListing {
     final String invite, name, map;
     final int engine, players, maximum, version, age;
     final boolean open;
+    final boolean customEdition;
+
+    static boolean customEditionMap(String map) {
+        return map != null && map.replace('\\', '/').toLowerCase(Locale.ROOT).startsWith("custom_maps/");
+    }
     /** The roster's player count when the directory sends one (-1: none). */
     final int rosterCount;
     final Kind kind;
@@ -77,6 +82,7 @@ final class ServerListing {
     private ServerListing(String[] fields) {
         invite = ServerInvite.normalize(fields[0]);
         name = ServerInvite.displayName(fields[1]);
+        customEdition = customEditionMap(fields[2]);
         String path = fields[2].replace('\\', '/');
         map = ServerInvite.displayName(path.substring(path.lastIndexOf('/') + 1));
         engine = Integer.parseInt(fields[3]);

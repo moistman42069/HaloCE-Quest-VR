@@ -44,7 +44,7 @@ final class CoopLauncher {
     void show() {
         new GamepadNavigation.Builder(activity).setTitle("Campaign co-op")
             .setMessage("Co-op as OpenCE plays it: up to 128 players on Quest, Android, Windows, Mac and Linux "
-                + "(OpenCE network version " + BuildConfig.HALO_NETWORK_MAXIMUM + "), with the same campaign maps. "
+                + "(hosting on OpenCE network version " + BuildConfig.HALO_NETWORK_VERSION + "), with the same campaign maps. "
                 + "Players can join a mission already under way.\n\n"
                 + "TO HOST: press Host campaign, pick the mission, difficulty and most players, name your server if you like, leave the public "
                 + "box ticked to be listed, and press Host. Start from the lobby when everyone is in (a full "
@@ -133,7 +133,7 @@ final class CoopLauncher {
                 activity.getSharedPreferences("coop-host", 0).edit().putString("server_name", name).apply();
                 RunLog.line("Campaign host requested: mission=" + MAPS[selected] + " difficulty="
                     + difficulty.getSelectedItemPosition() + " players=" + PLAYER_CHOICES[players.getSelectedItemPosition()]
-                    + " public=" + publish.isChecked() + " network=" + BuildConfig.HALO_NETWORK_MAXIMUM
+                    + " public=" + publish.isChecked() + " network=" + BuildConfig.HALO_NETWORK_VERSION
                     + " name=" + (name.isEmpty() ? "(the device's)" : name));
                 if (start.getAsBoolean()) dialog.dismiss();
                 else request.delete();

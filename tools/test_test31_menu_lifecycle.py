@@ -81,7 +81,10 @@ int main(void) {
 }
 ''')
 
-config = (ROOT/'port/linux/src/port_config.c').read_text().replace('#include "platform.h"', 'static void platform_log(const char *s, ...) {(void)s;}').replace('#include <SDL3/SDL.h>', '')
+config = (ROOT/'port/linux/src/port_config.c').read_text().replace('#include "platform.h"', 'static void platform_log(const char *s, ...) {(void)s;}').replace(
+    '#include "halo_port_limits.h"',
+    '#define HALO_PORT_NETWORK_VERSION 24\n#define HALO_PORT_NETWORK_VERSION_MINIMUM 11\n#define HALO_PORT_NETWORK_VERSION_MAXIMUM 24'
+).replace('#include <SDL3/SDL.h>', '')
 test = r'''
 #include <assert.h>
 int main(void) {

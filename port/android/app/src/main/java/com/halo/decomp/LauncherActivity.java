@@ -156,6 +156,11 @@ public class LauncherActivity extends Activity {
 
     private boolean startGame() {
         if (!readyToPlay()) return false;
+        try { NetworkProfile.prepare(this, gameRoot()); }
+        catch (java.io.IOException e) {
+            LauncherHelp.page(this, "Network selection could not be saved", e.getMessage());
+            return false;
+        }
         RunLog.line("Starting game; data root=" + gameRoot());
         File[] mapFiles = new File(gameRoot(), "maps").listFiles((dir, name) -> name.endsWith(".map"));
         if (mapFiles != null) for (File mapFile : mapFiles) RunLog.line("Data header: " + mapFile.getName() + " " + MapInfo.read(mapFile).summary() + " bytes=" + mapFile.length());
@@ -196,6 +201,18 @@ public class LauncherActivity extends Activity {
             }
         }
         startGame();
+    }
+
+    /** The community catalog is a launcher fallback; the game keeps its own signed broker/LAN browser. */
+    private void openServerBrowser(boolean campaign) {
+        if (!readyToPlay()) return;
+        new ServerBrowser(this, invite -> {
+            if (!writeInvite(invite)) {
+                if (status != null) status.setText("Could not save the server invite. Check available storage and try again.");
+                return false;
+            }
+            return startGame();
+        }, campaign);
     }
 
     /**
@@ -306,6 +323,11 @@ public class LauncherActivity extends Activity {
         LauncherFont.keepNormal(updateStatus);
         play = menuButton(layout, "Play");
         play.setOnClickListener(v -> startFromMenu());
+
+        label(layout, "Community directory fallback · live reported populations · compatible versions only can join",
+            13, Color.rgb(150, 160, 170));
+        menuButton(layout, "Browse multiplayer servers").setOnClickListener(v -> openServerBrowser(false));
+        menuButton(layout, "Browse campaign co-op servers").setOnClickListener(v -> openServerBrowser(true));
 
         label(layout, LauncherHelp.RECOMMENDED_ISO_NOTE, 14, Color.rgb(255, 190, 70));
         label(layout, LauncherHelp.SUPPORT_NOTE, 13, Color.rgb(150, 190, 210));

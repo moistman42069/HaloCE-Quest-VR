@@ -1,10 +1,38 @@
 # Current development state
 
-## Unpublished test36 candidate work (2026-10-08)
+## Unpublished test37 candidate (2026-10-08)
+
+Final local branch: `test37-network-browser`. Both APKs compiled; all62 regression suites have passing results. See [TEST37-DELIVERY.md](TEST37-DELIVERY.md) for exact APK hashes, packaging gates and test limitations. Device acceptance is pending.
+
+The private candidate is **1.0.18-test37 / code47 / OpenCE Build 157**.
+Local hosting and signed advertisements remain **network24**. The launcher
+now selects the client's startup join target: **24** by default, an exact
+version **11 through 24**, or **All compatible networks** (11-24). This choice
+controls native discovery and admission as well as the launcher list; it is
+not merely a directory filter. Versions 11-22 are limited to original Xbox-map
+PvP. Campaign co-op and Custom Edition require host version 23 or 24.
+
+The target is shared across PvP, co-op and imported data sets. Close the game,
+choose the target in the launcher, then launch again. It cannot change during
+a running game. Hosting never impersonates an older version. Catalog-reported
+players and servers are grouped by version and sorted busiest first; unsupported
+versions remain visible but unavailable. MQTT brokers are discovery mirrors,
+not additional protocol implementations. One public HTTPS catalog is verified;
+up to four compatible custom catalogs can be configured.
+
+Public v1.0.16/code45/network23 and the Test36 artifacts remain unchanged.
+This candidate has not been device-accepted. Source checks and compilation do
+not establish every historical server, map revision or co-op combination.
+Read [TEST37-PROGRESS.md](TEST37-PROGRESS.md),
+[TEST37-UPSTREAM-INTEGRATION.md](TEST37-UPSTREAM-INTEGRATION.md) and
+[TEST37-PLAYER-NOTES.md](TEST37-PLAYER-NOTES.md). No publication, push,
+installation or game launch is authorized.
+
+## Superseded test36 candidate work (2026-10-08)
 
 The accepted public pointer is still v1.0.16 / code45 / OpenCE Build148 /
-network23. A private test36 candidate is being prepared at 1.0.17-test36 /
-code46 / Build157 / network24. The pair is now packaged for owner testing;
+network23. The archived test36 candidate was 1.0.17-test36 / code46 /
+Build157 / network24. Its pair was packaged for owner testing;
 hashes and final checks are in TEST36-DELIVERY.md. It ports selected upstream networking and
 gameplay changes and adds evidence-only two-hand aim and hand-aim fallback
 diagnostics. The reported scope shift is consistent with the source switching

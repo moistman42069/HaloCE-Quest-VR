@@ -15,6 +15,7 @@ alone. Prints PASS or the failures.
 */
 
 #include "p2p_internal.h"
+#include "halo_port_limits.h"
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -36,12 +37,13 @@ static const unsigned char *hosting_token;
 void posix_random_bytes(void *buffer, unsigned long size) { memset(buffer, 0x5a, size); }
 unsigned long p2p_now(void) { return clock_now; }
 int config_boolean(const char *name) { (void)name; return 1; }
+int halo_port_active_network_version(void) { return HALO_PORT_NETWORK_VERSION; }
 static unsigned long last_discovery_log;
 static int discovery_logs, discovery_too_frequent;
 static char discovery_text[1024];
 void platform_log(const char *format, ...)
 {
-	if (strstr(format, "discovery network="))
+	if (strstr(format, "discovery target="))
 	{
 		va_list arguments;
 		if (discovery_logs && clock_now - last_discovery_log < 10000)
@@ -242,6 +244,8 @@ static void lobby_checks(void)
 	check(publish_count == 1 && !published_closing && p2p_lobby_listed(), "the host publishes its listing");
 	memcpy(first, published, (size_t)published_size);
 	first_size = published_size;
+	check(published[3] == 0 && published[4] == HALO_PORT_NETWORK_VERSION,
+		"the host listing remains on the compiled protocol version");
 	/* the browser takes it */
 	p2p_lobby_browse(1);
 	hear(first, first_size, 0, NULL);
@@ -346,8 +350,9 @@ int main(void)
 	crypto_checks();
 	lobby_checks();
 	check(discovery_logs > 0 && !discovery_too_frequent, "discovery logs are bounded to one per ten seconds");
-	check(strstr(discovery_text, "broker_ready=1") && strstr(discovery_text, "version_rejected=1 "),
-		"discovery distinguishes broker status and version filtering");
+	check(strstr(discovery_text, "discovery target=24") && strstr(discovery_text, "local_host=24") &&
+		strstr(discovery_text, "broker_ready=1") && strstr(discovery_text, "version_rejected=1 "),
+		"discovery distinguishes the selected target, local host version, broker status and version filtering");
 	check(!strstr(discovery_text, "halo://") && !strstr(discovery_text, "hunter2"),
 		"discovery summary contains no invite or password");
 	printf("%s (%d failures)\n", failures ? "FAIL" : "PASS", failures);

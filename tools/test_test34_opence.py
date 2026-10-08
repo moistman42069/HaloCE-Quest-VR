@@ -22,8 +22,11 @@ def function(source, name):
 
 
 limits = read("port/linux/include/halo_port_limits.h")
-for suffix in ("", "_MINIMUM", "_MAXIMUM"):
-    assert re.search(r"#define HALO_PORT_NETWORK_VERSION%s 24\b" % suffix, limits)
+assert re.search(r"#define HALO_PORT_NETWORK_VERSION 24\b", limits)
+assert re.search(r"#define HALO_PORT_NETWORK_VERSION_MINIMUM 11\b", limits)
+assert re.search(r"#define HALO_PORT_NETWORK_VERSION_MAXIMUM 24\b", limits)
+assert re.search(r"#define HALO_PORT_CAMPAIGN_NETWORK_VERSION_MINIMUM 23\b", limits)
+assert re.search(r"#define HALO_PORT_CUSTOM_EDITION_NETWORK_VERSION_MINIMUM 23\b", limits)
 
 # The zoom scope plane follows the calibrated scope view while its center
 # stays on the physical gun, using the same extended-arm clamp. Ensure config

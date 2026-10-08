@@ -11,7 +11,7 @@ whose X25519 form's hash is the invite's host part (p2p.c), so no one but
 the host can list its invite, alter its listing, or list another's under
 false details:
 
-	"HL", format 1, the lobby version (2: HALO_PORT_NETWORK_VERSION; browsers
+	"HL", format 1, the lobby version (2: the host's protocol version; browsers
 	hide others), flags (open, under way, teams, closed, password), sequence
 	(4: newest wins), Unix time (4), the Ed25519 key (32), the invite's token
 	(16; a password's game's sealed with the password's key, 56:
@@ -269,6 +269,7 @@ static int listing_make(unsigned char *bytes, int flags)
 	bytes[size++] = 'H';
 	bytes[size++] = 'L';
 	bytes[size++] = LISTING_FORMAT;
+	/* A client discovery target never changes the protocol this build hosts. */
 	bytes[size++] = (unsigned char)(HALO_PORT_NETWORK_VERSION >> 8);
 	bytes[size++] = (unsigned char)HALO_PORT_NETWORK_VERSION;
 	bytes[size++] = (unsigned char)flags;
@@ -649,6 +650,14 @@ static void listing_take(const struct queued *queued, const struct listing *list
 	shown->ping = -1;
 }
 
+static int listing_version_matches_target(int version)
+{
+	int target = halo_port_active_network_version();
+	return version >= HALO_PORT_NETWORK_VERSION_MINIMUM &&
+		version <= HALO_PORT_NETWORK_VERSION_MAXIMUM &&
+		(target == 0 || version == target);
+}
+
 static void update_browsing(void)
 {
 	unsigned long start = p2p_now();
@@ -673,7 +682,7 @@ static void update_browsing(void)
 			lobby.diagnostic_malformed++;
 			continue;
 		}
-		if (listing.version != HALO_PORT_NETWORK_VERSION)
+		if (!listing_version_matches_target(listing.version))
 		{
 			lobby.diagnostic_version++;
 			lobby.diagnostic_remote_version = listing.version;
@@ -719,10 +728,12 @@ static void update_browsing(void)
 		int visible = 0;
 		for (index = 0; index < MAXIMUM_GAMES; index++)
 			visible += lobby.games[index].used != 0;
-		platform_log("Internet play: discovery network=%d broker_ready=%d visible=%d queued=%d "
+		platform_log("Internet play: discovery target=%d (0=all compatible %d..%d), local_host=%d broker_ready=%d visible=%d queued=%d "
 			"heard=%lu malformed=%lu version_rejected=%lu last_unverified_version=%d "
 			"expired=%lu signature_rejected=%lu verified=%lu",
-			HALO_PORT_NETWORK_VERSION, p2p_signal_connected(), visible, lobby.queue_count,
+			halo_port_active_network_version(), HALO_PORT_NETWORK_VERSION_MINIMUM,
+			HALO_PORT_NETWORK_VERSION_MAXIMUM, HALO_PORT_NETWORK_VERSION,
+			p2p_signal_connected(), visible, lobby.queue_count,
 			lobby.diagnostic_seen, lobby.diagnostic_malformed, lobby.diagnostic_version,
 			lobby.diagnostic_remote_version, lobby.diagnostic_expired,
 			lobby.diagnostic_signature, lobby.diagnostic_verified);

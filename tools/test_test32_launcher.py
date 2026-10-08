@@ -164,8 +164,23 @@ def main():
     help_source = (JAVA / 'LauncherHelp.java').read_text()
     network = (JAVA / 'NetworkSettings.java').read_text()
     main_menu = launcher[launcher.index('private void buildMenu()'):launcher.index('private void selectMod(')]
-    for name in ['new ServerBrowser', 'new PvpLauncher', 'new CoopLauncher']:
+    for name in ['new PvpLauncher', 'new CoopLauncher']:
         assert name not in main_menu, name
+    for label in ['Browse multiplayer servers', 'Browse campaign co-op servers']:
+        assert label in main_menu, label
+    browser_open = launcher[launcher.index('private void openServerBrowser'):launcher.index('File baseRoot()')]
+    assert 'new ServerBrowser(this' in browser_open
+    assert 'writeInvite(invite)' in browser_open and 'return startGame();' in browser_open
+    browser_source = (JAVA / 'ServerBrowser.java').read_text()
+    for marker in ['networkSelector = button(content, "Network: All networks"',
+                   'private List<NetworkPopulation> networkPopulations()',
+                   'population.players += entry.players',
+                   'result.sort((a, b) ->', 'setSingleChoiceItems(choices, checked',
+                   'NetworkProfile.select(activity, gameRoot(), version)',
+                   'ServerListing.joinable(campaign, entry.kind, entry.version',
+                   'open.setEnabled(compatible']:
+        assert marker in browser_source, marker
+    assert 'Legacy app co-op CE' in browser_source
     assert 'LauncherHelp.network(this)' in main_menu
     assert 'if(item==0) { network(activity); return; }' in help_source
     for essential in ['"Play"', '"Versions & updates"', '"Network settings"',
@@ -221,7 +236,7 @@ class GuideCheck { public static void main(String[] args) {
             assert text in pages[2], text
         for text in ['Direct Link', 'PASTE LINK', 'ENTER LINK', 'PASSWORDS', 'does not ask', 'Saved invites', 'not automatically imported']:
             assert text in pages[3], text
-        assert 'network 997' in pages[4], 'network version must come from BuildConfig'
+        assert 'network 24' in pages[4] and '11–24' in pages[4] and 'original Xbox-map PvP only' in pages[4]
         for text in ['ISO/revision', 'Versions & updates', 'no relay', 'Download/HaloCE', 'discord.gg/S9uSCKxKx', '@MeWhenINameMyself']:
             assert text in pages[4], text
 

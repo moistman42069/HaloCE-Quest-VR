@@ -24,7 +24,7 @@ def function(source, name):
 
 limits = read("port/linux/include/halo_port_limits.h")
 assert re.search(r"^#define HALO_PORT_NETWORK_VERSION 24$", limits, re.M)
-assert re.search(r"^#define HALO_PORT_NETWORK_VERSION_MINIMUM 24$", limits, re.M)
+assert re.search(r"^#define HALO_PORT_NETWORK_VERSION_MINIMUM 11$", limits, re.M)
 assert re.search(r"^#define HALO_PORT_NETWORK_VERSION_MAXIMUM 24$", limits, re.M)
 
 # Exercise the port helper compiled from the real C function under sanitizers.

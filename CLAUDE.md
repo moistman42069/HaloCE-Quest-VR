@@ -1,23 +1,34 @@
 # Agent and contributor continuation
 
-## Active private work: Test36 (2026-10-08)
+## Active private candidate: Test37 (2026-10-08)
 
-Keep public v1.0.16 unchanged. Continue from `docs/ACTIVE-WORK-CHECKPOINT.md`,
-`docs/CURRENT-STATE.md`, `docs/TEST36-PROGRESS.md`, and
-`docs/TEST36-UPSTREAM-INTEGRATION.md`. The private candidate is 1.0.17-test36,
-Android code46, OpenCE Build157/network24. It ports the verified Build157
-changes and adds transition diagnostics for the two-hand scope report without
-changing scope/aim or turret behavior absent a device log. Saved-game resume
-and Rev2 reports remain unmodified pending exact logs. Both launcher screens
-now show the refined ISO recommendation, Discord support contact and a
-persistent Halo-inspired display-font toggle. The existing GitHub updater was
-checked against the current live release and left unchanged. Both APKs are
-packaged for owner testing; read TEST36-DELIVERY.md under docs for hashes and
-checks, then await device feedback. Do not publish, push or alter public release metadata.
+Continue on local branch `test37-network-browser`. Read `docs/TEST37-DELIVERY.md` for final APK hashes and checks. Await owner device results; no public release is authorized.
 
-The public latest release remains v1.0.16/code45/network23; Build157/network24
-will not join network23 sessions. The owner has asked that uncertain runtime
-reports be left unchanged until an exact determination is available.
+The private candidate is **1.0.18-test37 / code47 / OpenCE Build 157**.
+Local hosting and signed advertisements remain **network24**. The launcher
+now selects the client's startup join target: **24** by default, an exact
+version **11 through 24**, or **All compatible networks** (11-24). This choice
+controls native discovery and admission as well as the launcher list; it is
+not merely a directory filter. Versions 11-22 are limited to original Xbox-map
+PvP. Campaign co-op and Custom Edition require host version 23 or 24.
+
+The target is shared across PvP, co-op and imported data sets. Close the game,
+choose the target in the launcher, then launch again. It cannot change during
+a running game. Hosting never impersonates an older version. Catalog-reported
+players and servers are grouped by version and sorted busiest first; unsupported
+versions remain visible but unavailable. MQTT brokers are discovery mirrors,
+not additional protocol implementations. One public HTTPS catalog is verified;
+up to four compatible custom catalogs can be configured.
+
+Public v1.0.16/code45/network23 and the Test36 artifacts remain unchanged.
+This candidate has not been device-accepted. Source checks and compilation do
+not establish every historical server, map revision or co-op combination.
+Read [TEST37-PROGRESS.md](docs/TEST37-PROGRESS.md),
+[TEST37-UPSTREAM-INTEGRATION.md](docs/TEST37-UPSTREAM-INTEGRATION.md) and
+[TEST37-PLAYER-NOTES.md](docs/TEST37-PLAYER-NOTES.md). No publication, push,
+installation or game launch is authorized.
+
+Read `docs/ACTIVE-WORK-CHECKPOINT.md` and `docs/CURRENT-STATE.md` first. Preserve the accepted VR/mobile baselines and leave uncertain runtime reports unchanged until exact evidence is available.
 
 ## Current: v1.0.16 public release (2026-10-07)
 

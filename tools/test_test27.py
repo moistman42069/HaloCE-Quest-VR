@@ -60,15 +60,17 @@ players = read('source/game/players.c', 'latin-1')
 units = read('source/units/units.c', 'latin-1')
 bipeds = read('source/units/bipeds.c', 'latin-1')
 
-# --- 1. OpenCE's network version, exactly (the launcher reads the numbers)
+# --- 1. host advertisement and supported client range (the launcher reads these numbers)
 # (test29 follows OpenCE build 144, network 21: test_test29 checks it and
 # its files; the build 138 checks below hold for a network 20 tree)
 network = int(re.search(r'#define HALO_PORT_NETWORK_VERSION (\d+)\b', limits).group(1))
-assert network >= 20
-for name in ['', '_MINIMUM', '_MAXIMUM']:
-    assert re.search(r'#define HALO_PORT_NETWORK_VERSION%s %d\b' % (name, network), limits), 'exactly one version'
+assert network == 24
+assert re.search(r'#define HALO_PORT_NETWORK_VERSION_MINIMUM 11\b', limits)
+assert re.search(r'#define HALO_PORT_NETWORK_VERSION_MAXIMUM 24\b', limits)
+assert re.search(r'#define HALO_PORT_CAMPAIGN_NETWORK_VERSION_MINIMUM 23\b', limits)
+assert re.search(r'#define HALO_PORT_CUSTOM_EDITION_NETWORK_VERSION_MINIMUM 23\b', limits)
 assert '#define HALO_PORT_ADVERTISED_IN_PROGRESS_FLAG 0x02' in limits, "OpenCE's in-progress advertisement"
-print('PASS: network version %d exactly (20: OpenCE build 138), with its in-progress advertisement' % network)
+print('PASS: host protocol %d; compatible PvP client range 11..24; campaign and CE maps require 23+; in-progress advertisement' % network)
 
 # --- 2. upstream's co-op and lobby modules byte for byte
 UPSTREAM_138 = [
@@ -139,11 +141,13 @@ print('PASS: online gameplay as OpenCE: picked-up weapons readied, a swap drops 
 
 # --- 6. the join gate: this app's retired co-op hosts named, newer hosts "update"
 gate = fn(manager, 'network_game_client_advertised_game_compatible')
-assert 'theirs == ours && distributed' in gate, "OpenCE's exact match"
+assert 'network_protocol_target_allows_version(target, theirs)' in gate
+assert 'HALO_PORT_CAMPAIGN_NETWORK_VERSION_MINIMUM' in gate
+assert 'HALO_PORT_CUSTOM_EDITION_NETWORK_VERSION_MINIMUM' in gate
 assert '(theirs & 0xFF00) == 0xCE00' in gate and 'This version plays co-op as OpenCE does' in gate
-assert '(a newer OpenCE build)' in gate
+assert 'Choose All Compatible' in gate
 assert 'network_campaign_join_token' not in manager, 'no CE02 join'
-print('PASS: the join gate is OpenCE\'s (exact version); 1.0.8 co-op hosts and newer OpenCE builds are named')
+print('PASS: host-version target gate; PvP range, campaign/CE minimums and retired 1.0.8 co-op hosts are named')
 
 # --- 7. the launcher's co-op host: an OpenCE co-op lobby, 2-16 players, public through the signed lobby
 setup = fn(server, 'network_game_server_setup_game_from_playlist')
@@ -194,7 +198,7 @@ print('PASS: the launcher lists co-op (joinable at this version) and multiplayer
 
 # --- 9. version, identity, package markers
 assert int(re.search(r'versionCode Math\.max\((\d+), buildNumber\)', gradle).group(1)) >= 35
-assert int(re.search(r': "1\.0\.(\d+)"', gradle).group(1)) >= 9
+assert int(re.search(r': "1\.0\.(\d+)(?:-test\d+[a-z]?)?"', gradle).group(1)) >= 9
 assert 'HaloCE Quest test27 candidate 1.0.9' in frame or 'test27: OpenCE build 138 netcode, network 20' in frame
 assert 'candidate_at_least(args.label, 27)' in package
 print('PASS: test27 wiring (version 1.0.9 / 35, identity, package markers)')

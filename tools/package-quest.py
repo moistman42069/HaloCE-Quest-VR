@@ -76,7 +76,7 @@ NETWORK_STRING = re.compile(rb"Internet play|browser: |signalling|UPnP|upnp|STUN
 # This exact VR startup identity mentions "lobby" in its change summary. It is
 # not a networking path; keep all other runtime/import differences fatal.
 VR_BUILD_IDENTITIES = {
-    b"vr: HaloCE Quest test36 candidate 1.0.17-test36 code46 (OpenCE Build 157 / network 24; upstream analog trigger, Custom Edition spawn facing, PC vehicle set and solo lobby start; scope/turret behavior retained with aim-state diagnostics; Safe geometry and accepted VR settings retained)"
+    b"vr: HaloCE Quest test37 candidate 1.0.18-test37 code47 (OpenCE Build 157 / network 24; launcher network-version browser and population selector; upstream analog trigger, Custom Edition spawn facing, PC vehicle set and solo lobby start; scope/turret behavior retained; Safe geometry and accepted VR settings retained)"
 }
 
 
@@ -219,8 +219,10 @@ def main():
         if f"versionName='{version_name}'" not in badging:
             raise SystemExit("Wrong candidate version: " + str(path))
         version_code = re.search(r"versionCode='(\d+)'", badging)
-        if candidate_at_least(args.label, 36) and (version_code is None or int(version_code[1]) < 46):
-            raise SystemExit("Test36 Android version code must be at least 46: " + str(path))
+        required_candidate_code = 47 if candidate_at_least(args.label, 37) else 46
+        if candidate_at_least(args.label, 36) and (version_code is None or int(version_code[1]) < required_candidate_code):
+            raise SystemExit("Test" + ("37" if required_candidate_code == 47 else "36")
+                             + " Android version code must be at least " + str(required_candidate_code) + ": " + str(path))
         if args.stable and args.label == "1.0.16" and "versionCode='45'" not in badging:
             raise SystemExit("Wrong v1.0.16 Android version code: " + str(path))
         with zipfile.ZipFile(path) as archive:
@@ -242,7 +244,9 @@ def main():
             guest = archive.read("assets/halo_guest.elf")
             host = archive.read("lib/arm64-v8a/libmain.so")
             if candidate_at_least(args.label, 36):
-                for marker in [b"discovery network=%d broker_ready=%d", b"last_unverified_version=%d",
+                discovery_marker = (b"discovery target=%d (0=all compatible %d..%d), local_host=%d broker_ready=%d"
+                                    if candidate_at_least(args.label, 37) else b"discovery network=%d broker_ready=%d")
+                for marker in [discovery_marker, b"last_unverified_version=%d",
                                b"connection failed/closed at state=%d", b"ready (MQTT %d, retained=%d wildcard=%d)"]:
                     if marker not in guest:
                         raise SystemExit("Test36 discovery diagnostic missing: " + repr(marker))
@@ -319,7 +323,9 @@ def main():
                     raise SystemExit("Test33 VR candidate identity marker missing")
             if candidate_at_least(args.label, 34):
                 if vr:
-                    current_upstream_markers = ([b"OpenCE Build 157 / network 24", b"test36 candidate 1.0.17-test36 code46"]
+                    current_upstream_markers = ([b"OpenCE Build 157 / network 24", b"test37 candidate 1.0.18-test37 code47"]
+                        if candidate_at_least(args.label, 37) else
+                        [b"OpenCE Build 157 / network 24", b"test36 candidate 1.0.17-test36 code46"]
                         if candidate_at_least(args.label, 36) else
                         [b"OpenCE Build 148 / network 23", b"test35 candidate 1.0.16 code45"])
                     for marker in current_upstream_markers:
@@ -332,6 +338,21 @@ def main():
                             raise SystemExit("Test34 scope diagnosis marker missing: " + repr(marker))
                     if b"left trigger for right-handed play" not in archive.read("assets/guide/controls.txt"):
                         raise SystemExit("Test34 explicit scope zoom input missing from bundled control guide")
+            if candidate_at_least(args.label, 37):
+                for marker in [b"network client target: all compatible", b"network client target: exact",
+                               b"Campaign co-op requires network version", b"Custom Edition map requires network version",
+                               b"leaving pregame lobby: host version"]:
+                    if marker not in guest:
+                        raise SystemExit("Test37 native compatibility gate missing: " + repr(marker))
+                guide = re.sub(rb"\s+", b" ", archive.read("assets/guide/player-guide.txt"))
+                for marker in [b"1.0.18-test37", b"network-version population selector",
+                               b"Hosting remains on network 24"]:
+                    if marker not in guide:
+                        raise SystemExit("Test37 offline guide marker missing: " + repr(marker))
+                for marker in [b"Browse multiplayer servers", b"Browse campaign co-op servers",
+                               b"Network: All networks", b"unavailable; protocol not included"]:
+                    if marker not in dex:
+                        raise SystemExit("Test37 launcher network selector missing: " + repr(marker))
             if candidate_at_least(args.label, 36):
                 # Paragraph wrapping is presentation, not missing guidance.
                 guide = re.sub(rb"\s+", b" ", archive.read("assets/guide/player-guide.txt"))
@@ -451,6 +472,9 @@ def main():
                 "certificate_sha256": CERTIFICATE, "apks": records,
                 "source_zip": {"file": source.name, "sha256": sha(source)},
                 "native_host_version": network_value("HALO_PORT_NETWORK_VERSION"), "accepted_host_versions": list(range(network_value("HALO_PORT_NETWORK_VERSION_MINIMUM"), network_value("HALO_PORT_NETWORK_VERSION_MAXIMUM")+1)),
+                "client_default_target": 24, "client_all_compatible_target": 0,
+                "campaign_minimum_host_version": 23, "custom_edition_minimum_host_version": 23,
+                "legacy_client_scope": "original Xbox-map PvP; device cross-play validation pending",
                 "coop": "opence-native", "campaign_runtime_verified": False,
                 "avatar_protocol": 1, "avatar_message_ids": [37, 38], "avatar_prior_owner_report": "Owner confirmed earlier VR body movement was visible on flat Android; Test32 preserves avatar protocol v1 and native action handoff.",
                 "directory": "https://halo.milenko.org/v1/games.txt"}
@@ -489,6 +513,8 @@ def main():
         documents += ["TEST35-PLAYER-NOTES.md", "TEST35-UPSTREAM-INTEGRATION.md"]
     if candidate_at_least(args.label, 36) and not args.stable:
         documents += ["TEST36-PLAYER-NOTES.md", "TEST36-UPSTREAM-INTEGRATION.md"]
+    if candidate_at_least(args.label, 37) and not args.stable:
+        documents += ["TEST37-PLAYER-NOTES.md", "TEST37-UPSTREAM-INTEGRATION.md"]
     for doc in documents:
         shutil.copy2(ROOT / "docs" / doc, output / doc)
     for notice in ["CREDITS.md", "THIRD-PARTY-NOTICES.txt", "LICENSE.md"]:

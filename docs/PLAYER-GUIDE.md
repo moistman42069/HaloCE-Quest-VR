@@ -1,6 +1,6 @@
 # Halo CE Quest VR + Android player guide
 
-This guide describes the unpublished **test36 candidate / 1.0.17-test36 / OpenCE Build 157 / network 24**. It is provided for testing, not as a public release. For the current public build see [v1.0.16 release notes](RELEASE-1.0.16.md).
+This guide describes the unpublished **test37 candidate / 1.0.18-test37 / OpenCE Build 157 / network 24**. It is provided for testing, not as a public release. For the current public build see [v1.0.16 release notes](RELEASE-1.0.16.md).
 
 ## Install and update
 
@@ -22,9 +22,15 @@ The OpenCE multiplayer flow is in the game menus. Create/select a profile if pro
 
 In **Server Setup**, choose the server name, player limit, public/private listing and password as needed. PvP also has match rules; campaign has co-op options. Start the lobby, invite players or publish it, then start the match when ready. The campaign player selector offers limits up to 128; start with a small group because the maximum is not a performance guarantee.
 
-All players need **network 24** for this candidate, compatible maps/resources and a reachable network route. It cannot join network-23 sessions from public v1.0.16. Public listings do not relay traffic. NAT, firewall/VPN, mobile-data restrictions, Wi-Fi isolation, passwords, full lobbies and missing or different game content can prevent joining. If joining fails, record logs from both host and client and note the network type and selected game-data set.
+The launcher also has **Browse multiplayer servers** and **Browse campaign co-op servers**. Refresh, then open **Network** to compare reported server/player populations, busiest first. Choose **All compatible networks** (11-24) or an exact version from 11 through 24. The default is 24. This sets the native client's discovery and join target on the next game launch as well as filtering the launcher list. The selection is shared across both browsers and game-data sets. Close the game before changing it; it cannot switch while a game is running.
 
-The launcher no longer hosts or browses through its old server lists. It retains help, saved-invite access, game-data management, updates, controller/touch settings and logs. Copy a saved invite into the in-game Direct Link flow.
+Versions 11-22 are for original Xbox-map PvP only. Campaign co-op and Custom Edition require a version23 or version24 host. Hosting and signed listings from this app always use network24; choosing an older join target does not make a network24 host compatible with old clients. Versions below 11 and unknown future versions remain unavailable. This is backward client compatibility, not a replacement for every historical engine or compatibility with retail Halo PC/Custom Edition, MCC or retail Xbox networking.
+
+Counts are catalog reports, may be stale, and do not include every private/LAN game. Up to four supported HTTPS catalogs can be configured; only the default community catalog has been independently verified in this pass. MQTT brokers are mirrors of discovery, not separate selectable game protocols. The native in-game browser continues to use signed MQTT and LAN discovery with the selected client target.
+
+Compatible maps/resources and a reachable network route are still required. Public listings do not relay traffic. NAT, firewall/VPN, mobile-data restrictions, Wi-Fi isolation, passwords, full lobbies and missing or different game content can prevent joining. PvP directory joins can prompt for an installed map/game-data set; campaign joins do not automatically choose a matching revision. If joining fails, record logs from both host and client, host version, selected join target, map/revision and network type. Device cross-play testing is still required; no universal compatibility is claimed.
+
+The launcher server directory is a fallback list; it does not replace in-game host setup, LAN discovery or signed MQTT discovery. Saved invites, game-data management, updates, controller/touch settings, guides and logs remain available.
 
 ## Controls
 

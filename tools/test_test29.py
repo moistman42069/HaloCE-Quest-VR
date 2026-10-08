@@ -52,9 +52,11 @@ updater = read('port/android/app/src/main/java/com/halo/decomp/Updater.java')
 
 # --- 1. OpenCE's network version 21, exactly; its co-op, lobby and message files byte for byte
 network = int(re.search(r'#define HALO_PORT_NETWORK_VERSION (\d+)\b', limits).group(1))
-assert network in (21, 22, 23, 24)
-for name in ['', '_MINIMUM', '_MAXIMUM']:
-    assert re.search(r'#define HALO_PORT_NETWORK_VERSION%s %d\b' % (name, network), limits), name
+assert network == 24
+assert re.search(r'#define HALO_PORT_NETWORK_VERSION_MINIMUM 11\b', limits)
+assert re.search(r'#define HALO_PORT_NETWORK_VERSION_MAXIMUM 24\b', limits)
+assert re.search(r'#define HALO_PORT_CAMPAIGN_NETWORK_VERSION_MINIMUM 23\b', limits)
+assert re.search(r'#define HALO_PORT_CUSTOM_EDITION_NETWORK_VERSION_MINIMUM 23\b', limits)
 UPSTREAM_144 = [
     ('port/linux/game/coop_enemies.c', '64288778915265ec598613e1bb982f27330953b4b4f5dd7af41244e26c4a7f2a'),
     ('port/linux/game/coop_enemies.h', '8984e3e416e5f6fa1c743313e57fc5de87fc9a2a47be488be667865808a05a68'),
@@ -361,7 +363,7 @@ int main(void){
 
 # --- 8. version, identity, package markers
 assert int(re.search(r'versionCode Math\.max\((\d+), buildNumber\)', gradle).group(1)) >= 37
-assert int(re.search(r': "1\.0\.(\d+)"', gradle).group(1)) >= 11
+assert int(re.search(r': "1\.0\.(\d+)(?:-test\d+[a-z]?)?"', gradle).group(1)) >= 11
 assert 'HaloCE Quest test29 candidate 1.0.11 (OpenCE build 144 netcode, network 21;' in frame or \
     'test29: OpenCE build 144 netcode, network 21;' in frame
 assert 'candidate_at_least(args.label, 29)' in package

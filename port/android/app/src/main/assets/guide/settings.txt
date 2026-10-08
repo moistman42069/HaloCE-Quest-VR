@@ -371,6 +371,14 @@ clipboard) that lets whoever has it join over the internet; opening a
 link (or copying one before switching to the game) joins. Only people
 with the invite can join. Off keeps system link to the local network.
 
+network.protocol_version [integer]
+Default: 24
+Client protocol target: 0 lists/joins all compatible PvP versions 11-24;
+11-24 selects one exact server version. This build always hosts as 24.
+Campaign and Custom Edition map joins require version 23 or newer. This
+is read once when the game starts; restart after changing it. Invalid
+values fall back to the default, 24.
+
 network.join_from_clipboard [boolean]
 Default: true
 Join the game of an invite link found on the clipboard when the game

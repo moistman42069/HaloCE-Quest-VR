@@ -1,10 +1,54 @@
+## Test37 delivery checkpoint
+
+Local branch `test37-network-browser`; read `docs/TEST37-DELIVERY.md` for APK hashes, validation, source packaging and remaining device/ISO tests. No push/publication/install. Hosting stays24; client targets11-24 or0; old campaign/CE joins and later lobby transitions are rejected. Preserve public1.0.16 and prior Test36 artifacts.
+
+## Networking resumed; ISO validation deferred — 2026-10-08
+
+The owner explicitly resumed networking implementation, validation and private APK packaging. Original/Rev1/Rev2 ISO validation waits for the images later. No publication is authorized. The earlier pause is superseded for networking.
+
+Resume requirements:
+- Actual startup network/protocol switching from the launcher, with reported player/server populations sorted busiest first; a directory filter alone does not satisfy the request.
+- Support as many networks as evidence and validation permit. Investigate ChupathingyCE's existing Delta compatibility implementation and cross-play evidence before assuming older versions require separate engines. Its upstream claims versions 11–24 are additive after the version11 boundary; that claim is a lead, not validation of this port or every co-op combination.
+- Current source work implements client targets 0 (all compatible 11-24) or exact 11-24, with native discovery/admission gates; hosting and signed advertisements stay 24. Versions 11-22 are original Xbox-map PvP only; campaign/CE require 23 or 24. The earlier 23/24 host-profile and PC vehicle-guard plan is superseded. Final source is on local branch test37-network-browser; both APKs compiled and all62 suites have passing results. See TEST37-DELIVERY.md. This is not device acceptance.
+- Compare actual original/Rev1/Rev2 images once supplied: import detection, map/revision differences and reproducible compatibility failures. ISO revision is separate from network protocol. Do not claim universal ISO or network compatibility from source review alone.
+- Preserve working VR/mobile behavior, saves, original signing identity, prior APKs and public releases. No speculative fixes or unsupported selectable profiles. Explicitly report any remaining evidence/testing gap.
+- Latest verified upstream is OpenCE Build157 / 73dc01d / default network24. Public release remains v1.0.16. Test36 APKs remain preserved. Test37 final APK hashes and packaging gates are recorded in TEST37-DELIVERY.md; deliver privately and await owner testing.
+- Local WSL Ubuntu has clang/JDK/Android SDK and the existing debug keystore. Run checks in WSL, not Windows Python (which lacks clang/javac on PATH). Historical version tests were adjusted to accept private candidate suffixes. Final checks cover native admission and post-join lobby changes, Java persistence/counts and full launcher compilation; see the delivery record for the corrected test extractor and validation limits.
+- Relevant implementation files: NetworkProfile.java, ServerBrowser.java, native halo_port_active_network_version implementation/guards, tools/test_test37_launcher.py and tools/test_test37_network_profiles.py. Read git diff and both agents' findings before continuing. Read-only ChupathingyCE audit downloads are under ignored build/chupa-audit.
+
 # Active work checkpoint — v1.0.16 release (2026-10-07)
 
-## Active private candidate: test36 / 1.0.17-test36 / OpenCE Build 157 (2026-10-08)
+## Active private candidate: test37 / 1.0.18-test37 / OpenCE Build 157 (2026-10-08)
+
+The private candidate is **1.0.18-test37 / code47 / OpenCE Build 157**.
+Local hosting and signed advertisements remain **network24**. The launcher
+now selects the client's startup join target: **24** by default, an exact
+version **11 through 24**, or **All compatible networks** (11-24). This choice
+controls native discovery and admission as well as the launcher list; it is
+not merely a directory filter. Versions 11-22 are limited to original Xbox-map
+PvP. Campaign co-op and Custom Edition require host version 23 or 24.
+
+The target is shared across PvP, co-op and imported data sets. Close the game,
+choose the target in the launcher, then launch again. It cannot change during
+a running game. Hosting never impersonates an older version. Catalog-reported
+players and servers are grouped by version and sorted busiest first; unsupported
+versions remain visible but unavailable. MQTT brokers are discovery mirrors,
+not additional protocol implementations. One public HTTPS catalog is verified;
+up to four compatible custom catalogs can be configured.
+
+Public v1.0.16/code45/network23 and the Test36 artifacts remain unchanged.
+This candidate has not been device-accepted. Source checks and compilation do
+not establish every historical server, map revision or co-op combination.
+Read [TEST37-PROGRESS.md](TEST37-PROGRESS.md),
+[TEST37-UPSTREAM-INTEGRATION.md](TEST37-UPSTREAM-INTEGRATION.md) and
+[TEST37-PLAYER-NOTES.md](TEST37-PLAYER-NOTES.md). No publication, push,
+installation or game launch is authorized.
+
+## Superseded Test36 candidate archive: 1.0.17-test36 / network24 (2026-10-08)
 
 The public latest release remains v1.0.16 / Android code45 / network23. The
-current local work is an unpublished test36 candidate, version 1.0.17-test36,
-code46 / network24. It ports the applicable OpenCE Build 157 update and keeps
+preceding test36 candidate was version 1.0.17-test36,
+code46 / network24. It ported the applicable OpenCE Build157 update and kept
 the existing public release intact. The owner's public Android1.0.16 browser
 was empty on mobile data and Wi-Fi. A live broker sample found network24
 listings and no network23 listings; the supplied log cannot prove exactly
@@ -26,7 +70,7 @@ Both setup and Play screens also provide a persistent Halo-inspired font toggle
 and the user's Discord support DM; long instructions remain in the standard
 font. The updater was checked against current public release metadata and left
 unchanged.
-The pair is packaged for owner testing; see TEST36-DELIVERY.md for APK hashes,
+The pair was packaged for owner testing; see TEST36-DELIVERY.md for APK hashes,
 final source identity and validation limits. Await owner device results.
 See [TEST36-PROGRESS.md](TEST36-PROGRESS.md),
 [TEST36-UPSTREAM-INTEGRATION.md](TEST36-UPSTREAM-INTEGRATION.md), and

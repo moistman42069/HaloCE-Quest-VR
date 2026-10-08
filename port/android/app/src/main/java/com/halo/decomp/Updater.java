@@ -41,7 +41,7 @@ final class Updater {
     static void show(Activity a,File gameRoot) {
         android.widget.LinearLayout box=new android.widget.LinearLayout(a);box.setOrientation(1);box.setPadding(28,16,28,16);
         TextView text=new TextView(a);text.setText(prefs(a).getString("status","No update check yet.")+"\n\nInstalled: "+BuildConfig.VERSION_NAME+" ("+BuildConfig.VERSION_CODE+")\n"+BuildConfig.APPLICATION_ID+
-            "\nNetwork: v"+BuildConfig.HALO_NETWORK_VERSION+" (OpenCE's), multiplayer and co-op alike"+
+            "\nJoin target: "+NetworkProfile.label(NetworkProfile.selected(a))+"; hosting: network 24. Legacy 11–22 targets support Xbox-map PvP; co-op and Custom Edition use 23–24."+
             "\nCo-op: OpenCE's, up to 128 players, with OpenCE players too\n\nThe launcher checks for compatible project releases and upstream network changes. A project update includes the integrated engine, VR, co-op and launcher together. New upstream changes require integration before they can update this mod safely. Upstream netcode: OpenCE build 157 (network 24), with its co-op, CE map checksum matching, signed public discovery, Custom Edition fixes, PC vehicle set, analog trigger pressure, and spatialized world stereo audio.\n\nDownload verifies compatibility metadata, SHA-256, package, newer Android version and the current signing certificate. The current APK, active configuration and touch preferences are backed up privately before Android opens its installer. Game maps and saves are preserved. Android asks you to approve installation; rollback may require ADB. Test candidates are never offered as public updates.");box.addView(text);
         android.widget.CheckBox automatic=new android.widget.CheckBox(a);automatic.setText("Check automatically when the launcher opens (every 6 hours)");automatic.setChecked(prefs(a).getBoolean("automatic",true));box.addView(automatic);
         automatic.setOnCheckedChangeListener((b,v)->prefs(a).edit().putBoolean("automatic",v).apply());
@@ -62,7 +62,7 @@ final class Updater {
             String source=new String(android.util.Base64.decode(header.getString("content"),android.util.Base64.DEFAULT),StandardCharsets.UTF_8);
             int version=UpdatePolicy.upstreamVersion(source);
             if(version<1)return "Upstream protocol format needs review.";
-            return version>BuildConfig.HALO_NETWORK_MAXIMUM ? "Upstream network v"+version+" needs project integration before it is safe for this build. Compatible servers remain playable." : "Upstream network v"+version+" is within this build's supported range.";
+            return NetworkProfile.supported(version) ? "Upstream network v"+version+" is available in the launcher network selector." : "Upstream network v"+version+" needs a matching project implementation. Compatible servers remain playable.";
         }catch(Exception e){return "Upstream status unavailable (offline or service limit).";}
     }
     private static void message(Activity a,String text) {a.runOnUiThread(()->{if(!a.isFinishing()&&!a.isDestroyed())new GamepadNavigation.Builder(a).setTitle("Project update").setMessage(text).setPositiveButton("OK",null).show();});}

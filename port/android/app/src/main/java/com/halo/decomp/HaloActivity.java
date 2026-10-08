@@ -36,6 +36,7 @@ public class HaloActivity extends SDLActivity {
         java.io.File shared = new java.io.File("/sdcard/Documents/HaloCE");
         if (BuildConfig.APPLICATION_ID.endsWith(".vr") && new java.io.File(shared, "maps/ui.map").isFile()) gameRoot = shared;
         gameRoot=GameDataLibrary.activeRoot(gameRoot);
+        NetworkProfile.gameStarted(gameRoot);
         if (gameRoot != null) { new java.io.File(gameRoot, "coop_status.txt").delete(); new java.io.File(gameRoot, "pvp_status.txt").delete(); }
         super.onCreate(savedInstanceState);
         if (gameRoot != null) { pvpPublisher = new PvpPublisher(this, gameRoot); }

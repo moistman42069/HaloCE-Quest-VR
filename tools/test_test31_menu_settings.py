@@ -130,7 +130,10 @@ static int config_write_file(const char *path, const char *text)
  if(config_test_fail_write){errno=ENOSPC;return 0;}
  return config_write_file_actual(path,text);
 }
-''', 1).replace('#include "platform.h"', 'static void platform_log(const char *text, ...) {(void)text;}').replace('#include <SDL3/SDL.h>', '')
+''', 1).replace('#include "platform.h"', 'static void platform_log(const char *text, ...) {(void)text;}').replace(
+    '#include "halo_port_limits.h"',
+    '#define HALO_PORT_NETWORK_VERSION 24\n#define HALO_PORT_NETWORK_VERSION_MINIMUM 11\n#define HALO_PORT_NETWORK_VERSION_MAXIMUM 24'
+).replace('#include <SDL3/SDL.h>', '')
 config_test = r'''
 #include <assert.h>
 static void reject_and_retry(const char *name,const char *changed,const char *expected)
@@ -311,6 +314,11 @@ int main(void){
  legacy.friendly_fire=99;legacy.radar_players=255;legacy.loadout=255;legacy.no_map_weapons=255;
  put(&legacy);assert(playlist_profile_options_from_block(disk,&loaded)&&game_variant_options_valid(&loaded));
  assert(loaded.primary_weapon==6&&loaded.secondary_weapon==6&&loaded.no_map_weapons==1);
+ /* Importing a PC vehicle-set profile preserves its bytes and does not depend on client targeting. */
+ struct game_variant_options imported=original;imported.vehicle_set[0]=VARIANT_VEHICLE_SET_PC;
+ put(&imported);byte before[SAVED_GAME_FILE_BLOCK_SIZE];memcpy(before,disk,sizeof(before));
+ assert(playlist_profile_options_from_block(disk,&loaded));assert(!memcmp(before,disk,sizeof(before)));
+ assert(loaded.vehicle_set[0]==VARIANT_VEHICLE_SET_PC);
  playlist_profile_write_options.time_limit=7;playlist_profile_globals.thread=(void*)1;
  playlist_profile_save_with_options(32,&variant,&original);
  assert(polls==2&&disposed==1&&write_count==1&&cleanup_count==1&&!memcmp(&original,&written,sizeof(written)));

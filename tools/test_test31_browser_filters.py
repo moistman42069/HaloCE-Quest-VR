@@ -124,7 +124,11 @@ int main(void)
     keys={node.get('setting') for node in xml.iter('widget') if node.get('setting')}
     assert keys=={'browser.show_empty','browser.show_full','browser.engine','browser.teams','browser.passwords','browser.maps'}
     assert not any(node.get('event')=='deleted' for node in xml.iter('on')), 'Cancel must not save edits'
-    assert 'listing.version != HALO_PORT_NETWORK_VERSION' in p2p
+    version_filter=function(p2p,'listing_version_matches_target')
+    assert 'HALO_PORT_NETWORK_VERSION_MINIMUM' in version_filter
+    assert 'HALO_PORT_NETWORK_VERSION_MAXIMUM' in version_filter
+    assert '(target == 0 || version == target)' in version_filter
+    assert 'HALO_PORT_NETWORK_VERSION' in function(p2p,'listing_make')
     assert 'game->locked' in function(menu,'lobby_browser_select')
     assert 'p2p_listing_unlock' in function(menu,'password_screen_join')
     assert '!memcmp(games[index].xnaddr + 2, lobby_browser.identifier' in function(menu,'lobby_browser_joined_game')
