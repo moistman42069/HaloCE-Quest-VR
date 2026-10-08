@@ -2936,8 +2936,10 @@ static void update_aim_pose(void)
 				rotate(one_hand_orientation, xr_forward, one_hand_forward);
 				rotate(one_hand_orientation, xr_right, one_hand_right);
 				rotate(one_hand_orientation, xr_up, one_hand_up);
-				dot = PIN(one_hand_forward[0] * between[0] + one_hand_forward[1] * between[1] +
-					one_hand_forward[2] * between[2], -1.0f, 1.0f);
+				dot = one_hand_forward[0] * between[0] + one_hand_forward[1] * between[1] +
+					one_hand_forward[2] * between[2];
+				if (dot > 1.0f) dot = 1.0f;
+				if (dot < -1.0f) dot = -1.0f;
 				line_right = one_hand_right[0] * between[0] + one_hand_right[1] * between[1] + one_hand_right[2] * between[2];
 				line_up = one_hand_up[0] * between[0] + one_hand_up[1] * between[1] + one_hand_up[2] * between[2];
 				if (isfinite(dot) && isfinite(line_right) && isfinite(line_up))
