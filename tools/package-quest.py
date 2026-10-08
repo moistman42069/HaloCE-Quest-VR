@@ -333,7 +333,8 @@ def main():
                     if b"left trigger for right-handed play" not in archive.read("assets/guide/controls.txt"):
                         raise SystemExit("Test34 explicit scope zoom input missing from bundled control guide")
             if candidate_at_least(args.label, 36):
-                guide = archive.read("assets/guide/player-guide.txt")
+                # Paragraph wrapping is presentation, not missing guidance.
+                guide = re.sub(rb"\s+", b" ", archive.read("assets/guide/player-guide.txt"))
                 for marker in [b"1.0.17-test36", b"OpenCE Build 157 / network 24",
                                b"Two-hand aim centering diagnostics",
                                b"Scope, aim, turret and vehicle behavior remain unchanged",
