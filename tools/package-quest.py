@@ -393,7 +393,9 @@ def main():
                 if b"GyroAim;" not in dex or b"GyroPolicy;" not in dex:
                     raise SystemExit("Test28 gyro aim missing from APK")
             if candidate_at_least(args.label, 27):
-                for marker in [b"co-op: lobby open: ", b"(a newer OpenCE build)", b"This version plays co-op as OpenCE does"]:
+                version_guidance = (b"The selected network target is %u, but this host uses version %u."
+                                    if candidate_at_least(args.label, 37) else b"(a newer OpenCE build)")
+                for marker in [b"co-op: lobby open: ", version_guidance, b"This version plays co-op as OpenCE does"]:
                     if marker not in guest: raise SystemExit("Test27 OpenCE co-op hosting marker missing: " + repr(marker))
                 for marker in [b"Co-op (network v", b"Directory classified for the ", b"Up to "]:
                     if marker not in dex: raise SystemExit("Test27 launcher co-op classification missing: " + repr(marker))
