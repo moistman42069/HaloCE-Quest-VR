@@ -171,6 +171,15 @@ with tempfile.TemporaryDirectory() as folder:
     apk(flat, elf_fixture(symbols=b'lobby_add_player\0lobby_join.0\0'))
     with contextlib.redirect_stdout(io.StringIO()):
         packager.networking_parity(vr, flat)  # only .strtab differs: must pass
+    identity = next(iter(packager.VR_BUILD_IDENTITIES))
+    apk(vr, elf_fixture(runtime=b'browser: shared\0network.online\0' + identity + b'\0'), vr=True)
+    with contextlib.redirect_stdout(io.StringIO()):
+        packager.networking_parity(vr, flat)  # exact reviewed VR startup identity only
+    apk(vr, elf_fixture(runtime=b'browser: shared\0network.online\0' + identity + b' altered\0'), vr=True)
+    parity_reject(vr, flat, 'Networking differs')
+    apk(vr, valid, vr=True, host=elf_fixture(runtime=b'browser: shared\0network.online\0' + identity + b'\0'))
+    parity_reject(vr, flat, 'lib/arm64-v8a/libmain.so')
+    apk(vr, valid, vr=True)
     apk(flat, elf_fixture(runtime=b'browser: REGRESSED\0network.online\0'))
     parity_reject(vr, flat, 'Networking differs')
     apk(flat, elf_fixture(runtime=b'browser: shared\0network.other\0'))

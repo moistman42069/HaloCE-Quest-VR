@@ -73,6 +73,11 @@ def network_value(name):
 VR_ONLY_ENTRIES = {"lib/arm64-v8a/libopenxr_loader.so"}
 NETWORK_STRING = re.compile(rb"Internet play|browser: |signalling|UPnP|upnp|STUN|stun\.|tunnel|invite|network\.[a-z_]+|"
                             rb"halo://join|p2p|lobby|games\.txt|joining|join requested|Multiplayer join")
+# This exact VR startup identity mentions "lobby" in its change summary. It is
+# not a networking path; keep all other runtime/import differences fatal.
+VR_BUILD_IDENTITIES = {
+    b"vr: HaloCE Quest test36 candidate 1.0.17-test36 code46 (OpenCE Build 157 / network 24; upstream analog trigger, Custom Edition spawn facing, PC vehicle set and solo lobby start; scope/turret behavior retained with aim-state diagnostics; Safe geometry and accepted VR settings retained)"
+}
 
 
 def candidate_at_least(label, number, letter=""):
@@ -163,6 +168,8 @@ def networking_parity(vr_path, flat_path):
                 b = {x for x in runtime_elf_strings(flat.read(member)) if NETWORK_STRING.search(x)}
             except ValueError as error:
                 raise SystemExit("Cannot verify networking parity in " + member + ": " + str(error)) from error
+            if member == "assets/halo_guest.elf":
+                a -= VR_BUILD_IDENTITIES
             if a != b:
                 raise SystemExit("Networking differs between the Quest and Android " + member + ": VR-only "
                                  + repr(sorted(a - b)[:8]) + ", flat-only " + repr(sorted(b - a)[:8]))
@@ -183,7 +190,7 @@ def main():
     parser.add_argument("--label", default="test17")
     parser.add_argument("--version-name", help="Internal APK version for a private candidate; does not authorize publication")
     parser.add_argument("--stable", action="store_true", help="Use semantic release identity; requires owner publication authorization")
-    parser.add_argument("--runtime-source", help="Exact build commit when later commits change documentation only")
+    parser.add_argument("--runtime-source", help="Exact build commit when later commits change only documentation or packaging tools")
     args = parser.parse_args()
     if not re.fullmatch(r"[A-Za-z0-9_.-]+", args.label):
         parser.error("label must contain letters, digits, underscore or dash")
