@@ -405,8 +405,11 @@ def main():
                 "avatar_protocol": 1, "avatar_message_ids": [37, 38], "avatar_prior_owner_report": "Owner confirmed earlier VR body movement was visible on flat Android; Test32 preserves avatar protocol v1 and native action handoff.",
                 "directory": "https://halo.milenko.org/v1/games.txt"}
     (output / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
+    # The compatibility record identifies the source used to build the APKs;
+    # documentation-only commits can then add final asset hashes without
+    # changing the updater metadata and creating a self-referential checksum.
     compatibility = {"schema": 1, "project": "moistman42069/HaloCE-Quest-VR",
-        "tag": release_tag, "source_commit": commit, "minimum_app_code": 15,
+        "tag": release_tag, "source_commit": runtime_commit if args.stable else commit, "minimum_app_code": 15,
         "save_policy": "preserve", "config_policy": "preserve", "vr_and_coop_integrated": True,
         "native_minimum": network_value("HALO_PORT_NETWORK_VERSION_MINIMUM"),
         "native_maximum": network_value("HALO_PORT_NETWORK_VERSION_MAXIMUM"), "coop": "opence-native",
