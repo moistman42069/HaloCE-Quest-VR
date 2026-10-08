@@ -1,4 +1,9 @@
-# Test35 private candidate delivery record
+# Test35 pre-release candidate artifact record
+
+These test35-named APKs were the private candidate inputs before the v1.0.16
+stable-identity rebuild. They are not the public release assets. Use
+[`RELEASE-PROVENANCE-1.0.16.md`](RELEASE-PROVENANCE-1.0.16.md) for the final
+published filenames and hashes.
 
 ## Candidate identity
 

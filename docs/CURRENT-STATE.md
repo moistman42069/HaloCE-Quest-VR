@@ -1,6 +1,21 @@
 # Current development state
 
-## Current private candidate: Test35 OpenCE Build 148 (2026-10-07)
+## Current published release: v1.0.16 (2026-10-07)
+
+Release **Halo CE Quest VR + Android 1.0.16** is published as Latest from
+OpenCE Build 148 / network 23, version code 45. The release includes Android
+and Quest APKs plus updater metadata; prior releases remain intact and the
+GitHub About description is unchanged. Release notes, hashes and build
+provenance are in [RELEASE-1.0.16.md](RELEASE-1.0.16.md) and
+[RELEASE-PROVENANCE-1.0.16.md](RELEASE-PROVENANCE-1.0.16.md).
+
+The exact v1.0.16 APK pair has no recorded Android or Quest device session.
+Publication does not imply device acceptance. The most recent owner-confirmed
+platform baselines remain Test31b VR and Test31c Android; Test35 carries those
+settings/touch baselines forward. Continue using logs and device reports to
+validate new runtime behavior.
+
+## Test35 implementation summary (now released)
 
 Test35 targets Android/Quest version 1.0.16/code45. It ports applicable
 OpenCE Build148 changes while retaining network23: tag validation corrects
@@ -13,18 +28,15 @@ cache/BSP validation, map identity, capacity/co-op/camera fixes, server-row
 pointer selection, scope diagnostics/alignment and the owner-accepted Android
 touch / VR settings baselines remain. See [TEST35-PROGRESS.md](TEST35-PROGRESS.md),
 [TEST35-UPSTREAM-INTEGRATION.md](TEST35-UPSTREAM-INTEGRATION.md), and
-[TEST35-DELIVERY.md](TEST35-DELIVERY.md). This is a private test candidate;
-automated checks and APK builds do not establish device acceptance. No public
-release, push, install or game launch is authorized. The private Test35 APKs
-and matching archives are packaged and awaiting owner testing; exact hashes
-and host validation are in [TEST35-DELIVERY.md](TEST35-DELIVERY.md).
+[TEST35-DELIVERY.md](TEST35-DELIVERY.md) for the engineering record.
 
 SPV1 remains experimental. Its listed map files exceed 128 MiB but fit the
 current Custom Edition parser's 384 MiB ordinary / 576 MiB upgraded file caps;
 the launcher explains that size alone does not establish gameplay support.
 
 Preserve the owner-confirmed baselines: Test31b Quest VR settings and Test31c
-flat Android touch/gameplay. The public v1.0.12 remains unchanged at network21.
+flat Android touch/gameplay. The prior v1.0.12 release remains archived at
+network 21; it is not compatible with v1.0.16/network 23.
 
 ## Latest owner-accepted private result: Test31c Android; Test31b VR
 
@@ -59,7 +71,7 @@ work and requests that specific VR fix plus both replacement APKs. Code40
 remains the accepted VR comparison baseline, with this glass issue now noted.
 Test31c/code41 device acceptance remains pending for both editions.
 
-## Current GitHub latest release: v1.0.12 (test30 APKs)
+## Historical public release: v1.0.12 (test30 APKs)
 
 **Published as Latest on 2026-10-07** from `D:\HaloQuest\builds\test30-20261007-v1.0.12`. Version **1.0.12 / code 38**, OpenCE Build 144/network 21. This incremental release fixes Quest face-button behavior in VR menus and adds an optional remembered name for campaign co-op hosts; prior release features remain. See [`RELEASE-1.0.12.md`](RELEASE-1.0.12.md), [`RELEASE-PROVENANCE-1.0.12.md`](RELEASE-PROVENANCE-1.0.12.md), and [`TEST30-DELIVERY.md`](TEST30-DELIVERY.md). Previous releases remain intact; the GitHub About description was not changed.
 

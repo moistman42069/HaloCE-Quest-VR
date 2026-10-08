@@ -1,8 +1,11 @@
 # Test35 progress — OpenCE Build 148
 
-**Status:** both APKs and matching source/build archives are packaged as a
-private candidate. Host checks and APK validation passed; Android/Quest device
-acceptance remains pending. This is not a public release.
+**Status:** Test35 is the engineering record for the published v1.0.16/code45
+release. Its original candidate APK hashes below are historical and are not
+the stable-identity release APK hashes; use
+[`RELEASE-PROVENANCE-1.0.16.md`](RELEASE-PROVENANCE-1.0.16.md) for the public
+assets. Host checks passed, while device acceptance for the exact public pair
+remains unrecorded.
 
 ## Candidate identity
 

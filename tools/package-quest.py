@@ -172,6 +172,8 @@ def main():
             raise SystemExit("Wrong package or ABI: " + str(path))
         if f"versionName='{version_name}'" not in badging:
             raise SystemExit("Wrong candidate version: " + str(path))
+        if args.stable and args.label == "1.0.16" and "versionCode='45'" not in badging:
+            raise SystemExit("Wrong v1.0.16 Android version code: " + str(path))
         with zipfile.ZipFile(path) as archive:
             if archive.testzip() is not None:
                 raise SystemExit("APK ZIP checksum failure")
@@ -263,6 +265,15 @@ def main():
                             raise SystemExit("Test34 scope diagnosis marker missing: " + repr(marker))
                     if b"left trigger for right-handed play" not in archive.read("assets/guide/controls.txt"):
                         raise SystemExit("Test34 explicit scope zoom input missing from bundled control guide")
+            if args.stable and args.label == "1.0.16":
+                if b"OpenCE build 148 (network 23)" not in dex:
+                    raise SystemExit("v1.0.16 updater does not identify OpenCE Build 148 / network 23")
+                player_guide = archive.read("assets/guide/player-guide.txt")
+                if b"Halo CE Quest VR + Android 1.0.16" not in player_guide or b"network version 23" not in player_guide:
+                    raise SystemExit("v1.0.16 offline guide is stale or missing")
+                if vr and (b"HaloCE Quest 1.0.16 release" not in guest or
+                           b"device acceptance not recorded" not in guest):
+                    raise SystemExit("v1.0.16 VR release identity or acceptance status is missing")
             if candidate_at_least(args.label, 28):
                 # a release build (HALO_RELEASE, as OpenCE's): checks logged, play goes on
                 if b"(release build)" not in guest:
@@ -344,9 +355,9 @@ def main():
     source = output / f"HaloCE-Quest-{args.label}-source.zip"
     subprocess.run(["git", "archive", "--format=zip", "--prefix=halo-ce-quest/", "-o", str(source), commit], cwd=ROOT, check=True)
     manifest = {"candidate": args.label, "created_utc": datetime.now(timezone.utc).isoformat(),
-                "source_commit": commit, "runtime_source_commit": runtime_commit, "branch": branch, "runtime_accepted": args.stable,
-                "publication": "owner-authorized 1.0 baseline" if args.stable else "held pending owner candidate testing and approval",
-                "prior_device_report": "Public 1.0 preserves owner-authorized test18; current candidate requires separate device testing and publication approval",
+                "source_commit": commit, "runtime_source_commit": runtime_commit, "branch": branch, "runtime_accepted": False,
+                "publication": "owner-authorized public release" if args.stable else "held pending owner candidate testing and approval",
+                "prior_device_report": "Device acceptance for this exact APK pair is not recorded; publication authorization does not imply device acceptance",
                 "certificate_sha256": CERTIFICATE, "apks": records,
                 "source_zip": {"file": source.name, "sha256": sha(source)},
                 "native_host_version": network_value("HALO_PORT_NETWORK_VERSION"), "accepted_host_versions": list(range(network_value("HALO_PORT_NETWORK_VERSION_MINIMUM"), network_value("HALO_PORT_NETWORK_VERSION_MAXIMUM")+1)),

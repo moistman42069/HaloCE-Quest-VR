@@ -1,19 +1,18 @@
 # Agent and contributor continuation
 
-## Current: Test35 OpenCE Build 148 integration (2026-10-07)
+## Current: v1.0.16 public release (2026-10-07)
 
 Read `docs/ACTIVE-WORK-CHECKPOINT.md`, `docs/CURRENT-STATE.md`,
-`docs/TEST35-PROGRESS.md`, `docs/TEST35-UPSTREAM-INTEGRATION.md`, and
-`docs/TEST35-DELIVERY.md`. The private candidate targets Android/Quest
-1.0.16/code45. It ports Build148's applicable particle-radius tag corrections,
-runtime point-physics guard, and native build/error halt-screen details while
-retaining network23. Build148 does not change the network protocol. Preserve
-Test34's map/cache/BSP validation, co-op/camera safeguards, cursor selection,
-scope diagnostics/alignment, and the owner-accepted Test31b VR settings and
-Test31c Android touch/gameplay. Test35's two APKs and matching archives have
-been built and packaged; consult `TEST35-DELIVERY.md` for exact hashes and
-automated results. Await phone and Quest testing; automated checks are not
-device acceptance. Do not push, publish, install or launch the game.
+`docs/RELEASE-1.0.16.md`, `docs/RELEASE-PROVENANCE-1.0.16.md`,
+`docs/TEST35-PROGRESS.md`, and `docs/TEST35-UPSTREAM-INTEGRATION.md`.
+The public latest release is Android/Quest 1.0.16/code45, OpenCE Build 148,
+network23. Build148 adds particle-radius tag corrections, a point-physics
+guard, and clearer native halt-screen details; it does not change the network
+protocol. Preserve Test34 map/cache/BSP validation, co-op/camera safeguards,
+cursor selection, scope diagnostics/alignment, and the owner-accepted Test31b
+VR settings and Test31c Android touch/gameplay. The exact v1.0.16 APK pair has
+no recorded device session, so distinguish release publication from device
+acceptance. Keep older releases and the repository About description intact.
 
 This Test35 entry is the active handoff. Older Test31/Test32 "Active" headings
 below are retained historical notes and are superseded; do not resume their
@@ -60,7 +59,7 @@ menu functionality, superseding the narrower browser/setup approval; see
 installation or game launch is authorized. Public release pointers below are
 historical/public state, not permission to release this work.
 
-## Current GitHub latest release: v1.0.12 (test30 APKs)
+## Historical GitHub release: v1.0.12 (test30 APKs)
 
 **Published release: test30 (version 1.0.12 / code 38),** branch `test30-profiles-coopname`, on v1.0.11. Quest A/X/Y now match the button labels in VR menus (X deletes a profile; B backs out once), with gameplay mappings unchanged. Campaign hosting accepts an optional remembered server name. The network remains OpenCE Build 144 / version 21. The exact APK pair has no recorded device session at publication. See `docs/RELEASE-1.0.12.md`, `docs/RELEASE-PROVENANCE-1.0.12.md`, `docs/TEST30-PROGRESS.md` and `docs/TEST30-DELIVERY.md`.
 

@@ -1,6 +1,9 @@
-# Active work checkpoint — Test35 private candidate (2026-10-07)
+# Active work checkpoint — v1.0.16 release (2026-10-07)
 
-Read [TEST35-PROGRESS.md](TEST35-PROGRESS.md),
+The user authorized and the repository published [v1.0.16](https://github.com/moistman42069/HaloCE-Quest-VR/releases/tag/v1.0.16) as Latest. It is OpenCE Build 148 / network 23, Android code 45. Release notes and exact hashes are in [RELEASE-1.0.16.md](RELEASE-1.0.16.md) and [RELEASE-PROVENANCE-1.0.16.md](RELEASE-PROVENANCE-1.0.16.md). Prior releases and the GitHub About description are preserved. The exact APK pair has no recorded device session; do not describe publication as runtime acceptance.
+
+The release source and implementation record are:
+[TEST35-PROGRESS.md](TEST35-PROGRESS.md),
 [TEST35-UPSTREAM-INTEGRATION.md](TEST35-UPSTREAM-INTEGRATION.md), and
 [TEST35-DELIVERY.md](TEST35-DELIVERY.md). Test35 targets Android/Quest 1.0.16,
 code45, with official OpenCE Build148 behavior and network23. It adds
@@ -9,12 +12,12 @@ zero-radius fallback, and native halt-screen platform/build and recent-error
 details. Build148 does not change the network protocol. It preserves Test34's
 CE map validation, network-23 identity, co-op/camera safeguards, server-row
 pointer hover, scope diagnostics and alignment, plus the owner-accepted Test31b
-VR settings and Test31c Android touch/gameplay. Both APKs and matching source/
-build archives are packaged; hashes and automated results are recorded in
-TEST35-DELIVERY.md.
-Await owner device testing of both APKs, representative maps/effects, error
-logging and network-23 multiplayer. No device acceptance, push, release,
-install or game launch is implied. Keep public v1.0.12 intact.
+VR settings and Test31c Android touch/gameplay. The original test35-named
+candidate APKs and archives were packaged before the stable v1.0.16 rebuild;
+their hashes are historical and are not the public release hashes.
+Device testing of both APKs, representative maps/effects, error logging and
+network-23 multiplayer remains useful follow-up. The public v1.0.12 remains
+intact as an older release but uses network 21.
 
 SPV1's ten listed maps are 157-253 MiB each, above the often-quoted 128 MiB
 figure but within the current Custom Edition reader's 384 MiB ordinary / 576
@@ -84,7 +87,7 @@ launcher equivalents alone do not satisfy this scope.
 Work through the subsystems sequentially; acknowledgment alone is not completion.
 Public/accepted build pointers below remain unchanged.
 
-The latest public release is [v1.0.12](https://github.com/moistman42069/HaloCE-Quest-VR/releases/tag/v1.0.12), built from test30. Preserve v1.0.11 and all earlier releases. Provenance and APK hashes are in [RELEASE-PROVENANCE-1.0.12.md](RELEASE-PROVENANCE-1.0.12.md). The repository About description was not changed.
+Historical prior release: [v1.0.12](https://github.com/moistman42069/HaloCE-Quest-VR/releases/tag/v1.0.12), built from test30 on network 21. It remains preserved but is not compatible with v1.0.16/network 23. See the current release pointer at the top of this checkpoint.
 
 ## Current Test31 implementation status
 
@@ -187,7 +190,7 @@ Private candidate **test21b** (1.0.2 / code 27, replacing test21 code 26, branch
 
 ## Historical hand and IK report (2026-10-04)
 
-- At the time, the latest public release was [`v1.0.2`](https://github.com/moistman42069/HaloCE-Quest-VR/releases/tag/v1.0.2), the exact test20e APK pair, Android version code 25. This is historical; the current release is v1.0.12 above.
+- At the time, the latest public release was [`v1.0.2`](https://github.com/moistman42069/HaloCE-Quest-VR/releases/tag/v1.0.2), the exact test20e APK pair, Android version code 25. This is historical; see the current release pointer at the top of this checkpoint.
 - The original report concerned a Quest/VR rendering regression: cut-off/floating hands and arm IK not following body turns. Keep the evidence below for reference; reopen only if new reports point to a regression.
 - Do not assume the public v1.0.2 binary caused the symptoms. The supplied logs include both a test20d-labelled runtime and a test20e-labelled runtime. Match APK hashes/version codes and source revisions before calling this a public-release regression.
 - The owner later authorized test29 as v1.0.11 and test30 as v1.0.12. The exact v1.0.12 pair still needs device validation; see the current release section above and `TEST30-DELIVERY.md`.
