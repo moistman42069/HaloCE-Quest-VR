@@ -1,40 +1,62 @@
-# Halo CE Quest VR + Android
+<p align="center">
+  <img src=".github/decomplogo.png" alt="Halo Combat Evolved VR — OpenCE port" width="460" />
+</p>
 
-**Latest release: [v1.0.18](https://github.com/moistman42069/HaloCE-Quest-VR/releases/tag/v1.0.18)** · OpenCE Build 157 · network 24
+<h1 align="center">Halo CE Quest VR + Android</h1>
 
-Halo CE for standalone Meta Quest VR and flat Android. The release includes an in-game OpenCE server browser and campaign co-op, tracked VR body and hands, customizable Android touch/gamepad controls, and a launcher for game-data management and updates. It does not include Halo game data; provide your own supported Xbox game files.
+<p align="center"><strong>Halo: Combat Evolved on standalone Meta Quest VR and Android</strong><br />An unofficial community port built on OpenCE.</p>
 
-## Downloads and installation
+<p align="center">
+  <a href="https://github.com/moistman42069/HaloCE-Quest-VR/releases/tag/v1.0.18"><strong>Download latest release · v1.0.18</strong></a>
+  &nbsp;·&nbsp;
+  <a href="docs/RELEASE-1.0.18.md">Release notes</a>
+  &nbsp;·&nbsp;
+  <a href="https://github.com/OpenCommunityEdition/OpenCE">OpenCE upstream</a>
+</p>
+
+---
+
+## Download and install
+
+**v1.0.18 · OpenCE Build 157 · network version 24**
 
 | Device | Download |
 | --- | --- |
-| Android phone/tablet — flat play | [HaloCE-Android-1.0.18.apk](https://github.com/moistman42069/HaloCE-Quest-VR/releases/download/v1.0.18/HaloCE-Android-1.0.18.apk) |
-| Meta Quest — standalone VR | [HaloCE-Quest-1.0.18.apk](https://github.com/moistman42069/HaloCE-Quest-VR/releases/download/v1.0.18/HaloCE-Quest-1.0.18.apk) |
+| **Meta Quest** · standalone VR | [HaloCE-Quest-1.0.18.apk](https://github.com/moistman42069/HaloCE-Quest-VR/releases/download/v1.0.18/HaloCE-Quest-1.0.18.apk) |
+| **Android phone or tablet** · flat play | [HaloCE-Android-1.0.18.apk](https://github.com/moistman42069/HaloCE-Quest-VR/releases/download/v1.0.18/HaloCE-Android-1.0.18.apk) |
 
-Both APKs are ARM64 and require Android 9/API 28 or later. Enable app installation from your browser/file manager on Android. For Quest, enable Developer Mode and sideload the Quest APK with SideQuest or ADB. Install over the existing project app to preserve saves, settings and imported game data. **Do not uninstall the old app or clear its data.** Back up important data before updating.
+Both APKs are ARM64 and require Android 9 / API 28 or newer. On Quest, enable Developer Mode and sideload the Quest APK with SideQuest or ADB. On Android, allow installation from your browser or file manager.
 
-On first launch, use **Game files & versions** to import your own legally obtained Xbox Halo CE ISO/XISO or extracted game files. See the [complete v1.0.18 release notes](docs/RELEASE-1.0.18.md) for setup, controls, network selector, compatibility and known issues.
+When updating, install over the existing app to keep your saves, settings and imported game data. **Do not uninstall the old app or clear its data.** Back up important data before updating.
 
-## Highlights
+The app does not contain Halo game data. On first launch, open **Game files & versions** and import your own supported Xbox Halo CE ISO/XISO or extracted game files. For best compatibility, use the original Xbox Halo CE XISO. Rev 1 and Rev 2 images are supported where recognized but are not recommended.
 
-- OpenCE Build 157 / network 24 with native in-game server browsing and campaign co-op. The launcher adds a population-sorted client target selector for compatible networks 11–24; hosting remains network 24.
-- Build 157 analog trigger pressure, PC vehicle-set support, Custom Edition spawn facing, host-alone lobby start and spatial stereo world audio. Build 148 particle-radius validation and clearer native halt-screen details remain.
-- Quest OpenXR rendering, full set of VR body/hand modes, controller-driven fingers, weapon alignment, Safe geometry by default and adjustable comfort/vehicle/HUD settings.
-- Android touch HUD editor, swipe/fire-drag controls, optional gyro aiming, Xbox-style USB/Bluetooth gamepads and controller-aware touch visibility.
-- Launcher game-data/revision manager, updater, settings, help and per-launch logs.
+## What’s included
 
-## In-game multiplayer and co-op
+- **Quest VR:** standalone OpenXR rendering, room-scale play, tracked body and hands, weapon-aligned aiming, configurable comfort and controls, and multiple body/hand modes. Safe geometry is the default.
+- **Android:** editable touch HUD, multitouch, swipe/fire-drag controls, optional gyro aiming, and USB/Bluetooth gamepad support with controller-aware touch visibility.
+- **OpenCE multiplayer and co-op:** native in-game server browser, PvP hosting and campaign co-op, with network 24 hosting and a launcher selector for compatible client targets 11–24.
+- **Game and launcher tools:** multiple game-data sets and revisions, updates, settings, saved invites, help and per-launch logs.
 
-Open **Play → Multiplayer**. Join through the in-game server browser or LAN list. To host PvP, choose **Create Game → Internet or LAN → Multiplayer**, configure the match and server, then start the lobby. To host campaign co-op, choose **Create Game → Internet or LAN → Singleplayer**, select a mission and difficulty, configure **Server Setup**, and start the lobby. Share the invite or make the lobby public. Hosting is network 24. Client targets 11–22 are limited to original Xbox-map PvP; co-op and Custom Edition need host version 23 or 24. The selectable co-op limit up to 128 is an engine option, not a performance guarantee.
+### Network compatibility
 
-For detailed paths and controls, use the [player guide](docs/PLAYER-GUIDE.md) and [controls/settings reference](docs/CONTROLS-AND-OPTIONS.md). The launcher’s **Multiplayer & co-op guide** also has offline instructions.
+The app always hosts on network 24. Selecting an older client target changes which compatible games this client can join; it does not downgrade hosted games. Targets 11–22 are limited to original Xbox-map PvP. Custom Edition and campaign co-op require network 23 or 24, with matching game files, maps and session conditions. The selectable co-op limit up to 128 is an engine setting, not a tested performance guarantee. See the [release notes](docs/RELEASE-1.0.18.md) for limitations and troubleshooting.
 
-## Game revisions and support
+## Join or host a game
 
-Import multiple supported game-data sets and switch them in **Game files & versions**. The manager recognizes supported Xbox cache build identifiers, but it does not reliably infer every Original/Rev 1/Rev 2 disc label or guarantee full-disc integrity. Different map files or revisions can prevent a multiplayer join.
+Join public games from **Play → Multiplayer → Join Game → Server Browser**, or nearby games from **LAN**. Use **Direct Link** to join by invite. To host PvP, choose **Create Game → Internet or LAN → Multiplayer**. To host campaign co-op, choose **Create Game → Internet or LAN → Singleplayer**, select a mission and difficulty, then configure **Server Setup**. Share the invite or make the lobby public. Hosting remains on network 24.
+## Guides and support
 
-For best game-data compatibility, the launcher recommends the original Xbox Halo CE XISO. Rev 1 and Rev 2 can be imported where supported, but are not recommended; the browser cannot automatically match a server to every disc revision. For crashes, failed joins, desync or compatibility reports, include the device/OS, app and network versions, selected game-data set, map/mission, connection type, reproduction steps and logs from each player. Android logs are saved under **Download/HaloCE** when permitted. Contact **@MeWhenINameMyself** by DM or report in the [Halo CE Decomp Discord](https://discord.gg/S9uSCKxKx). Remove private invite and device details before sharing.
+- [Player guide](docs/PLAYER-GUIDE.md)
+- [Controls and settings reference](docs/CONTROLS-AND-OPTIONS.md)
+- [Complete v1.0.18 release notes](docs/RELEASE-1.0.18.md)
 
-## Project
+For help or a bug report, include the device and OS, app and network versions, selected game-data set, map or mission, connection type, reproduction steps, and relevant logs from each player. Android logs are saved under **Download/HaloCE** when permitted. Contact **@MeWhenINameMyself** or visit the [Halo CE Decomp Discord](https://discord.gg/S9uSCKxKx). Remove private invites and device details before posting publicly.
 
-This is an unofficial community port and contains no Halo game assets. OpenCE networking and campaign co-op are from [OpenCommunityEdition/OpenCE](https://github.com/OpenCommunityEdition/OpenCE). The glasses-FOV and resolution contribution by [Willem Horak, PR #1](https://github.com/moistman42069/HaloCE-Quest-VR/pull/1) is included. Additional contributors and licenses are in [CREDITS.md](CREDITS.md) and [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt).
+## Project and upstream status
+
+This repository publishes the Halo CE Quest VR and Android app source, documentation and releases. It is an unofficial community project based on [OpenCE](https://github.com/OpenCommunityEdition/OpenCE), includes OpenCE networking and campaign co-op, and contains no Halo game data or other Halo game assets.
+
+The separate [OpenCE-VR fork](https://github.com/moistman42069/OpenCE-VR) holds the dedicated upstream integration branch. The Quest implementation is under review in [OpenCE PR #217](https://github.com/OpenCommunityEdition/OpenCE/pull/217); it remains open and has not been merged into upstream. The fork’s current Quest/Android release is also [available there](https://github.com/moistman42069/OpenCE-VR/releases/tag/quest-v1.0.18).
+
+The glasses-FOV and resolution contribution by [Willem Horak, PR #1](https://github.com/moistman42069/HaloCE-Quest-VR/pull/1) is included. See [CREDITS.md](CREDITS.md) and [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt) for additional contributors and licenses. This project is not affiliated with or endorsed by Microsoft or 343 Industries.
