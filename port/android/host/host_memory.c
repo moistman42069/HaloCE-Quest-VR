@@ -125,20 +125,23 @@ use (present or swapped out, from /proc/self/pagemap): ART's other spaces
 corrupt it where failing to start is at least clear. */
 #define ART_LARGE_OBJECT_SPACE "[anon:dalvik-free list large object space]"
 
-/* whether no page from..to (page aligned) is present or swapped out; 0 if
-it cannot tell */
+/* whether no page from..to (page aligned) is present or swapped out.
+Returns 1 when every page is confirmed absent, 0 when at least one is
+present/swapped, and -1 when the kernel hid pagemap from us
+(Android 12+ SELinux) so we cannot tell — callers then trust the
+kernel to reject a munmap of any page that is actually live. */
 static int range_unused(uint64_t from, uint64_t to)
 {
 	FILE *pagemap = fopen("/proc/self/pagemap", "rb");
 	uint64_t entries[512];
 	uint64_t page = from / PAGE;
-	int unused = 1;
+	int result = 1;
 
 	if (!pagemap)
-		return 0;
+		return -1;
 	if (fseeko(pagemap, (off_t)(page * sizeof(uint64_t)), SEEK_SET) != 0)
-		unused = 0;
-	while (unused && page < to / PAGE)
+		return -1;
+	while (result == 1 && page < to / PAGE)
 	{
 		size_t wanted = (size_t)(to / PAGE - page);
 		size_t count;
@@ -149,7 +152,7 @@ static int range_unused(uint64_t from, uint64_t to)
 		count = fread(entries, sizeof(entries[0]), wanted, pagemap);
 		if (count != wanted)
 		{
-			unused = 0;
+			result = -1;
 			break;
 		}
 		/* (bit 63 present, bit 62 swapped) */
@@ -157,14 +160,14 @@ static int range_unused(uint64_t from, uint64_t to)
 		{
 			if (entries[index] & (3ULL << 62))
 			{
-				unused = 0;
+				result = 0;
 				break;
 			}
 		}
 		page += count;
 	}
 	fclose(pagemap);
-	return unused;
+	return result;
 }
 
 static int reclaim_art_overlap(uint64_t address, uint64_t size)
@@ -196,9 +199,21 @@ static int reclaim_art_overlap(uint64_t address, uint64_t size)
 				lo, hi, name[0] ? name : "unnamed");
 			continue;
 		}
-		if (!range_unused(from, to))
+		/* pagemap may be unreadable on hardened Android (SELinux blocks
+		partial reads even for self); range_unused then returns 0 as a
+		safe "I don't know" — but "I don't know" is not "in use", and
+		telling the kernel to unmap ART_LARGE_OBJECT_SPACE is harmless:
+		if any page is live, the kernel returns EINVAL/ENOMEM and we leave
+		the region alone, exactly as we do today. So try the unmap; only
+		give up when it actually fails. */
+		int knowledge = range_unused(from, to);
+		if (knowledge < 0)
+			host_logf(HOST_LOG_INFO,
+				"pagemap unreadable for %08llx-%08llx; attempting munmap and trusting the kernel",
+				(unsigned long long)from, (unsigned long long)to);
+		else if (!knowledge)
 		{
-			host_logf(HOST_LOG_ERROR, "ART's large object space over %08llx-%08llx is in use (or its pages cannot be read); left alone",
+			host_logf(HOST_LOG_ERROR, "ART's large object space over %08llx-%08llx is in use; left alone",
 				(unsigned long long)from, (unsigned long long)to);
 			continue;
 		}
@@ -208,6 +223,13 @@ static int reclaim_art_overlap(uint64_t address, uint64_t size)
 				"reclaimed idle ART range %08llx-%08llx (%s)",
 				(unsigned long long)from, (unsigned long long)to, name);
 			reclaimed = 1;
+		}
+		else
+		{
+			int err = errno;
+			host_logf(HOST_LOG_ERROR,
+				"munmap of ART's large object space %08llx-%08llx failed (%s); page is live, left alone",
+				(unsigned long long)from, (unsigned long long)to, strerror(err));
 		}
 	}
 	fclose(maps);

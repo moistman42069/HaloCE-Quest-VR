@@ -1,13 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Merged over src/main's manifest in the VR build (configure.py with the vr option):
-     an OpenXR app for standalone headsets such as the Meta Quest 3 and the Steam Frame.
+     an OpenXR app for standalone headsets such as the Meta Quest 3, Steam Frame, and PICO 4 / PICO 4 Ultra.
 
      The launcher (the disc image picker) stays an ordinary 2D activity, which
-     the Quest shows on a panel; the game's activity is the immersive one. -->
+     the headset shows on a panel; the game's activity is the immersive one.
+
+     The Khronos OpenXR loader is unchanged - runtimes register themselves with the
+     OpenXR broker the loader consults, so a single OpenXR binary works across Meta Quest
+     and PICO without recompiling. -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-feature android:name="android.hardware.vr.headtracking" android:version="1" android:required="true" />
+    <uses-feature android:name="oculus.software.eye_tracking" android:required="false" />
+    <!-- Controller-only: PICO OS uses pvr.app.inputType=controller + the
+         absence of a handtracking feature to decide whether to overlay the
+         HAND_DIALOG (com.picovr.systemext/.HandDialogActivity). Declaring
+         the handtracking feature at all - even with required=false - flips
+         the system into hybrid-input mode and the systemext overlay covers
+         the game and absorbs input on every cold launch. We do NOT declare
+         it. oculus.software.requires_controller is a Meta-only hint that
+         PICO OS ignores, so it is also omitted. -->
 
     <!-- the Khronos loader (libopenxr_loader.so) finds the runtime through
          its broker or the system's active_runtime.json -->
@@ -28,6 +41,36 @@
         <meta-data
             android:name="com.oculus.supportedDevices"
             android:value="quest|quest2|questpro|quest3|quest3s" />
+        <!-- the PICO headsets the app is offered on. PICO 4 Ultra advertises
+             codename "pico_4_ultra"; we keep the 4 / Neo3 / G3 / Pro family as
+             optional so the same APK can ride the platform. -->
+        <meta-data
+            android:name="pvr.supportedDevices"
+            android:value="pico_4_ultra|pico_4|pico_neo3|pico_g3" />
+        <meta-data
+            android:name="pvr.app.type"
+            android:value="vr" />
+        <!-- Controller-only input. The pvr.app.inputType=controller meta is
+             what PICO OS reads to decide the runtime is a controller-only app;
+             combined with the absence of <uses-feature name="handtracking"/>
+             above, it suppresses the HAND_DIALOG overlay that systemext
+             otherwise shows on first launch and re-shows on every cache miss. -->
+        <meta-data
+            android:name="pvr.app.inputType"
+            android:value="controller" />
+        <!-- Belt-and-braces: a few PICO OS builds (notably the 5.x runtime on
+             the Pico 4 Ultra) still probe pvr.app.handtrackingSupport before
+             they honour inputType. Setting it to 0 keeps the systemext out
+             of our launch path even if a future OS update re-enables the
+             hybrid probe. Harmless on older builds that ignore the key. -->
+        <meta-data
+            android:name="pvr.app.handtrackingSupport"
+            android:value="0" />
+        <!-- shared EGL/OpenXR contexts so the multiview extension can bind a
+              single array swapchain across the two eyes. -->
+        <meta-data
+            android:name="enable_shared_context"
+            android:value="true" />
 
         <!-- the game, immersive. Its own process: the game ends its process
              when it quits (host_exit), which leaves the launcher's alone, and
@@ -46,6 +89,7 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="org.khronos.openxr.intent.category.IMMERSIVE_HMD" />
                 <category android:name="com.oculus.intent.category.VR" />
+                <category android:name="com.picovr.intent.category.VR" />
             </intent-filter>
         </activity>
     </application>
