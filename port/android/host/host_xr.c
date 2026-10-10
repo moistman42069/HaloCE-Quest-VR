@@ -93,7 +93,7 @@ static struct
 	XrSystemId system;
 	XrSession session;
 	XrSessionState state;
-	int running, focused, exiting, frame_controller, refresh_rate_extension;
+	int running, focused, exiting, frame_controller, refresh_rate_extension, bd_controllers;
 	XrSpace local, view;
 	XrSpace grip[2], aim[2];
 	XrActionSet action_set;
@@ -450,6 +450,64 @@ static int create_actions(void)
 		{ _action_hand_stick, "/user/hand/right/input/thumbstick/click" },
 		{ _action_hand_menu, "/user/hand/left/input/system/click" },
 	};
+	/* PICO 4 / Pico 4 Ultra / Pico Neo 3 controllers - shared interaction
+	   profile (/interaction_profiles/bytedance/pico4s_controller, defined by
+	   the XR_BD_controller_interaction Khronos extension). The Pico 4 Ultra
+	   runtime on the device (PICO OS 5.x with XR Platform 3.1.2 plugin)
+	   reports XR_TYPE_VIEW_CONFIGURATION_DEPTH...._PICO and registers
+	   "pico4s_controller" as the active interaction profile - the canonical
+	   "pico4_controller" string the older Pico 4 SDK used is rejected by the
+	   Pico 4 Ultra runtime with XR_ERROR_PATH_UNSUPPORTED. The same binding
+	   table covers the Pico 4 / Neo 3 / Ultra family because the path layout
+	   (a/b on the right, x/y/menu on the left) is unchanged across the line.
+
+	   The bytedance/pico4s_controller profile defines ONLY these input paths:
+	     /user/hand/right/input/a/click, b/click, thumbstick, thumbstick/click,
+	         trigger/value, trigger/touch, squeeze/value, grip_pose, aim_pose
+	     /user/hand/left/input/x/click, y/click, menu/click, thumbstick,
+	         thumbstick/click, trigger/value, trigger/touch, squeeze/value,
+	         grip_pose, aim_pose
+	   There is NO /select/ subroute (path is rejected by xrSuggestInteraction
+	   ProfileBindings with XR_ERROR_PATH_UNSUPPORTED and the WHOLE suggestion
+	   is discarded per Khronos spec sec. 10.3), NO /menu/click on the right
+	   hand (only the left carries it), and /system/click is compositor-
+	   consumed by PICO OS and not safe to bind. The Pico 4 controllers have
+	   no bumper, d-pad, or view button; flashlight and d-pad actions stay
+	   unmapped - they are still created above as actions but receive no
+	   bindings, which is the correct degenerate state. */
+	static const struct binding pico[] =
+	{
+		{ _action_move, "/user/hand/left/input/thumbstick" },
+		{ _action_look, "/user/hand/right/input/thumbstick" },
+		{ _action_trigger_left, "/user/hand/left/input/trigger/value" },
+		{ _action_trigger_right, "/user/hand/right/input/trigger/value" },
+		{ _action_squeeze_left, "/user/hand/left/input/squeeze/value" },
+		{ _action_squeeze_right, "/user/hand/right/input/squeeze/value" },
+		/* face buttons: A right-lower, B right-upper, X left-lower, Y left-upper */
+		{ _action_a, "/user/hand/right/input/a/click" },
+		{ _action_b, "/user/hand/right/input/b/click" },
+		{ _action_x, "/user/hand/left/input/x/click" },
+		{ _action_y, "/user/hand/left/input/y/click" },
+		/* pause -> menu on the LEFT hand (the only hand that carries
+		   /menu/click); the system button is intercepted by the PICO
+		   compositor and cannot be bound to a gameplay action. */
+		{ _action_start, "/user/hand/left/input/menu/click" },
+		{ _action_left_thumb, "/user/hand/left/input/thumbstick/click" },
+		{ _action_right_thumb, "/user/hand/right/input/thumbstick/click" },
+		POSES("left"), POSES("right"),
+		{ _action_hand_south, "/user/hand/right/input/a/click" },
+		{ _action_hand_south, "/user/hand/left/input/x/click" },
+		{ _action_hand_east, "/user/hand/right/input/b/click" },
+		{ _action_hand_east, "/user/hand/left/input/y/click" },
+		{ _action_hand_stick, "/user/hand/left/input/thumbstick/click" },
+		{ _action_hand_stick, "/user/hand/right/input/thumbstick/click" },
+		{ _action_hand_menu, "/user/hand/left/input/menu/click" },
+		/* capacitive touch surfaces for Alyx-like finger pose */
+		{ _action_hand_index_touch, "/user/hand/left/input/trigger/touch" },
+		{ _action_hand_index_touch, "/user/hand/right/input/trigger/touch" },
+		{ _action_hand_thumb_touch, "/user/hand/left/input/thumbstick/touch" },
+		{ _action_hand_thumb_touch, "/user/hand/right/input/thumbstick/touch" },
+	};
 	XrActionSetCreateInfo set_info = { XR_TYPE_ACTION_SET_CREATE_INFO };
 	XrSessionActionSetsAttachInfo attach = { XR_TYPE_SESSION_ACTION_SETS_ATTACH_INFO };
 	int hand, ok = 1;
@@ -500,6 +558,16 @@ static int create_actions(void)
 	suggest("/interaction_profiles/oculus/touch_controller", touch, sizeof(touch) / sizeof(touch[0]));
 	suggest("/interaction_profiles/valve/index_controller", index_controller,
 		sizeof(index_controller) / sizeof(index_controller[0]));
+	/* PICO 4 / Pico 4 Ultra: the runtime accepts this profile and binds the
+	   Pico 4 controllers. If the active runtime is not PICO, this suggest is
+	   rejected (host_logf warning) and the runtime falls back to Touch or
+	   Index, which is the correct behaviour. The XR_BD_controller_interaction
+	   extension is enabled above so this profile path is resolvable. The
+	   canonical ByteDance path /bytedance/pico4s_controller is what the
+	   modern Pico 4 Ultra runtime's PxrPlugin reports back through
+	   xrGetCurrentInteractionProfile - the older /pico/neo3_controller
+	   string is rejected by Pico 4 OS 5.x with XR_ERROR_PATH_UNSUPPORTED. */
+	suggest("/interaction_profiles/bytedance/pico4s_controller", pico, sizeof(pico) / sizeof(pico[0]));
 	attach.countActionSets = 1;
 	attach.actionSets = &xr.action_set;
 	if (!check(xrAttachSessionActionSets(xr.session, &attach), "xrAttachSessionActionSets"))
@@ -759,6 +827,8 @@ static int create_instance(struct halo_xr_info *out)
 			xr.refresh_rate_extension = 1;
 		if (!strcmp(available[index].extensionName, XR_EXT_PERFORMANCE_SETTINGS_EXTENSION_NAME))
 			xr.performance_settings = 1;
+		if (!strcmp(available[index].extensionName, XR_BD_CONTROLLER_INTERACTION_EXTENSION_NAME))
+			xr.bd_controllers = 1;
 	}
 	free(available);
 	count = 0;
@@ -770,6 +840,8 @@ static int create_instance(struct halo_xr_info *out)
 		extensions[count++] = REFRESH_RATE_EXTENSION;
 	if (xr.performance_settings)
 		extensions[count++] = XR_EXT_PERFORMANCE_SETTINGS_EXTENSION_NAME;
+	if (xr.bd_controllers)
+		extensions[count++] = XR_BD_CONTROLLER_INTERACTION_EXTENSION_NAME;
 	for (index = 0; index < count; index++)
 		host_logf(HOST_LOG_INFO, "[openxr] enabling %s", extensions[index]);
 	android.applicationVM = xr.vm;
